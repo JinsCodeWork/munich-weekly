@@ -36,7 +36,7 @@ munich-weekly/
 │   ├── public/      # 静态资源
 │   ├── package.json # 前端依赖
 │   └── ...
-├── backend/         # 计划中的 Flask 后端
+├── backend/         # 计划中的 javaspring 后端
 │   └── .keep        # 占位文件（后续会创建 app.py 等）
 ├── db/              # SQL 脚本、数据备份
 │   └── .keep
