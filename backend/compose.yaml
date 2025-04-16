@@ -1,9 +1,18 @@
+version: '3.8'
+
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:15                # ✅ 建议指定具体版本，避免 future break
+    container_name: mw-postgres       # ✅ 给容器起个名字，便于管理
+    restart: unless-stopped           # ✅ 自动重启策略（推荐用于开发）
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: secret
     ports:
-      - '5432'
+      - '5432:5432'                   # ✅ 显式映射端口（host:container）
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # ✅ 数据持久化（即使重启也不会丢数据）
+
+volumes:
+  pgdata:
