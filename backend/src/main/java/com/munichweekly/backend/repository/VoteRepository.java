@@ -21,5 +21,5 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     List<Vote> findBySubmission(Submission submission);
 
     // 查询某个用户是否对某期某作品投过票（可用于审核用途）
-    Optional<Vote> findByUserAndSubmissionAndIssue(User user, Submission submission, Issue issue);
+    //Optional<Vote> findByUserAndSubmissionAndIssue(User user, Submission submission, Issue issue);
 }

@@ -90,4 +90,12 @@ public class User {
     public void setIsBanned(Boolean banned) {
         isBanned = banned;
     }
+
+    /**
+     * test-use; delete after published
+     * @param l
+     */
+    public void setId(long l) {
+        this.id = l;
+    }
 }

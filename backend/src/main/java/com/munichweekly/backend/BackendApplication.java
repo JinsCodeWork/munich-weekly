@@ -17,14 +17,14 @@ public class BackendApplication {
         SpringApplication.run(BackendApplication.class, args);
     }
 
-//    @Bean //测试阶段用于清空数据
-//    @Order(1)
-//    @Profile("dev")
-//    public CommandLineRunner resetDatabase(DataResetService resetService) {
-//        return args -> {
-//                resetService.resetAllData();
-//        };
-//    }
+    @Bean //测试阶段用于清空数据
+    @Order(1)
+    @Profile("dev")
+    public CommandLineRunner resetDatabase(DataResetService resetService) {
+        return args -> {
+                resetService.resetAllData();
+        };
+    }
 
 
 }

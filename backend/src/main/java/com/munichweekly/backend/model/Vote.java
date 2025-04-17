@@ -3,6 +3,10 @@ package com.munichweekly.backend.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing a single vote by a user on a submission in a specific issue.
+ * Each user can vote once per submission.
+ */
 @Entity
 @Table(name = "votes", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "submission_id"}))
 public class Vote {
@@ -23,7 +27,7 @@ public class Vote {
     @JoinColumn(name = "issue_id")
     private Issue issue;
 
-    private LocalDateTime votedAt = LocalDateTime.now();
+    private LocalDateTime votedAt;
 
     public Vote() {}
 
