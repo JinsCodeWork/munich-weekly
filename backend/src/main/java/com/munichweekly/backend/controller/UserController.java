@@ -2,6 +2,7 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.repository.UserRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,8 @@ public class UserController {
     }
 
     // GET /api/users
+
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
