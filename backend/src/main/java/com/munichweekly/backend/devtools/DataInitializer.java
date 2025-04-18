@@ -33,10 +33,10 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        User admin = new User("dongkai.jin@tum.de", "marc", null, "admin");
+        User admin = new User("dongkai.jin@tum.de", "123456","marc", null, "admin");
         User savedAdmin = userRepository.saveAndFlush(admin); // 自动生成 ID
 
-        User user = new User("xiaoming@gmail.com", "小明", null, "user");
+        User user = new User("xiaoming@gmail.com", "12399!_zz","小明", null, "user");
         User savedUser = userRepository.saveAndFlush(user);
 
         // 第一期：投票中
@@ -84,5 +84,5 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("🧪 userId = " + savedUser.getId());
         System.out.println("🧪 issue1Id = " + savedIssue1.getId());
         System.out.println("🧪 issue2Id = " + savedIssue2.getId());
-    };
+    }
 }

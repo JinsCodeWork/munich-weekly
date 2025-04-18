@@ -25,13 +25,17 @@ public class User {
 
     private Boolean isBanned = false;
 
+    private String password; // Password used for email-based login
+
+
     // 无参构造函数（JPA 规范要求）
     public User() {}
 
     // 全参数构造函数（便于后续创建用户实例）
-    public User(String email, String nickname, String avatarUrl, String role) {
+    public User(String email, String password, String nickname, String avatarUrl, String role) {
         this.email = email;
         this.nickname = nickname;
+        this.password = password;
         this.avatarUrl = avatarUrl;
         this.role = role;
         this.registeredAt = LocalDateTime.now();
@@ -91,11 +95,11 @@ public class User {
         isBanned = banned;
     }
 
-    /**
-     * test-use; delete after published
-     * @param l
-     */
-    public void setId(long l) {
-        this.id = l;
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

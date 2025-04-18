@@ -3,6 +3,10 @@ package com.munichweekly.backend.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Represents a third-party auth provider linked to a user account.
+ * Supports OAuth logins (e.g., WeChat, Google, Apple).
+ */
 @Entity
 @Table(name = "user_auth_providers", uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "providerUserId"}))
 public class UserAuthProvider {
