@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
                         .requestMatchers("/api/submissions").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
+                        .requestMatchers("/api/users/me").hasAnyAuthority("user", "admin")
                         .anyRequest().authenticated()                // Everything else requires login
                 )
                 .addFilterBefore(

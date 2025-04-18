@@ -25,7 +25,7 @@ public class VoteController {
      * Submit a vote for a submission in a specific issue.
      * This endpoint assumes the user is authenticated (simulated userId).
      */
-    @PreAuthorize("hasAuthority('user') or hasAuthority('admin')")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
     @PostMapping
     public ResponseEntity<Vote> vote(@RequestParam Long submissionId) {
         Long fakeUserId = CurrentUserUtil.getUserIdOrThrow();

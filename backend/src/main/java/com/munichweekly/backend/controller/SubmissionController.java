@@ -29,7 +29,7 @@ public class SubmissionController {
      * Submit a new photo to a specific issue.
      * Called by authenticated users (currently simulated).
      */
-    @PreAuthorize("hasAuthority('user') or hasAuthority('admin')")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
     @PostMapping
     public ResponseEntity<?> submit(@RequestBody SubmissionRequestDTO dto) {
         Long actualId = CurrentUserUtil.getUserIdOrThrow();
