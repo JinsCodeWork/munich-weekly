@@ -1,6 +1,6 @@
 # 📸 Munich Weekly 慕城摄影周刊平台
 
-A web-based photography submission and voting platform for Chinese students studying in Munich.  
+A web-based photography submission and voting platform for students studying in Munich.  
 This project is built with **Spring Boot + PostgreSQL + Next.js**, and deployed on a German Hetzner Cloud server.
 
 ---
@@ -31,11 +31,13 @@ This project is built with **Spring Boot + PostgreSQL + Next.js**, and deployed 
 
 ## 🧱 Project Structure
 
+```text
 munich-weekly/
 ├── backend/       # Java Spring Boot application
 ├── frontend/      # Next.js static web frontend
 ├── db/            # SQL backups, scripts
 └── README.md      # You are here
+```
 
 ---
 
@@ -55,7 +57,6 @@ docker compose up -d
 cd ../frontend
 npm install
 npm run dev
-
 
 
 ⸻
