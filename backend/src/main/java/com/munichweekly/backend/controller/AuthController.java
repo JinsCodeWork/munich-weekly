@@ -2,6 +2,7 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.LoginRequestDTO;
 import com.munichweekly.backend.dto.LoginResponseDTO;
+import com.munichweekly.backend.dto.UserRegisterRequestDTO;
 import com.munichweekly.backend.service.UserService;
 
 import jakarta.validation.Valid;
@@ -29,5 +30,17 @@ public class AuthController {
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         LoginResponseDTO response = userService.login(dto);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Register a new user with email, password, and nickname.
+     * Returns a JWT token upon successful registration.
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody @Valid UserRegisterRequestDTO dto) {
+        String token = userService.register(dto);
+        return ResponseEntity.ok().body(
+                java.util.Map.of("token", token)
+        );
     }
 }

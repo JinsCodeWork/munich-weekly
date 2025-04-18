@@ -2,12 +2,14 @@ package com.munichweekly.backend.service;
 
 import com.munichweekly.backend.dto.LoginRequestDTO;
 import com.munichweekly.backend.dto.LoginResponseDTO;
+import com.munichweekly.backend.dto.UserRegisterRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.UserAuthProvider;
 import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.repository.UserAuthProviderRepository;
 import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -20,12 +22,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserAuthProviderRepository authProviderRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository,
-                       UserAuthProviderRepository authProviderRepository, JwtUtil jwtUtil) {
+                       UserAuthProviderRepository authProviderRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.authProviderRepository = authProviderRepository;
         this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -75,5 +79,32 @@ public class UserService {
 
         // Return token and basic user info
         return new LoginResponseDTO(token, user.getNickname(), user.getAvatarUrl(), user.getRole());
+    }
+
+    /**
+     * Registers a new user.
+     * Validates email uniqueness, encrypts password, and returns JWT token.
+     */
+    public String register(UserRegisterRequestDTO dto) {
+        // Check for duplicate email
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        // Encrypt the password
+        String hashedPassword = passwordEncoder.encode(dto.getPassword());
+
+        // Create and save new user
+        User user = new User();
+        user.setEmail(dto.getEmail());
+        user.setPassword(hashedPassword);
+        user.setNickname(dto.getNickname());
+        user.setAvatarUrl(dto.getAvatarUrl());
+        user.setRole("user"); // Default role
+
+        userRepository.save(user);
+
+        // Generate JWT token
+        return jwtUtil.generateToken(user.getId());
     }
 }
