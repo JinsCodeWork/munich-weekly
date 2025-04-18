@@ -1,7 +1,10 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.dto.IssueCreateRequestDTO;
 import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.repository.IssueRepository;
+import com.munichweekly.backend.service.IssueService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,13 +14,26 @@ import java.util.List;
 public class IssueController {
 
     private final IssueRepository issueRepository;
+    private final IssueService issueService;
 
-    public IssueController(IssueRepository issueRepository) {
+    public IssueController(IssueRepository issueRepository, IssueService issueService) {
         this.issueRepository = issueRepository;
+        this.issueService = issueService;
     }
 
     @GetMapping
     public List<Issue> getAllIssues() {
         return issueRepository.findAll();
+    }
+
+    /**
+     * Create a new issue (admin only).
+     * Accepts title, description, submission/voting times.
+     */
+    @PostMapping
+    public ResponseEntity<Issue> createIssue(@RequestBody IssueCreateRequestDTO dto) {
+        // TODO: Replace with real admin authentication check
+        Issue created = issueService.createIssue(dto);
+        return ResponseEntity.ok(created);
     }
 }
