@@ -35,8 +35,11 @@ public class SubmissionController {
     }
 
     /**
-     * Retrieve all approved submissions for a given issue.
-     * Used by frontend to display entries during the voting phase.
+     * Get all approved submissions under a specific issue,
+     * including the number of votes for each submission.
+     *
+     * @param issueId ID of the issue
+     * @return List of submissions with vote counts
      */
     @GetMapping
     public List<SubmissionResponseDTO> getApprovedSubmissions(@RequestParam Long issueId) {

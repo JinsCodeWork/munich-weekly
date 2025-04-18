@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,14 +18,17 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
+    private final VoteRepository voteRepository;
     private static final int MAX_SUBMISSIONS_PER_ISSUE = 4;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              IssueRepository issueRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository,
+                             VoteRepository voteRepository) {
         this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
+        this.voteRepository = voteRepository;
     }
 
     public Submission submit(Long userId, SubmissionRequestDTO dto) {
@@ -56,12 +60,29 @@ public class SubmissionService {
     }
 
     public List<SubmissionResponseDTO> listApprovedByIssue(Long issueId) {
+        // 1. 检查期刊是否存在
         Issue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
 
-        return submissionRepository.findByIssueAndStatus(issue, "approved")
-                .stream()
-                .map(SubmissionResponseDTO::new)
+        // 2. 查询所有“审核通过”的投稿
+        List<Submission> submissions = submissionRepository.findByIssueAndStatus(issue, "approved");
+
+        // 3. 查询投票统计（返回 List<Object[]>: [submissionId, voteCount]）
+        List<Object[]> voteCounts = voteRepository.countVotesByIssue(issueId);
+
+        // 4. 转换为 Map<submissionId, voteCount>
+        Map<Long, Long> voteCountMap = voteCounts.stream()
+                .collect(Collectors.toMap(
+                        obj -> (Long) obj[0],
+                        obj -> (Long) obj[1]
+                ));
+
+        // 5. 构造响应 DTO，附带每个投稿的票数
+        return submissions.stream()
+                .map(submission -> new SubmissionResponseDTO(
+                        submission,
+                        voteCountMap.getOrDefault(submission.getId(), 0L) // 默认0票
+                ))
                 .collect(Collectors.toList());
     }
 

@@ -64,4 +64,8 @@ public class VoteService {
         Vote vote = new Vote(user, submission, issue);
         return voteRepository.save(vote);
     }
+
+    public IssueRepository getIssueRepository() {
+        return issueRepository;
+    }
 }

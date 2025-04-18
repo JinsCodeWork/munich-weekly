@@ -5,6 +5,8 @@ import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.model.Submission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +24,9 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
 
     // 查询某个用户是否对某期某作品投过票（可用于审核用途）
     //Optional<Vote> findByUserAndSubmissionAndIssue(User user, Submission submission, Issue issue);
+
+
+    @Query("SELECT v.submission.id AS submissionId, COUNT(v) AS voteCount " +
+            "FROM Vote v WHERE v.issue.id = :issueId GROUP BY v.submission.id")
+    List<Object[]> countVotesByIssue(@Param("issueId") Long issueId);
 }

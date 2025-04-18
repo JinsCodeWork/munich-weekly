@@ -15,17 +15,19 @@ public class SubmissionResponseDTO {
     private String description;
     private String nickname;
     private LocalDateTime submittedAt;
+    private Long voteCount;
 
     public SubmissionResponseDTO() {
         // 默认构造器（可选）
     }
 
-    public SubmissionResponseDTO(Submission s) {
+    public SubmissionResponseDTO(Submission s, long voteCount) {
         this.id = s.getId();
         this.imageUrl = s.getImageUrl();
         this.description = s.getDescription();
         this.nickname = s.getUser().getNickname();
         this.submittedAt = s.getSubmittedAt();
+        this.voteCount = voteCount;
     }
 
     // getter/setter 可通过 IDE 自动生成，无需手动编写
@@ -68,5 +70,13 @@ public class SubmissionResponseDTO {
 
     public void setSubmittedAt(LocalDateTime submittedAt) {
         this.submittedAt = submittedAt;
+    }
+
+    public Long getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(Long voteCount) {
+        this.voteCount = voteCount;
     }
 }
