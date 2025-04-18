@@ -3,6 +3,7 @@ package com.munichweekly.backend.security;
 import com.munichweekly.backend.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -36,6 +37,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
+                        .requestMatchers("/api/submissions").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
                         .anyRequest().authenticated()                // Everything else requires login
                 )

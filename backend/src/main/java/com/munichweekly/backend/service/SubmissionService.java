@@ -34,22 +34,22 @@ public class SubmissionService {
     public Submission submit(Long userId, SubmissionRequestDTO dto) {
         // 1️⃣ 找用户
         User user = userRepository.findById(userId).orElseThrow(() ->
-                new IllegalArgumentException("用户不存在"));
+                new IllegalArgumentException("User not found"));
 
         // 2️⃣ 找对应期数
         Issue issue = issueRepository.findById(dto.getIssueId()).orElseThrow(() ->
-                new IllegalArgumentException("投稿期不存在"));
+                new IllegalArgumentException("Issue not found"));
 
         // 3️⃣ 检查投稿时间是否开放
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(issue.getSubmissionStart()) || now.isAfter(issue.getSubmissionEnd())) {
-            throw new IllegalStateException("当前不在投稿开放时间段");
+            throw new IllegalStateException("Not in valid date range");
         }
 
         // 4️⃣ 检查该用户是否已投了4张图
         long count = submissionRepository.countByUserAndIssue(user, issue);
         if (count >= MAX_SUBMISSIONS_PER_ISSUE) {
-            throw new IllegalStateException("每期最多允许投稿 " + MAX_SUBMISSIONS_PER_ISSUE + " 张作品");
+            throw new IllegalStateException("Maximum " + MAX_SUBMISSIONS_PER_ISSUE + " submissions per issue");
         }
 
         // 5️⃣ 创建投稿对象，状态为 pending

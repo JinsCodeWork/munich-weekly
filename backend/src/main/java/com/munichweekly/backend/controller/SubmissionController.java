@@ -3,8 +3,10 @@ package com.munichweekly.backend.controller;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
 import com.munichweekly.backend.model.Submission;
+import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.SubmissionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,10 +29,11 @@ public class SubmissionController {
      * Submit a new photo to a specific issue.
      * Called by authenticated users (currently simulated).
      */
+    @PreAuthorize("hasAuthority('user') or hasAuthority('admin')")
     @PostMapping
     public ResponseEntity<?> submit(@RequestBody SubmissionRequestDTO dto) {
-        Long fakeUserId = 2L; // Simulated current user ID (e.g., Xiaoming)
-        Submission saved = submissionService.submit(fakeUserId, dto);
+        Long actualId = CurrentUserUtil.getUserIdOrThrow();
+        Submission saved = submissionService.submit(actualId, dto);
         return ResponseEntity.ok(saved);
     }
 
@@ -50,6 +53,7 @@ public class SubmissionController {
      * Approve a submission. Changes its status to 'approved' and sets reviewed time.
      * Called by admin users (simulated).
      */
+    @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/approve")
     public ResponseEntity<Submission> approveSubmission(@PathVariable Long id) {
         Submission updated = submissionService.approveSubmission(id);
@@ -60,6 +64,7 @@ public class SubmissionController {
      * Reject a submission. Changes its status to 'rejected' and sets reviewed time.
      * Called by admin users (simulated).
      */
+    @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/reject")
     public ResponseEntity<Submission> rejectSubmission(@PathVariable Long id) {
         Submission updated = submissionService.rejectSubmission(id);

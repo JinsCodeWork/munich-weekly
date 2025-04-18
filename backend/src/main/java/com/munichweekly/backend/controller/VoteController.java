@@ -1,8 +1,10 @@
 package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.model.Vote;
+import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.VoteService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,9 +25,10 @@ public class VoteController {
      * Submit a vote for a submission in a specific issue.
      * This endpoint assumes the user is authenticated (simulated userId).
      */
+    @PreAuthorize("hasAuthority('user') or hasAuthority('admin')")
     @PostMapping
     public ResponseEntity<Vote> vote(@RequestParam Long submissionId) {
-        Long fakeUserId = 2L; // Simulated user ID (e.g., Xiaoming)
+        Long fakeUserId = CurrentUserUtil.getUserIdOrThrow();
         Vote vote = voteService.vote(fakeUserId, submissionId);
         return ResponseEntity.ok(vote);
     }

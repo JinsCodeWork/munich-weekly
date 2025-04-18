@@ -37,8 +37,8 @@ public class IssueService {
             throw new IllegalArgumentException("Voting start must be before voting end.");
         }
 
-        if (dto.getVotingStart().isBefore(dto.getSubmissionEnd())) {
-            throw new IllegalArgumentException("Voting must start after submission ends.");
+        if (dto.getVotingStart().isBefore(dto.getSubmissionStart())) {
+            throw new IllegalArgumentException("Voting must start after submission start.");
         }
 
         Issue issue = new Issue(

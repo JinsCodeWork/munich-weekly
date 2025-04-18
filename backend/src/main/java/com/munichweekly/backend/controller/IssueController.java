@@ -5,6 +5,7 @@ import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.repository.IssueRepository;
 import com.munichweekly.backend.service.IssueService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,9 +31,9 @@ public class IssueController {
      * Create a new issue (admin only).
      * Accepts title, description, submission/voting times.
      */
+    @PreAuthorize("hasAuthority('admin')")
     @PostMapping
     public ResponseEntity<Issue> createIssue(@RequestBody IssueCreateRequestDTO dto) {
-        // TODO: Replace with real admin authentication check
         Issue created = issueService.createIssue(dto);
         return ResponseEntity.ok(created);
     }
