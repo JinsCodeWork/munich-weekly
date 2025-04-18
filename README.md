@@ -1,78 +1,119 @@
+# 📸 Munich Weekly 慕城摄影周刊平台
 
-# 📸 慕城周刊 Munich Weekly
-
-一个面向在德国的大学生（尤其是慕尼黑中国留学生群体）的摄影投稿与投票平台。用户可以在线投稿照片，后台审核后展示，其他用户可以登录后投票，形成每期摄影作品排行榜。
-
----
-
-## 🧠 项目背景
-
-- 📍 服务对象：德国大学生，尤其是慕尼黑中国留学生
-- 📷 投稿：每周开放，每人每期限投4张照片
-- 🗳️ 投票：记名制登录投票，防止刷票
-- 🧑‍💻 目标：稳定、安全、简洁易用的摄影平台，后期支持中英文双语
+A web-based photography submission and voting platform for Chinese students studying in Munich.  
+This project is built with **Spring Boot + PostgreSQL + Next.js**, and deployed on a German Hetzner Cloud server.
 
 ---
 
-## 🧱 技术架构（当前 V1）
+## 🌟 Project Highlights
 
-| 层级     | 技术框架             | 说明                           |
-|----------|----------------------|--------------------------------|
-| 前端     | Next.js (React + TS) | 页面渲染，登录、投稿、投票     |
-| 后端     | java springboot      | API、数据库、身份校验等       |
-| 数据库   | PostgreSQL           | 存储用户/照片/投票记录等       |
-| 存储服务 | 阿里云 OSS 或 Hetzner S3 | 存储用户上传的照片          |
-| 云部署   | Hetzner              | 位于德国，延迟更低、便于部署   |
-| 域名     | `munichweekly.art`   | 已注册，绑定 Web 服务         |
+- Users can **submit photos** to a weekly issue
+- Photos go through an **approval** process before public display
+- Authenticated users can **vote for submissions** (named voting)
+- Backend admin tools include: submission review, user management, CSV export
+- Secure and clean architecture with API-first design
 
 ---
 
-## 📁 项目结构
+## 🛠️ Tech Stack
 
-```bash
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js + TypeScript |
+| Backend | Java 21 + Spring Boot 3 |
+| Database | PostgreSQL (via Docker) |
+| Auth | Email or WeChat login (TBD) |
+| File Storage | OSS or S3-compatible |
+| Hosting | Hetzner Cloud (Germany) |
+| Domain | [munichweekly.art](https://munichweekly.art) |
+
+---
+
+## 🧱 Project Structure
+
 munich-weekly/
-├── frontend/        # 前端项目（Next.js）
-│   ├── src/         # 页面和组件
-│   ├── public/      # 静态资源
-│   ├── package.json # 前端依赖
-│   └── ...
-├── backend/         # 计划中的 javaspring 后端
-│   └── .keep        # 占位文件（后续会创建 app.py 等）
-├── db/              # SQL 脚本、数据备份
-│   └── .keep
-├── .gitignore       # Git 忽略规则
-└── README.md        # 本文件
-```
+├── backend/       # Java Spring Boot application
+├── frontend/      # Next.js static web frontend
+├── db/            # SQL backups, scripts
+└── README.md      # You are here
 
 ---
 
-## 🧪 本地开发指引（Frontend）
+## 📦 Local Development
+
+> Requirements: Java 21, Node.js v22+, Docker
 
 ```bash
-cd frontend
+# Start database
+cd backend
+docker compose up -d
+
+# Run backend
+./gradlew bootRun
+
+# Run frontend
+cd ../frontend
 npm install
 npm run dev
-```
 
-然后打开浏览器访问：[http://localhost:3000](http://localhost:3000)
 
----
 
-## 🚧 项目阶段进度（v1）
+⸻
 
-- [x] 注册域名
-- [x] 本地开发环境部署（前端）
-- [x] GitHub 项目结构同步
-- [ ] 初始化后端结构（Flask）
-- [ ] 实现投稿/投票页面
-- [ ] 部署测试版本
-- [ ] 后端 API 开发
-- [ ] 第一期活动上线！
+🔗 API Overview
 
----
+📚 IssueController
 
-## 🤝 致谢
+Method	Endpoint	Auth	Description
+GET	/api/issues	None	Get all issues
 
-由 @MarcJin 独立发起，感谢慕尼黑留学生社区的支持。
+
+
+⸻
+
+📸 SubmissionController
+
+Method	Endpoint	Auth	Description
+POST	/api/submissions	Login	Submit a photo
+GET	/api/submissions?issueId=...	Login	Get all approved submissions with vote counts
+PATCH	/api/submissions/{id}/approve	Admin	Approve a submission
+PATCH	/api/submissions/{id}/reject	Admin	Reject a submission
+
+
+
+⸻
+
+👤 UserController
+
+Method	Endpoint	Auth	Description
+GET	/api/users	Admin (TBD)	Get all registered users
+
+
+
+⸻
+
+🗳️ VoteController
+
+Method	Endpoint	Auth	Description
+POST	/api/votes?submissionId=...	Login	Cast a vote for a submission
+
+
+
+⸻
+
+🚧 To Do (Coming Soon)
+	•	JWT-based user authentication
+	•	Email / WeChat login support
+	•	Submission image upload to OSS
+	•	Voting limits (max N votes per issue)
+	•	Admin dashboard UI
+
+⸻
+
+📬 Contact
+
+Project lead: Dongkai Jin
+Maintained in Munich, Germany 🇩🇪
+GitHub: github.com/JinsCodeWork/munich-weekly
 
 ---
