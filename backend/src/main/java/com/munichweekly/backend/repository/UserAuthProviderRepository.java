@@ -14,4 +14,7 @@ public interface UserAuthProviderRepository extends JpaRepository<UserAuthProvid
 
     // 查找某用户已绑定的所有登录方式（用于个人账号页展示）
     List<UserAuthProvider> findByUser(User user);
+
+    // 查找某个用户绑定的指定 provider（用于解绑）
+    Optional<UserAuthProvider> findByUserAndProvider(User user, String provider);
 }

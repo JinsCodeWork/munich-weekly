@@ -177,4 +177,25 @@ public class UserService {
                 ))
                 .collect(Collectors.toList());
     }
+
+
+    /**
+     * Unbinds a third-party provider account from the current user.
+     *
+     * @param userId   ID of the user requesting to unbind
+     * @param provider The provider name (e.g. google, WeChat)
+     */
+    public void unbindThirdPartyAccount(Long userId, String provider) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 查询是否存在该绑定
+        Optional<UserAuthProvider> existing = authProviderRepository.findByUserAndProvider(user, provider);
+
+        if (existing.isEmpty()) {
+            throw new IllegalArgumentException("No binding found for provider: " + provider);
+        }
+
+        authProviderRepository.delete(existing.get());
+    }
 }

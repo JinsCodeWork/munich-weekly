@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller for authentication (login) endpoints.
@@ -79,5 +80,19 @@ public class AuthController {
         Long userId = CurrentUserUtil.getUserIdOrThrow();
         List<UserAuthProviderResponseDTO> linked = userService.getLinkedAuthProviders(userId);
         return ResponseEntity.ok(linked);
+    }
+
+    /**
+     * Unbind a third-party provider from the current user account.
+     * Example: DELETE /api/auth/bind/google
+     */
+    @DeleteMapping("/bind/{provider}")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<?> unbindProvider(@PathVariable String provider) {
+        Long userId = CurrentUserUtil.getUserIdOrThrow();
+        userService.unbindThirdPartyAccount(userId, provider.toLowerCase()); // normalize
+        return ResponseEntity.ok().body(
+                Map.of("message", "Successfully unbound " + provider)
+        );
     }
 }
