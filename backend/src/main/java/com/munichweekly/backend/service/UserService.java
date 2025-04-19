@@ -32,50 +32,57 @@ public class UserService {
     }
 
     /**
-     * Unified login method for both email/password and third-party login.
-     * Returns a logged-in user or throws if authentication fails.
+     * Logs in a user using email and password.
+     * Throws if authentication fails.
      */
-    public LoginResponseDTO login(LoginRequestDTO dto) {
-        User user;
+    public LoginResponseDTO loginWithEmail(EmailLoginRequestDTO dto) {
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (dto.getEmail() != null && dto.getPassword() != null) {
-            // Email login
-            user = userRepository.findByEmail(dto.getEmail())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-            if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("Invalid password");
-            }
-
-        } else if (dto.getProvider() != null && dto.getProviderUserId() != null) {
-            // Third-party login
-            Optional<UserAuthProvider> auth = authProviderRepository
-                    .findByProviderAndProviderUserId(dto.getProvider(), dto.getProviderUserId());
-
-            if (auth.isPresent()) {
-                user = auth.get().getUser();
-            } else {
-                // Auto-create new user for new third-party login
-                User newUser = new User();
-                newUser.setEmail(null);
-                newUser.setNickname("用户" + System.currentTimeMillis());
-                newUser.setAvatarUrl(null);
-                newUser.setRole("user");
-
-                user = userRepository.save(newUser);
-
-                UserAuthProvider newAuth = new UserAuthProvider(user, dto.getProvider(), dto.getProviderUserId());
-                authProviderRepository.save(newAuth);
-            }
-
-        } else {
-            throw new IllegalArgumentException("Invalid login request");
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
         }
 
-        // Generate JWT token
         String token = jwtUtil.generateToken(user.getId());
 
-        // Return token and basic user info
+        return new LoginResponseDTO(token, user.getNickname(), user.getAvatarUrl(), user.getRole());
+    }
+
+    /**
+     * Logs in a user using third-party provider (e.g. Google/WeChat).
+     * Creates a new user account if first-time login.
+     */
+    public LoginResponseDTO loginWithThirdParty(UserAuthProviderLoginRequestDTO dto) {
+        Optional<UserAuthProvider> auth = authProviderRepository
+                .findByProviderAndProviderUserId(dto.getProvider(), dto.getProviderUserId());
+
+        User user;
+
+        if (auth.isPresent()) {
+            user = auth.get().getUser();
+        } else {
+            // Create new user using info from third-party
+            User newUser = new User();
+            newUser.setEmail(null);
+            newUser.setNickname(dto.getDisplayName() != null ? dto.getDisplayName() : "用户" + System.currentTimeMillis());
+            newUser.setAvatarUrl(dto.getAvatarUrl());
+            newUser.setRole("user");
+
+            user = userRepository.save(newUser);
+
+            UserAuthProvider newAuth = new UserAuthProvider(
+                    user,
+                    dto.getProvider(),
+                    dto.getProviderUserId(),
+                    dto.getDisplayName(),
+                    dto.getAvatarUrl()
+            );
+
+            authProviderRepository.save(newAuth);
+        }
+
+        String token = jwtUtil.generateToken(user.getId());
+
         return new LoginResponseDTO(token, user.getNickname(), user.getAvatarUrl(), user.getRole());
     }
 
@@ -122,25 +129,30 @@ public class UserService {
     }
 
     /**
-     * Binds a third-party provider account (e.g. Google/WeChat) to the current user.
-     * Prevents duplicate binding if the providerUserId is already used by another user.
+     * Binds a third-party account (e.g., Google, WeChat) to the current user.
+     * Throws an exception if the third-party account is already bound to another user.
      */
     public void bindThirdPartyAccount(Long userId, BindRequestDTO dto) {
-        // Check if this providerUserId is already bound to someone
-        boolean alreadyBound = authProviderRepository
-                .findByProviderAndProviderUserId(dto.getProvider(), dto.getProviderUserId())
-                .isPresent();
-
-        if (alreadyBound) {
-            throw new IllegalArgumentException("This third-party account is already bound to another user.");
-        }
-
-        // Find current user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Create new binding
-        UserAuthProvider newBinding = new UserAuthProvider(user, dto.getProvider(), dto.getProviderUserId());
-        authProviderRepository.save(newBinding);
+        // Check if the third-party account is already linked to someone else
+        Optional<UserAuthProvider> existing = authProviderRepository
+                .findByProviderAndProviderUserId(dto.getProvider(), dto.getProviderUserId());
+
+        if (existing.isPresent()) {
+            throw new IllegalArgumentException("This third-party account is already bound to another user.");
+        }
+
+        // Save new binding with displayName and avatarUrl (if any)
+        UserAuthProvider newAuth = new UserAuthProvider(
+                user,
+                dto.getProvider(),
+                dto.getProviderUserId(),
+                dto.getDisplayName(),
+                dto.getAvatarUrl()
+        );
+
+        authProviderRepository.save(newAuth);
     }
 }

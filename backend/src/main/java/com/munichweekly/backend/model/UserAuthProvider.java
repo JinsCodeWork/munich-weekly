@@ -20,16 +20,20 @@ public class UserAuthProvider {
 
     private String provider; // wechat / google / apple
     private String providerUserId;
+    private String displayName; // e.g., "abc@gmail.com" for Google, "小明" for WeChat
+    private String avatarUrl;   // Optional, from platform
 
     private LocalDateTime linkedAt = LocalDateTime.now();
 
     public UserAuthProvider() {}
 
-    public UserAuthProvider(User user, String provider, String providerUserId) {
+    public UserAuthProvider(User user, String provider, String providerUserId, String displayName, String avatarUrl) {
         this.user = user;
         this.provider = provider;
         this.providerUserId = providerUserId;
         this.linkedAt = LocalDateTime.now();
+        this.displayName = displayName;
+        this.avatarUrl = avatarUrl;
     }
 
     // Getters & setters ...
@@ -72,5 +76,21 @@ public class UserAuthProvider {
 
     public void setLinkedAt(LocalDateTime linkedAt) {
         this.linkedAt = linkedAt;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

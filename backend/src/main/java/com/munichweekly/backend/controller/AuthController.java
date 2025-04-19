@@ -1,9 +1,6 @@
 package com.munichweekly.backend.controller;
 
-import com.munichweekly.backend.dto.BindRequestDTO;
-import com.munichweekly.backend.dto.LoginRequestDTO;
-import com.munichweekly.backend.dto.LoginResponseDTO;
-import com.munichweekly.backend.dto.UserRegisterRequestDTO;
+import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.UserService;
 
@@ -26,14 +23,25 @@ public class AuthController {
     }
 
     /**
-     * Login endpoint for both email/password and third-party login.
-     * Returns JWT token and basic user info if authentication is successful.
+     * Login with email + password.
+     * Returns JWT token and user info.
      */
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
-        LoginResponseDTO response = userService.login(dto);
+    @PostMapping("/login/email")
+    public ResponseEntity<LoginResponseDTO> loginWithEmail(@Valid @RequestBody EmailLoginRequestDTO dto) {
+        LoginResponseDTO response = userService.loginWithEmail(dto);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Login with third-party provider (e.g. Google/WeChat).
+     * Will auto-create user if first-time login.
+     */
+    @PostMapping("/login/provider")
+    public ResponseEntity<LoginResponseDTO> loginWithProvider(@Valid @RequestBody UserAuthProviderLoginRequestDTO dto) {
+        LoginResponseDTO response = userService.loginWithThirdParty(dto);
+        return ResponseEntity.ok(response);
+    }
+
 
     /**
      * Register a new user with email, password, and nickname.
