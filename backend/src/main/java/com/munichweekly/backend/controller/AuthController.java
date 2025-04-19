@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Controller for authentication (login) endpoints.
  */
@@ -66,5 +68,16 @@ public class AuthController {
         return ResponseEntity.ok().body(
                 java.util.Map.of("message", "Binding successful")
         );
+    }
+
+    /**
+     * Get all third-party accounts linked to the current user.
+     */
+    @GetMapping("/providers")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<List<UserAuthProviderResponseDTO>> getLinkedProviders() {
+        Long userId = CurrentUserUtil.getUserIdOrThrow();
+        List<UserAuthProviderResponseDTO> linked = userService.getLinkedAuthProviders(userId);
+        return ResponseEntity.ok(linked);
     }
 }

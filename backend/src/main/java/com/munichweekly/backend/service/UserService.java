@@ -10,7 +10,9 @@ import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for handling user login and identity linking.
@@ -154,5 +156,25 @@ public class UserService {
         );
 
         authProviderRepository.save(newAuth);
+    }
+
+    /**
+     * Retrieves all third-party providers linked to a user account.
+     *
+     * @param userId ID of the user
+     * @return List of linked provider information (e.g. WeChat, google)
+     */
+    public List<UserAuthProviderResponseDTO> getLinkedAuthProviders(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return authProviderRepository.findByUser(user)
+                .stream()
+                .map(auth -> new UserAuthProviderResponseDTO(
+                        auth.getProvider(),
+                        auth.getDisplayName(),
+                        auth.getAvatarUrl()
+                ))
+                .collect(Collectors.toList());
     }
 }
