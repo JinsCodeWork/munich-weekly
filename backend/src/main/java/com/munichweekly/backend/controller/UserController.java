@@ -1,8 +1,11 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.dto.UserUpdateRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.security.CurrentUserUtil;
+import com.munichweekly.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +18,12 @@ import java.util.Map;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
 
     // 构造函数注入 repository
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     // GET /api/users
@@ -52,5 +57,16 @@ public class UserController {
                 "email", user.getEmail(),
                 "role", user.getRole()
         ));
+    }
+
+    /**
+     * Update current user's nickname and avatar.
+     * Only authenticated users (admin or user) can access this endpoint.
+     */
+    @PatchMapping("/me")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<User> updateProfile(@RequestBody @Valid UserUpdateRequestDTO dto) {
+        User updated = userService.updateUserProfile(dto);
+        return ResponseEntity.ok(updated);
     }
 }

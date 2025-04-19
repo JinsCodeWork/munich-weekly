@@ -3,10 +3,12 @@ package com.munichweekly.backend.service;
 import com.munichweekly.backend.dto.LoginRequestDTO;
 import com.munichweekly.backend.dto.LoginResponseDTO;
 import com.munichweekly.backend.dto.UserRegisterRequestDTO;
+import com.munichweekly.backend.dto.UserUpdateRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.UserAuthProvider;
 import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.repository.UserAuthProviderRepository;
+import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,8 +46,7 @@ public class UserService {
             user = userRepository.findByEmail(dto.getEmail())
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-            // TODO: Use real password hashing (e.g. BCrypt)
-            if (!user.getPassword().equals(dto.getPassword())) {
+            if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
                 throw new IllegalArgumentException("Invalid password");
             }
 
@@ -106,5 +107,20 @@ public class UserService {
 
         // Generate JWT token
         return jwtUtil.generateToken(user.getId());
+    }
+
+    /**
+     * Update nickname and avatar for the current user.
+     */
+    public User updateUserProfile(UserUpdateRequestDTO dto) {
+        Long userId = CurrentUserUtil.getUserIdOrThrow();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setNickname(dto.getNickname());
+        user.setAvatarUrl(dto.getAvatarUrl());
+
+        return userRepository.save(user);
     }
 }
