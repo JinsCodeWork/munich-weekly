@@ -1,5 +1,6 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
 import com.munichweekly.backend.model.Submission;
@@ -69,5 +70,16 @@ public class SubmissionController {
     public ResponseEntity<Submission> rejectSubmission(@PathVariable Long id) {
         Submission updated = submissionService.rejectSubmission(id);
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Retrieve the current user's submissions (optionally filtered by issue).
+     */
+    @GetMapping("/mine")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<List<MySubmissionResponseDTO>> getMySubmissions(
+            @RequestParam(required = false) Long issueId) {
+        List<MySubmissionResponseDTO> submissions = submissionService.listMySubmissions(issueId);
+        return ResponseEntity.ok(submissions);
     }
 }

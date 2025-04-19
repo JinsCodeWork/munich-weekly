@@ -1,9 +1,11 @@
 package com.munichweekly.backend.service;
 
+import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
 import com.munichweekly.backend.model.*;
 import com.munichweekly.backend.repository.*;
+import com.munichweekly.backend.security.CurrentUserUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -102,6 +104,30 @@ public class SubmissionService {
         submission.setStatus("rejected");
         submission.setReviewedAt(LocalDateTime.now());
         return submissionRepository.save(submission);
+    }
+
+    public List<MySubmissionResponseDTO> listMySubmissions(Long issueId) {
+        Long userId = CurrentUserUtil.getUserIdOrThrow();
+
+        List<Submission> submissions;
+
+        if (issueId != null) {
+            Issue issue = issueRepository.findById(issueId)
+                    .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+            submissions = submissionRepository.findByUserIdAndIssue(userId, issue);
+        } else {
+            submissions = submissionRepository.findByUserId(userId);
+        }
+
+        return submissions.stream()
+                .map(s -> {
+                    int voteCount = ("approved".equals(s.getStatus()) || "selected".equals(s.getStatus()))
+                            ? voteRepository.findBySubmission(s).size()
+                            : 0;
+
+                    return new MySubmissionResponseDTO(s, voteCount);
+                })
+                .collect(Collectors.toList());
     }
 
     public SubmissionRepository getSubmissionRepository() {
