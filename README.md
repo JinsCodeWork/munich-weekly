@@ -101,9 +101,86 @@ POST	/api/votes?submissionId=...	Login	Cast a vote for a submission
 
 
 ⸻
+```
+## 🔐 Authentication & Security
+
+The backend system uses a stateless JWT-based authentication and role-based access control (RBAC) mechanism to protect API endpoints and manage user identity.
+
+### 📦 Package Structure
+```
+backend/src/main/java/com/munichweekly/backend/security/
+├── CurrentUserUtil.java               # Utility to access the authenticated user
+├── CustomAccessDeniedHandler.java    # Handles 403 Forbidden responses
+├── CustomAuthenticationEntryPoint.java # Handles 401 Unauthorized responses
+├── JwtAuthenticationFilter.java      # Extracts and verifies JWT from headers
+├── JwtUtil.java                      # JWT generation and parsing utility
+└── SecurityConfig.java               # Main Spring Security configuration
+```
+---
+
+### 🔑 Features
+
+- **JWT Authentication**
+  - Stateless login system
+  - Token generated after login, sent in `Authorization: Bearer <token>`
+  - Token contains user ID and expiration
+
+- **User Identity Injection**
+  - Valid token automatically injects the user into Spring Security Context
+  - Available in backend via `CurrentUserUtil.getUser()` or `getUserIdOrThrow()`
+
+- **Authorization with `@PreAuthorize`**
+  - Role-based access to API methods (`admin`, `user`)
+  - Examples:
+    - `@PreAuthorize("hasAuthority('admin')")`
+    - `@PreAuthorize("hasAnyAuthority('user', 'admin')")`
+
+- **Public / Protected Route Configuration**
+  - Configurable with `.permitAll()`, `.hasAuthority(...)`, etc.
+  - Examples:
+    - `GET /api/issues` is public
+    - `POST /api/submissions` requires login
+
+- **Unified Error Handling**
+  - `401 Unauthorized` → handled by `CustomAuthenticationEntryPoint`
+  - `403 Forbidden` → handled by `CustomAccessDeniedHandler`
+  - Responses returned in standard JSON format
+
+---
+
+### 🧪 Available Security Endpoints
+
+| Endpoint | Method | Auth Required | Description |
+|----------|--------|----------------|-------------|
+| `/api/auth/login` | POST | ❌ | User login with email/password or provider |
+| `/api/users/me`   | GET  | ✅ (`user` or `admin`) | Get current authenticated user's info |
+| `/api/submissions` | GET | ❌ | Public view of approved submissions |
+| `/api/submissions` | POST | ✅ | Submit a photo (must be logged in) |
+| `/api/votes` | POST | ✅ | Vote on a submission |
+| `/api/issues` | GET | ❌ | View list of issues |
+| `/api/issues` | POST | ✅ (`admin`) | Create a new issue |
+
+---
+
+### 🔐 Example Token Usage (Postman)
+
+1. Login via `/api/auth/login` and obtain a token.
+2. Use this token in headers for all protected endpoints:
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6…
+
+---
+
+### ✅ Best Practices
+
+- Always validate token in backend before trusting user identity.
+- Use `@PreAuthorize` to secure sensitive methods.
+- For frontend: clear token on logout (stateless logout).
+- Consider enabling token expiration and refresh mechanisms (future enhancement).
+
+---
 
 🚧 To Do (Coming Soon)
-	•	JWT-based user authentication
 	•	Email / WeChat login support
 	•	Submission image upload to OSS
 	•	Voting limits (max N votes per issue)
