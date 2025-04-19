@@ -1,9 +1,6 @@
 package com.munichweekly.backend.service;
 
-import com.munichweekly.backend.dto.LoginRequestDTO;
-import com.munichweekly.backend.dto.LoginResponseDTO;
-import com.munichweekly.backend.dto.UserRegisterRequestDTO;
-import com.munichweekly.backend.dto.UserUpdateRequestDTO;
+import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.UserAuthProvider;
 import com.munichweekly.backend.repository.UserRepository;
@@ -122,5 +119,28 @@ public class UserService {
         user.setAvatarUrl(dto.getAvatarUrl());
 
         return userRepository.save(user);
+    }
+
+    /**
+     * Binds a third-party provider account (e.g. Google/WeChat) to the current user.
+     * Prevents duplicate binding if the providerUserId is already used by another user.
+     */
+    public void bindThirdPartyAccount(Long userId, BindRequestDTO dto) {
+        // Check if this providerUserId is already bound to someone
+        boolean alreadyBound = authProviderRepository
+                .findByProviderAndProviderUserId(dto.getProvider(), dto.getProviderUserId())
+                .isPresent();
+
+        if (alreadyBound) {
+            throw new IllegalArgumentException("This third-party account is already bound to another user.");
+        }
+
+        // Find current user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Create new binding
+        UserAuthProvider newBinding = new UserAuthProvider(user, dto.getProvider(), dto.getProviderUserId());
+        authProviderRepository.save(newBinding);
     }
 }

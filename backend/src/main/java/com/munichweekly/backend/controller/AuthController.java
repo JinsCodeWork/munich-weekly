@@ -1,12 +1,15 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.dto.BindRequestDTO;
 import com.munichweekly.backend.dto.LoginRequestDTO;
 import com.munichweekly.backend.dto.LoginResponseDTO;
 import com.munichweekly.backend.dto.UserRegisterRequestDTO;
+import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.UserService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -41,6 +44,19 @@ public class AuthController {
         String token = userService.register(dto);
         return ResponseEntity.ok().body(
                 java.util.Map.of("token", token)
+        );
+    }
+
+    /**
+     * Bind a third-party provider (e.g. Google/WeChat) to current logged-in user.
+     */
+    @PostMapping("/bind")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<?> bindProvider(@Valid @RequestBody BindRequestDTO dto) {
+        Long userId = CurrentUserUtil.getUserIdOrThrow(); // ← 直接拿当前登录用户ID
+        userService.bindThirdPartyAccount(userId, dto);
+        return ResponseEntity.ok().body(
+                java.util.Map.of("message", "Binding successful")
         );
     }
 }
