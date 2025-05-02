@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,14 +20,9 @@ import java.util.stream.Collectors;
 public class ApiScanner {
 
     // List of all controller classes to scan
-    private final List<Class<?>> controllers = List.of(
-            com.munichweekly.backend.controller.AuthController.class,
-            com.munichweekly.backend.controller.IssueController.class,
-            com.munichweekly.backend.controller.SubmissionController.class,
-            com.munichweekly.backend.controller.UserController.class,
-            com.munichweekly.backend.controller.VoteController.class
+    private final List<Class<?>> controllers = new ArrayList<>(
+            ClassScanner.scanForControllers("com.munichweekly.backend.controller")
     );
-
     public void run() {
         StringBuilder markdown = new StringBuilder("# API Endpoints\n\n");
 
@@ -81,7 +77,7 @@ public class ApiScanner {
                     String paramList = Arrays.stream(parameters)
                             .map(p -> p.getType().getSimpleName() + " " + p.getName())
                             .collect(Collectors.joining(", "));
-                    markdown.append("  > **Params**: `").append(paramList).append("`\n");
+                    markdown.append("\n  > **Params**: `").append(paramList).append("`\n");
                 }
 
             }
