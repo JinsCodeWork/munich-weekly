@@ -1,5 +1,6 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.UserUpdateRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.repository.UserRepository;
@@ -14,20 +15,19 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users") // 所有路径都以 /api/users 开头
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
 
-    // 构造函数注入 repository
     public UserController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
         this.userService = userService;
     }
 
     // GET /api/users
-
+    @Description("Get a list of all users. Admin only.")
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public List<User> getAllUsers() {
@@ -43,6 +43,7 @@ public class UserController {
      * If the token is missing or invalid, Spring Security will return 401 Unauthorized automatically.
      * This is NOT a login status checker, but a way to fetch logged-in user info.
      */
+    @Description("Get the profile of the currently authenticated user. Requires JWT token.")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser() {
@@ -63,6 +64,7 @@ public class UserController {
      * Update current user's nickname and avatar.
      * Only authenticated users (admin or user) can access this endpoint.
      */
+    @Description("Update the authenticated user's nickname and avatar.")
     @PatchMapping("/me")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public ResponseEntity<User> updateProfile(@RequestBody @Valid UserUpdateRequestDTO dto) {

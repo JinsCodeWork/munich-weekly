@@ -32,6 +32,8 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 序列化支持
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation 'org.reflections:reflections:0.10.2'
 }
 
 tasks.named('test') {

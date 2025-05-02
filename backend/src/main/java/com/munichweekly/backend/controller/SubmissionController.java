@@ -1,5 +1,6 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
@@ -30,6 +31,7 @@ public class SubmissionController {
      * Submit a new photo to a specific issue.
      * Called by authenticated users (currently simulated).
      */
+    @Description("Submit a new photo to a specific issue. Requires authentication.")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     @PostMapping
     public ResponseEntity<?> submit(@RequestBody SubmissionRequestDTO dto) {
@@ -45,6 +47,7 @@ public class SubmissionController {
      * @param issueId ID of the issue
      * @return List of submissions with vote counts
      */
+    @Description("Get all approved submissions under a given issue, including vote counts.")
     @GetMapping
     public List<SubmissionResponseDTO> getApprovedSubmissions(@RequestParam Long issueId) {
         return submissionService.listApprovedByIssue(issueId);
@@ -52,8 +55,9 @@ public class SubmissionController {
 
     /**
      * Approve a submission. Changes its status to 'approved' and sets reviewed time.
-     * Called by admin users (simulated).
+     * Called by admin users.
      */
+    @Description("Approve a submission by ID. Admin only.")
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/approve")
     public ResponseEntity<Submission> approveSubmission(@PathVariable Long id) {
@@ -63,8 +67,9 @@ public class SubmissionController {
 
     /**
      * Reject a submission. Changes its status to 'rejected' and sets reviewed time.
-     * Called by admin users (simulated).
+     * Called by admin users.
      */
+    @Description("Reject a submission by ID. Admin only.")
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/reject")
     public ResponseEntity<Submission> rejectSubmission(@PathVariable Long id) {
@@ -75,6 +80,7 @@ public class SubmissionController {
     /**
      * Retrieve the current user's submissions (optionally filtered by issue).
      */
+    @Description("Get the current user's own submissions, optionally filtered by issue.")
     @GetMapping("/mine")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public ResponseEntity<List<MySubmissionResponseDTO>> getMySubmissions(

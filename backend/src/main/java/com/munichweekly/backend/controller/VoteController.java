@@ -1,5 +1,6 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.model.Vote;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.VoteService;
@@ -23,8 +24,9 @@ public class VoteController {
 
     /**
      * Submit a vote for a submission in a specific issue.
-     * This endpoint assumes the user is authenticated (simulated userId).
+     * This endpoint assumes the user is authenticated.
      */
+    @Description("Submit a vote for a submission. Requires authentication.")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     @PostMapping
     public ResponseEntity<Vote> vote(@RequestParam Long submissionId) {

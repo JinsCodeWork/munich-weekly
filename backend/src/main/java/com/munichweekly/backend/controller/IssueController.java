@@ -1,5 +1,6 @@
 package com.munichweekly.backend.controller;
 
+import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.IssueCreateRequestDTO;
 import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.repository.IssueRepository;
@@ -22,6 +23,7 @@ public class IssueController {
         this.issueService = issueService;
     }
 
+    @Description("Get all issues in the system")
     @GetMapping
     public List<Issue> getAllIssues() {
         return issueRepository.findAll();
@@ -31,6 +33,7 @@ public class IssueController {
      * Create a new issue (admin only).
      * Accepts title, description, submission/voting times.
      */
+    @Description("Create a new issue. Admin only. Accepts title, description, and submission/voting periods")
     @PreAuthorize("hasAuthority('admin')")
     @PostMapping
     public ResponseEntity<Issue> createIssue(@RequestBody IssueCreateRequestDTO dto) {
