@@ -68,15 +68,17 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 
 ### 🗂️ votes
 
-| Column         | Type        | Description                       | Remarks              |
-| -------------- | ----------- | --------------------------------- | -------------------- |
-| id             | BIGINT      | Vote ID (Primary Key)             | Auto-generated       |
-| user\_id       | BIGINT (FK) | User ID (users table)             | Many-to-one          |
-| submission\_id | BIGINT (FK) | Submission ID (submissions table) | Many-to-one          |
-| issue\_id      | BIGINT (FK) | Issue ID (issues table)           | Many-to-one          |
-| votedAt        | TIMESTAMP   | Voting timestamp                  | Default current time |
+| Column             | Type      | Description                       | Remarks                               |
+| ------------------ | --------- | --------------------------------- | ------------------------------------- |
+| id                 | BIGINT    | Vote ID (Primary Key)             | Auto-generated                        |
+| submission\_id     | BIGINT FK | Submission ID (submissions table) | Many-to-one                           |
+| issue\_id          | BIGINT FK | Issue ID (issues table)           | Many-to-one                           |
+| visitorId          | VARCHAR   | Anonymous visitor identifier      | From browser cookie; required         |
+| browserFingerprint | VARCHAR   | Optional fingerprint string       | Used for abuse detection              |
+| ipAddress          | VARCHAR   | IP address at vote time           | Stored for auditing / abuse detection |
+| votedAt            | TIMESTAMP | Voting timestamp                  | Default current time                  |
 
-**Unique Constraint:** Each user can vote only once per submission.
+**Unique Constraint:** Each visitorId can vote only once per submission.
 
 ---
 
@@ -84,9 +86,10 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 
 * **User ↔️ Submission** *(one-to-many)*
 * **Issue ↔️ Submission** *(one-to-many)*
-* **User ↔️ Vote** *(one-to-many)*
 * **Submission ↔️ Vote** *(one-to-many)*
 * **Issue ↔️ Vote** *(one-to-many)*
 * **User ↔️ UserAuthProvider** *(one-to-many)*
+
+> Note: Votes are no longer linked to `User`, but use `visitorId` from cookies for anonymous vote tracking.
 
 ---
