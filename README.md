@@ -47,6 +47,7 @@ munich-weekly/
 - 👤 [User Guide](./docs/user-guide.md)
 - 🧑‍💻 [Developer Guide](./docs/dev-guide.md)
 - 🔐 [Auth & Security](./docs/auth.md)
+-    [Privacy and Cookies](./docs/privacy.md)
 
 ⸻
 
