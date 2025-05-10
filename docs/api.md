@@ -1,5 +1,50 @@
 # API Endpoints
 
+## UserController
+
+- **GET** `/api/users`
+  > Get a list of all users. Admin only.
+- **GET** `/api/users/me`
+  > Get the profile of the currently authenticated user. Requires JWT token.
+- **PATCH** `/api/users/me`
+  > Update the authenticated user's nickname and avatar.
+
+  > **Params**: `UserUpdateRequestDTO dto`
+
+## VoteController
+
+- **GET** `/api/votes/check`
+  > Check if current visitor has voted for a submission.
+
+  > **Params**: `Long submissionId, String visitorId`
+- **POST** `/api/votes`
+  > Submit a vote for a submission. Uses visitorId from cookie.
+
+  > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
+
+## SubmissionController
+
+- **POST** `/api/submissions`
+  > Submit a new photo to a specific issue. Requires authentication.
+
+  > **Params**: `SubmissionRequestDTO dto`
+- **PATCH** `/api/submissions/{id}/approve`
+  > Approve a submission by ID. Admin only.
+
+  > **Params**: `Long id`
+- **PATCH** `/api/submissions/{id}/reject`
+  > Reject a submission by ID. Admin only.
+
+  > **Params**: `Long id`
+- **GET** `/api/submissions`
+  > Get all approved submissions under a given issue, including vote counts.
+
+  > **Params**: `Long issueId`
+- **GET** `/api/submissions/mine`
+  > Get the current user's own submissions, optionally filtered by issue.
+
+  > **Params**: `Long issueId`
+
 ## AuthController
 
 - **POST** `/api/auth/register`
@@ -33,45 +78,4 @@
   > **Params**: `IssueCreateRequestDTO dto`
 - **GET** `/api/issues`
   > Get all issues in the system
-
-## SubmissionController
-
-- **POST** `/api/submissions`
-  > Submit a new photo to a specific issue. Requires authentication.
-
-  > **Params**: `SubmissionRequestDTO dto`
-- **PATCH** `/api/submissions/{id}/approve`
-  > Approve a submission by ID. Admin only.
-
-  > **Params**: `Long id`
-- **PATCH** `/api/submissions/{id}/reject`
-  > Reject a submission by ID. Admin only.
-
-  > **Params**: `Long id`
-- **GET** `/api/submissions`
-  > Get all approved submissions under a given issue, including vote counts.
-
-  > **Params**: `Long issueId`
-- **GET** `/api/submissions/mine`
-  > Get the current user's own submissions, optionally filtered by issue.
-
-  > **Params**: `Long issueId`
-
-## UserController
-
-- **GET** `/api/users`
-  > Get a list of all users. Admin only.
-- **GET** `/api/users/me`
-  > Get the profile of the currently authenticated user. Requires JWT token.
-- **PATCH** `/api/users/me`
-  > Update the authenticated user's nickname and avatar.
-
-  > **Params**: `UserUpdateRequestDTO dto`
-
-## VoteController
-
-- **POST** `/api/votes`
-  > Submit a vote for a submission. Requires authentication.
-
-  > **Params**: `Long submissionId`
 
