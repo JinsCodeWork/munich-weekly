@@ -41,13 +41,20 @@ munich-weekly/
 
 ## 📚 Documentation
 
+### General Documentation
 - 🧭 [Deployment Guide](./docs/deployment.md)
 - 📦 [API Reference](./docs/api.md)
 - 🗃️ [Database Design](./docs/database.md)
 - 👤 [User Guide](./docs/user-guide.md)
 - 🧑‍💻 [Developer Guide](./docs/dev-guide.md)
 - 🔐 [Auth & Security](./docs/auth.md)
--    [Privacy and Cookies](./docs/privacy.md)
+- 🔒 [Privacy and Cookies](./docs/privacy.md)
+
+### Frontend Documentation
+- 📱 [Frontend Overview](./docs/frontend-overview.md)
+- 🏗️ [Frontend Architecture](./docs/frontend-architecture.md)
+- 🧩 [UI Component Library](./docs/ui-components.md)
+- 💻 [Frontend Development Guide](./docs/frontend-development-guide.md)
 
 ⸻
 

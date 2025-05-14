@@ -51,6 +51,12 @@
   > Register a new user with email, password, and nickname. Returns JWT token
 
   > **Params**: `UserRegisterRequestDTO dto`
+- **POST** `/api/auth/login/provider`
+  > Login with a third-party provider (e.g. Google). Auto-creates user on first login
+
+  > **Params**: `UserAuthProviderLoginRequestDTO dto`
+- **GET** `/api/auth/providers`
+  > Get all third-party providers linked to the current logged-in user
 - **POST** `/api/auth/login/email`
   > Login with email and password, returns JWT token and user info
 
@@ -63,12 +69,6 @@
   > Unbind a third-party provider from the current user. Example: DELETE /api/auth/bind/google
 
   > **Params**: `String provider`
-- **POST** `/api/auth/login/provider`
-  > Login with a third-party provider (e.g. Google). Auto-creates user on first login
-
-  > **Params**: `UserAuthProviderLoginRequestDTO dto`
-- **GET** `/api/auth/providers`
-  > Get all third-party providers linked to the current logged-in user
 
 ## IssueController
 
