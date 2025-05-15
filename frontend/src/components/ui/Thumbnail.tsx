@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants } from "@/styles/components/thumbnail";
 
 export interface ThumbnailProps {
   src: string;
@@ -13,10 +13,10 @@ export interface ThumbnailProps {
   priority?: boolean;
   sizes?: string;
   fill?: boolean;
-  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+  objectFit?: keyof typeof objectFitVariants;
   quality?: number;
   rounded?: boolean;
-  aspectRatio?: "square" | "video" | "portrait" | string;
+  aspectRatio?: keyof typeof aspectRatioVariants | string;
 }
 
 /**
@@ -40,39 +40,25 @@ export function Thumbnail({
   rounded = true,
   aspectRatio = "square"
 }: ThumbnailProps) {
-  // Calculate container style based on aspectRatio
-  const getAspectRatioClass = () => {
-    switch (aspectRatio) {
-      case "square":
-        return "aspect-square";
-      case "video":
-        return "aspect-video";
-      case "portrait":
-        return "aspect-[3/4]";
-      default:
-        return aspectRatio; // Support custom ratio classes like "aspect-[16/9]"
-    }
-  };
-
   return (
     <div
-      className={cn(
-        "relative overflow-hidden",
-        rounded && "rounded",
-        fill ? getAspectRatioClass() : "",
-        containerClassName
-      )}
+      className={getThumbnailContainerStyles({
+        rounded,
+        fill,
+        aspectRatio,
+        className: containerClassName
+      })}
       onClick={onClick}
       style={fill ? undefined : { width, height }}
     >
       <Image
         src={src}
         alt={alt}
-        className={cn(
-          `object-${objectFit}`,
-          onClick && "cursor-pointer",
+        className={getThumbnailImageStyles({
+          objectFit,
+          isClickable: !!onClick,
           className
-        )}
+        })}
         width={fill ? undefined : width}
         height={fill ? undefined : height}
         fill={fill}

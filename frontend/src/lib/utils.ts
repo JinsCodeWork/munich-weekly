@@ -1,6 +1,10 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+/**
+ * Utility for combining class names with Tailwind CSS
+ * Uses clsx for conditional classes and twMerge to handle Tailwind conflicts
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -45,4 +49,31 @@ export function formatFileSize(bytes: number) {
  */
 export function generateId() {
   return Math.random().toString(36).substring(2, 9)
+}
+
+/**
+ * Type-safe conditional class application
+ * Applies a class only if the condition is true
+ */
+export function classIf(condition: boolean, className: string): string {
+  return condition ? className : ''
+}
+
+/**
+ * Map a status to the appropriate Tailwind color class
+ */
+export function statusToColorClass(status: string, type: 'bg' | 'text' | 'border' = 'bg'): string {
+  const prefix = type === 'bg' ? 'bg' : type === 'text' ? 'text' : 'border'
+  const defaultColor = 'gray'
+  const intensity = type === 'bg' ? 100 : 500
+  
+  const statusColorMap: Record<string, string> = {
+    approved: 'green',
+    rejected: 'red',
+    selected: 'purple',
+    pending: 'gray'
+  }
+  
+  const color = statusColorMap[status.toLowerCase()] || defaultColor
+  return `${prefix}-${color}-${intensity}`
 }

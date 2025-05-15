@@ -35,7 +35,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative">
+    <div 
+      className="min-h-screen flex items-center justify-center relative bg-[#161616]"
+      style={{
+        backgroundImage: "url('https://picsum.photos/id/1018/2000/1200')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
       <LoginForm 
         isOpen={isLoginOpen} 
         onClose={handleCloseLogin} 

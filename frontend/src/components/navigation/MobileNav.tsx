@@ -3,11 +3,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { NAV_LINKS } from '@/lib/constants';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Thumbnail } from '@/components/ui/Thumbnail';
+import { NAV_LINKS } from '@/lib/constants';
+import { 
+  getNavLinkStyles, 
+  getMobileNavStyles
+} from '@/styles';
 
 interface MobileNavProps {
   onLoginClick?: () => void;
@@ -65,7 +68,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
     <div className="relative" ref={menuRef}>
       <button 
         onClick={toggleMenu}
-        className="p-2 text-gray-600 focus:outline-none"
+        className={getMobileNavStyles('toggle')}
         aria-label={isOpen ? "Close menu" : "Open menu"}
       >
         <i className={`fa-solid ${isOpen ? 'fa-times' : 'fa-bars'} h-6 w-6`} aria-hidden="true"></i>
@@ -73,13 +76,13 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
 
       {/* Mobile navigation menu */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="absolute right-0 top-0 bottom-0 w-64 bg-white shadow-xl p-5 overflow-y-auto">
+        <div className={getMobileNavStyles('overlay')}>
+          <div className={getMobileNavStyles('container')}>
             {/* User information */}
             {user && (
-              <div className="pb-4 mb-4 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div className={getMobileNavStyles('userInfo')}>
+                <div className={getMobileNavStyles('userProfile')}>
+                  <div className={getMobileNavStyles('avatar')}>
                     {user.avatarUrl ? (
                       <Thumbnail
                         src={user.avatarUrl}
@@ -101,7 +104,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                 <div className="space-y-2">
                   <Link
                     href="/account"
-                    className="block py-2 text-gray-600 hover:text-black"
+                    className={getMobileNavStyles('navItem')}
                     onClick={() => setIsOpen(false)}
                   >
                     <i className="fa-solid fa-user mr-2"></i>
@@ -109,7 +112,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                   </Link>
                   <Link
                     href="/account/submissions"
-                    className="block py-2 text-gray-600 hover:text-black"
+                    className={getMobileNavStyles('navItem')}
                     onClick={() => setIsOpen(false)}
                   >
                     <i className="fa-solid fa-images mr-2"></i>
@@ -117,7 +120,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                   </Link>
                   <Link
                     href="/account/settings"
-                    className="block py-2 text-gray-600 hover:text-black"
+                    className={getMobileNavStyles('navItem')}
                     onClick={() => setIsOpen(false)}
                   >
                     <i className="fa-solid fa-gear mr-2"></i>
@@ -133,12 +136,10 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={cn(
-                    'block px-3 py-2 rounded-md text-base font-medium',
-                    pathname === link.href
-                      ? 'bg-gray-100 text-black'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-black'
-                  )}
+                  className={pathname === link.href 
+                    ? getMobileNavStyles('navItemActive') 
+                    : getMobileNavStyles('navItem')
+                  }
                   onClick={closeMenu}
                 >
                   {link.label}
@@ -183,7 +184,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
             {/* Close button */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-black"
+              className={getMobileNavStyles('closeButton')}
             >
               <i className="fa-solid fa-times text-lg"></i>
             </button>

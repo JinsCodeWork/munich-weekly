@@ -102,10 +102,9 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'bg-white/10 backdrop-blur-md border border-white/30 rounded-lg',
-          'p-8 shadow-xl w-[90vw] max-w-md',
-          'flex flex-col items-center',
-          'animate-in fade-in duration-500'
+          'backdrop-blur-none border-none rounded-lg',
+          'p-8 w-[90vw] max-w-md',
+          'flex flex-col items-center'
         )}
       >
         <h1 className="text-4xl font-bold text-white mb-10 tracking-wider animate-fadeIn opacity-0" style={{ animationDelay: '0.1s' }}>
@@ -180,7 +179,7 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
 
         {/* Error message */}
         {error && (
-          <p className="text-red-400 text-sm mb-4 animate-fadeIn opacity-0" style={{ animationDelay: '0.4s' }}>
+          <p className="text-red-300 text-sm mb-4 animate-fadeIn opacity-0" style={{ animationDelay: '0.4s' }}>
             {error}
           </p>
         )}

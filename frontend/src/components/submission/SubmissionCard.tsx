@@ -1,47 +1,23 @@
 import React, { useState } from "react";
 import { Submission, SubmissionStatus } from "@/types/submission";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { ImageViewer } from "./ImageViewer";
 import { Thumbnail } from "@/components/ui/Thumbnail";
+import { StatusBadge } from "@/components/ui/Badge";
+import { getSubmissionCardStyles, getSubmissionCardElementStyles } from "@/styles/components/card";
+import { mapSubmissionStatusToBadge } from "@/styles/components/badge";
 
 interface SubmissionCardProps {
   submission: Submission;
   className?: string;
 }
 
+/**
+ * Card component for displaying submission content 
+ * Includes thumbnail image, status badge, description and metadata
+ */
 export function SubmissionCard({ submission, className }: SubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-
-  // Get badge style based on status
-  const getStatusBadge = (status: SubmissionStatus) => {
-    switch (status) {
-      case SubmissionStatus.APPROVED:
-        return (
-          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
-            Approved
-          </span>
-        );
-      case SubmissionStatus.REJECTED:
-        return (
-          <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
-            Rejected
-          </span>
-        );
-      case SubmissionStatus.SELECTED:
-        return (
-          <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
-            Selected
-          </span>
-        );
-      case SubmissionStatus.PENDING:
-      default:
-        return (
-          <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
-            Pending
-          </span>
-        );
-    }
-  };
 
   const handleOpenViewer = () => {
     setIsViewerOpen(true);
@@ -54,11 +30,11 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
   return (
     <>
       <div 
-        className={cn("bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer", className)}
+        className={getSubmissionCardStyles(className)}
         onClick={handleOpenViewer}
       >
         {/* Image area */}
-        <div className="relative h-48 overflow-hidden">
+        <div className={getSubmissionCardElementStyles('imageContainer')}>
           <Thumbnail
             src={submission.imageUrl}
             alt={submission.description}
@@ -68,45 +44,43 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
             priority={false}
           />
           {/* Status badge */}
-          <div className="absolute top-2 right-2">
-            {getStatusBadge(submission.status as SubmissionStatus)}
+          <div className={getSubmissionCardElementStyles('badgeTopRight')}>
+            <StatusBadge status={mapSubmissionStatusToBadge(submission.status)} />
           </div>
           
           {/* Cover badge */}
           {submission.isCover && (
-            <div className="absolute top-2 left-2">
-              <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                Cover
-              </span>
+            <div className={getSubmissionCardElementStyles('badgeTopLeft')}>
+              <StatusBadge status="cover" />
             </div>
           )}
         </div>
 
         {/* Content area */}
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
+        <div className={getSubmissionCardElementStyles('contentContainer')}>
+          <h3 className={getSubmissionCardElementStyles('title')}>
             {submission.description.split('\n')[0]}
           </h3>
           
-          <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+          <p className={getSubmissionCardElementStyles('description')}>
             {submission.description.split('\n').slice(1).join('\n')}
           </p>
           
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center">
-              <i className="fa-solid fa-calendar-days mr-1"></i>
+          <div className={getSubmissionCardElementStyles('metaContainer')}>
+            <div className={getSubmissionCardElementStyles('metaItem')}>
+              <i className={`fa-solid fa-calendar-days ${getSubmissionCardElementStyles('metaIcon')}`}></i>
               <span>{formatDate(submission.submittedAt)}</span>
             </div>
             
-            <div className="flex items-center">
-              <i className="fa-solid fa-book mr-1"></i>
+            <div className={getSubmissionCardElementStyles('metaItem')}>
+              <i className={`fa-solid fa-book ${getSubmissionCardElementStyles('metaIcon')}`}></i>
               <span>Issue {submission.issue.id}</span>
             </div>
             
             {(submission.status === SubmissionStatus.APPROVED || 
               submission.status === SubmissionStatus.SELECTED) && (
-              <div className="flex items-center">
-                <i className="fa-solid fa-thumbs-up mr-1"></i>
+              <div className={getSubmissionCardElementStyles('metaItem')}>
+                <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                 <span>{submission.voteCount} votes</span>
               </div>
             )}

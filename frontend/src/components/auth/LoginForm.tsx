@@ -89,10 +89,9 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
       <form
         onSubmit={handleSubmit}
         className={cn(
-          "bg-white/10 backdrop-blur-md border border-white/30 rounded-lg",
-          "p-8 shadow-xl w-[90vw] max-w-md",
-          "flex flex-col items-center",
-          "animate-in fade-in duration-500"
+          "backdrop-blur-none border-none rounded-lg",
+          "p-8 w-[90vw] max-w-md",
+          "flex flex-col items-center"
         )}
       >
         <h1 className="text-4xl font-bold text-white mb-12 tracking-wider animate-fadeIn opacity-0" style={{ animationDelay: "0.1s" }}>
@@ -151,7 +150,7 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
 
         {/* Error message */}
         {error && (
-          <p className="text-red-400 text-sm mb-4 animate-fadeIn opacity-0" style={{ animationDelay: "0.45s" }}>
+          <p className="text-red-300 text-sm mb-4 animate-fadeIn opacity-0" style={{ animationDelay: "0.45s" }}>
             {error}
           </p>
         )}

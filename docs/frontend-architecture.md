@@ -313,6 +313,37 @@ For developers working on the frontend:
 5. **Authentication**: Secure endpoints should verify the JWT token via the AuthContext
 6. **API Integration**: Use modular API structure organized by business functionality
 
+## Style Management
+
+The application implements a systematic approach to style management using a combination of Tailwind CSS and TypeScript:
+
+```
+styles/
+├── components/           # Component-specific styles
+│   ├── badge.ts         # Badge component styles
+│   ├── button.ts        # Button component styles
+│   ├── card.ts          # Card component styles
+│   ├── container.ts     # Container component styles
+│   ├── loadingError.ts  # Loading/error state styles
+│   ├── modal.ts         # Modal component styles
+│   ├── navigation/      # Navigation-specific styles
+│   │   ├── header.ts    # Header component styles
+│   │   └── navBar.ts    # Navigation bar styles
+│   ├── table.ts         # Table component styles
+│   └── thumbnail.ts     # Thumbnail component styles
+├── index.ts             # Style exports
+├── theme.ts             # Theme configuration
+└── variants.ts          # Style variants and utilities
+```
+
+Key features of the style system:
+- **Centralized style functions**: Replaces inline styles with reusable style functions
+- **Type-safe style variants**: TypeScript-powered style variants with proper type checking
+- **Theme consistency**: Unified theme variables for colors, spacing, and animations
+- **Animation support**: Integration with tailwindcss-animate for consistent animations
+- **Responsive design**: Mobile-first responsive styles with consistent breakpoints
+- **Dark mode ready**: Structure supports future theme switching capabilities
+
 ## Conclusion
 
 The Munich Weekly frontend provides a solid foundation for a modern, responsive web application. It employs best practices in React and Next.js development, with a clean component structure and well-defined authentication flow. The architecture is designed to be maintainable and scalable as new features are added. 

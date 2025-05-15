@@ -1,10 +1,11 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { getContainerStyles } from '@/styles/components/container';
 
 interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   as?: React.ElementType;
+  variant?: 'default' | 'narrow' | 'wide' | 'fluid';
 }
 
 /**
@@ -14,14 +15,15 @@ export function Container({
   children,
   className,
   as: Component = 'div',
+  variant = 'default',
   ...props
 }: ContainerProps) {
   return (
     <Component
-      className={cn(
-        'w-full max-w-[1400px] mx-auto px-5 md:px-6', 
+      className={getContainerStyles({
+        variant,
         className
-      )}
+      })}
       {...props}
     >
       {children}

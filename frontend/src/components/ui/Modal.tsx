@@ -1,29 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { getModalOverlayStyles, getModalContentStyles } from '@/styles/components/modal';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  overlayVariant?: 'default' | 'dark' | 'light';
+  contentVariant?: 'default' | 'glassmorphism' | 'dark-glass';
 }
 
 /**
  * Modal component - Implements a frosted glass effect
  */
-export function Modal({ isOpen, onClose, children, className }: ModalProps) {
-  const [isClosing, setIsClosing] = useState(false);
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  children, 
+  className,
+  overlayVariant = 'default',
+  contentVariant = 'dark-glass'
+}: ModalProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // Handle closing animation
+  // Handle closing without animation
   const handleClose = useCallback(() => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 300);
+    onClose();
   }, [onClose]);
 
   // Handle ESC key to close
@@ -57,18 +61,17 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
   return (
     <div
       ref={backdropRef}
-      className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm transition-opacity',
-        isClosing ? 'opacity-0' : 'opacity-100',
-      )}
+      className={getModalOverlayStyles({
+        variant: overlayVariant,
+        isClosing: false,
+      })}
       onClick={handleBackdropClick}
     >
       <div
-        className={cn(
-          'transition-transform duration-300',
-          isClosing ? 'translate-y-8 opacity-0' : 'translate-y-0 opacity-100',
+        className={getModalContentStyles({
+          variant: contentVariant,
           className
-        )}
+        })}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

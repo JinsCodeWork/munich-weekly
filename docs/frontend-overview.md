@@ -10,6 +10,7 @@ This document serves as the entry point to the frontend development documentatio
 
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
+- [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
 
 ## Technology Stack
@@ -108,7 +109,22 @@ frontend/
 │   ├── lib/                # Utility functions and constants
 │   │   ├── constants.ts    # Application constants
 │   │   └── utils.ts        # Utility helper functions
-│   ├── styles/             # Style-related directory (reserved)
+│   ├── styles/             # Style management system
+│   │   ├── components/     # Component-specific styles
+│   │   │   ├── badge.ts    # Badge component styles
+│   │   │   ├── button.ts   # Button component styles
+│   │   │   ├── card.ts     # Card component styles
+│   │   │   ├── container.ts # Container component styles 
+│   │   │   ├── loadingError.ts # Loading/error styles
+│   │   │   ├── modal.ts    # Modal component styles
+│   │   │   ├── navigation/ # Navigation styles
+│   │   │   │   ├── header.ts # Header styles
+│   │   │   │   └── navBar.ts # Navigation bar styles
+│   │   │   ├── table.ts    # Table component styles
+│   │   │   └── thumbnail.ts # Thumbnail component styles
+│   │   ├── index.ts        # Style function exports
+│   │   ├── theme.ts        # Theme configuration
+│   │   └── variants.ts     # Style variants definition
 │   ├── theme/              # Theme-related directory (reserved)
 │   ├── types/              # TypeScript type definitions
 │   │   └── submission.ts   # Submission-related types
@@ -159,6 +175,15 @@ frontend/
 - Grouped by business function (authentication, users, submissions, issues, votes)
 - Unified error handling
 - TypeScript type safety
+
+### 6. Style Management System
+
+- Centralized style functions
+- Type-safe style variants
+- Component-specific style modules
+- Animation support with tailwindcss-animate
+- Theme consistency across components
+- Structure for future dark mode support
 
 ## Implemented Components
 

@@ -1,14 +1,33 @@
 import React from "react";
+import { 
+  getLoadingSpinnerStyles, 
+  getLoadingContainerStyles, 
+  getErrorContainerStyles,
+  getErrorButtonStyles,
+  loadingSpinnerVariants,
+  loadingContainerVariants,
+  errorContainerVariants
+} from "@/styles/components/loadingError";
 
-type LoadingStateProps = Record<never, never>;
+type LoadingStateProps = {
+  variant?: keyof typeof loadingContainerVariants;
+  className?: string;
+  spinnerVariant?: keyof typeof loadingSpinnerVariants;
+  spinnerClassName?: string;
+};
 
 /**
  * Loading spinner component shown while data is being fetched
  */
-export function LoadingState({}: LoadingStateProps) {
+export function LoadingState({ 
+  variant = 'default',
+  className,
+  spinnerVariant = 'default',
+  spinnerClassName
+}: LoadingStateProps) {
   return (
-    <div className="flex justify-center items-center py-20">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    <div className={getLoadingContainerStyles({ variant, className })}>
+      <div className={getLoadingSpinnerStyles({ variant: spinnerVariant, className: spinnerClassName })}></div>
     </div>
   );
 }
@@ -18,28 +37,37 @@ interface ErrorStateProps {
   onRetry: () => void;
   onUseMockData: () => void;
   showMockDataOption: boolean;
+  variant?: keyof typeof errorContainerVariants;
+  className?: string;
 }
 
 /**
  * Error state component shown when data fetching fails
  * Provides retry and fallback options
  */
-export function ErrorState({ message, onRetry, onUseMockData, showMockDataOption }: ErrorStateProps) {
+export function ErrorState({ 
+  message, 
+  onRetry, 
+  onUseMockData, 
+  showMockDataOption,
+  variant = 'default',
+  className
+}: ErrorStateProps) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center mb-6">
+    <div className={getErrorContainerStyles({ variant, className })}>
       <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
       <p className="text-red-600 mb-4">{message}</p>
       <div className="flex justify-center space-x-4">
         <button 
           onClick={onRetry} 
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+          className={getErrorButtonStyles({ variant: 'primary' })}
         >
           Retry
         </button>
         {showMockDataOption && (
           <button 
             onClick={onUseMockData} 
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className={getErrorButtonStyles({ variant: 'secondary' })}
           >
             Use Mock Data
           </button>

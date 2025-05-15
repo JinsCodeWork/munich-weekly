@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { Container } from '../ui/Container';
 import { Logo } from '../ui/Logo';
 import MobileNav from './MobileNav';
@@ -12,6 +11,11 @@ import { NAV_LINKS } from '@/lib/constants';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import { Thumbnail } from '../ui/Thumbnail';
+import { 
+  getNavContainerStyles,
+  getNavLinkStyles, 
+  getUserMenuStyles
+} from '@/styles';
 
 /**
  * Main navigation component - Responsive design with Tailwind CSS
@@ -76,7 +80,7 @@ export default function MainNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+      <header className={getNavContainerStyles()}>
         <Container as="nav" className="flex items-center justify-between h-[70px]">
           {/* Left area: Logo and navigation links */}
           <div className="flex items-center">
@@ -89,10 +93,9 @@ export default function MainNav() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={cn(
-                    'text-base text-gray-600 hover:text-black whitespace-nowrap font-medium',
-                    pathname === link.href && 'text-black font-semibold'
-                  )}
+                  className={getNavLinkStyles({
+                    isActive: pathname === link.href
+                  })}
                 >
                   {link.label}
                 </Link>
@@ -107,10 +110,10 @@ export default function MainNav() {
               {loading ? (
                 <span className="opacity-70">Loading...</span>
               ) : user ? (
-                <div className="relative" ref={menuRef}>
+                <div className={getUserMenuStyles('container')} ref={menuRef}>
                   <button 
                     onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                    className="flex items-center gap-2"
+                    className={getUserMenuStyles('trigger')}
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                       {user.avatarUrl ? (
@@ -131,10 +134,10 @@ export default function MainNav() {
                   
                   {/* User dropdown menu */}
                   {isMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+                    <div className={getUserMenuStyles('dropdown')}>
                       <Link
                         href="/account"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className={getUserMenuStyles('item')}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <i className="fa-solid fa-user mr-2"></i>
@@ -142,7 +145,7 @@ export default function MainNav() {
                       </Link>
                       <Link
                         href="/account/submissions"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className={getUserMenuStyles('item')}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <i className="fa-solid fa-images mr-2"></i>
@@ -150,16 +153,16 @@ export default function MainNav() {
                       </Link>
                       <Link
                         href="/account/settings"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className={getUserMenuStyles('item')}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <i className="fa-solid fa-gear mr-2"></i>
                         Settings
                       </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className={getUserMenuStyles('separator')}></div>
                       <button
                         onClick={handleLogout}
-                        className="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 w-full text-left"
+                        className={getUserMenuStyles('logout')}
                       >
                         <i className="fa-solid fa-sign-out-alt mr-2"></i>
                         Logout

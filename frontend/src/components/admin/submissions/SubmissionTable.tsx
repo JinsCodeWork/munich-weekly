@@ -2,6 +2,9 @@ import React from "react";
 import { AdminSubmissionResponse, SubmissionStatus } from "@/types/submission";
 import { formatDate } from "@/lib/utils";
 import { Thumbnail } from "@/components/ui/Thumbnail";
+import { StatusBadge } from "@/components/ui/Badge";
+import { mapSubmissionStatusToBadge } from "@/styles/components/badge";
+import { getTableHeaderStyles, getTableCellStyles, getTableRowStyles } from "@/styles/components/table";
 
 interface SubmissionTableProps {
   submissions: AdminSubmissionResponse[];
@@ -15,19 +18,25 @@ interface SubmissionTableProps {
  * Includes columns for submission details, status, submission date, votes, contributor info, and actions
  */
 export function SubmissionTable({ submissions, onViewSubmission, onAction, actionLoading }: SubmissionTableProps) {
-  // Helper function to get status badge color based on submission status
-  const getStatusColor = (status: SubmissionStatus) => {
-    switch (status) {
-      case SubmissionStatus.APPROVED:
-        return "bg-green-100 text-green-800";
-      case SubmissionStatus.REJECTED:
-        return "bg-red-100 text-red-800";
-      case SubmissionStatus.SELECTED:
-        return "bg-purple-100 text-purple-800";
-      case SubmissionStatus.PENDING:
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Action button styles based on status
+  const getActionButtonClass = (submission: AdminSubmissionResponse, actionType: 'approve' | 'reject' | 'select') => {
+    const isDisabled = 
+      (actionType === 'approve' && submission.status === SubmissionStatus.APPROVED) ||
+      (actionType === 'reject' && submission.status === SubmissionStatus.REJECTED) ||
+      (actionType === 'select' && submission.status === SubmissionStatus.SELECTED) ||
+      actionLoading === submission.id;
+    
+    if (isDisabled) {
+      return "text-gray-400 cursor-not-allowed";
     }
+    
+    const colorMap = {
+      'approve': "text-green-600 hover:text-green-900",
+      'reject': "text-red-600 hover:text-red-900",
+      'select': "text-purple-600 hover:text-purple-900"
+    };
+    
+    return colorMap[actionType];
   };
 
   return (
@@ -35,18 +44,18 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-50">
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contributor</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th className={getTableHeaderStyles()}>Submission</th>
+            <th className={getTableHeaderStyles()}>Status</th>
+            <th className={getTableHeaderStyles()}>Submitted</th>
+            <th className={getTableHeaderStyles()}>Votes</th>
+            <th className={getTableHeaderStyles()}>Contributor</th>
+            <th className={getTableHeaderStyles()}>Actions</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {submissions.map(submission => (
-            <tr key={submission.id} className="hover:bg-gray-50">
-              <td className="px-4 py-4 whitespace-nowrap">
+            <tr key={submission.id} className={getTableRowStyles()}>
+              <td className={getTableCellStyles()}>
                 <div className="flex items-center">
                   {/* Thumbnail */}
                   <div 
@@ -71,27 +80,23 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
                       ID: {submission.id}
                     </div>
                     {submission.isCover && (
-                      <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                        Cover
-                      </span>
+                      <StatusBadge status="cover" variant="rounded" />
                     )}
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(submission.status as SubmissionStatus)}`}>
-                  {submission.status}
-                </span>
+              <td className={getTableCellStyles()}>
+                <StatusBadge status={mapSubmissionStatusToBadge(submission.status as SubmissionStatus)} />
               </td>
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className={getTableCellStyles()}>
                 <div className="text-sm text-gray-900">
                   {formatDate(submission.submittedAt)}
                 </div>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className={getTableCellStyles("text-sm text-gray-500")}>
                 {submission.voteCount}
               </td>
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className={getTableCellStyles()}>
                 <div className="text-sm text-gray-900">
                   {submission.userNickname || "Unknown User"}
                 </div>
@@ -99,13 +104,11 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
                   {submission.userEmail || ""}
                 </div>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td className={getTableCellStyles("text-right text-sm font-medium")}>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onAction(submission.id, 'approve')}
-                    className={`${submission.status !== SubmissionStatus.APPROVED 
-                      ? "text-green-600 hover:text-green-900" 
-                      : "text-gray-400 cursor-not-allowed"}`}
+                    className={getActionButtonClass(submission, 'approve')}
                     disabled={submission.status === SubmissionStatus.APPROVED || actionLoading === submission.id}
                   >
                     {actionLoading === submission.id ? 'Processing...' : 'Approve'}
@@ -113,9 +116,7 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
                   
                   <button
                     onClick={() => onAction(submission.id, 'reject')}
-                    className={`${submission.status !== SubmissionStatus.REJECTED 
-                      ? "text-red-600 hover:text-red-900" 
-                      : "text-gray-400 cursor-not-allowed"}`}
+                    className={getActionButtonClass(submission, 'reject')}
                     disabled={submission.status === SubmissionStatus.REJECTED || actionLoading === submission.id}
                   >
                     {actionLoading === submission.id ? 'Processing...' : 'Reject'}
@@ -123,9 +124,7 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
                   
                   <button
                     onClick={() => onAction(submission.id, 'select')}
-                    className={`${submission.status !== SubmissionStatus.SELECTED 
-                      ? "text-purple-600 hover:text-purple-900" 
-                      : "text-gray-400 cursor-not-allowed"}`}
+                    className={getActionButtonClass(submission, 'select')}
                     disabled={submission.status === SubmissionStatus.SELECTED || actionLoading === submission.id}
                   >
                     {actionLoading === submission.id ? 'Processing...' : 'Select'}

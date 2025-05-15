@@ -1,27 +1,23 @@
 import React from 'react';
 import { Thumbnail } from '@/components/ui/Thumbnail';
+import { Container } from '@/components/ui/Container';
+import { 
+  getHeaderContainerStyles, 
+  getNavLinkStyles
+} from '@/styles';
 
+/**
+ * Main header component for the application
+ * Responsive header with logo, navigation and login controls
+ */
 export default function MainHeader() {
-    return (
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'white',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-      }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '12px 16px',
-          display: 'grid',
-          gridTemplateColumns: '200px 1fr 100px',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          {/* Logo 和标题区域 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ width: '32px', height: '32px', marginRight: '8px' }}>
+  return (
+    <header className={getHeaderContainerStyles({ variant: 'default' })}>
+      <Container className="py-3">
+        <div className="grid grid-cols-[200px_1fr_100px] items-center gap-4">
+          {/* Logo area */}
+          <div className="flex items-center">
+            <div className="w-8 h-8 mr-2">
               <Thumbnail 
                 src="/logo.svg" 
                 alt="Munich Weekly Logo" 
@@ -30,50 +26,23 @@ export default function MainHeader() {
                 objectFit="contain"
               />
             </div>
-            <div style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold',
-              letterSpacing: '0.025em'
-            }}>Munich Weekly</div>
+            <div className="text-xl font-bold tracking-wide">Munich Weekly</div>
           </div>
           
-          {/* 导航菜单 */}
-          <div style={{ 
-            display: 'flex',
-            paddingLeft: '0'
-          }}>
-            <a href="#" style={{ 
-              marginRight: '24px',
-              fontSize: '0.875rem',
-              color: '#4B5563'
-            }}>Gallery</a>
-            <a href="#" style={{ 
-              marginRight: '24px',
-              fontSize: '0.875rem',
-              color: '#4B5563'
-            }}>Submit</a>
-            <a href="#" style={{ 
-              marginRight: '24px',
-              fontSize: '0.875rem',
-              color: '#4B5563'
-            }}>Vote</a>
-            <a href="#" style={{ 
-              marginRight: '24px',
-              fontSize: '0.875rem',
-              color: '#4B5563'
-            }}>About</a>
+          {/* Navigation menu */}
+          <div className="flex">
+            <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Gallery</a>
+            <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Submit</a>
+            <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Vote</a>
+            <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>About</a>
           </div>
           
-          {/* 登录按钮 */}
-          <div style={{ 
-            textAlign: 'right',
-            fontSize: '0.875rem',
-            color: '#4B5563',
-            cursor: 'pointer'
-          }}>
+          {/* Login button */}
+          <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer text-right">
             Login
           </div>
         </div>
-      </header>
-    );
+      </Container>
+    </header>
+  );
 } 
