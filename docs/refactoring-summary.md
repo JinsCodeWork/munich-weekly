@@ -201,3 +201,62 @@ frontend/
 3. **Permission Control**: Enhance admin permission control to restrict page access
 4. **Performance Optimization**: Add pagination, virtual scrolling, etc. to optimize large data display
 5. **Internationalization**: Add i18n support for multilingual capabilities
+
+# Authentication Hook Refactoring Summary
+
+## Problem Background
+
+Previously, there were two separate implementations of useAuth:
+
+1. **Duplicate Implementation**: 
+   - `useAuth` hook implemented in `context/AuthContext.tsx`
+   - Another `useAuth` hook implemented in `hooks/useAuth.ts`
+
+2. **Functional Differences**:
+   - The AuthContext version focused on user login state management
+   - The hooks directory version provided additional role-checking functionality
+
+3. **Reference Confusion**:
+   - Actual code mainly used the AuthContext version
+   - The hooks version wasn't referenced by any components, possibly legacy code
+
+## Refactoring Solution
+
+1. **Functionality Consolidation**:
+   - Kept the main useAuth implementation in AuthContext
+   - Merged additional functionality (hasRole, isAuthenticated) from hooks/useAuth.ts into AuthContext
+   - Removed the unused hooks/useAuth.ts file
+
+2. **Interface Optimization**:
+   - Enhanced the login method to support optional user data parameters
+   - Used Next.js Router for page navigation, replacing direct window.location modification
+   - Added role-checking and authentication state verification methods
+
+3. **Dependency Updates**:
+   - Ensured dependent hooks like useDebugTools continue to work properly
+   - Updated related documentation to reflect authentication system changes
+
+## Refactoring Benefits
+
+1. **Unified API**:
+   - Authentication-related functionality provided through a single unified useAuth hook
+   - Eliminated confusion caused by duplicate implementations
+
+2. **Enhanced Functionality**:
+   - Provided a more complete set of authentication features
+   - Supported quick role checking and permission validation
+
+3. **Code Clarity**:
+   - Removed unused code
+   - Reduced maintenance burden
+   - Improved overall code quality
+
+4. **Documentation Consistency**:
+   - Updated frontend architecture documentation to clearly explain the authentication flow
+   - Clarified the functionality and usage of the authentication hook
+
+## Future Improvement Suggestions
+
+1. **Unit Testing**: Add unit tests for the authentication system
+2. **Token Refresh**: Implement automatic JWT token refresh mechanism
+3. **OAuth Integration**: Extend the authentication system to support third-party login via OAuth

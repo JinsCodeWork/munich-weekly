@@ -171,7 +171,7 @@ Components and hooks for development and debugging:
 - **LoadingErrorStates**: Components for handling loading and error states
 - **mockData**: Mock data utilities for development and testing
 
-## Authentication Flow
+### Authentication Flow
 
 1. **Registration**:
    - User enters email, nickname, and password
@@ -196,6 +196,11 @@ Components and hooks for development and debugging:
    - Token is removed from localStorage
    - User state is cleared from the AuthContext
    - User is redirected to the homepage
+
+5. **Role-Based Access Control**:
+   - User roles (admin, user) are stored in the AuthContext
+   - Components can check user roles to control UI rendering
+   - Protected routes verify user roles to restrict access
 
 ## API Integration
 

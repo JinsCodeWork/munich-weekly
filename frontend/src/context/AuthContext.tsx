@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { usersApi } from "@/api"
+import { useRouter } from "next/navigation"
 
 // 用户类型
 interface User {
@@ -16,8 +17,10 @@ interface AuthContextType {
   user: User | null
   token: string | null
   loading: boolean
-  login: (token: string) => void
+  login: (token: string, userData?: User) => void
   logout: () => void
+  hasRole: (role: string) => boolean
+  isAuthenticated: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -26,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt")
@@ -50,10 +54,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  const login = (newToken: string) => {
+  const login = (newToken: string, userData?: User) => {
     localStorage.setItem("jwt", newToken)
     setToken(newToken)
-    fetchUserData()
+    
+    if (userData) {
+      // 如果提供了用户数据，直接设置
+      setUser(userData)
+      setLoading(false)
+    } else {
+      // 否则从API获取用户数据
+      fetchUserData()
+    }
   }
 
   const logout = () => {
@@ -61,13 +73,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setToken(null)
     setUser(null)
     
-    if (typeof window !== "undefined") {
-      window.location.href = "/"
-    }
+    // 重定向到首页
+    router.push("/")
+  }
+
+  // 检查用户是否有特定角色
+  const hasRole = (role: string) => {
+    return user?.role === role
+  }
+
+  // 检查用户是否已认证
+  const isAuthenticated = () => {
+    return !!token
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      login, 
+      logout, 
+      hasRole, 
+      isAuthenticated 
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -196,7 +196,7 @@ frontend/
 ## Custom Hooks
 
 ### Authentication Hooks
-- `useAuth`: Manages user authentication state and operations
+- `useAuth`: Provided by AuthContext, manages user authentication state, permission checking and related operations
 
 ### Data Management Hooks
 - `useSubmissions`: Manages submission data and operations
