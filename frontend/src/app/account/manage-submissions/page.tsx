@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSubmissions } from "@/hooks/useSubmissions";
 import { useDebugTools } from "@/hooks/useDebugTools";
 import { SubmissionTable } from "@/components/admin/submissions/SubmissionTable";
@@ -26,6 +26,11 @@ import { ImageViewer } from "@/components/submission/ImageViewer";
 export default function ManageSubmissionsPage() {
   const { user, token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get issueId from URL query parameters
+  const issueIdParam = searchParams.get('issueId');
+  const initialIssueId = issueIdParam ? parseInt(issueIdParam, 10) : null;
   
   // State management
   const [useMockData, setUseMockData] = useState(false);
@@ -43,7 +48,7 @@ export default function ManageSubmissionsPage() {
     setViewingSubmission,
     handleSubmissionAction,
     retryLoadSubmissions
-  } = useSubmissions(useMockData);
+  } = useSubmissions(useMockData, initialIssueId);
   
   const {
     showDebugInfo,
@@ -75,6 +80,17 @@ export default function ManageSubmissionsPage() {
   const handleCloseImageViewer = () => {
     setShowImageViewer(false);
   };
+
+  // Update URL when selectedIssue changes
+  useEffect(() => {
+    if (selectedIssue) {
+      const currentPath = window.location.pathname;
+      const newUrl = `${currentPath}?issueId=${selectedIssue}`;
+      
+      // Update URL without causing a page refresh
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [selectedIssue]);
 
   // Redirect non-admin users
   useEffect(() => {

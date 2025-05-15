@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
+import { getImageCaptionStyles } from '@/styles';
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -8,6 +9,35 @@ interface ImageViewerProps {
 }
 
 export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageViewerProps) {
+  // Determine caption style based on description length
+  const captionStyle = useMemo(() => {
+    if (!description) return null;
+    
+    const length = description.trim().length;
+    
+    // Short descriptions use pill style
+    if (length < 50) {
+      return {
+        variant: 'pill' as const,
+        maxWidth: '70%'
+      };
+    }
+    
+    // Medium descriptions use default style
+    if (length < 120) {
+      return {
+        variant: 'default' as const,
+        maxWidth: '85%'
+      };
+    }
+    
+    // Long descriptions use card style with larger width
+    return {
+      variant: 'card' as const,
+      maxWidth: '95%'
+    };
+  }, [description]);
+
   // Handle ESC key press to close the viewer
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -64,11 +94,16 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         </div>
         
         {/* Description */}
-        {description && (
-          <div className="mt-4 px-6 py-4 bg-black bg-opacity-70 backdrop-blur-sm rounded text-center">
-            <p className="text-white text-lg font-light leading-relaxed">
-              {description.trim()}
-            </p>
+        {description && captionStyle && (
+          <div className="mt-4 flex justify-center">
+            <div className={getImageCaptionStyles({
+              variant: captionStyle.variant,
+              maxWidth: captionStyle.maxWidth
+            })}>
+              <p className="text-white text-lg font-light leading-relaxed italic">
+                "{description.trim()}"
+              </p>
+            </div>
           </div>
         )}
       </div>

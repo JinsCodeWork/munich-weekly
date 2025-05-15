@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Submission, SubmissionStatus } from "@/types/submission";
+import { Submission } from "@/types/submission";
 import { formatDate } from "@/lib/utils";
 import { ImageViewer } from "./ImageViewer";
 import { Thumbnail } from "@/components/ui/Thumbnail";
@@ -77,13 +77,11 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
               <span>Issue {submission.issue.id}</span>
             </div>
             
-            {(submission.status === SubmissionStatus.APPROVED || 
-              submission.status === SubmissionStatus.SELECTED) && (
-              <div className={getSubmissionCardElementStyles('metaItem')}>
-                <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
-                <span>{submission.voteCount} votes</span>
-              </div>
-            )}
+            {/* 显示所有状态的投票数 */}
+            <div className={getSubmissionCardElementStyles('metaItem')}>
+              <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+              <span>{submission.voteCount} votes</span>
+            </div>
           </div>
         </div>
       </div>

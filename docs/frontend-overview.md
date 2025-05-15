@@ -61,7 +61,8 @@ frontend/
 │   │   │   ├── page.tsx    # Main account page
 │   │   │   ├── settings/   # User settings
 │   │   │   ├── submissions/# User submissions management
-│   │   │   └── manage-submissions/ # Admin submission management
+│   │   │   ├── manage-submissions/ # Admin submission management
+│   │   │   └── manage-issues/ # Admin issue management
 │   │   ├── admin/          # Admin panel routes
 │   │   │   └── submissions/# Admin submission management
 │   │   ├── content/        # Content pages
@@ -162,6 +163,7 @@ frontend/
 - Work submission system
 - Admin approval workflow
 - Voting mechanism
+- Issue management system
 
 ### 4. Navigation System
 
@@ -218,6 +220,10 @@ frontend/
 - LoadingErrorStates
 - DebugTools
 
+### Issue Management Components
+- ManageIssuesPage: Admin interface for viewing and managing all issues
+- CreateIssuePage: Form interface for creating new issues with submission and voting periods
+
 ## Custom Hooks
 
 ### Authentication Hooks
@@ -235,7 +241,7 @@ The frontend API adopts a modular structure, grouped by business function to imp
 
 - **auth**: Authentication-related APIs, including registration, login, and third-party authentication
 - **users**: User-related APIs, including retrieving user information and updating user profiles
-- **issues**: Issue-related APIs, including retrieving issue lists and details
+- **issues**: Issue-related APIs, including retrieving issue lists, creating new issues, and getting issue details
 - **submissions**: Submission-related APIs, including creating, reviewing, and managing submissions
 - **votes**: Voting-related APIs, including submitting votes and checking vote status
 
@@ -243,7 +249,7 @@ API module usage:
 
 ```typescript
 // Import needed API modules
-import { authApi, submissionsApi } from "@/api";
+import { authApi, submissionsApi, issuesApi } from "@/api";
 
 // Using authentication API
 const handleLogin = async () => {
@@ -256,6 +262,18 @@ const handleLogin = async () => {
 // Using submissions API
 const loadSubmissions = async () => {
   const submissions = await submissionsApi.getUserSubmissions();
+};
+
+// Using issues API
+const createNewIssue = async () => {
+  const issue = await issuesApi.createIssue({
+    title: "Weekly Issue Title",
+    description: "This week's theme description",
+    submissionStart: "2023-06-01T00:00:00Z",
+    submissionEnd: "2023-06-07T23:59:59Z",
+    votingStart: "2023-06-08T00:00:00Z",
+    votingEnd: "2023-06-14T23:59:59Z"
+  });
 };
 ```
 
@@ -279,6 +297,7 @@ Planned feature enhancements:
 5. Multilingual support (English/Chinese)
 6. Dark mode
 7. Batch submission management tools
+8. Advanced issue management features
 
 ## Contribution Guidelines
 
@@ -287,4 +306,4 @@ Planned feature enhancements:
 3. Ensure responsive design adapts to various devices
 4. Write appropriate unit tests
 5. Update relevant documentation
-6. Use modular API structure for API integration 
+6. Use modular API structure for API integration

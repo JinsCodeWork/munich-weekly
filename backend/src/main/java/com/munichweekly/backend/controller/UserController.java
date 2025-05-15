@@ -1,6 +1,7 @@
 package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.devtools.annotation.Description;
+import com.munichweekly.backend.dto.ChangePasswordRequestDTO;
 import com.munichweekly.backend.dto.UserUpdateRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.repository.UserRepository;
@@ -70,5 +71,26 @@ public class UserController {
     public ResponseEntity<User> updateProfile(@RequestBody @Valid UserUpdateRequestDTO dto) {
         User updated = userService.updateUserProfile(dto);
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Change the current user's password.
+     * Requires the old password to verify identity and a new password to set.
+     */
+    @Description("Change the authenticated user's password.")
+    @PostMapping("/change-password")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequestDTO dto) {
+        try {
+            Long userId = CurrentUserUtil.getUserIdOrThrow();
+            userService.changePassword(userId, dto);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Password changed successfully"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", e.getMessage()
+            ));
+        }
     }
 }

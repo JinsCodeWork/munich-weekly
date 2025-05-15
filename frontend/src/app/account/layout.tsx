@@ -33,6 +33,11 @@ const ADMIN_SIDEBAR_ITEMS = [
     label: "Manage Submissions",
     href: "/account/manage-submissions",
     icon: "fa-solid fa-tasks"
+  },
+  {
+    label: "Manage Issues",
+    href: "/account/manage-issues",
+    icon: "fa-solid fa-calendar-week"
   }
 ]
 

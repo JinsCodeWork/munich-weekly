@@ -131,6 +131,35 @@ public class UserService {
     }
 
     /**
+     * Changes the user's password after validating the old password.
+     * 
+     * @param userId The ID of the user changing their password
+     * @param dto Contains the old password and new password
+     * @return The updated user entity
+     * @throws IllegalArgumentException if the old password is incorrect
+     */
+    public User changePassword(Long userId, ChangePasswordRequestDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        // If user is using third-party auth and has no password set
+        if (user.getPassword() == null) {
+            throw new IllegalArgumentException("Cannot change password for accounts without password");
+        }
+        
+        // Verify old password
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        
+        // Encrypt and set the new password
+        String hashedNewPassword = passwordEncoder.encode(dto.getNewPassword());
+        user.setPassword(hashedNewPassword);
+        
+        return userRepository.save(user);
+    }
+
+    /**
      * Binds a third-party account (e.g., Google, WeChat) to the current user.
      * Throws an exception if the third-party account is already bound to another user.
      */

@@ -7,10 +7,10 @@ import { generateMockSubmissions } from "@/utils/mockData";
  * Custom hook for managing submissions data and operations
  * Handles fetching issues and submissions, and performing actions on submissions
  */
-export function useSubmissions(useMockData: boolean = false) {
+export function useSubmissions(useMockData: boolean = false, initialIssueId?: number | null) {
   // State for issues and submissions data
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [selectedIssue, setSelectedIssue] = useState<number | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<number | null>(initialIssueId || null);
   const [submissions, setSubmissions] = useState<AdminSubmissionResponse[]>([]);
   
   // Loading and error states
@@ -32,7 +32,7 @@ export function useSubmissions(useMockData: boolean = false) {
       try {
         const issuesData = await issuesApi.getAllIssues();
         setIssues(issuesData || []);
-        if (issuesData && issuesData.length > 0) {
+        if (!selectedIssue && issuesData && issuesData.length > 0) {
           setSelectedIssue(issuesData[0].id);
         }
       } catch (err) {
@@ -51,12 +51,14 @@ export function useSubmissions(useMockData: boolean = false) {
           createdAt: new Date(Date.now() - 30 * 86400000).toISOString()
         };
         setIssues([mockIssue]);
-        setSelectedIssue(1);
+        if (!selectedIssue) {
+          setSelectedIssue(1);
+        }
       }
     };
     
     loadIssues();
-  }, []);
+  }, [selectedIssue]);
 
   // Load submissions when selected issue changes
   useEffect(() => {

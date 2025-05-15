@@ -17,6 +17,11 @@ interface UserUpdateRequest {
   avatarUrl?: string;
 }
 
+interface PasswordChangeRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 /**
  * 获取当前登录用户信息
  * GET /api/users/me
@@ -34,6 +39,18 @@ export const getCurrentUser = async (): Promise<User> => {
 export const updateCurrentUser = async (data: UserUpdateRequest): Promise<User> => {
   return fetchAPI<User>("/api/users/me", {
     method: "PATCH",
+    body: JSON.stringify(data),
+    headers: getAuthHeader()
+  });
+};
+
+/**
+ * 更改当前用户密码
+ * POST /api/users/change-password
+ */
+export const changePassword = async (data: PasswordChangeRequest): Promise<void> => {
+  return fetchAPI<void>("/api/users/change-password", {
+    method: "POST",
     body: JSON.stringify(data),
     headers: getAuthHeader()
   });

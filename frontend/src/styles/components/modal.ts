@@ -24,6 +24,15 @@ export const modalContentVariants = {
 };
 
 /**
+ * Image caption variants
+ */
+export const imageCaptionVariants = {
+  default: 'px-6 py-3 bg-black/25 backdrop-blur-sm rounded-full mx-auto inline-block',
+  pill: 'px-5 py-2 bg-black/20 backdrop-blur-sm rounded-full mx-auto inline-block',
+  card: 'px-6 py-3 bg-black/15 backdrop-blur-sm rounded-lg mx-auto inline-block',
+};
+
+/**
  * Modal animation states - only for closing
  */
 export const modalAnimationStates = {
@@ -63,6 +72,25 @@ export function getModalContentStyles({
 } = {}) {
   return cn(
     modalContentVariants[variant],
+    className
+  );
+}
+
+/**
+ * Get image caption styles
+ */
+export function getImageCaptionStyles({
+  variant = 'default',
+  className,
+  maxWidth = '85%',
+}: {
+  variant?: keyof typeof imageCaptionVariants;
+  className?: string;
+  maxWidth?: string;
+} = {}) {
+  return cn(
+    imageCaptionVariants[variant],
+    `max-w-[${maxWidth}]`,
     className
   );
 } 

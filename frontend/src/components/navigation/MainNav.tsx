@@ -78,6 +78,11 @@ export default function MainNav() {
     router.push('/');
   };
 
+  // Handle double click on user avatar to go to profile page
+  const handleDoubleClick = () => {
+    router.push('/account');
+  };
+
   return (
     <>
       <header className={getNavContainerStyles()}>
@@ -113,6 +118,7 @@ export default function MainNav() {
                 <div className={getUserMenuStyles('container')} ref={menuRef}>
                   <button 
                     onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                    onDoubleClick={handleDoubleClick}
                     className={getUserMenuStyles('trigger')}
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
@@ -159,6 +165,7 @@ export default function MainNav() {
                         <i className="fa-solid fa-gear mr-2"></i>
                         Settings
                       </Link>
+                      
                       <div className={getUserMenuStyles('separator')}></div>
                       <button
                         onClick={handleLogout}
