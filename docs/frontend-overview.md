@@ -14,12 +14,12 @@ This document serves as the entry point to the frontend development documentatio
 
 ## Technology Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: React Context API + Custom Hooks
 - **Authentication**: JWT tokens
-- **API Integration**: Fetch API with RESTful endpoints
+- **API Integration**: Modular API structure organized by business functionality
 - **Image Optimization**: Next.js Image component
 
 ## Project Structure
@@ -40,6 +40,20 @@ frontend/
 │   ├── convert-favicon.js  # Favicon conversion tool
 │   └── generate-favicon.js # Favicon generation script
 ├── src/
+│   ├── api/                # Modular API directory
+│   │   ├── auth/           # Authentication-related APIs
+│   │   │   └── index.ts    # Authentication API exports
+│   │   ├── issues/         # Issue-related APIs
+│   │   │   └── index.ts    # Issue API exports
+│   │   ├── submissions/    # Submission-related APIs
+│   │   │   └── index.ts    # Submission API exports
+│   │   ├── users/          # User-related APIs
+│   │   │   └── index.ts    # User API exports
+│   │   ├── votes/          # Voting-related APIs
+│   │   │   └── index.ts    # Voting API exports
+│   │   ├── http.ts         # Base HTTP request utilities
+│   │   ├── types.ts        # API-related type definitions
+│   │   └── index.ts        # Unified API exports
 │   ├── app/                # Next.js App Router pages
 │   │   ├── account/        # User account section
 │   │   │   ├── layout.tsx  # Account layout with sidebar
@@ -92,9 +106,10 @@ frontend/
 │   │   ├── useSubmissions.ts # Submissions data hook
 │   │   └── useDebugTools.ts # Development debugging tools
 │   ├── lib/                # Utility functions and constants
-│   │   ├── api.ts          # API service functions
 │   │   ├── constants.ts    # Application constants
 │   │   └── utils.ts        # Utility helper functions
+│   ├── styles/             # Style-related directory (reserved)
+│   ├── theme/              # Theme-related directory (reserved)
 │   ├── types/              # TypeScript type definitions
 │   │   └── submission.ts   # Submission-related types
 │   └── utils/              # Additional utilities
@@ -137,6 +152,13 @@ frontend/
 - Responsive navigation
 - Mobile sidebar menu
 - User-state aware elements
+
+### 5. API Integration System
+
+- Modular API structure
+- Grouped by business function (authentication, users, submissions, issues, votes)
+- Unified error handling
+- TypeScript type safety
 
 ## Implemented Components
 
@@ -182,6 +204,36 @@ frontend/
 ### Development Tools Hooks
 - `useDebugTools`: Provides debugging and development tools
 
+## API Module Structure
+
+The frontend API adopts a modular structure, grouped by business function to improve code maintainability and extensibility:
+
+- **auth**: Authentication-related APIs, including registration, login, and third-party authentication
+- **users**: User-related APIs, including retrieving user information and updating user profiles
+- **issues**: Issue-related APIs, including retrieving issue lists and details
+- **submissions**: Submission-related APIs, including creating, reviewing, and managing submissions
+- **votes**: Voting-related APIs, including submitting votes and checking vote status
+
+API module usage:
+
+```typescript
+// Import needed API modules
+import { authApi, submissionsApi } from "@/api";
+
+// Using authentication API
+const handleLogin = async () => {
+  const response = await authApi.loginWithEmail({
+    email: "user@example.com",
+    password: "password123"
+  });
+};
+
+// Using submissions API
+const loadSubmissions = async () => {
+  const submissions = await submissionsApi.getUserSubmissions();
+};
+```
+
 ## Development Process
 
 1. Understand the project architecture and component structure
@@ -189,6 +241,7 @@ frontend/
 3. Use the existing component library to build new features
 4. Ensure code passes TypeScript type checking
 5. Maintain good code comments and documentation
+6. Follow modular API structure for API calls
 
 ## Roadmap
 
@@ -208,4 +261,5 @@ Planned feature enhancements:
 2. Reuse existing components to ensure UI consistency
 3. Ensure responsive design adapts to various devices
 4. Write appropriate unit tests
-5. Update relevant documentation 
+5. Update relevant documentation
+6. Use modular API structure for API integration 

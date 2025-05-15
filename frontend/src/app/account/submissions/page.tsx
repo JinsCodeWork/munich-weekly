@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
-import { getUserSubmissions, getIssues } from "@/lib/api"
+import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, Submission, SubmissionStatus } from "@/types/submission"
 import { SubmissionCard } from "@/components/submission/SubmissionCard"
 
@@ -19,7 +19,7 @@ export default function SubmissionsPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await getUserSubmissions(selectedIssue)
+      const response = await submissionsApi.getUserSubmissions(selectedIssue)
       setSubmissions(response || [])
       console.log("Loaded submissions:", response)
     } catch (err) {
@@ -34,7 +34,7 @@ export default function SubmissionsPage() {
   // Load issues data
   const loadIssues = async () => {
     try {
-      const issuesData = await getIssues()
+      const issuesData = await issuesApi.getAllIssues()
       setIssues(issuesData || [])
     } catch (err) {
       console.error("Failed to load issues:", err)

@@ -1,12 +1,14 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { usersApi } from "@/api"
 
+// 用户类型
 interface User {
   id: number
   email: string
   nickname: string
-  role: "user" | "admin"
+  role: string
   avatarUrl?: string
 }
 
@@ -29,25 +31,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedToken = localStorage.getItem("jwt")
     if (storedToken) {
       setToken(storedToken)
-      fetchUserData(storedToken)
+      fetchUserData()
     } else {
       setLoading(false)
     }
   }, [])
 
-  const fetchUserData = async (authToken: string) => {
+  const fetchUserData = async () => {
     try {
-      const res = await fetch("/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      })
-      
-      if (!res.ok) {
-        throw new Error("Unauthorized")
-      }
-      
-      const userData = await res.json()
+      const userData = await usersApi.getCurrentUser()
       setUser(userData)
     } catch (err) {
       console.error("Failed to fetch user data:", err)
@@ -61,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (newToken: string) => {
     localStorage.setItem("jwt", newToken)
     setToken(newToken)
-    fetchUserData(newToken)
+    fetchUserData()
   }
 
   const logout = () => {

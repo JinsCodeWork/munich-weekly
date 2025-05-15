@@ -1,63 +1,172 @@
-# 投稿管理页面重构总结
+# Submission Management Page Refactoring Summary
 
-## 问题背景
+## Problem Background
 
-原投稿管理页面存在以下问题：
+The original submission management page had the following issues:
 
-1. **代码过于庞大**：单一文件超过500行，难以维护和理解
-2. **职责混乱**：单一组件承担了过多功能，违反单一职责原则
-3. **重复代码**：存在大量重复逻辑，增加维护难度
-4. **调试代码混入**：开发调试代码与生产代码混合，影响可读性和性能
-5. **"未知用户"问题**：无法显示完整的用户信息
+1. **Code Size**: Single file exceeding 500 lines, difficult to maintain and understand
+2. **Mixed Responsibilities**: Single component handling too many functions, violating the single responsibility principle
+3. **Code Duplication**: Multiple instances of repeated logic, increasing maintenance difficulty
+4. **Debug Code Mix-in**: Development debugging code mixed with production code, affecting readability and performance
+5. **"Unknown User" Problem**: Unable to display complete user information
 
-## 重构方案
+## Refactoring Solution
 
-### 后端改进
+### Backend Improvements
 
-1. **创建专用DTO**：
-   - 新增`AdminSubmissionResponseDTO`，专门用于管理员视图
-   - 包含完整的用户信息（ID、邮箱、昵称、头像）
-   - 分离管理员视图和普通用户视图的数据结构
+1. **Created Specialized DTO**:
+   - Added `AdminSubmissionResponseDTO`, specifically for admin views
+   - Includes complete user information (ID, email, nickname, avatar)
+   - Separated admin view and regular user view data structures
 
-### 前端改进
+### Frontend Improvements
 
-1. **组件化拆分**：
-   - `SubmissionTable`：渲染投稿列表表格
-   - `IssueSelector`：期刊选择器组件
-   - `DebugTools`：调试工具组件
-   - `LoadingState`/`ErrorState`：加载和错误状态组件
+1. **Component Decomposition**:
+   - `SubmissionTable`: Renders submission list table
+   - `IssueSelector`: Issue selector component
+   - `DebugTools`: Debugging tool component
+   - `LoadingState`/`ErrorState`: Loading and error state components
 
-2. **自定义Hooks**：
-   - `useSubmissions`：管理投稿数据和操作
-   - `useDebugTools`：管理调试功能
-   - `useAuth`：处理认证相关逻辑
+2. **Custom Hooks**:
+   - `useSubmissions`: Manages submission data and operations
+   - `useDebugTools`: Manages debugging functionality
+   - `useAuth`: Handles authentication-related logic
 
-3. **工具函数**：
-   - `mockData`：生成模拟数据的工具函数
+3. **Utility Functions**:
+   - `mockData`: Generates mock data for development
 
-## 重构优势
+# API Refactoring Summary
 
-1. **关注点分离**：
-   - 每个组件和hook只负责单一职责
-   - 业务逻辑与UI展示分离
+## Problem Background
 
-2. **代码复用**：
-   - 通过hooks和组件化实现代码复用
-   - 减少重复代码
+The original API call structure had the following issues:
 
-3. **可维护性提升**：
-   - 小型组件更易于理解和维护
-   - 清晰的职责划分便于团队协作
+1. **Centralized API File**: All API functions concentrated in a single file (`lib/api.ts`), resulting in an overly large file
+2. **Lack of Modularity**: API functions not grouped by business domain, causing related functionality to be scattered
+3. **Unclear Responsibilities**: HTTP request utilities and business APIs mixed together
+4. **Maintenance Difficulty**: As the number of APIs increased, a single file became difficult to maintain
 
-4. **解决"未知用户"问题**：
-   - 通过改进DTO结构，确保用户信息完整
-   - 前端显示完整的用户信息
+## Refactoring Solution
 
-5. **调试与生产代码分离**：
-   - 通过`DebugTools`组件封装调试功能
-   - 使用`useMockData`标志控制数据来源
+1. **Modular API Structure**:
+   - Split APIs into independent modules based on business functionality
+   - Created a separate HTTP request utility module
+   - Established a unified API export mechanism
 
-## 文件结构
+2. **Directory Structure Optimization**:
+   ```
+   api/
+   ├── auth/           # Authentication-related APIs
+   ├── users/          # User-related APIs
+   ├── issues/         # Issue-related APIs
+   ├── submissions/    # Submission-related APIs
+   ├── votes/          # Voting-related APIs
+   ├── http.ts         # Common HTTP request utilities
+   ├── types.ts        # API error type definitions
+   └── index.ts        # Unified API exports
+   ```
+
+3. **Utility Function Improvements**:
+   - Created common HTTP request functions and authentication header handling
+   - Enhanced error handling mechanisms
+   - Simplified API call parameters
+
+4. **Type Safety**:
+   - Provided detailed TypeScript type definitions for each API function
+   - Defined API error types for unified handling
+   - Used generics to enhance type safety
+
+## Refactoring Benefits
+
+1. **Separation of Concerns**:
+   - Each API module is responsible for a single business domain
+   - Base HTTP utilities separated from business logic
+
+2. **Code Organization**:
+   - Code organized by business domain, improving readability
+   - New functionality can be easily added to corresponding modules
+
+3. **Improved Maintainability**:
+   - Smaller module files are easier to maintain
+   - Consistent API function naming improves understanding
+
+4. **Usage Convenience**:
+   - Unified exports make usage simple
+   - On-demand importing reduces dependencies
+
+5. **Documentation**:
+   - Detailed JSDoc comments provide self-documentation
+   - Each API function clearly explains purpose and parameters
+
+## File Structure
+
+```
+src/
+├── api/
+│   ├── auth/
+│   │   └── index.ts     # Authentication-related APIs
+│   ├── users/
+│   │   └── index.ts     # User-related APIs
+│   ├── issues/
+│   │   └── index.ts     # Issue-related APIs
+│   ├── submissions/
+│   │   └── index.ts     # Submission-related APIs
+│   ├── votes/
+│   │   └── index.ts     # Voting-related APIs
+│   ├── http.ts          # HTTP request utility functions
+│   ├── types.ts         # API error type definitions
+│   └── index.ts         # Unified exports
+```
+
+## Usage Example
+
+```typescript
+// Previous usage
+import { getUserSubmissions, getIssues } from "@/lib/api";
+
+const loadSubmissions = async () => {
+  const response = await getUserSubmissions(selectedIssue);
+};
+
+// After refactoring
+import { submissionsApi, issuesApi } from "@/api";
+
+const loadSubmissions = async () => {
+  const response = await submissionsApi.getUserSubmissions(selectedIssue);
+};
+```
+
+## Future Improvement Suggestions
+
+1. **Request Caching**: Add request caching mechanism to reduce repeated requests
+2. **Request Interceptors**: Add request/response interceptors for unified handling of authentication, token refreshing, etc.
+3. **Enhanced Error Handling**: Add unified error handling mechanisms
+4. **API Version Control**: Support API version management
+5. **Swagger Integration**: Integrate with backend Swagger documentation to automatically generate API clients
+
+## Refactoring Benefits
+
+1. **Separation of Concerns**:
+   - Each component and hook is responsible for a single task
+   - Business logic and UI presentation are separated
+
+2. **Code Reuse**:
+   - Achieves code reuse through hooks and componentization
+   - Reduces duplicate code
+
+3. **Improved Maintainability**:
+   - Smaller components are easier to understand and maintain
+   - Clear division of responsibilities facilitates team collaboration
+
+4. **Resolved "Unknown User" Problem**:
+   - Ensures complete user information through improved DTO structure
+   - Frontend displays complete user information
+
+5. **Separation of Debug and Production Code**:
+   - Encapsulates debugging functionality through the `DebugTools` component
+   - Uses `useMockData` flag to control data sources
+
+## File Structure
 
 ```
 frontend/
@@ -65,30 +174,30 @@ frontend/
 │   ├── app/
 │   │   └── admin/
 │   │       └── submissions/
-│   │           └── page.tsx        # 主页面组件
+│   │           └── page.tsx        # Main page component
 │   ├── components/
 │   │   └── admin/
 │   │       └── submissions/
-│   │           ├── DebugTools.tsx  # 调试工具组件
-│   │           ├── IssueSelector.tsx  # 期刊选择器
-│   │           ├── LoadingErrorStates.tsx  # 加载和错误状态
-│   │           └── SubmissionTable.tsx  # 投稿表格组件
+│   │           ├── DebugTools.tsx  # Debugging tool component
+│   │           ├── IssueSelector.tsx  # Issue selector
+│   │           ├── LoadingErrorStates.tsx  # Loading and error states
+│   │           └── SubmissionTable.tsx  # Submission table component
 │   ├── hooks/
-│   │   ├── useAuth.ts  # 认证相关hook
-│   │   ├── useDebugTools.ts  # 调试工具hook
-│   │   └── useSubmissions.ts  # 投稿数据管理hook
+│   │   ├── useAuth.ts  # Authentication-related hook
+│   │   ├── useDebugTools.ts  # Debugging tool hook
+│   │   └── useSubmissions.ts  # Submission data management hook
 │   ├── lib/
-│   │   └── api.ts  # API调用函数
+│   │   └── api.ts  # API call functions
 │   ├── types/
-│   │   └── submission.ts  # 类型定义
+│   │   └── submission.ts  # Type definitions
 │   └── utils/
-│       └── mockData.ts  # 模拟数据生成
+│       └── mockData.ts  # Mock data generation
 ```
 
-## 后续优化建议
+## Future Improvement Suggestions
 
-1. **单元测试**：为拆分后的组件和hooks添加单元测试
-2. **状态管理**：考虑引入Redux或Context API进行全局状态管理
-3. **权限控制**：增强管理员权限控制，限制页面访问
-4. **性能优化**：添加分页、虚拟滚动等优化大量数据的显示
-5. **国际化**：添加i18n支持，便于多语言切换
+1. **Unit Tests**: Add unit tests for split components and hooks
+2. **State Management**: Consider introducing Redux or Context API for global state management
+3. **Permission Control**: Enhance admin permission control to restrict page access
+4. **Performance Optimization**: Add pagination, virtual scrolling, etc. to optimize large data display
+5. **Internationalization**: Add i18n support for multilingual capabilities

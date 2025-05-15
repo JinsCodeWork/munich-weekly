@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminSubmissionResponse, Issue} from "@/types/submission";
-import { getIssues, getAllSubmissionsByIssue, approveSubmission, rejectSubmission, selectSubmission } from "@/lib/api";
+import { issuesApi, submissionsApi } from "@/api";
 import { generateMockSubmissions } from "@/utils/mockData";
 
 /**
@@ -30,7 +30,7 @@ export function useSubmissions(useMockData: boolean = false) {
   useEffect(() => {
     const loadIssues = async () => {
       try {
-        const issuesData = await getIssues();
+        const issuesData = await issuesApi.getAllIssues();
         setIssues(issuesData || []);
         if (issuesData && issuesData.length > 0) {
           setSelectedIssue(issuesData[0].id);
@@ -72,7 +72,7 @@ export function useSubmissions(useMockData: boolean = false) {
           setSubmissions(MOCK_SUBMISSIONS());
         } else {
           // Use real API
-          const response = await getAllSubmissionsByIssue(selectedIssue);
+          const response = await submissionsApi.getAllSubmissionsByIssue(selectedIssue);
           setSubmissions(response);
         }
       } catch (err) {
@@ -99,11 +99,11 @@ export function useSubmissions(useMockData: boolean = false) {
       if (!useMockData) {
         // Call the appropriate API
         if (action === 'approve') {
-          await approveSubmission(submissionId);
+          await submissionsApi.approveSubmission(submissionId);
         } else if (action === 'reject') {
-          await rejectSubmission(submissionId);
+          await submissionsApi.rejectSubmission(submissionId);
         } else if (action === 'select') {
-          await selectSubmission(submissionId);
+          await submissionsApi.selectSubmission(submissionId);
         }
       }
       

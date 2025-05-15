@@ -6,7 +6,7 @@ Munich Weekly is a photography-based weekly publication platform where users can
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Authentication**: JWT-based authentication with secure HTTP-only cookies
@@ -25,11 +25,27 @@ frontend/
 │   ├── logo.svg            # Brand logo
 │   ├── globe.svg           # UI icons
 │   ├── file.svg            # UI icons
+│   ├── next.svg            # Next.js logo
+│   ├── vercel.svg          # Vercel logo
 │   └── window.svg          # UI icons
 ├── scripts/                # Utility scripts
 │   ├── convert-favicon.js  # Favicon conversion tool
 │   └── generate-favicon.js # Favicon generation script
 ├── src/
+│   ├── api/                # Modular API directory
+│   │   ├── auth/           # Authentication-related APIs
+│   │   │   └── index.ts    # Authentication API exports
+│   │   ├── issues/         # Issue-related APIs
+│   │   │   └── index.ts    # Issue API exports
+│   │   ├── submissions/    # Submission-related APIs
+│   │   │   └── index.ts    # Submission API exports
+│   │   ├── users/          # User-related APIs
+│   │   │   └── index.ts    # User API exports
+│   │   ├── votes/          # Voting-related APIs
+│   │   │   └── index.ts    # Voting API exports
+│   │   ├── http.ts         # Base HTTP request utilities
+│   │   ├── types.ts        # API-related type definitions
+│   │   └── index.ts        # Unified API exports
 │   ├── app/                # Next.js App Router pages
 │   │   ├── account/        # User account section
 │   │   │   ├── layout.tsx  # Account layout with sidebar
@@ -80,9 +96,10 @@ frontend/
 │   │   ├── useSubmissions.ts # Submissions data hook
 │   │   └── useDebugTools.ts # Development debugging hook
 │   ├── lib/                # Utility functions and constants
-│   │   ├── api.ts          # API service functions
 │   │   ├── constants.ts    # Application constants
 │   │   └── utils.ts        # Utility helper functions
+│   ├── styles/             # Style-related directory (reserved)
+│   ├── theme/              # Theme-related directory (reserved)
 │   ├── types/              # TypeScript type definitions
 │   │   └── submission.ts   # Submission-related types
 │   └── utils/              # Additional utilities
@@ -182,21 +199,82 @@ Components and hooks for development and debugging:
 
 ## API Integration
 
-The frontend interacts with the backend API through RESTful endpoints:
+### Modular API Structure
+
+The frontend API is organized in a modular way, categorized by business functionality:
+
+```
+api/
+├── auth/           # Authentication-related APIs (registration, login, third-party auth)
+├── users/          # User-related APIs (user info retrieval, profile updates)
+├── issues/         # Issue-related APIs (retrieving issue lists, getting single issues)
+├── submissions/    # Submission-related APIs (submitting, reviewing, querying submissions)
+├── votes/          # Voting-related APIs (submitting votes, checking vote status)
+├── http.ts         # Common HTTP request utility functions
+├── types.ts        # API error type definitions
+└── index.ts        # Unified API export module
+```
+
+Example of using APIs in components:
+
+```typescript
+// Import specific API modules
+import { authApi, usersApi, submissionsApi } from "@/api";
+
+// Using authentication API
+const handleLogin = async () => {
+  try {
+    const response = await authApi.loginWithEmail({
+      email: "user@example.com",
+      password: "password123"
+    });
+    // Handle login response
+  } catch (error) {
+    // Handle error
+  }
+};
+
+// Using submissions API
+const loadSubmissions = async () => {
+  try {
+    const submissions = await submissionsApi.getUserSubmissions();
+    // Handle submission data
+  } catch (error) {
+    // Handle error
+  }
+};
+```
+
+### REST API Endpoints
+
+The frontend interacts with the backend through the following RESTful endpoints:
 
 - **Authentication Endpoints**:
   - `/api/auth/register`: User registration
   - `/api/auth/login/email`: Email-based login
-  - `/api/users/me`: Fetch current user data
+  - `/api/auth/login/provider`: Third-party provider login
+  - `/api/auth/bind`: Bind third-party account
+  - `/api/auth/providers`: Get linked third-party providers
+
+- **User Endpoints**:
+  - `/api/users/me`: Get current user data
+  - `/api/users`: Get all users (admin only)
 
 - **Submission Endpoints**:
   - `/api/submissions`: Get/create submissions
-  - `/api/submissions/:id`: Get/update/delete specific submission
-  - `/api/issues`: Get available publication issues
+  - `/api/submissions/mine`: Get user's own submissions
+  - `/api/submissions/all`: Get all submissions (admin only)
+  - `/api/submissions/{id}/approve`: Approve submission
+  - `/api/submissions/{id}/reject`: Reject submission
+  - `/api/submissions/{id}/select`: Select submission as featured
 
-- **Admin Endpoints**:
-  - `/api/admin/submissions`: Admin submission management
-  - `/api/admin/issues`: Admin issue management
+- **Issue Endpoints**:
+  - `/api/issues`: Get all issues
+  - `/api/issues/{id}`: Get specific issue
+
+- **Voting Endpoints**:
+  - `/api/votes`: Submit vote
+  - `/api/votes/check`: Check vote status
 
 ## Code Conventions
 
@@ -207,6 +285,7 @@ The codebase follows these conventions:
 3. **CSS**: Tailwind utility classes with custom extensions when needed
 4. **Comments**: Key functions and components are documented with JSDoc comments
 5. **File Naming**: Component files use PascalCase, utility files use camelCase
+6. **API Modularization**: APIs grouped by business functionality, using unified HTTP request utilities
 
 ## Future Enhancements
 
@@ -227,6 +306,7 @@ For developers working on the frontend:
 3. **Styling**: Use Tailwind classes directly in components and extract common patterns to the utility layer
 4. **Responsiveness**: Always design with mobile-first approach
 5. **Authentication**: Secure endpoints should verify the JWT token via the AuthContext
+6. **API Integration**: Use modular API structure organized by business functionality
 
 ## Conclusion
 
