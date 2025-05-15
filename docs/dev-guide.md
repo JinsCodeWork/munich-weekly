@@ -176,4 +176,3 @@ See the [Deployment Documentation](./deployment.md) for deployment process detai
 
 - [Frontend Architecture Details](./frontend-architecture.md)
 - [UI Component Library](./ui-components.md)
-- [Complete Development Guide](./frontend-development-guide.md)

@@ -55,7 +55,6 @@ munich-weekly/
 - 📱 [Frontend Overview](./docs/frontend-overview.md)
 - 🏗️ [Frontend Architecture](./docs/frontend-architecture.md)
 - 🧩 [UI Component Library](./docs/ui-components.md)
-- 💻 [Frontend Development Guide](./docs/frontend-development-guide.md)
 
 ⸻
 

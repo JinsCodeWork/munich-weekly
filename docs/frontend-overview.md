@@ -10,7 +10,7 @@ This document serves as the entry point to the frontend development documentatio
 
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
-- [**Development Guide**](./frontend-development-guide.md) - Frontend development processes and best practices
+- [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
 
 ## Technology Stack
 
@@ -24,23 +24,70 @@ This document serves as the entry point to the frontend development documentatio
 
 ## Project Structure
 
+The frontend project follows a feature-based and component-based architecture, with clear separation of concerns:
+
 ```
 frontend/
-├── public/                # Static assets
+├── .next/                  # Next.js build output
+├── node_modules/           # Dependencies
+├── public/                 # Static assets
+│   ├── favicon.png         # Site favicon
+│   ├── logo.svg            # Brand logo
+│   ├── globe.svg           # Various site icons
+│   ├── file.svg
+│   └── window.svg
 ├── src/
-│   ├── app/              # Next.js pages and layouts
-│   │   ├── account/      # User account pages
-│   │   └── ...
-│   ├── components/       # UI components
-│   │   ├── admin/        # Admin components
-│   │   ├── auth/         # Authentication components
-│   │   ├── navigation/   # Navigation components
-│   │   ├── submission/   # Submission-related components
-│   │   └── ui/           # Core UI components
-│   ├── context/          # React Context providers
-│   ├── hooks/            # Custom React hooks
-│   └── lib/              # Utility functions and constants
-└── .env.local            # Environment variables
+│   ├── app/                # Next.js App Router pages
+│   │   ├── account/        # User account pages
+│   │   │   ├── layout.tsx  # Account section layout
+│   │   │   ├── page.tsx    # Main account page
+│   │   │   ├── submissions/# User's submissions management
+│   │   │   ├── settings/   # User settings
+│   │   │   └── manage-submissions/ # Admin submission management
+│   │   ├── admin/          # Admin panel
+│   │   ├── login/          # Login page
+│   │   ├── register/       # Registration page
+│   │   ├── content/        # Content pages
+│   │   ├── globals.css     # Global CSS
+│   │   ├── layout.tsx      # Root layout
+│   │   └── page.tsx        # Homepage
+│   ├── components/         # UI components
+│   │   ├── admin/          # Admin components
+│   │   ├── auth/           # Authentication components
+│   │   ├── navigation/     # Navigation components
+│   │   │   ├── MainNav.tsx # Desktop navigation
+│   │   │   └── MobileNav.tsx # Mobile navigation menu
+│   │   ├── submission/     # Submission-related components
+│   │   ├── ui/             # Core UI components
+│   │   │   ├── Button.tsx  # Button component
+│   │   │   ├── Container.tsx # Container layout component
+│   │   │   ├── Link.tsx    # Link component
+│   │   │   ├── Logo.tsx    # Logo component
+│   │   │   ├── Modal.tsx   # Modal dialog component
+│   │   │   ├── Pagination.tsx # Pagination component
+│   │   │   └── Thumbnail.tsx # Image thumbnail component
+│   │   ├── Header.tsx      # Main header component
+│   │   └── MainHeader.tsx  # Alternative header component
+│   ├── context/            # React Context providers
+│   │   └── AuthContext.tsx # Authentication context
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useAuth.ts      # Authentication hook
+│   │   ├── useSubmissions.ts # Submissions data hook
+│   │   └── useDebugTools.ts # Development debugging tools
+│   ├── lib/                # Utility functions and constants
+│   │   ├── api.ts          # API service functions
+│   │   ├── constants.ts    # Application constants
+│   │   └── utils.ts        # Utility helper functions
+│   ├── types/              # TypeScript type definitions
+│   │   └── submission.ts   # Submission-related types
+│   └── utils/              # Additional utilities
+│       └── mockData.ts     # Mock data for development
+├── .eslintrc.json          # ESLint configuration
+├── next.config.js          # Next.js configuration
+├── package.json            # Project dependencies
+├── postcss.config.js       # PostCSS configuration
+├── tailwind.config.js      # Tailwind CSS configuration
+└── tsconfig.json           # TypeScript configuration
 ```
 
 ## Core Features
@@ -92,6 +139,7 @@ frontend/
 - Link
 - Thumbnail
 - Pagination
+- Button
 
 ### Submission Related Components
 - SubmissionCard
@@ -117,7 +165,7 @@ frontend/
 ## Development Process
 
 1. Understand the project architecture and component structure
-2. Follow the code standards in the [development guide](./frontend-development-guide.md)
+2. Follow the code standards in the [development guide](./dev-guide.md)
 3. Use the existing component library to build new features
 4. Ensure code passes TypeScript type checking
 5. Maintain good code comments and documentation
