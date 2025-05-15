@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { Thumbnail } from '@/components/ui/Thumbnail';
 
 interface MobileNavProps {
   onLoginClick?: () => void;
@@ -80,10 +81,12 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                     {user.avatarUrl ? (
-                      <img
+                      <Thumbnail
                         src={user.avatarUrl}
                         alt={user.nickname}
-                        className="w-full h-full object-cover"
+                        width={40}
+                        height={40}
+                        rounded
                       />
                     ) : (
                       <i className="fa-solid fa-user text-gray-500"></i>

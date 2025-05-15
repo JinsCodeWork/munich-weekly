@@ -1,6 +1,7 @@
 package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.devtools.annotation.Description;
+import com.munichweekly.backend.dto.AdminSubmissionResponseDTO;
 import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
@@ -78,6 +79,18 @@ public class SubmissionController {
     }
 
     /**
+     * Select a submission as featured. Changes its status to 'selected'.
+     * Called by admin users.
+     */
+    @Description("Select a submission as featured. Admin only.")
+    @PreAuthorize("hasAuthority('admin')")
+    @PatchMapping("/{id}/select")
+    public ResponseEntity<Submission> selectSubmission(@PathVariable Long id) {
+        Submission updated = submissionService.selectSubmission(id);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
      * Retrieve the current user's submissions (optionally filtered by issue).
      */
     @Description("Get the current user's own submissions, optionally filtered by issue.")
@@ -86,6 +99,19 @@ public class SubmissionController {
     public ResponseEntity<List<MySubmissionResponseDTO>> getMySubmissions(
             @RequestParam(required = false) Long issueId) {
         List<MySubmissionResponseDTO> submissions = submissionService.listMySubmissions(issueId);
+        return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * Retrieve all submissions for an issue (admin only).
+     * This endpoint is used by admins to manage submissions.
+     */
+    @Description("Get all submissions for an issue, regardless of status. Admin only.")
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<List<AdminSubmissionResponseDTO>> getAllSubmissions(
+            @RequestParam(required = false) Long issueId) {
+        List<AdminSubmissionResponseDTO> submissions = submissionService.listAllSubmissions(issueId);
         return ResponseEntity.ok(submissions);
     }
 }

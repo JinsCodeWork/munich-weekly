@@ -11,6 +11,7 @@ import MobileNav from './MobileNav';
 import { NAV_LINKS } from '@/lib/constants';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
+import { Thumbnail } from '../ui/Thumbnail';
 
 /**
  * Main navigation component - Responsive design with Tailwind CSS
@@ -113,10 +114,12 @@ export default function MainNav() {
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                       {user.avatarUrl ? (
-                        <img 
+                        <Thumbnail 
                           src={user.avatarUrl} 
-                          alt={user.nickname} 
-                          className="w-full h-full object-cover"
+                          alt={user.nickname}
+                          width={32}
+                          height={32}
+                          rounded
                         />
                       ) : (
                         <i className="fa-solid fa-user text-gray-500"></i>

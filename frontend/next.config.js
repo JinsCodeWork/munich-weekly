@@ -8,6 +8,9 @@ const nextConfig = {
         destination: 'http://localhost:8080/api/:path*' // 后端默认端口为8080
       }
     ]
+  },
+  images: {
+    domains: ['picsum.photos']
   }
 }
 

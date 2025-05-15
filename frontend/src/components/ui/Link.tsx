@@ -2,17 +2,16 @@ import React from 'react';
 import NextLink from 'next/link';
 import { cn } from '@/lib/utils';
 
-interface LinkProps {
+interface LinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
   href: string;
   children: React.ReactNode;
   className?: string;
   variant?: 'default' | 'nav' | 'button';
   external?: boolean;
-  [key: string]: any;
 }
 
 /**
- * 标准链接组件，整合Next.js的Link组件，并提供一致的样式
+ * Standard link component that integrates Next.js Link component with consistent styling
  */
 export function Link({
   href,
@@ -29,7 +28,7 @@ export function Link({
   };
 
   const LinkComponent = external ? 
-    ({ children, ...props }: any) => (
+    ({ children, ...props }: React.HTMLAttributes<HTMLAnchorElement> & { children: React.ReactNode }) => (
       <a target="_blank" rel="noopener noreferrer" {...props}>
         {children}
       </a>

@@ -1,12 +1,13 @@
 // components/Header.tsx
 import React from 'react';
+import { Thumbnail } from '@/components/ui/Thumbnail';
 
 export default function Header() {
-    // 定义内联样式（使用React.CSSProperties类型）
+    // Define inline styles (using React.CSSProperties type)
     const headerStyles: {[key: string]: React.CSSProperties} = {
       container: {
         display: 'grid',
-        gridTemplateColumns: '200px 1fr 100px', // 固定宽度的logo区域，自动宽度的导航区，固定宽度的登录区
+        gridTemplateColumns: '200px 1fr 100px', // Fixed width logo area, auto width nav area, fixed width login area
         alignItems: 'center',
         maxWidth: '1280px',
         margin: '0 auto',
@@ -23,7 +24,7 @@ export default function Header() {
       },
       nav: {
         display: 'flex',
-        paddingLeft: '10px' // 导航栏左侧额外空间
+        paddingLeft: '10px' // Extra space on the left of nav bar
       },
       navLink: {
         marginRight: '24px',
@@ -42,19 +43,21 @@ export default function Header() {
     return (
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div style={headerStyles.container}>
-          {/* Logo 和标题区域 */}
+          {/* Logo and title area */}
           <div style={headerStyles.logo}>
             <div style={headerStyles.logoImg}>
-              <img 
+              <Thumbnail 
                 src="/logo.svg" 
                 alt="Munich Weekly Logo" 
-                style={{width: '100%', height: '100%', objectFit: 'contain'}}
+                width={32}
+                height={32}
+                objectFit="contain"
               />
             </div>
             <div className="text-xl font-bold tracking-wide">Munich Weekly</div>
           </div>
           
-          {/* 导航菜单 */}
+          {/* Navigation menu */}
           <div style={headerStyles.nav} className="hidden md:flex">
             <a href="#" style={headerStyles.navLink}>Gallery</a>
             <a href="#" style={headerStyles.navLink}>Submit</a>
@@ -62,7 +65,7 @@ export default function Header() {
             <a href="#" style={headerStyles.navLink}>About</a>
           </div>
           
-          {/* 登录按钮 */}
+          {/* Login button */}
           <div style={headerStyles.login} className="hidden md:block">
             Login
           </div>

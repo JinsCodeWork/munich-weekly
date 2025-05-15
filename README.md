@@ -1,4 +1,4 @@
-# 📸 Munich Weekly 慕城摄影周刊平台
+# 📸 Munich Weekly Photography Platform
 
 A web-based platform for weekly photography submission and voting, built for students in Munich.
 
@@ -43,6 +43,7 @@ munich-weekly/
 
 ### General Documentation
 - 🧭 [Deployment Guide](./docs/deployment.md)
+- 📊 [Server Changelog](./docs/server-changelog.md)
 - 📦 [API Reference](./docs/api.md)
 - 🗃️ [Database Design](./docs/database.md)
 - 👤 [User Guide](./docs/user-guide.md)
@@ -62,4 +63,4 @@ munich-weekly/
 
 Dongkai Jin · Munich, Germany 🇩🇪
 - GitHub: JinsCodeWork
-- EMail: dongkai.jin@tum.de
+- Email: dongkai.jin@tum.de

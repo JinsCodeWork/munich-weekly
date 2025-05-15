@@ -26,4 +26,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByIdAndUser(Long id, User user);
 
     long countByUserAndIssue(User user, Issue issue);
+    
+    // 查询某期所有投稿（不分状态，用于管理员审核）
+    List<Submission> findByIssue(Issue issue);
 }

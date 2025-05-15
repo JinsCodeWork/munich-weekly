@@ -1,265 +1,290 @@
-# Munich Weekly - UI Component Library
+# Munich Weekly UI Component Library
 
 ## Overview
 
-This document provides detailed information about the UI components available in the Munich Weekly frontend application. These components are designed to provide a consistent user experience across the application while maintaining flexibility and reusability.
+The Munich Weekly UI component library provides a unified set of reusable UI components for building the frontend interface. These components follow a consistent design language to ensure user experience consistency and development efficiency.
 
-## Core Design Principles
+## Design Principles
 
-The UI component library adheres to the following principles:
-
-1. **Consistency**: Components maintain consistent styling, behavior, and interaction patterns
+1. **Consistency**: Components maintain consistent styles, behaviors, and interaction patterns
 2. **Responsiveness**: All components adapt to different screen sizes
-3. **Accessibility**: Components follow WCAG guidelines for accessibility
-4. **Reusability**: Components are designed to be reused across the application
-5. **Modular Design**: Each component has a single responsibility
+3. **Accessibility**: Components follow WCAG accessibility guidelines
+4. **Reusability**: Components are designed to be reused throughout the application
+5. **Modularity**: Each component has a single responsibility
 
-## Component Categories
+## Component Directory
 
 ### Navigation Components
 
-#### `MainNav`
+#### MainNav
 
-The primary navigation component for desktop and tablet views.
+The main navigation component for desktop and tablet views.
 
 **Features**:
-- Responsive layout that adapts to screen size
-- Support for navigation links defined in constants
-- User authentication state integration
-- User dropdown menu for authenticated users
-- Login/register buttons for unauthenticated users
+- Responsive layout
+- User authentication status integration
+- User dropdown menu
+- Login/Register button
+- Use Thumbnail component to display user avatar
 
-**Usage**:
-```tsx
-<MainNav />
-```
+#### MobileNav
 
-#### `MobileNav`
-
-The mobile navigation component that appears on small screens.
+The mobile navigation component for small screen devices.
 
 **Features**:
 - Hamburger menu toggle
 - Slide-in menu panel
-- User information display for authenticated users
+- User information display
 - Navigation links
-- Authentication buttons
-- Prevents background scrolling when open
+- Prevent background scrolling
 
-**Usage**:
-```tsx
-<MobileNav 
-  onLoginClick={() => {}} 
-  onRegisterClick={() => {}} 
-/>
-```
+#### Logo
 
-#### `Logo`
+The application Logo component, supporting different sizes.
 
-The application logo component with size variations.
-
-**Props**:
-- `size`: "sm" | "md" | "lg" - Controls the logo size
-- `className`: Additional CSS classes
-
-**Usage**:
-```tsx
-<Logo size="lg" className="mr-8" />
-```
+**Attributes**:
+- `size`: "sm" | "md" | "lg"
+- `className`: Additional CSS class
 
 ### Authentication Components
 
-#### `LoginForm`
+#### LoginForm
 
-A modal form for user login with glassmorphism effect.
+The login modal form with glass effect.
 
 **Features**:
 - Email and password input fields
-- Remember me checkbox
+- Remember me option
 - Forgot password link
-- Error display
+- Error message
 - Success message
 - Loading state
-- Register link
 
-**Props**:
-- `isOpen`: Boolean to control modal visibility
-- `onClose`: Function to call when closing the modal
-- `onRegisterClick`: Function to switch to register form
+#### RegisterForm
 
-**Usage**:
-```tsx
-<LoginForm 
-  isOpen={isLoginOpen} 
-  onClose={handleCloseLogin} 
-  onRegisterClick={handleRegisterClick}
-/>
-```
-
-#### `RegisterForm`
-
-A modal form for user registration with glassmorphism effect.
+The registration modal form with glass effect.
 
 **Features**:
 - Email, nickname, and password fields
 - Password confirmation
 - Form validation
-- Error display
+- Error message
 - Success message
 - Loading state
-- Login link
 
-**Props**:
-- `isOpen`: Boolean to control modal visibility
-- `onClose`: Function to call when closing the modal
-- `onLoginClick`: Function to switch to login form
+### Basic UI Components
 
-**Usage**:
-```tsx
-<RegisterForm
-  isOpen={isRegisterOpen}
-  onClose={handleCloseRegister}
-  onLoginClick={handleLoginClick}
-/>
-```
+#### Modal
 
-### UI Foundation Components
-
-#### `Modal`
-
-A reusable modal component with glassmorphism effect.
+The reusable glass effect modal component.
 
 **Features**:
-- Backdrop with blur effect
+- Background blur effect
 - Centered content
 - Close button
 - Keyboard accessibility (ESC to close)
-- Prevents background scrolling
+- Prevent background scrolling
+- Smooth transition animation
 
-**Props**:
-- `isOpen`: Boolean to control modal visibility
+**Attributes**:
+- `isOpen`: Boolean value to control modal visibility
 - `onClose`: Function to call when closing the modal
 - `children`: React nodes to render inside the modal
+- `className`: Additional CSS class for the modal container
 
-**Usage**:
-```tsx
-<Modal isOpen={isOpen} onClose={onClose}>
-  <div>Modal content here</div>
-</Modal>
-```
+#### Container
 
-#### `Container`
-
-A responsive container component with consistent padding.
+The responsive container component with consistent padding.
 
 **Features**:
 - Responsive width
 - Consistent horizontal padding
-- Optional component type (as prop)
+- Optional component type
 
-**Props**:
+**Attributes**:
 - `children`: React nodes to render inside the container
 - `as`: HTML element or component to render (default: "div")
-- `className`: Additional CSS classes
+- `className`: Additional CSS class
 
-**Usage**:
-```tsx
-<Container as="section" className="py-8">
-  Content here
-</Container>
-```
+#### Link
 
-### Account Page Components
+The standard link component integrated with Next.js Link component.
 
-#### `AccountLayout`
+**Features**:
+- Consistent style
+- Support external links
+- Different style variants
+- TypeScript type safety
 
-Layout component for user account pages with sidebar navigation.
+**Attributes**:
+- `href`: Navigation target URL
+- `children`: React nodes inside the link
+- `className`: Additional CSS class
+- `variant`: "default" | "nav" | "button" - Link style variant
+- `external`: Boolean value indicating whether the link should open in a new tab
+
+#### Thumbnail
+
+The flexible image thumbnail component based on Next.js Image.
+
+**Features**:
+- Optimize image through Next.js Image
+- Multiple aspect ratio options
+- Support rounded corners
+- Customizable object adaptation
+- Load priority control
+
+**Attributes**:
+- `src`: Image source URL
+- `alt`: Accessible alternative text
+- `width`: Image width (default: 64)
+- `height`: Image height (default: 64)
+- `fill`: Boolean value to enable fill mode
+- `objectFit`: Object adaptation method
+- `rounded`: Boolean value to enable rounded corners
+- `aspectRatio`: Aspect ratio setting
+
+#### Pagination
+
+The flexible pagination component for multi-page content navigation.
+
+**Features**:
+- Dynamic page number generation
+- Current page indicator
+- Previous and next page navigation
+- Home and end page shortcuts
+
+**Attributes**:
+- `currentPage`: Current active page
+- `totalPages`: Total number of pages
+- `onPageChange`: Function to call when selecting a page
+- `className`: Additional CSS class
+
+### Submission Components
+
+#### SubmissionCard
+
+The card component for displaying a single photo submission.
+
+**Features**:
+- Use Thumbnail component to display submission image
+- Use color-coded badge to display submission status
+- Display submission date and journal information
+- Display the number of approved or selected submissions
+- Support clicking to view full-size image
+- Use special badge to mark cover submission
+
+#### ImageGrid
+
+The responsive grid layout for displaying multiple images/submissions.
+
+**Features**:
+- Based on configurable column count for screen size
+- Customizable project spacing
+- Support different aspect ratios
+- Hover effect to display image information
+- Click to open full-size image view
+
+#### ImageViewer
+
+The modal component for viewing full-size images with description.
+
+**Features**:
+- Full-screen image display
+- Image description display
+- Click outside area to close
+- Keyboard support (ESC to close)
+- Prevent background scrolling
+
+### Management Components
+
+#### SubmissionTable
+
+The table component for managing submissions.
+
+**Features**:
+- Table view of submission key information
+- Color-coded status indicator
+- Clickable preview thumbnail
+- Approve, reject, or select submission operation buttons
+- Operation loading state
+
+#### IssueSelector
+
+The selector component for selecting a journal to view submissions.
+
+**Attributes**:
+- `issues`: Journal object array
+- `selectedIssue`: Current selected journal
+- `onIssueChange`: Callback when journal selection changes
+
+#### LoadingErrorStates
+
+The component for displaying loading and error states in the management interface.
+
+**Components**:
+- `LoadingState`: Display loading animation and message
+- `ErrorState`: Display error message and retry option
+
+### Account Components
+
+#### AccountLayout
+
+The responsive layout component for user account pages with sidebar navigation.
 
 **Features**:
 - Responsive layout with sidebar and main content area
 - User information display
-- Navigation links for account sections
+- Account navigation links
 - Logout button
-- Authentication check with redirect
-
-**Usage**:
-```tsx
-<AccountLayout>
-  <ProfileContent />
-</AccountLayout>
-```
-
-## Animation System
-
-The UI components utilize several animation patterns:
-
-1. **Fade-in Animations**: Components fade in with staggered delays
-2. **Transition Animations**: Smooth transitions for interactive elements
-3. **Transform Animations**: Subtle transform effects for hover states
-
-Example of the animation pattern used in forms:
-```tsx
-<div className="animate-fadeIn opacity-0" style={{ animationDelay: "0.2s" }}>
-  Content here
-</div>
-```
+- Authentication check with redirection
 
 ## Style System
 
-The UI components use Tailwind CSS for styling with consistent patterns:
+UI components use Tailwind CSS for styling, following a consistent pattern:
 
-### Color Palette
+### Color System
 
-- **Primary**: Blue (`blue-500`, `blue-600`)
-- **Gray Scale**: Various gray shades for text and backgrounds
+- **Primary Color**: Blue (`blue-500`, `blue-600`)
+- **Gray Scale**: Used for text and background
 - **Success**: Green (`green-500`)
 - **Error**: Red (`red-400`, `red-500`)
-- **White/Black**: For contrast and backgrounds
+- **White/Black**: Used for contrast and background
 
 ### Typography
 
-- **Headings**: Various sizes with consistent font weights
-- **Body Text**: Regular and medium weights with appropriate sizes
-- **Form Labels**: Smaller, medium weight text
+- **Title**: Various sizes with consistent font weight
+- **Body Text**: Regular and medium font weight at appropriate size
+- **Form Label**: Small and medium font weight text
 
 ### Spacing
 
-Consistent spacing using Tailwind's spacing scale:
+Using Tailwind spacing system:
 - Small spacing: 2, 3, 4 (0.5rem, 0.75rem, 1rem)
 - Medium spacing: 6, 8, 10 (1.5rem, 2rem, 2.5rem)
 - Large spacing: 12, 16, 20 (3rem, 4rem, 5rem)
 
-## Responsive Patterns
+## Responsive Mode
 
-The component library implements several responsive patterns:
+The component library implements several responsive modes:
 
-1. **Container Queries**: The main container adapts to viewport width
-2. **Flex/Grid Layouts**: Flexible layouts that reflow based on available space
-3. **Component Visibility**: Components appear/hide based on breakpoints
+1. **Container Query**: Main container adapts to viewport width
+2. **Elastic/Grid Layout**: Flexible layout based on available space
+3. **Component Visibility**: Display/hide components based on breakpoints
 4. **Adaptive Spacing**: Spacing scales with viewport size
 
 Breakpoints follow Tailwind's default system:
-- `sm`: 640px and up
-- `md`: 768px and up
-- `lg`: 1024px and up
-- `xl`: 1280px and up
+- `sm`: 640px and above
+- `md`: 768px and above
+- `lg`: 1024px and above
+- `xl`: 1280px and above
 
-## Form Components
-
-Forms follow consistent patterns:
-
-1. **Input Design**: Consistent styling for all input fields
-2. **Validation**: Client-side validation with error messages
-3. **State Handling**: Loading, success, and error states
-4. **Accessibility**: Proper labeling and focus states
-
-## Custom Utility Functions
+## Utility Functions
 
 ### `cn`
 
-A utility function for conditional class name composition using `clsx` and `tailwind-merge`.
+The utility function for combining conditional class names using `clsx` and `tailwind-merge`.
 
-**Usage**:
 ```tsx
 import { cn } from "@/lib/utils"
 
@@ -272,45 +297,66 @@ import { cn } from "@/lib/utils"
 </div>
 ```
 
-## Best Practices for Component Development
+## Custom Hooks
 
-When extending the component library:
+### Authentication Hooks
+
+#### `useAuth`
+
+The Hook for managing user authentication status and operations using React Context.
+
+**Features**:
+- User authentication status management
+- JWT token handling and storage
+- User personal information access
+- Login and logout operations
+- Loading state management
+
+### Data Management Hooks
+
+#### `useSubmissions`
+
+The Hook for managing submission data.
+
+**Features**:
+- Fetch journals and submissions from API
+- Manage loading and error states
+- Handle submission operations (approve/reject/select)
+- Support simulated data for development and testing
+- Manage submission detail view state
+
+### Development Tool Hooks
+
+#### `useDebugTools`
+
+The Hook for providing debugging tools.
+
+**Features**:
+- Authentication status check
+- API connection test
+- Simulated data switch
+- Debugging information display
+
+## Component Development Guide
+
+Best practices when extending the component library:
 
 1. **Component Structure**:
-   - Define a clear interface for props
+   - Define clear interface for props
    - Use TypeScript for type safety
    - Include JSDoc comments for functionality
 
-2. **Styling Approach**:
+2. **Style Method**:
    - Use Tailwind classes directly in components
    - Extract common patterns to utility functions
-   - Use the `cn` utility for conditional classes
+   - Use `cn` utility for conditional class processing
 
 3. **Component Testing**:
-   - Test components in different viewport sizes
-   - Ensure accessibility with keyboard navigation
+   - Test components at different viewport sizes
+   - Ensure keyboard navigation accessibility
    - Check component states (loading, error, success)
 
 4. **Documentation**:
-   - Document props and their purpose
+   - Record props and their usage
    - Provide usage examples
    - Note any important implementation details
-
-## Future Component Roadmap
-
-Planned additions to the component library:
-
-1. **Data Display Components**:
-   - Image gallery component
-   - Pagination component
-   - Card components for photo displays
-
-2. **Input Components**:
-   - File upload with preview
-   - Advanced form controls
-   - Search input with suggestions
-
-3. **Feedback Components**:
-   - Toast notifications
-   - Progress indicators
-   - Loading skeletons 

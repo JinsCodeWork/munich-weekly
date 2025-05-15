@@ -1,4 +1,5 @@
 import React from 'react';
+import { Thumbnail } from '@/components/ui/Thumbnail';
 
 export default function MainHeader() {
     return (
@@ -21,10 +22,12 @@ export default function MainHeader() {
           {/* Logo 和标题区域 */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '32px', height: '32px', marginRight: '8px' }}>
-              <img 
+              <Thumbnail 
                 src="/logo.svg" 
                 alt="Munich Weekly Logo" 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                width={32}
+                height={32}
+                objectFit="contain"
               />
             </div>
             <div style={{ 

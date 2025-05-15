@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ModalProps {
@@ -11,13 +11,22 @@ interface ModalProps {
 }
 
 /**
- * 模态框组件 - 实现磨砂玻璃效果
+ * Modal component - Implements a frosted glass effect
  */
 export function Modal({ isOpen, onClose, children, className }: ModalProps) {
   const [isClosing, setIsClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // 处理ESC键关闭
+  // Handle closing animation
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300);
+  }, [onClose]);
+
+  // Handle ESC key to close
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -27,25 +36,16 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // 防止背景滚动
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'auto';
     };
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
-  // 处理关闭动画
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 300);
-  };
-
-  // 处理背景点击关闭
+  // Handle backdrop click to close
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (backdropRef.current === e.target) {
       handleClose();

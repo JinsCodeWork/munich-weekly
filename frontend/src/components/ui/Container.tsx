@@ -8,7 +8,7 @@ interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * 标准容器组件，提供一致的页面宽度和边距
+ * Standard container component providing consistent page width and margins
  */
 export function Container({
   children,

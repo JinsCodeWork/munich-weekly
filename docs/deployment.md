@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide for Munich Weekly
 
-This guide explains how to deploy the **Munich Weekly** photography platform to a production server on **Hetzner Cloud**. It covers backend configuration, database setup, and reverse proxy (Nginx + SSL). Frontend deployment will be added in future versions.
+This guide explains how to deploy the **Munich Weekly** photography platform to a production server on **Hetzner Cloud**. It covers backend configuration, database setup, and reverse proxy (Nginx + SSL), as well as frontend deployment with PM2.
 
 ---
 
@@ -15,7 +15,63 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 
 ---
 
-## 2. Directory Setup
+## 2. SSH Security Configuration
+
+### SSH Key Setup
+
+Ensure SSH key-based authentication is properly configured:
+
+```bash
+# On server, ensure proper permissions
+chmod 700 /root/.ssh
+chmod 600 /root/.ssh/authorized_keys
+```
+
+### SSH Configuration
+
+Edit `/etc/ssh/sshd_config` with these security settings:
+
+```
+PasswordAuthentication no
+PubkeyAuthentication yes
+PermitRootLogin yes
+MaxAuthTries 3
+LoginGraceTime 20
+```
+
+Restart SSH service:
+
+```bash
+systemctl restart sshd
+```
+
+### Local SSH Configuration
+
+Add this to your local `~/.ssh/config` for easy access:
+
+```
+Host munichweekly
+    HostName 188.245.71.169
+    User root
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+### Emergency Recovery
+
+If SSH key authentication fails:
+1. Access Hetzner Cloud Console
+2. Enable Rescue Mode for the server
+3. Mount the system disk and fix permissions:
+   ```bash
+   mount /dev/sda1 /mnt
+   chmod 700 /mnt/root/.ssh
+   chmod 600 /mnt/root/.ssh/authorized_keys
+   ```
+4. Reboot the server
+
+---
+
+## 3. Directory Setup
 
 On the server:
 
@@ -30,14 +86,14 @@ This creates the expected project structure:
 ```
 munich-weekly/
 ├── backend/         # Spring Boot application
-├── frontend/        # (to be developed)
+├── frontend/        # Next.js frontend
 ├── db/              # SQL scripts (optional)
 └── docs/            # Documentation
 ```
 
 ---
 
-## 3. Environment Configuration
+## 4. Environment Configuration
 
 Create a `.env` file inside the `backend/` directory:
 
@@ -61,7 +117,7 @@ These values are used by:
 
 ---
 
-## 4. Backend Database Setup (Docker)
+## 5. Backend Database Setup (Docker)
 
 Launch the PostgreSQL container with volume persistence:
 
@@ -94,7 +150,7 @@ volumes:
 
 ---
 
-## 5. Building & Running the Backend
+## 6. Building & Running the Backend
 
 Option 1: Run via Gradle (development)
 
@@ -124,7 +180,63 @@ jwt.secret=${JWT_SECRET:this-is-a-very-secret-key-123456789077883932032328}
 
 ---
 
-## 6. Reverse Proxy with Nginx + SSL
+## 7. Frontend Deployment
+
+### Installing Dependencies
+
+```bash
+cd /opt/munich-weekly/frontend
+npm install
+```
+
+### Development Mode (Not Recommended for Production)
+
+```bash
+npm run dev
+```
+
+### Production Deployment with PM2
+
+Install PM2 globally:
+
+```bash
+npm install -g pm2
+```
+
+Start the Next.js application with PM2:
+
+```bash
+cd /opt/munich-weekly/frontend
+pm2 start npm --name munich-frontend -- run dev
+```
+
+Configure PM2 to start on system boot:
+
+```bash
+pm2 save
+pm2 startup
+# Execute the command that PM2 outputs
+```
+
+PM2 Management Commands:
+
+```bash
+# Check status
+pm2 status
+
+# View logs
+pm2 logs munich-frontend
+
+# Restart application
+pm2 restart munich-frontend
+
+# Stop application
+pm2 stop munich-frontend
+```
+
+---
+
+## 8. Reverse Proxy with Nginx + SSL
 
 File: `/etc/nginx/sites-available/10-munichweekly.conf`
 
@@ -159,7 +271,7 @@ server {
         add_header         X-Debug-Proxy "api-hit";
     }
 
-    # Frontend (currently placeholder)
+    # Frontend (Next.js on port 3000)
     location / {
         proxy_pass         http://127.0.0.1:3000/;
         proxy_http_version 1.1;
@@ -167,6 +279,8 @@ server {
         proxy_set_header   X-Real-IP         $remote_addr;
         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
         add_header         X-Debug-Proxy "frontend-hit";
     }
 }
@@ -182,7 +296,7 @@ sudo systemctl reload nginx
 
 ---
 
-## 7. SSL with Let's Encrypt
+## 9. SSL with Let's Encrypt
 
 Install and enable HTTPS certificate:
 
@@ -199,6 +313,46 @@ sudo certbot certificates
 
 ---
 
+## 10. Troubleshooting
+
+### 502 Bad Gateway
+
+If you encounter a 502 Bad Gateway error:
+
+1. Check if the frontend service is running:
+   ```bash
+   pm2 status
+   ```
+
+2. If the service is down, restart it:
+   ```bash
+   cd /opt/munich-weekly/frontend
+   pm2 restart munich-frontend
+   ```
+
+3. Check Nginx logs:
+   ```bash
+   tail -f /var/log/nginx/error.log
+   ```
+
+### SSH Access Issues
+
+If SSH key authentication fails:
+
+1. Use Hetzner Rescue Mode
+2. Mount the system disk:
+   ```bash
+   mount /dev/sda1 /mnt
+   ```
+3. Fix SSH permissions:
+   ```bash
+   chmod 700 /mnt/root/.ssh
+   chmod 600 /mnt/root/.ssh/authorized_keys
+   ```
+4. Reboot the server
+
+---
+
 ## ✅ Status Summary (as of May 2025)
 
 * Server IP: `188.245.71.169`
@@ -207,16 +361,18 @@ sudo certbot certificates
 * Docker: v28.0.4
 * Docker Compose: v2.34.0
 * Nginx: installed & SSL enabled
+* Node.js: installed for frontend
+* PM2: managing frontend service
 * Ports:
 
   * 80/443 → Nginx
   * 8080 → Spring Boot backend
-  * 3000 → reserved for frontend
+  * 3000 → Next.js frontend
 
 ---
 
 ## 📝 Notes
 
-* Frontend is under development — not yet deployed
-* Backend sample app already running on port 8080 (test/homepage)
-* This guide will be extended once frontend is complete
+* Frontend is deployed and managed with PM2
+* Backend sample app running on port 8080
+* SSH security has been hardened with key-based authentication

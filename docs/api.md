@@ -13,14 +13,14 @@
 
 ## VoteController
 
-- **GET** `/api/votes/check`
-  > Check if current visitor has voted for a submission.
-
-  > **Params**: `Long submissionId, String visitorId`
 - **POST** `/api/votes`
   > Submit a vote for a submission. Uses visitorId from cookie.
 
   > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
+- **GET** `/api/votes/check`
+  > Check if current visitor has voted for a submission.
+
+  > **Params**: `Long submissionId, String visitorId`
 
 ## SubmissionController
 
@@ -36,12 +36,20 @@
   > Reject a submission by ID. Admin only.
 
   > **Params**: `Long id`
+- **PATCH** `/api/submissions/{id}/select`
+  > Select a submission as featured. Admin only.
+
+  > **Params**: `Long id`
 - **GET** `/api/submissions`
   > Get all approved submissions under a given issue, including vote counts.
 
   > **Params**: `Long issueId`
 - **GET** `/api/submissions/mine`
   > Get the current user's own submissions, optionally filtered by issue.
+
+  > **Params**: `Long issueId`
+- **GET** `/api/submissions/all`
+  > Get all submissions for an issue, regardless of status. Admin only.
 
   > **Params**: `Long issueId`
 
@@ -51,12 +59,6 @@
   > Register a new user with email, password, and nickname. Returns JWT token
 
   > **Params**: `UserRegisterRequestDTO dto`
-- **POST** `/api/auth/login/provider`
-  > Login with a third-party provider (e.g. Google). Auto-creates user on first login
-
-  > **Params**: `UserAuthProviderLoginRequestDTO dto`
-- **GET** `/api/auth/providers`
-  > Get all third-party providers linked to the current logged-in user
 - **POST** `/api/auth/login/email`
   > Login with email and password, returns JWT token and user info
 
@@ -69,6 +71,12 @@
   > Unbind a third-party provider from the current user. Example: DELETE /api/auth/bind/google
 
   > **Params**: `String provider`
+- **POST** `/api/auth/login/provider`
+  > Login with a third-party provider (e.g. Google). Auto-creates user on first login
+
+  > **Params**: `UserAuthProviderLoginRequestDTO dto`
+- **GET** `/api/auth/providers`
+  > Get all third-party providers linked to the current logged-in user
 
 ## IssueController
 

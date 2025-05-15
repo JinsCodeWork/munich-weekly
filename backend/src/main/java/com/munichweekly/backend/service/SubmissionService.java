@@ -1,5 +1,6 @@
 package com.munichweekly.backend.service;
 
+import com.munichweekly.backend.dto.AdminSubmissionResponseDTO;
 import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
@@ -7,11 +8,11 @@ import com.munichweekly.backend.model.*;
 import com.munichweekly.backend.repository.*;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,7 +67,7 @@ public class SubmissionService {
         Issue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
 
-        // 2. 查询所有“审核通过”的投稿
+        // 2. 查询所有"审核通过"的投稿
         List<Submission> submissions = submissionRepository.findByIssueAndStatus(issue, "approved");
 
         // 3. 查询投票统计（返回 List<Object[]>: [submissionId, voteCount]）
@@ -106,6 +107,31 @@ public class SubmissionService {
         return submissionRepository.save(submission);
     }
 
+    /**
+     * Select a submission as featured and set its status to "selected"
+     * This will also update the reviewed time
+     */
+    @Transactional
+    public Submission selectSubmission(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+        
+        // First, reset any previously selected submission for this issue
+        Issue issue = submission.getIssue();
+        List<Submission> selectedSubmissions = submissionRepository.findByIssueAndStatus(issue, "selected");
+        for (Submission selected : selectedSubmissions) {
+            if (!selected.getId().equals(submissionId)) {
+                selected.setStatus("approved");
+                submissionRepository.save(selected);
+            }
+        }
+        
+        // Then set this submission as selected
+        submission.setStatus("selected");
+        submission.setReviewedAt(LocalDateTime.now());
+        return submissionRepository.save(submission);
+    }
+
     public List<MySubmissionResponseDTO> listMySubmissions(Long issueId) {
         Long userId = CurrentUserUtil.getUserIdOrThrow();
 
@@ -126,6 +152,29 @@ public class SubmissionService {
                             : 0;
 
                     return new MySubmissionResponseDTO(s, voteCount);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * List all submissions for admin management.
+     * This returns all submissions regardless of status, optionally filtered by issue.
+     */
+    public List<AdminSubmissionResponseDTO> listAllSubmissions(Long issueId) {
+        List<Submission> submissions;
+        
+        if (issueId != null) {
+            Issue issue = issueRepository.findById(issueId)
+                    .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+            submissions = submissionRepository.findByIssue(issue);
+        } else {
+            submissions = submissionRepository.findAll();
+        }
+        
+        return submissions.stream()
+                .map(s -> {
+                    int voteCount = voteRepository.findBySubmission(s).size();
+                    return new AdminSubmissionResponseDTO(s, voteCount);
                 })
                 .collect(Collectors.toList());
     }

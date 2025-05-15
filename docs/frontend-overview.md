@@ -1,115 +1,143 @@
-# Munich Weekly - Frontend Overview
+# Munich Weekly Frontend Architecture Overview
 
 ## Introduction
 
-The Munich Weekly frontend is a modern, responsive web application built using Next.js and TypeScript. It provides a user-friendly interface for the photography submission and voting platform, designed to be accessible on both desktop and mobile devices.
+Munich Weekly is a photography submission and voting platform, built with modern technology stack that provides a responsive user interface supporting multiple devices. This document provides an overview of the frontend architecture.
 
-## Quick Links
+## Documentation Guide
 
-- [Frontend Architecture](./frontend-architecture.md) - Detailed architecture overview
-- [UI Component Library](./ui-components.md) - Documentation of all UI components
-- [Frontend Development Guide](./frontend-development-guide.md) - Step-by-step development guide
+This document serves as the entry point to the frontend development documentation system, which includes the following related documents:
 
-## Key Features
-
-The frontend implementation includes the following features:
-
-1. **Responsive Design**
-   - Mobile-first approach with adaptive layouts
-   - Support for a wide range of devices and screen sizes
-
-2. **Modern Authentication System**
-   - JWT-based authentication
-   - Email registration and login
-   - Persistent sessions
-   - Protected routes
-
-3. **User Interface**
-   - Clean, modern aesthetic with glassmorphism effects
-   - Animated transitions and interactions
-   - Consistent design language
-
-4. **Account Management**
-   - User profile editing
-   - Submission management
-   - Account settings
-
-5. **Navigation**
-   - Responsive navigation system
-   - Mobile navigation with slide-in menu
-   - User state-aware navigation elements
+- [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
+- [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
+- [**Development Guide**](./frontend-development-guide.md) - Frontend development processes and best practices
 
 ## Technology Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **State Management**: React Context API
+- **State Management**: React Context API + Custom Hooks
 - **Authentication**: JWT tokens
 - **API Integration**: Fetch API with RESTful endpoints
+- **Image Optimization**: Next.js Image component
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v16.0.0 or later)
-- npm (v7.0.0 or later) or Yarn (v1.22.0 or later)
-
-### Quick Start
-
-1. Clone the repository
-2. Navigate to the frontend directory: `cd frontend`
-3. Install dependencies: `npm install`
-4. Start the development server: `npm run dev`
-5. Open your browser to `http://localhost:3000`
-
-For detailed setup instructions, refer to the [Frontend Development Guide](./frontend-development-guide.md).
-
-## Project Structure Overview
+## Project Structure
 
 ```
 frontend/
+├── public/                # Static assets
 ├── src/
-│   ├── app/                # Next.js pages and layouts
-│   │   ├── account/        # User account pages
+│   ├── app/              # Next.js pages and layouts
+│   │   ├── account/      # User account pages
 │   │   └── ...
-│   ├── components/         # UI components
-│   │   ├── auth/           # Authentication components
-│   │   ├── navigation/     # Navigation components
-│   │   └── ui/             # Core UI components
-│   ├── context/            # React Context providers
-│   └── lib/                # Utilities and helpers
-└── public/                 # Static assets
+│   ├── components/       # UI components
+│   │   ├── admin/        # Admin components
+│   │   ├── auth/         # Authentication components
+│   │   ├── navigation/   # Navigation components
+│   │   ├── submission/   # Submission-related components
+│   │   └── ui/           # Core UI components
+│   ├── context/          # React Context providers
+│   ├── hooks/            # Custom React hooks
+│   └── lib/              # Utility functions and constants
+└── .env.local            # Environment variables
 ```
 
-## Current Status
+## Core Features
 
-The frontend currently implements:
+### 1. Authentication System
 
-- Complete authentication flow (registration, login, logout)
+- JWT token authentication mechanism
+- User registration and login
+- Session persistence
+- Permission control
+
+### 2. User Interface
+
+- Responsive design
+- Glassmorphism design elements
+- Component-based architecture
+- Image optimization techniques
+
+### 3. Content Management
+
 - User profile management
+- Work submission system
+- Admin approval workflow
+- Voting mechanism
+
+### 4. Navigation System
+
 - Responsive navigation
-- Account settings page
-- Core UI component library
+- Mobile sidebar menu
+- User-state aware elements
+
+## Implemented Components
+
+### Navigation Components
+- MainNav (desktop navigation)
+- MobileNav (mobile menu)
+- Logo
+
+### Authentication Components
+- LoginForm
+- RegisterForm
+
+### Layout Components
+- Container
+- AccountLayout
+
+### Base UI Components
+- Modal
+- Link
+- Thumbnail
+- Pagination
+
+### Submission Related Components
+- SubmissionCard
+- ImageGrid
+- ImageViewer
+
+### Admin Components
+- SubmissionTable
+- IssueSelector
+- LoadingErrorStates
+
+## Custom Hooks
+
+### Authentication Hooks
+- `useAuth`: Manages user authentication state and operations
+
+### Data Management Hooks
+- `useSubmissions`: Manages submission data and operations
+
+### Development Tools Hooks
+- `useDebugTools`: Provides debugging and development tools
+
+## Development Process
+
+1. Understand the project architecture and component structure
+2. Follow the code standards in the [development guide](./frontend-development-guide.md)
+3. Use the existing component library to build new features
+4. Ensure code passes TypeScript type checking
+5. Maintain good code comments and documentation
 
 ## Roadmap
 
-Planned future enhancements:
+Planned feature enhancements:
 
-1. Photo submission interface
-2. Gallery view for weekly issues
-3. Voting system
-4. User notifications
-5. Multi-language support (English/Chinese)
+1. Image submission interface improvements
+2. Weekly journal gallery view
+3. Voting system refinements
+4. User notification system
+5. Multilingual support (English/Chinese)
+6. Dark mode
+7. Batch submission management tools
 
-## Contributing
+## Contribution Guidelines
 
-To contribute to the frontend development:
-
-1. Review the [Frontend Architecture](./frontend-architecture.md) document
-2. Follow the coding standards in the [Frontend Development Guide](./frontend-development-guide.md)
-3. Use components from the [UI Component Library](./ui-components.md) where possible
-
-## Screenshots
-
-_This section will contain screenshots of key pages once the design is finalized._ 
+1. Follow code standards and development best practices
+2. Reuse existing components to ensure UI consistency
+3. Ensure responsive design adapts to various devices
+4. Write appropriate unit tests
+5. Update relevant documentation 
