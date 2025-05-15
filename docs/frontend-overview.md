@@ -24,48 +24,65 @@ This document serves as the entry point to the frontend development documentatio
 
 ## Project Structure
 
-The frontend project follows a feature-based and component-based architecture, with clear separation of concerns:
+The frontend project follows a feature-based and component-based architecture, with clear separation of concerns. Here's the actual project structure:
 
 ```
 frontend/
-├── .next/                  # Next.js build output
-├── node_modules/           # Dependencies
 ├── public/                 # Static assets
 │   ├── favicon.png         # Site favicon
 │   ├── logo.svg            # Brand logo
-│   ├── globe.svg           # Various site icons
-│   ├── file.svg
-│   └── window.svg
+│   ├── globe.svg           # UI icons
+│   ├── file.svg            # UI icons
+│   ├── next.svg            # Next.js logo
+│   ├── vercel.svg          # Vercel logo
+│   └── window.svg          # UI icons
+├── scripts/                # Utility scripts
+│   ├── convert-favicon.js  # Favicon conversion tool
+│   └── generate-favicon.js # Favicon generation script
 ├── src/
 │   ├── app/                # Next.js App Router pages
-│   │   ├── account/        # User account pages
-│   │   │   ├── layout.tsx  # Account section layout
+│   │   ├── account/        # User account section
+│   │   │   ├── layout.tsx  # Account layout with sidebar
 │   │   │   ├── page.tsx    # Main account page
-│   │   │   ├── submissions/# User's submissions management
 │   │   │   ├── settings/   # User settings
+│   │   │   ├── submissions/# User submissions management
 │   │   │   └── manage-submissions/ # Admin submission management
-│   │   ├── admin/          # Admin panel
-│   │   ├── login/          # Login page
-│   │   ├── register/       # Registration page
+│   │   ├── admin/          # Admin panel routes
+│   │   │   └── submissions/# Admin submission management
 │   │   ├── content/        # Content pages
+│   │   ├── login/          # Login page
+│   │   │   └── page.tsx    # Login page component
+│   │   ├── register/       # Registration page
+│   │   ├── test/           # Test pages
+│   │   │   └── page.tsx    # Test component
 │   │   ├── globals.css     # Global CSS
 │   │   ├── layout.tsx      # Root layout
 │   │   └── page.tsx        # Homepage
 │   ├── components/         # UI components
 │   │   ├── admin/          # Admin components
+│   │   │   └── submissions/# Admin submission components
+│   │   │       ├── DebugTools.tsx     # Development debugging interface
+│   │   │       ├── IssueSelector.tsx  # Issue selection component
+│   │   │       ├── LoadingErrorStates.tsx # Loading/error handling
+│   │   │       └── SubmissionTable.tsx # Submission management table
 │   │   ├── auth/           # Authentication components
+│   │   │   ├── LoginForm.tsx   # Login form component
+│   │   │   └── RegisterForm.tsx # Registration form component
 │   │   ├── navigation/     # Navigation components
-│   │   │   ├── MainNav.tsx # Desktop navigation
-│   │   │   └── MobileNav.tsx # Mobile navigation menu
-│   │   ├── submission/     # Submission-related components
+│   │   │   ├── MainNav.tsx     # Desktop navigation bar
+│   │   │   └── MobileNav.tsx   # Mobile navigation menu
+│   │   ├── submission/     # Submission components
+│   │   │   ├── ImageGrid.tsx   # Grid layout for images
+│   │   │   ├── ImageViewer.tsx # Image viewing modal
+│   │   │   └── SubmissionCard.tsx # Submission card component
 │   │   ├── ui/             # Core UI components
-│   │   │   ├── Button.tsx  # Button component
-│   │   │   ├── Container.tsx # Container layout component
-│   │   │   ├── Link.tsx    # Link component
-│   │   │   ├── Logo.tsx    # Logo component
-│   │   │   ├── Modal.tsx   # Modal dialog component
-│   │   │   ├── Pagination.tsx # Pagination component
-│   │   │   └── Thumbnail.tsx # Image thumbnail component
+│   │   │   ├── Button.tsx      # Button component
+│   │   │   ├── Container.tsx   # Container layout component
+│   │   │   ├── Link.tsx        # Link component
+│   │   │   ├── Logo.tsx        # Logo component
+│   │   │   ├── Modal.tsx       # Modal dialog component
+│   │   │   ├── Pagination.tsx  # Pagination component
+│   │   │   └── Thumbnail.tsx   # Image thumbnail component
 │   │   ├── Header.tsx      # Main header component
 │   │   └── MainHeader.tsx  # Alternative header component
 │   ├── context/            # React Context providers
@@ -82,11 +99,13 @@ frontend/
 │   │   └── submission.ts   # Submission-related types
 │   └── utils/              # Additional utilities
 │       └── mockData.ts     # Mock data for development
-├── .eslintrc.json          # ESLint configuration
+├── components.json         # Components configuration
+├── eslint.config.mjs       # ESLint configuration
 ├── next.config.js          # Next.js configuration
+├── next-env.d.ts           # Next.js TypeScript declarations
 ├── package.json            # Project dependencies
-├── postcss.config.js       # PostCSS configuration
-├── tailwind.config.js      # Tailwind CSS configuration
+├── postcss.config.mjs      # PostCSS configuration
+├── tailwind.config.ts      # Tailwind CSS configuration
 └── tsconfig.json           # TypeScript configuration
 ```
 
@@ -150,6 +169,7 @@ frontend/
 - SubmissionTable
 - IssueSelector
 - LoadingErrorStates
+- DebugTools
 
 ## Custom Hooks
 

@@ -6,33 +6,87 @@ Munich Weekly is a photography-based weekly publication platform where users can
 
 ## Tech Stack
 
-- **Framework**: Next.js (App Router)
+- **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Authentication**: JWT-based authentication with secure HTTP-only cookies
-- **State Management**: React Context API
+- **State Management**: React Context API + Custom Hooks
 - **Icons**: Font Awesome
 - **UI Components**: Custom components with glassmorphism effects
 
 ## Core Components Structure
 
-The frontend is organized into a component-based architecture following the Next.js App Router pattern:
+The frontend is organized into a component-based architecture following the Next.js App Router pattern. Below is the actual project structure:
 
 ```
 frontend/
-├── public/             # Static assets
+├── public/                 # Static assets
+│   ├── favicon.png         # Site favicon
+│   ├── logo.svg            # Brand logo
+│   ├── globe.svg           # UI icons
+│   ├── file.svg            # UI icons
+│   └── window.svg          # UI icons
+├── scripts/                # Utility scripts
+│   ├── convert-favicon.js  # Favicon conversion tool
+│   └── generate-favicon.js # Favicon generation script
 ├── src/
-│   ├── app/            # Next.js App Router pages
-│   │   ├── account/    # User account pages
-│   │   ├── content/    # Content pages
-│   │   └── ...         # Other page routes
-│   ├── components/     # Reusable UI components
-│   │   ├── auth/       # Authentication components
-│   │   ├── navigation/ # Navigation components
-│   │   └── ui/         # UI element components
-│   ├── context/        # React Context providers
-│   ├── lib/            # Utility functions and constants
-│   └── ...
+│   ├── app/                # Next.js App Router pages
+│   │   ├── account/        # User account section
+│   │   │   ├── layout.tsx  # Account layout with sidebar
+│   │   │   ├── page.tsx    # Main account page
+│   │   │   ├── settings/   # User settings
+│   │   │   ├── submissions/# User submissions management
+│   │   │   └── manage-submissions/ # Submission management
+│   │   ├── admin/          # Admin panel routes
+│   │   │   └── submissions/# Admin submission management
+│   │   ├── content/        # Content pages
+│   │   ├── login/          # Login page
+│   │   ├── register/       # Registration page
+│   │   ├── test/           # Test pages
+│   │   ├── globals.css     # Global CSS
+│   │   ├── layout.tsx      # Root layout
+│   │   └── page.tsx        # Homepage
+│   ├── components/         # UI components
+│   │   ├── admin/          # Admin components
+│   │   │   └── submissions/# Admin submission components
+│   │   │       ├── DebugTools.tsx     # Development debugging
+│   │   │       ├── IssueSelector.tsx  # Issue selection
+│   │   │       ├── LoadingErrorStates.tsx # Loading/error states
+│   │   │       └── SubmissionTable.tsx # Submission table
+│   │   ├── auth/           # Authentication components
+│   │   │   ├── LoginForm.tsx   # Login form
+│   │   │   └── RegisterForm.tsx # Registration form
+│   │   ├── navigation/     # Navigation components
+│   │   │   ├── MainNav.tsx     # Desktop navigation
+│   │   │   └── MobileNav.tsx   # Mobile navigation
+│   │   ├── submission/     # Submission components
+│   │   │   ├── ImageGrid.tsx   # Grid layout for images
+│   │   │   ├── ImageViewer.tsx # Image viewing modal
+│   │   │   └── SubmissionCard.tsx # Submission card
+│   │   ├── ui/             # Core UI components
+│   │   │   ├── Button.tsx      # Button component
+│   │   │   ├── Container.tsx   # Container layout
+│   │   │   ├── Link.tsx        # Link component
+│   │   │   ├── Logo.tsx        # Logo component
+│   │   │   ├── Modal.tsx       # Modal dialog
+│   │   │   ├── Pagination.tsx  # Pagination component
+│   │   │   └── Thumbnail.tsx   # Image thumbnail
+│   │   ├── Header.tsx      # Main header component
+│   │   └── MainHeader.tsx  # Alternative header
+│   ├── context/            # React Context providers
+│   │   └── AuthContext.tsx # Authentication context
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useAuth.ts      # Authentication hook
+│   │   ├── useSubmissions.ts # Submissions data hook
+│   │   └── useDebugTools.ts # Development debugging hook
+│   ├── lib/                # Utility functions and constants
+│   │   ├── api.ts          # API service functions
+│   │   ├── constants.ts    # Application constants
+│   │   └── utils.ts        # Utility helper functions
+│   ├── types/              # TypeScript type definitions
+│   │   └── submission.ts   # Submission-related types
+│   └── utils/              # Additional utilities
+│       └── mockData.ts     # Mock data for development
 ```
 
 ## Key Features
@@ -50,6 +104,7 @@ Authentication components:
 - `LoginForm`: A modal-based login form with email/password fields
 - `RegisterForm`: A modal-based registration form with validation
 - `AuthContext`: React Context for managing authentication state and user data
+- `useAuth`: Custom hook for accessing authentication functionality
 
 ### Navigation System
 
@@ -58,15 +113,26 @@ A responsive navigation system that adjusts for different screen sizes:
 - **MainNav**: Desktop navigation with user account dropdown
 - **MobileNav**: Mobile-friendly navigation with sliding menu
 - **Logo**: Customizable logo component
+- **Header/MainHeader**: Alternative header implementations
 
 ### User Account Management
 
-A GitLab-inspired user account management system with:
+A user account management system with sidebar navigation:
 
-- **Layout**: Sidebar navigation with main content area
+- **Account Layout**: Sidebar navigation with main content area
 - **Profile Management**: User profile viewing and editing
 - **Submissions Management**: Interface for user photo submissions
 - **Account Settings**: Security settings and password management
+
+### Content Management
+
+Components for managing submission content:
+
+- **SubmissionCard**: Displays individual submissions with metadata
+- **ImageGrid**: Grid layout for displaying multiple submissions
+- **ImageViewer**: Modal for viewing full-size images
+- **SubmissionTable**: Admin interface for managing submissions
+- **IssueSelector**: Component for selecting publication issues
 
 ### UI Components
 
@@ -74,15 +140,19 @@ Custom UI components designed for consistency and reusability:
 
 - **Modal**: Glassmorphism-style modal with backdrop blur
 - **Container**: Responsive container with consistent padding
-- **Form Elements**: Styled input fields, buttons, and form controls
+- **Button**: Styled button component with variants
+- **Link**: Enhanced link component with Next.js integration
+- **Pagination**: Component for paginating through content
+- **Thumbnail**: Image thumbnail component with Next.js Image integration
 
-### Responsive Design
+### Development Tools
 
-The application features a fully responsive design:
+Components and hooks for development and debugging:
 
-- Mobile-first approach with Tailwind CSS
-- Responsive navigation that transforms based on viewport size
-- Flexible layouts that adapt to different screen sizes
+- **DebugTools**: Interface for testing and debugging functionality
+- **useDebugTools**: Hook for accessing debugging utilities
+- **LoadingErrorStates**: Components for handling loading and error states
+- **mockData**: Mock data utilities for development and testing
 
 ## Authentication Flow
 
@@ -119,8 +189,14 @@ The frontend interacts with the backend API through RESTful endpoints:
   - `/api/auth/login/email`: Email-based login
   - `/api/users/me`: Fetch current user data
 
-- **User Endpoints**:
-  - `/api/users/me`: Update user profile information
+- **Submission Endpoints**:
+  - `/api/submissions`: Get/create submissions
+  - `/api/submissions/:id`: Get/update/delete specific submission
+  - `/api/issues`: Get available publication issues
+
+- **Admin Endpoints**:
+  - `/api/admin/submissions`: Admin submission management
+  - `/api/admin/issues`: Admin issue management
 
 ## Code Conventions
 
