@@ -18,11 +18,45 @@ export const navContainerVariants = {
  * Navigation link variants
  */
 export const navLinkVariants = {
-  default: 'text-base text-gray-600 hover:text-black whitespace-nowrap font-medium',
-  active: 'text-black font-semibold',
-  light: 'text-base text-white/80 hover:text-white whitespace-nowrap font-medium',
-  lightActive: 'text-white font-semibold',
+  default: 'text-base text-gray-600 whitespace-nowrap font-medium relative nav-link-hover',
+  active: 'text-black font-semibold relative nav-link-active',
+  light: 'text-base text-white/80 whitespace-nowrap font-medium relative nav-link-hover',
+  lightActive: 'text-white font-semibold relative nav-link-active',
 };
+
+/**
+ * Nav link hover effect styles
+ * These will be injected globally for the hover animation
+ */
+export const navLinkHoverStyles = `
+  .nav-link-hover::after,
+  .nav-link-active::after {
+    content: '';
+    position: absolute;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    background-color: currentColor;
+    transform-origin: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .nav-link-hover::after {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  
+  .nav-link-hover:hover::after {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  
+  .nav-link-active::after {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+`;
 
 /**
  * User menu variants
@@ -46,9 +80,9 @@ export const mobileNavVariants = {
   userInfo: 'pb-4 mb-4 border-b border-gray-200',
   userProfile: 'flex items-center gap-3 mb-4',
   avatar: 'w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden',
-  navItem: 'block py-2 text-gray-600 hover:text-black',
+  navItem: 'block py-2 text-gray-600 relative nav-link-hover',
   navItemActive: 'block px-3 py-2 rounded-md text-base font-medium bg-gray-100 text-black',
-  closeButton: 'absolute top-4 right-4 text-gray-500 hover:text-black',
+  closeButton: 'absolute top-4 right-4 text-gray-500',
 };
 
 /**

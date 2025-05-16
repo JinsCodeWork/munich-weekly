@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { getSubmissionCardStyles, getSubmissionCardElementStyles } from "@/styles/components/card";
 import { mapSubmissionStatusToBadge } from "@/styles/components/badge";
 import { VoteButton } from '@/components/voting/VoteButton';
+import { cn } from "@/lib/utils";
 
 interface SubmissionCardProps {
   submission: Submission;
@@ -69,7 +70,7 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
               alt={submission.description}
               fill={true}
               objectFit="cover"
-              sizes="(max-width: 768px) 100vw, 384px"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
               priority={false}
             />
           )}
@@ -89,26 +90,33 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
         </div>
 
         {/* Content area */}
-        <div className={getSubmissionCardElementStyles('contentContainer')}>
-          <h3 className={getSubmissionCardElementStyles('title')}>
+        <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-2")}>
+          <h3 className={cn(getSubmissionCardElementStyles('title'), "sm:text-lg text-base sm:mb-1 mb-0")}>
             {submission.description.split('\n')[0]}
           </h3>
           
-          <p className={getSubmissionCardElementStyles('description')}>
+          <p className={cn(getSubmissionCardElementStyles('description'), "hidden sm:block")}>
             {submission.description.split('\n').slice(1).join('\n')}
           </p>
           
-          <div className={getSubmissionCardElementStyles('metaContainer')}>
+          <div className={cn(getSubmissionCardElementStyles('metaContainer'), "sm:mt-3 mt-1")}>
             {displayContext === 'default' && (
               <>
-                <div className={getSubmissionCardElementStyles('metaItem')}>
+                {/* 在移动端隐藏日期和Issue信息 */}
+                <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
                   <i className={`fa-solid fa-calendar-days ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                   <span>{formatDate(submission.submittedAt)}</span>
                 </div>
                 
-                <div className={getSubmissionCardElementStyles('metaItem')}>
+                <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
                   <i className={`fa-solid fa-book ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                   <span>Issue {submission.issue.id}</span>
+                </div>
+                
+                {/* 移动端只显示投票数 */}
+                <div className={cn(getSubmissionCardElementStyles('metaItem'), "sm:hidden w-full text-xs")}>
+                  <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+                  <span>{submission.voteCount} votes</span>
                 </div>
               </>
             )}
@@ -123,12 +131,12 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
                   submissionId={submission.id} 
                   onVoteSuccess={onVoteSuccess} 
                   initialVoteCount={submission.voteCount}
-                  className="ml-2"
+                  className="ml-2 sm:text-sm text-xs sm:py-2 py-1"
                 />
               </div>
             ) : (
-              /* Default display for vote count when not in voteView */
-              <div className={getSubmissionCardElementStyles('metaItem')}>
+              /* Default display for vote count when not in voteView - 只在非移动端显示 */
+              <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
                 <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                 <span>{submission.voteCount} votes</span>
               </div>

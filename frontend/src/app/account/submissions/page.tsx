@@ -6,6 +6,8 @@ import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
 import { SubmissionCard } from "@/components/submission/SubmissionCard"
 import { getImageUrl } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
+import Link from "next/link"
 
 export default function SubmissionsPage() {
   const { user } = useAuth()
@@ -66,8 +68,8 @@ export default function SubmissionsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center border-b border-gray-200 pb-5 mb-6">
-        <div>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b border-gray-200 pb-5 mb-6">
+        <div className="mb-4 md:mb-0">
           <h1 className="text-2xl font-bold text-gray-900">My Submissions</h1>
           <p className="mt-2 text-sm text-gray-500">
             View and manage all your submitted photos
@@ -75,13 +77,13 @@ export default function SubmissionsPage() {
         </div>
         
         {/* Issue filter */}
-        <div className="flex items-center">
+        <div className="flex items-center self-start md:self-auto">
           <label htmlFor="issue-filter" className="mr-2 text-sm text-gray-500">
             Filter by Issue:
           </label>
           <select
             id="issue-filter"
-            className="border border-gray-300 rounded-md py-1.5 px-3 text-sm"
+            className="border border-gray-300 rounded-md py-1.5 px-3 text-sm flex-1 min-w-[180px]"
             onChange={handleIssueChange}
             value={selectedIssue === undefined ? "all" : selectedIssue}
           >
@@ -135,9 +137,11 @@ export default function SubmissionsPage() {
           <p className="text-gray-500 mb-4">
             Upload your photos to participate in Munich Weekly
           </p>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-            Upload Photo
-          </button>
+          <Link href="/submit">
+            <Button variant="primary">
+              Upload Photo
+            </Button>
+          </Link>
         </div>
       )}
 
@@ -167,7 +171,7 @@ export default function SubmissionsPage() {
             )}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {submissions.map((submission) => {
               // 调试信息
               console.log(`Submission ${submission.id} image URL:`, submission.imageUrl);

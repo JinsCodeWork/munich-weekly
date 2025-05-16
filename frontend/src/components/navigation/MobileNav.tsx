@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -8,8 +8,8 @@ import { useRouter } from 'next/navigation';
 import { Thumbnail } from '@/components/ui/Thumbnail';
 import { NAV_LINKS } from '@/lib/constants';
 import { 
-  getNavLinkStyles, 
-  getMobileNavStyles
+  getMobileNavStyles,
+  navLinkHoverStyles
 } from '@/styles';
 
 interface MobileNavProps {
@@ -23,23 +23,8 @@ interface MobileNavProps {
 export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const router = useRouter();
-
-  // Handle outside click to close menu
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Handle logout
   const handleLogout = () => {
@@ -49,7 +34,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
   };
 
   // Prevent scrolling when menu is open
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -65,19 +50,87 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative">
+      {/* 添加CSS动画定义 */}
+      <style jsx global>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
+      
+      {/* 导航链接悬停样式 */}
+      <style jsx global>{navLinkHoverStyles}</style>
+      
+      {/* Button container */}
       <button 
         onClick={toggleMenu}
         className={getMobileNavStyles('toggle')}
         aria-label={isOpen ? "Close menu" : "Open menu"}
+        style={{ 
+          padding: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
       >
-        <i className={`fa-solid ${isOpen ? 'fa-times' : 'fa-bars'} h-6 w-6`} aria-hidden="true"></i>
+        {/* SVG Hamburger Icon instead of Font Awesome */}
+        {isOpen ? (
+          // X (Close) Icon
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        ) : (
+          // Hamburger Menu Icon
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        )}
       </button>
 
-      {/* Mobile navigation menu */}
+      {/* Mobile navigation menu with slide animation */}
       {isOpen && (
-        <div className={getMobileNavStyles('overlay')}>
-          <div className={getMobileNavStyles('container')}>
+        <div className={getMobileNavStyles('overlay')} style={{ animation: 'fadeIn 0.3s ease-out forwards' }}>
+          <div className={getMobileNavStyles('container')} style={{ 
+            animation: 'slideIn 0.3s ease-out forwards',
+            transform: 'translateX(100%)'
+          }}>
             {/* User information */}
             {user && (
               <div className={getMobileNavStyles('userInfo')}>
@@ -86,44 +139,70 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     {user.avatarUrl ? (
                       <Thumbnail
                         src={user.avatarUrl}
-                        alt={user.nickname}
+                        alt={user.nickname || 'User'}
                         width={40}
                         height={40}
                         rounded
                       />
                     ) : (
-                      <i className="fa-solid fa-user text-gray-500"></i>
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        {/* User SVG icon */}
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="20" 
+                          height="20" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="#666" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium">{user.nickname}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="font-medium">{user.nickname || 'User'}</p>
+                    <p className="text-xs text-gray-500">{user.email || ''}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex flex-col items-center space-y-2 text-center">
                   <Link
                     href="/account"
-                    className={getMobileNavStyles('navItem')}
+                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <i className="fa-solid fa-user mr-2"></i>
+                    <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                     Profile
                   </Link>
                   <Link
                     href="/account/submissions"
-                    className={getMobileNavStyles('navItem')}
+                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <i className="fa-solid fa-images mr-2"></i>
+                    <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
                     My Submissions
                   </Link>
                   <Link
                     href="/account/settings"
-                    className={getMobileNavStyles('navItem')}
+                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <i className="fa-solid fa-gear mr-2"></i>
+                    <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
                     Settings
                   </Link>
                 </div>
@@ -131,15 +210,15 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
             )}
 
             {/* Navigation links */}
-            <div className="space-y-3 mb-6">
+            <div className="flex flex-col items-center space-y-3 mb-6 text-center">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={pathname === link.href 
+                  className={`${pathname === link.href 
                     ? getMobileNavStyles('navItemActive') 
                     : getMobileNavStyles('navItem')
-                  }
+                  } relative nav-link-hover ${pathname === link.href ? 'nav-link-active' : ''}`}
                   onClick={closeMenu}
                 >
                   {link.label}
@@ -149,23 +228,33 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
 
             {/* Authentication buttons */}
             {user ? (
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left py-2 text-red-500 hover:text-red-700"
-              >
-                <i className="fa-solid fa-sign-out-alt mr-2"></i>
-                Logout
-              </button>
+              <div className="flex justify-center w-full">
+                <button
+                  onClick={handleLogout}
+                  className="text-center py-2 text-red-500 flex items-center justify-center"
+                >
+                  <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Logout
+                </button>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 w-full flex flex-col items-center">
                 <button
                   onClick={() => {
                     if (onLoginClick) onLoginClick();
                     setIsOpen(false);
                   }}
-                  className="block w-full py-2 text-blue-500 font-medium"
+                  className="btn bg-black text-white py-2 px-4 rounded-md hover:bg-gray-900 w-3/4"
                 >
-                  <i className="fa-solid fa-sign-in-alt mr-2"></i>
+                  <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                  </svg>
                   Login
                 </button>
                 <button
@@ -173,9 +262,14 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     if (onRegisterClick) onRegisterClick();
                     setIsOpen(false);
                   }}
-                  className="block w-full py-2 text-blue-500 font-medium"
+                  className="btn bg-black text-white py-2 px-4 rounded-md hover:bg-gray-900 w-3/4"
                 >
-                  <i className="fa-solid fa-user-plus mr-2"></i>
+                  <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                  </svg>
                   Register
                 </button>
               </div>
@@ -185,8 +279,22 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
             <button
               onClick={() => setIsOpen(false)}
               className={getMobileNavStyles('closeButton')}
+              style={{ position: 'absolute', right: '16px', top: '16px' }}
             >
-              <i className="fa-solid fa-times text-lg"></i>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
         </div>

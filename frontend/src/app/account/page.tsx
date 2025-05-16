@@ -99,12 +99,14 @@ export default function ProfilePage() {
                 <span className="text-gray-500 w-24">Email:</span>
                 <span className="font-medium">{user?.email}</span>
               </div>
-              <div className="flex">
-                <span className="text-gray-500 w-24">Role:</span>
-                <span className="font-medium capitalize">
-                  {user?.role === "admin" ? "Administrator" : "User"}
-                </span>
-              </div>
+              {user?.role === "admin" && (
+                <div className="flex">
+                  <span className="text-gray-500 w-24">Role:</span>
+                  <span className="font-medium capitalize">
+                    Administrator
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -12,7 +12,7 @@ import { cardVariants } from '../variants';
  */
 export const submissionCardStyles = {
   container: 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-  imageContainer: 'relative h-60 overflow-hidden',
+  imageContainer: 'relative overflow-hidden h-48 sm:h-60',
   contentContainer: 'p-4',
   title: 'text-lg font-semibold text-gray-900 mb-1 truncate',
   description: 'text-sm text-gray-500 mb-3 line-clamp-2',

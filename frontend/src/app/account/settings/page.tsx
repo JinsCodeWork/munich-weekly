@@ -145,7 +145,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`${loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"} text-white px-4 py-2 rounded-md`}
+            className={`${loading ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:bg-gray-800"} text-white px-4 py-2 rounded-md`}
           >
             {loading ? "Updating..." : "Update Password"}
           </button>
@@ -160,9 +160,6 @@ export default function SettingsPage() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium">Email Address</span>
-              <span className="text-green-500 text-sm bg-green-50 px-2 py-1 rounded">
-                Verified
-              </span>
             </div>
             <p className="text-gray-500 text-sm">{user?.email}</p>
           </div>
