@@ -195,24 +195,26 @@ frontend/
 - Logo
 
 ### Authentication Components
-- LoginForm
-- RegisterForm
+- LoginForm: Modal-based authentication form with email/password fields and glassmorphism effect
+- RegisterForm: User registration interface with form validation
 
 ### Layout Components
 - Container
 - AccountLayout
 
 ### Base UI Components
-- Modal
+- Modal: Glassmorphism-style modal dialog with customizable overlay variants (default, dark, light)
 - Link
 - Thumbnail
 - Pagination
-- Button
+- Button: Consistent button styling with multiple variants (primary, secondary, ghost)
 
 ### Submission Related Components
 - SubmissionCard
 - ImageGrid
 - ImageViewer
+- SubmissionForm: Form for adding descriptions to photo submissions
+- ImageUploader: Component for uploading and previewing submission photos
 
 ### Admin Components
 - SubmissionTable
@@ -234,6 +236,42 @@ frontend/
 
 ### Development Tools Hooks
 - `useDebugTools`: Provides debugging and development tools
+
+## Feature Implementation
+
+### Authentication System
+The application uses a modal-based authentication approach rather than dedicated pages. This design choice provides:
+- Seamless user experience with uninterrupted browsing context
+- Consistent visual presentation across the application
+- Reduced page transitions and navigation complexity
+
+The authentication flow:
+1. User attempts to access restricted content (e.g., submission page)
+2. System detects unauthenticated status and displays a prompt modal
+3. User clicks to proceed to the login modal
+4. After successful authentication, user continues with the original task without page reload
+
+### Photo Submission Flow
+The submission system follows a structured three-step process:
+1. **Issue Selection**: User selects the active issue to submit to
+2. **Photo Upload**: 
+   - Drag-and-drop or file selection interface with preview
+   - Supports JPEG and PNG formats up to 20MB
+   - Includes guidance for multiple submissions (maximum 4 photos per issue)
+   - Real-time validation and upload progress tracking
+3. **Description Entry**: Text form for providing context about the submission
+
+This workflow provides:
+- Clear guidance through a potentially complex process
+- Organized data collection with appropriate validation at each step
+- Visual feedback on progress and completion status
+- Consistent guidelines regarding submission limitations
+
+### Admin Review System
+For content moderation, the admin interface provides:
+- Tabular view of all submissions with filtering options
+- Quick-review capabilities for approving or rejecting content
+- Batch operations for efficient management
 
 ## API Module Structure
 

@@ -20,7 +20,7 @@ export const modalOverlayVariants = {
 export const modalContentVariants = {
   default: 'bg-white rounded-lg shadow-lg',
   glassmorphism: 'bg-white/90 backdrop-blur-md rounded-lg shadow-lg border border-white/20',
-  'dark-glass': 'bg-black/30 backdrop-blur-md rounded-lg shadow-lg border border-white/30',
+  'dark-glass': 'bg-black/20 backdrop-blur-md rounded-lg shadow-lg border border-white/30',
 };
 
 /**

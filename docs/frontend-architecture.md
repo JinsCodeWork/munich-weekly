@@ -181,10 +181,11 @@ Components and hooks for development and debugging:
    - User is automatically logged in
 
 2. **Login**:
-   - User enters email and password
+   - User enters email and password in the modal dialog
    - On submission, credentials are verified via the API
    - Upon success, the JWT token is stored in localStorage
    - User info is fetched and stored in the AuthContext
+   - User continues with their intended action without page transitions
 
 3. **Session Persistence**:
    - On app initialization, the AuthContext checks for a stored JWT token
@@ -192,15 +193,68 @@ Components and hooks for development and debugging:
    - If valid, the user remains logged in
    - If invalid, the token is cleared, and the user is redirected to login
 
-4. **Logout**:
+4. **Contextual Authentication**:
+   - When accessing protected features (like photo submission), authentication is handled contextually
+   - System presents a modal prompt with feature description ("Share Your Perspective")
+   - User proceeds to login modal directly from the prompt
+   - After successful authentication, user resumes their original task
+
+5. **Logout**:
    - Token is removed from localStorage
    - User state is cleared from the AuthContext
    - User is redirected to the homepage
 
-5. **Role-Based Access Control**:
+6. **Role-Based Access Control**:
    - User roles (admin, user) are stored in the AuthContext
    - Components can check user roles to control UI rendering
    - Protected routes verify user roles to restrict access
+
+### Content Submission System
+
+The application implements a user-friendly content submission system:
+
+1. **Submission Flow**:
+   - Three-step process with clear progression
+   - Each step becomes available after completing the previous one
+   - Visual feedback indicates current step and progress
+
+2. **Issue Selection**:
+   - Users select from currently active issues
+   - System filters issues based on submission period dates
+   - Clear presentation of issue details and guidelines
+
+3. **Photo Upload**:
+   - Interactive drag-and-drop or file browser interface
+   - Strict file type validation (only JPEG and PNG formats supported)
+   - File size limit of 20MB per submission
+   - Clear guidelines for multiple submissions (maximum 4 photos per issue)
+   - Progress indicator during upload
+   - Preview functionality before proceeding
+
+4. **Description Entry**:
+   - Form for adding context to submissions
+   - Character count with limits
+   - Validation to ensure complete submissions
+   - Success feedback upon completion
+
+### Modal Dialog System
+
+The application uses a consistent modal dialog system rather than multiple page transitions:
+
+1. **Dialog Architecture**:
+   - Centralized Modal component with customizable variants
+   - Overlay system with appropriate opacity levels for different contexts
+   - Content variants to support different visual styles (standard, glassmorphism)
+
+2. **User Experience Benefits**:
+   - Maintains browsing context without page reloads
+   - Provides focused interaction for specific tasks
+   - Reduces navigation complexity and improves flow
+
+3. **Implementation Approach**:
+   - Dialog content is component-based for reusability
+   - Animation effects enhance user experience
+   - Backdrop interactions (click to dismiss) improve usability
 
 ## API Integration
 

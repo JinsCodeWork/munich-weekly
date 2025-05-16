@@ -91,29 +91,47 @@ export default function MainNav() {
 }
 ```
 
-## Recent Style Updates
+## Component Styling Approach
 
-The following style improvements have been implemented:
+The application employs a systematic approach to styling components:
 
-1. **Image Configuration**: Updated Next.js image configuration from deprecated `images.domains` to recommended `images.remotePatterns` configuration
+1. **Image Optimization**
+   - Next.js Image component with proper configuration
+   - Configured `remotePatterns` for secure image loading
+   - Standardized aspect ratios and loading behaviors
 
-2. **Authentication UI Improvements**:
-   - Fixed glassmorphism effect display issues
-   - Adjusted Modal component to use dark semi-transparent background
-   - Added animation support with tailwindcss-animate plugin
-   - Fixed text color visibility issues on different backgrounds
-   - Eliminated white screen flashing by setting global dark background
+2. **Authentication UI**
+   - Glassmorphism effect for modern, depth-rich interfaces
+   - Semi-transparent backgrounds with backdrop blur
+   - Sequential animation effects for form elements
+   - Consistent text contrast on various backgrounds
 
-3. **Navigation/Layout Refactoring**:
-   - Created navigation bar style system
-   - Refactored MainNav and MobileNav components to use style functions
-   - Centralized header styling with reusable functions
-   - Ensured responsive design consistency
+3. **Navigation Components**
+   - Responsive navigation system with desktop and mobile variants
+   - Centralized styling functions for consistency
+   - Context-aware navigation elements (showing different options based on auth state)
 
-4. **Bug Fixes and Optimizations**:
-   - Resolved TypeScript lint errors
-   - Fixed require() import issues, switching to ESM style imports
-   - Optimized animation effects for form elements
+4. **Modal System**
+   - Overlay variant system with appropriate opacity levels:
+     - `default`: Light overlay (20% opacity) for standard interactions
+     - `dark`: Higher contrast overlay (50% opacity) for critical actions
+     - `light`: White-based overlay (70% opacity) for light-themed content
+   - Content variants supporting different visual styles
+   - Consistent visual hierarchy between related modals
+   - Shadow effects that enhance depth perception
+
+5. **Button System**
+   - Standardized variants across the application:
+     - `primary`: High-emphasis actions
+     - `secondary`: Alternative or secondary actions
+     - `ghost`: Low-emphasis or subtle interactions
+   - Consistent shadow effects and visual styling
+   - Strong TypeScript typing with proper variant definitions
+
+6. **Component Optimizations**
+   - Clean dependency management in components
+   - Responsive text sizing that prevents unwanted wrapping
+   - Loading and error states for asynchronous operations
 
 ## Core UI Components
 
@@ -137,6 +155,14 @@ The following style improvements have been implemented:
 
 - **Thumbnail**: Image thumbnail component with aspect ratio control
 - **ImageViewer**: Modal-based full-size image viewing component
+- **ImageUploader**: 
+  - Interactive file upload component with drag-and-drop support
+  - Preview functionality for selected images
+  - Format restrictions (JPEG and PNG only)
+  - File size limit of 20MB per upload
+  - Helpful guidance for multiple submissions (max 4 per issue)
+  - Progress tracking during upload process
+  - Error handling with user-friendly messages
 
 ### Content Components
 
