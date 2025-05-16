@@ -39,6 +39,11 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll() // Assuming public GET for submissions
+                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll() // <<< ADD THIS
+                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()     // <<< ADD THIS
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/submissions").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed

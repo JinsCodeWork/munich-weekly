@@ -93,7 +93,7 @@ export function SubmissionForm({
           id="description"
           rows={4}
           placeholder="Describe your photo, context, or techniques used..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           maxLength={maxDescriptionLength}

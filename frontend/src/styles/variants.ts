@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
  */
 export const buttonVariants = {
   variant: {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    primary: 'bg-black text-white hover:bg-gray-800 focus:ring-gray-700',
     secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
     ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-300',
   },

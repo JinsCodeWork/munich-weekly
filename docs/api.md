@@ -17,14 +17,14 @@
 
 ## VoteController
 
-- **GET** `/api/votes/check`
-  > Check if current visitor has voted for a submission.
-
-  > **Params**: `Long submissionId, String visitorId`
 - **POST** `/api/votes`
   > Submit a vote for a submission. Uses visitorId from cookie.
 
   > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
+- **GET** `/api/votes/check`
+  > Check if current visitor has voted for a submission.
+
+  > **Params**: `Long submissionId, String visitorId`
 
 ## SubmissionController
 
@@ -63,6 +63,10 @@
   > Register a new user with email, password, and nickname. Returns JWT token
 
   > **Params**: `UserRegisterRequestDTO dto`
+- **POST** `/api/auth/login/email`
+  > Login with email and password, returns JWT token and user info
+
+  > **Params**: `EmailLoginRequestDTO dto`
 - **POST** `/api/auth/bind`
   > Bind a third-party provider (e.g. Google or WeChat) to the currently logged-in user
 
@@ -71,10 +75,6 @@
   > Unbind a third-party provider from the current user. Example: DELETE /api/auth/bind/google
 
   > **Params**: `String provider`
-- **POST** `/api/auth/login/email`
-  > Login with email and password, returns JWT token and user info
-
-  > **Params**: `EmailLoginRequestDTO dto`
 - **POST** `/api/auth/login/provider`
   > Login with a third-party provider (e.g. Google). Auto-creates user on first login
 

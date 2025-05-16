@@ -27,7 +27,7 @@ export const badgeShapeVariants = {
  * @param status - The submission status
  * @returns The corresponding badge status
  */
-export function mapSubmissionStatusToBadge(status: string): BadgeStatus {
+export function mapSubmissionStatusToBadge(status: string | undefined | null): BadgeStatus {
   const statusMap: Record<string, BadgeStatus> = {
     'approved': 'approved',
     'rejected': 'rejected',
@@ -36,7 +36,11 @@ export function mapSubmissionStatusToBadge(status: string): BadgeStatus {
     'cover': 'special',
   };
   
-  return statusMap[status.toLowerCase()] || 'pending';
+  // Handle undefined, null, or non-string status defensively
+  if (typeof status === 'string') {
+    return statusMap[status.toLowerCase()] || 'pending';
+  }
+  return 'pending'; // Default to 'pending' if status is not a valid string
 }
 
 /**

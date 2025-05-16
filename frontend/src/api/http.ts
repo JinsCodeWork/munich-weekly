@@ -32,35 +32,42 @@ export const fetchAPI = async <T>(
     
     const response = await fetch(url, {
       ...options,
-      headers
+      headers,
+      credentials: 'include'
     });
 
     if (!response.ok) {
-      // 尝试获取响应文本以提供更好的错误诊断
       const responseText = await response.text();
-      let errorData = {};
+      let errorData: Record<string, unknown> | { rawText: string } = { rawText: responseText };
       
       try {
-        // 尝试解析为JSON（如果可能）
         errorData = JSON.parse(responseText);
       } catch {
-        // 如果不是JSON，则原样使用文本
-        errorData = { text: responseText };
+        console.warn("API Error response was not valid JSON. Raw text:", responseText);
       }
       
       console.error("API Error:", {
         status: response.status,
         statusText: response.statusText,
         url,
-        headers: Object.fromEntries(response.headers.entries()),
         errorData,
         requestHeaders: headers
       });
       
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      const errorMessage = 
+        (errorData as Record<string, unknown>).message as string || 
+        (errorData as Record<string, unknown>).detail as string || 
+        (errorData as { rawText: string }).rawText || 
+        `API request failed: ${response.status} ${response.statusText}`;
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const responseText = await response.text();
+    if (!responseText) {
+      return null as T;
+    }
+    
+    const data = JSON.parse(responseText);
     return data;
   } catch (error) {
     console.error(`API Request Failed for ${url}:`, error);

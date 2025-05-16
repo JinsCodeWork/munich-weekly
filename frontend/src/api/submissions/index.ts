@@ -7,7 +7,8 @@ import {
   SubmissionRequest, 
   SubmissionListResponse, 
   MySubmissionResponse, 
-  AdminSubmissionResponse 
+  AdminSubmissionResponse,
+  Submission
 } from "@/types/submission";
 
 /**
@@ -29,15 +30,14 @@ export const getUserSubmissions = async (
 
 /**
  * 获取某期刊的所有已批准投稿
- * GET /api/submissions?issueId={issueId}&page={page}&size={size}
+ * GET /api/submissions?issueId={issueId}
+ * Backend returns a direct list, not a paginated object for this endpoint.
  */
 export const getSubmissionsByIssue = async (
-  issueId: number,
-  page: number = 0,
-  size: number = 10
-): Promise<SubmissionListResponse> => {
-  return fetchAPI<SubmissionListResponse>(
-    `/api/submissions?issueId=${issueId}&page=${page}&size=${size}`
+  issueId: number
+): Promise<Submission[]> => {
+  return fetchAPI<Submission[]>(
+    `/api/submissions?issueId=${issueId}`
   );
 };
 

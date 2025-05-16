@@ -79,7 +79,7 @@ export function ImageUploader({
       {/* File selection area */}
       <div 
         className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors
-          ${preview ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}`}
+          ${preview ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-gray-500 hover:bg-gray-50'}`}
         onClick={preview ? undefined : triggerFileInput}
       >
         {preview ? (
@@ -172,7 +172,7 @@ export function ImageUploader({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              className="bg-gray-700 h-2.5 rounded-full transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             ></div>
           </div>

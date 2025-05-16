@@ -165,6 +165,23 @@ frontend/
 - Voting mechanism
 - Issue management system
 
+#### 3.1. Public Voting Page (`/vote`)
+
+To enhance user engagement and broaden participation, a new public voting page has been introduced at the `/vote` route. This page allows anonymous users (i.e., users not logged in) to participate in the voting process for active issues.
+
+**Key functionalities of the `/vote` page:**
+
+*   **Active Issue Detection**: The page automatically identifies and displays submissions for the currently active voting issue based on predefined `votingStart` and `votingEnd` dates.
+*   **Submission Display**: Submissions for the active issue are presented using a specialized view of the `SubmissionCard` component, optimized for the voting context.
+*   **Anonymous Voting**: Users can cast votes without needing to log in. Each anonymous user's vote is tracked via a `visitorId` stored in a cookie, ensuring one vote per submission per user.
+*   **Real-time Feedback**: Upon successful voting, the UI updates locally to reflect the vote count increment and button state change without a full page reload, providing a smooth user experience.
+*   **Loading and Error States**: The page includes clear loading indicators while fetching data and informative messages for error scenarios or when no issues are currently open for voting.
+
+This feature is supported by:
+*   The `VoteButton.tsx` component, which encapsulates voting logic.
+*   The `visitorId.ts` utility for managing anonymous user identification.
+*   Updates to the `votesApi` client to handle cookie-based `visitorId` transmission.
+
 ### 4. Navigation System
 
 - Responsive navigation

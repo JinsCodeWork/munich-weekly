@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils';
  * Loading spinner variants
  */
 export const loadingSpinnerVariants = {
-  default: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500',
-  small: 'animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500',
-  large: 'animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500',
+  default: 'animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700',
+  small: 'animate-spin rounded-full h-6 w-6 border-b-2 border-gray-700',
+  large: 'animate-spin rounded-full h-16 w-16 border-b-2 border-gray-700',
 };
 
 /**
@@ -37,7 +37,7 @@ export const errorContainerVariants = {
  */
 export const errorButtonVariants = {
   primary: 'bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600',
-  secondary: 'bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600',
+  secondary: 'bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800',
 };
 
 /**

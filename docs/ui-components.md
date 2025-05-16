@@ -176,9 +176,55 @@ The application employs a systematic approach to styling components:
 ### Content Components
 
 - **Badge**: Label/tag component for metadata
-- **Card**: Content card component for consistent layout
+- **Card**: Content card component for consistent layout. See `SubmissionCard` for a specific implementation.
 - **IssueSelector**: Reusable component for selecting issues with detailed information display
 - **LoadingErrorStates**: Unified component for handling loading, error, and empty states with consistent styling
+
+#### `SubmissionCard.tsx`
+Displays individual submission details, including image, description, author, status, and vote count.
+*   **Location**: `frontend/src/components/submission/SubmissionCard.tsx`
+*   **Key Features**:
+    *   Integrates `ImageViewer` for full-size image previews.
+    *   Uses `StatusBadge` to show submission status.
+    *   **`displayContext` Prop**: Supports different rendering contexts.
+        *   `default`: Standard view for general browsing.
+        *   `voteView`: A specialized view for the public voting page (`/vote`).
+            *   Conditionally renders the status badge (e.g., only for 'selected' or 'cover').
+            *   Hides submission date and issue ID.
+            *   Integrates the `VoteButton` component, passing the `onVoteSuccess` callback to enable voting functionality and UI updates.
+            *   Displays vote counts.
+
+### Voting Components
+
+#### `VoteButton.tsx`
+
+The `VoteButton` is a client-side component responsible for handling the user interaction for voting on a submission.
+
+**Location**: `frontend/src/components/voting/VoteButton.tsx`
+
+**Key Features**:
+
+*   **Props**:
+    *   `submissionId: number`: The ID of the submission to vote for.
+    *   `initialVoteCount?: number`: Optional, for display purposes.
+    *   `onVoteSuccess?: (submissionId: number) => void`: Callback function executed upon a successful vote.
+    *   `className?: string`: Optional CSS classes.
+*   **State Management**:
+    *   Manages `isLoading`, `hasVoted`, and `error` states internally.
+    *   On mount, it ensures a `visitorId` cookie is present (generating one if not) using `getOrGenerateVisitorId()` from `lib/visitorId.ts`.
+    *   It then calls `votesApi.checkVoteStatus()` to determine if the current user (identified by `visitorId`) has already voted for the given submission.
+*   **Voting Logic**:
+    *   `handleVoteClick` calls `votesApi.submitVote()`. The `visitorId` is sent implicitly via cookie.
+    *   It prevents click event propagation to avoid unintended parent element interactions.
+    *   Upon successful vote submission, it updates its internal `hasVoted` state and calls the `onVoteSuccess` callback.
+*   **UI**:
+    *   Renders a `<Button>` from the core UI library.
+    *   Displays different text and icons (from `lucide-react`) based on its state:
+        *   **Default/Ready to Vote**: "Vote" text with a thumbs-up icon, styled as a `primary` button, size `md`.
+        *   **Loading (initial status check)**: "Loading..." text with a spinner.
+        *   **Loading (during vote submission)**: "Voting..." text with a spinner.
+        *   **Voted**: "Voted" text with a green checkmark icon, styled as a `ghost` button.
+    *   Handles error display gracefully.
 
 ## Animation System
 

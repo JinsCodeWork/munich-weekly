@@ -206,9 +206,9 @@ export default function SubmitPage() {
                 {!uploadedImageUrl ? (
                   <ImageUploader onImageUploaded={handleImageUploaded} />
                 ) : (
-                  <div className="flex items-center justify-between bg-blue-50 p-4 rounded-md">
+                  <div className="flex items-center justify-between bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center">
-                      <i className="fa-solid fa-check-circle text-blue-500 mr-2"></i>
+                      <i className="fa-solid fa-check-circle text-gray-500 mr-2"></i>
                       <span>Image uploaded successfully</span>
                     </div>
                     <Button 

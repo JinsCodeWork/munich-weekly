@@ -1,22 +1,25 @@
 import React, { useState } from "react";
-import { Submission } from "@/types/submission";
+import { Submission, SubmissionStatus } from "@/types/submission";
 import { formatDate, getImageUrl } from "@/lib/utils";
 import { ImageViewer } from "./ImageViewer";
 import { Thumbnail } from "@/components/ui/Thumbnail";
 import { StatusBadge } from "@/components/ui/Badge";
 import { getSubmissionCardStyles, getSubmissionCardElementStyles } from "@/styles/components/card";
 import { mapSubmissionStatusToBadge } from "@/styles/components/badge";
+import { VoteButton } from '@/components/voting/VoteButton';
 
 interface SubmissionCardProps {
   submission: Submission;
   className?: string;
+  displayContext?: 'default' | 'voteView';
+  onVoteSuccess?: (submissionId: number) => void;
 }
 
 /**
  * Card component for displaying submission content 
  * Includes thumbnail image, status badge, description and metadata
  */
-export function SubmissionCard({ submission, className }: SubmissionCardProps) {
+export function SubmissionCard({ submission, className, displayContext = 'default', onVoteSuccess }: SubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleOpenViewer = () => {
@@ -37,6 +40,12 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
   // Debug information
   console.log("SubmissionCard original URL:", imageUrl);
   console.log("SubmissionCard display URL:", displayUrl);
+
+  // Determine if status badge should be shown based on context
+  const showStatusBadge = 
+    displayContext === 'default' || 
+    (displayContext === 'voteView' && 
+      (submission.status === SubmissionStatus.SELECTED || submission.isCover)); // In voteView, only show 'selected' or 'cover' badge
 
   return (
     <>
@@ -64,12 +73,14 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
               priority={false}
             />
           )}
-          {/* Status badge */}
-          <div className={getSubmissionCardElementStyles('badgeTopRight')}>
-            <StatusBadge status={mapSubmissionStatusToBadge(submission.status)} />
-          </div>
+          {/* Status badge - conditional rendering */}
+          {showStatusBadge && (
+            <div className={getSubmissionCardElementStyles('badgeTopRight')}>
+              <StatusBadge status={mapSubmissionStatusToBadge(submission.status)} />
+            </div>
+          )}
           
-          {/* Cover badge */}
+          {/* Cover badge - always show if submission.isCover is true, regardless of displayContext for this particular badge */}
           {submission.isCover && (
             <div className={getSubmissionCardElementStyles('badgeTopLeft')}>
               <StatusBadge status="cover" />
@@ -88,21 +99,40 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
           </p>
           
           <div className={getSubmissionCardElementStyles('metaContainer')}>
-            <div className={getSubmissionCardElementStyles('metaItem')}>
-              <i className={`fa-solid fa-calendar-days ${getSubmissionCardElementStyles('metaIcon')}`}></i>
-              <span>{formatDate(submission.submittedAt)}</span>
-            </div>
+            {displayContext === 'default' && (
+              <>
+                <div className={getSubmissionCardElementStyles('metaItem')}>
+                  <i className={`fa-solid fa-calendar-days ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+                  <span>{formatDate(submission.submittedAt)}</span>
+                </div>
+                
+                <div className={getSubmissionCardElementStyles('metaItem')}>
+                  <i className={`fa-solid fa-book ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+                  <span>Issue {submission.issue.id}</span>
+                </div>
+              </>
+            )}
             
-            <div className={getSubmissionCardElementStyles('metaItem')}>
-              <i className={`fa-solid fa-book ${getSubmissionCardElementStyles('metaIcon')}`}></i>
-              <span>Issue {submission.issue.id}</span>
-            </div>
-            
-            {/* Display vote count for all statuses */}
-            <div className={getSubmissionCardElementStyles('metaItem')}>
-              <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
-              <span>{submission.voteCount} votes</span>
-            </div>
+            {/* Vote count and VoteButton for voteView context */}
+            {displayContext === 'voteView' ? (
+              <div className={`${getSubmissionCardElementStyles('metaItem')} w-full flex justify-between items-center`}>
+                <span className="text-sm text-gray-700 font-medium">
+                  {submission.voteCount} votes
+                </span>
+                <VoteButton 
+                  submissionId={submission.id} 
+                  onVoteSuccess={onVoteSuccess} 
+                  initialVoteCount={submission.voteCount}
+                  className="ml-2"
+                />
+              </div>
+            ) : (
+              /* Default display for vote count when not in voteView */
+              <div className={getSubmissionCardElementStyles('metaItem')}>
+                <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+                <span>{submission.voteCount} votes</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

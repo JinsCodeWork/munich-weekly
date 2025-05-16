@@ -37,6 +37,8 @@ Endpoint	Access
 POST /api/auth/login/email	Public
 POST /api/auth/register	Public
 GET /api/issues	Public
+GET /api/votes/check	Public
+POST /api/votes	Public
 GET /api/users/me	Authenticated
 POST /api/submissions	Authenticated
 PATCH /api/submissions/{id}	Admin only
@@ -102,3 +104,36 @@ The JwtAuthenticationFilter:
 ## 8. Roles
 	•	user: Can vote, view own profile, submit photos.
 	•	admin: Can manage issues, approve/reject submissions, see all users.
+
+---
+
+## 9. Anonymous Voting Mechanism
+
+To allow broader participation, the platform now supports anonymous voting for submissions on the public `/vote` page. This mechanism works alongside the existing authenticated user voting system.
+
+### 9.1. Overview
+
+*   Users do not need to be logged in to cast a vote via the public `/vote` page.
+*   To prevent a single anonymous user from voting multiple times for the same submission, a unique `visitorId` is used.
+
+### 9.2. `visitorId` Cookie
+
+*   **Generation**: When a user first visits a page that utilizes the voting feature (specifically, when the `VoteButton` component mounts), the frontend checks for a `visitorId` cookie. If the cookie is not present or is empty, a new UUID v4 is generated and stored in a cookie named `visitorId`. This is handled by the `getOrGenerateVisitorId()` function in `frontend/src/lib/visitorId.ts`.
+*   **Usage**:
+    *   When checking if an anonymous user has voted for a submission (`GET /api/votes/check`), the `visitorId` from the cookie is sent with the request (implicitly, as cookies are included with `credentials: 'include'`).
+    *   When submitting a vote (`POST /api/votes`), the `visitorId` from the cookie is also sent.
+*   **Backend Handling**: The backend's `VoteController` reads the `visitorId` from the cookie using `@CookieValue`.
+    *   For `POST /api/votes`, if the `visitorId` cookie is missing, a 400 Bad Request ("Missing visitorId cookie.") is returned.
+    *   For `GET /api/votes/check`, if the `visitorId` cookie is missing, the backend responds as if the user has not voted (`{"voted": false}`).
+*   **Constraint**: The `votes` database table has a unique constraint on the combination of `visitorId` and `submission_id` to enforce the one-vote-per-anonymous-user-per-submission rule.
+
+### 9.3. Backend API Security Configuration
+
+To enable anonymous access to the voting endpoints, the following Spring Security configurations have been applied in `SecurityConfig.java`:
+
+```java
+// Example snippet from SecurityConfig.java
+.requestMatchers(HttpMethod.POST, "/api/votes").permitAll()
+.requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()
+```
+This ensures that requests to these specific endpoints do not require JWT authentication, allowing anonymous users (identified by their `visitorId` cookie) to participate in voting. All other protected endpoints still require JWT authentication as described earlier.

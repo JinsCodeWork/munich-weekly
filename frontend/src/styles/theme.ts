@@ -7,7 +7,7 @@
 export const theme = {
   colors: {
     // Main color palette
-    primary: 'blue',
+    primary: 'gray',
     secondary: 'gray',
     success: 'green',
     error: 'red',
@@ -16,35 +16,35 @@ export const theme = {
     // Color intensities mapping based on existing usage
     intensities: {
       bg: {
-        primary: 600,
+        primary: 900,
         secondary: 200,
         success: 500,
         error: 500,
         special: 500,
       },
       text: {
-        primary: 700,
+        primary: 900,
         secondary: 800,
         success: 800,
         error: 800,
         special: 800,
       },
       hover: {
-        primary: 700,
+        primary: 800,
         secondary: 300,
         success: 600,
         error: 600,
         special: 600,
       },
       border: {
-        primary: 500,
+        primary: 700,
         secondary: 200,
         success: 400,
         error: 400,
         special: 400,
       },
       focus: {
-        primary: 500,
+        primary: 700,
         secondary: 400,
         success: 500,
         error: 500,
