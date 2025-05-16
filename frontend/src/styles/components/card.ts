@@ -12,15 +12,15 @@ import { cardVariants } from '../variants';
  */
 export const submissionCardStyles = {
   container: 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-  imageContainer: 'relative h-48 overflow-hidden',
+  imageContainer: 'relative h-60 overflow-hidden',
   contentContainer: 'p-4',
   title: 'text-lg font-semibold text-gray-900 mb-1 truncate',
   description: 'text-sm text-gray-500 mb-3 line-clamp-2',
   metaContainer: 'flex items-center justify-between text-xs text-gray-500',
   metaItem: 'flex items-center',
   metaIcon: 'mr-1',
-  badgeTopRight: 'absolute top-2 right-2',
-  badgeTopLeft: 'absolute top-2 left-2',
+  badgeTopRight: 'absolute top-2 right-2 z-10',
+  badgeTopLeft: 'absolute top-2 left-2 z-10',
 };
 
 /**

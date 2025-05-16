@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Submission } from "@/types/submission";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getImageUrl } from "@/lib/utils";
 import { ImageViewer } from "./ImageViewer";
 import { Thumbnail } from "@/components/ui/Thumbnail";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -26,6 +26,17 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
   };
+  
+  // Process the image URL to ensure it has the correct server prefix
+  const imageUrl = submission.imageUrl;
+  const displayUrl = getImageUrl(imageUrl);
+  
+  // Check if this is a local upload (for rendering decisions)
+  const isLocalUpload = imageUrl.startsWith('/uploads/');
+  
+  // Debug information
+  console.log("SubmissionCard original URL:", imageUrl);
+  console.log("SubmissionCard display URL:", displayUrl);
 
   return (
     <>
@@ -35,14 +46,24 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
       >
         {/* Image area */}
         <div className={getSubmissionCardElementStyles('imageContainer')}>
-          <Thumbnail
-            src={submission.imageUrl}
-            alt={submission.description}
-            fill={true}
-            objectFit="cover"
-            sizes="(max-width: 768px) 100vw, 384px"
-            priority={false}
-          />
+          {isLocalUpload ? (
+            // Use standard img tag for local uploads
+            <img
+              src={displayUrl}
+              alt={submission.description}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // Use Thumbnail component for remote images
+            <Thumbnail
+              src={displayUrl}
+              alt={submission.description}
+              fill={true}
+              objectFit="cover"
+              sizes="(max-width: 768px) 100vw, 384px"
+              priority={false}
+            />
+          )}
           {/* Status badge */}
           <div className={getSubmissionCardElementStyles('badgeTopRight')}>
             <StatusBadge status={mapSubmissionStatusToBadge(submission.status)} />
@@ -77,7 +98,7 @@ export function SubmissionCard({ submission, className }: SubmissionCardProps) {
               <span>Issue {submission.issue.id}</span>
             </div>
             
-            {/* 显示所有状态的投票数 */}
+            {/* Display vote count for all statuses */}
             <div className={getSubmissionCardElementStyles('metaItem')}>
               <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
               <span>{submission.voteCount} votes</span>

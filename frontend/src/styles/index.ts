@@ -19,6 +19,7 @@ export * from './components/container';
 export * from './components/modal';
 export * from './components/thumbnail';
 export * from './components/loadingError';
+export * from './components/form';
 
 // Navigation and Layout styles
 export * from './components/navigation/navBar';

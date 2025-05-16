@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { getImageCaptionStyles } from '@/styles';
+import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -38,6 +40,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     };
   }, [description]);
 
+  // Process the image URL to ensure it has the correct server prefix
+  const displayUrl = getImageUrl(imageUrl);
+  
+  // Debug information
+  console.log("ImageViewer original URL:", imageUrl);
+  console.log("ImageViewer display URL:", displayUrl);
+
   // Handle ESC key press to close the viewer
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -68,6 +77,9 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   };
 
+  // Check if this is a local upload (for rendering decisions)
+  const isLocalUpload = imageUrl.startsWith('/uploads/');
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
@@ -86,11 +98,22 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         
         {/* Image */}
         <div className="w-full flex justify-center">
-          <img 
-            src={imageUrl} 
-            alt={description} 
-            className="max-h-[80vh] max-w-full object-contain rounded shadow-2xl"
-          />
+          {isLocalUpload ? (
+            <img 
+              src={displayUrl} 
+              alt={description} 
+              className="max-h-[80vh] max-w-full object-contain rounded shadow-2xl"
+            />
+          ) : (
+            <Image 
+              src={displayUrl} 
+              alt={description} 
+              className="max-h-[80vh] max-w-full object-contain rounded shadow-2xl"
+              width={1200}
+              height={800}
+              unoptimized={isLocalUpload}
+            />
+          )}
         </div>
         
         {/* Description */}
@@ -101,7 +124,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
               maxWidth: captionStyle.maxWidth
             })}>
               <p className="text-white text-lg font-light leading-relaxed italic">
-                "{description.trim()}"
+                &ldquo;{description.trim()}&rdquo;
               </p>
             </div>
           </div>

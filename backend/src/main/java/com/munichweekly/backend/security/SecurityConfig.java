@@ -39,6 +39,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/submissions").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
                         .requestMatchers("/api/users/me").hasAnyAuthority("user", "admin")

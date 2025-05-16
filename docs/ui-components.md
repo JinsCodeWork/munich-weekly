@@ -17,6 +17,7 @@ styles/
 │   ├── button.ts        # Button component styles
 │   ├── card.ts          # Card component styles
 │   ├── container.ts     # Container component styles
+│   ├── form.ts          # Form component styles
 │   ├── loadingError.ts  # Loading/error state styles
 │   ├── modal.ts         # Modal component styles
 │   ├── navigation/      # Navigation-specific styles
@@ -133,6 +134,12 @@ The application employs a systematic approach to styling components:
    - Responsive text sizing that prevents unwanted wrapping
    - Loading and error states for asynchronous operations
 
+7. **Form System**
+   - Standardized form container styles with multiple variants
+   - Consistent form field styling with state variations
+   - Type-safe style functions for all form elements
+   - Unified error message presentation
+
 ## Core UI Components
 
 ### Layout Components
@@ -150,6 +157,7 @@ The application employs a systematic approach to styling components:
 
 - **Button**: Styled button with variants (primary, secondary, outline, etc.)
 - **Input**: Form input components with consistent styling
+- **SubmissionForm**: Reusable form component for photo submissions with description field, validation, and submission handling
 
 ### Media Components
 
@@ -163,11 +171,14 @@ The application employs a systematic approach to styling components:
   - Helpful guidance for multiple submissions (max 4 per issue)
   - Progress tracking during upload process
   - Error handling with user-friendly messages
+  - Built on reusable useFileUpload hook for file handling logic
 
 ### Content Components
 
 - **Badge**: Label/tag component for metadata
 - **Card**: Content card component for consistent layout
+- **IssueSelector**: Reusable component for selecting issues with detailed information display
+- **LoadingErrorStates**: Unified component for handling loading, error, and empty states with consistent styling
 
 ## Animation System
 

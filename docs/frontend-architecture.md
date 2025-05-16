@@ -58,6 +58,7 @@ frontend/
 │   │   ├── content/        # Content pages
 │   │   ├── login/          # Login page
 │   │   ├── register/       # Registration page
+│   │   ├── submit/         # Photo submission page
 │   │   ├── test/           # Test pages
 │   │   ├── globals.css     # Global CSS
 │   │   ├── layout.tsx      # Root layout
@@ -66,9 +67,7 @@ frontend/
 │   │   ├── admin/          # Admin components
 │   │   │   └── submissions/# Admin submission components
 │   │   │       ├── DebugTools.tsx     # Development debugging
-│   │   │       ├── IssueSelector.tsx  # Issue selection
-│   │   │       ├── LoadingErrorStates.tsx # Loading/error states
-│   │   │       └── SubmissionTable.tsx # Submission table
+│   │   │       ├── SubmissionTable.tsx # Submission table
 │   │   ├── auth/           # Authentication components
 │   │   │   ├── LoginForm.tsx   # Login form
 │   │   │   └── RegisterForm.tsx # Registration form
@@ -82,10 +81,14 @@ frontend/
 │   │   ├── ui/             # Core UI components
 │   │   │   ├── Button.tsx      # Button component
 │   │   │   ├── Container.tsx   # Container layout
+│   │   │   ├── ImageUploader.tsx # Image upload component
+│   │   │   ├── IssueSelector.tsx # Issue selection component
 │   │   │   ├── Link.tsx        # Link component
+│   │   │   ├── LoadingErrorStates.tsx # Loading/error handling
 │   │   │   ├── Logo.tsx        # Logo component
 │   │   │   ├── Modal.tsx       # Modal dialog
 │   │   │   ├── Pagination.tsx  # Pagination component
+│   │   │   ├── SubmissionForm.tsx # Submission form
 │   │   │   └── Thumbnail.tsx   # Image thumbnail
 │   │   ├── Header.tsx      # Main header component
 │   │   └── MainHeader.tsx  # Alternative header
@@ -93,12 +96,20 @@ frontend/
 │   │   └── AuthContext.tsx # Authentication context
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useAuth.ts      # Authentication hook
-│   │   ├── useSubmissions.ts # Submissions data hook
-│   │   └── useDebugTools.ts # Development debugging hook
+│   │   ├── useDebugTools.ts # Development debugging hook
+│   │   ├── useFileUpload.ts # File upload hook
+│   │   ├── useIssues.ts    # Issues data hook
+│   │   └── useSubmissions.ts # Submissions data hook
 │   ├── lib/                # Utility functions and constants
 │   │   ├── constants.ts    # Application constants
 │   │   └── utils.ts        # Utility helper functions
-│   ├── styles/             # Style-related directory (reserved)
+│   ├── styles/             # Style management system
+│   │   ├── components/     # Component-specific styles
+│   │   │   ├── form.ts     # Form component styles
+│   │   │   └── ...         # Other component styles
+│   │   ├── index.ts        # Style exports
+│   │   ├── theme.ts        # Theme configuration
+│   │   └── variants.ts     # Style variants
 │   ├── theme/              # Theme-related directory (reserved)
 │   ├── types/              # TypeScript type definitions
 │   │   └── submission.ts   # Submission-related types
@@ -149,7 +160,7 @@ Components for managing submission content:
 - **ImageGrid**: Grid layout for displaying multiple submissions
 - **ImageViewer**: Modal for viewing full-size images
 - **SubmissionTable**: Admin interface for managing submissions
-- **IssueSelector**: Component for selecting publication issues
+- **IssueSelector**: Reusable component for selecting publication issues
 
 ### UI Components
 
@@ -161,6 +172,19 @@ Custom UI components designed for consistency and reusability:
 - **Link**: Enhanced link component with Next.js integration
 - **Pagination**: Component for paginating through content
 - **Thumbnail**: Image thumbnail component with Next.js Image integration
+- **ImageUploader**: Reusable component for image upload with preview and validation
+- **SubmissionForm**: Standardized form for photo submissions with validation
+- **LoadingErrorStates**: Unified component for handling loading, error, and empty states
+
+### Custom Hooks
+
+Reusable logic encapsulated in custom React hooks:
+
+- **useAuth**: Authentication state and methods
+- **useSubmissions**: Fetching and managing submission data
+- **useDebugTools**: Development and debugging utilities
+- **useFileUpload**: File selection, validation, preview, and upload functionality
+- **useIssues**: Fetching and filtering issues data
 
 ### Development Tools
 
@@ -199,62 +223,29 @@ Components and hooks for development and debugging:
    - User proceeds to login modal directly from the prompt
    - After successful authentication, user resumes their original task
 
-5. **Logout**:
-   - Token is removed from localStorage
-   - User state is cleared from the AuthContext
-   - User is redirected to the homepage
+### Submission Flow
 
-6. **Role-Based Access Control**:
-   - User roles (admin, user) are stored in the AuthContext
-   - Components can check user roles to control UI rendering
-   - Protected routes verify user roles to restrict access
+1. **Issue Selection**:
+   - User selects an active issue from the dropdown
+   - Issue details are displayed, including submission and voting periods
+   - Selection is managed by the IssueSelector component
 
-### Content Submission System
+2. **Image Upload**:
+   - User uploads a photo using the ImageUploader component
+   - Image is validated for format (JPEG/PNG) and size (max 20MB)
+   - Upload progress is tracked with visual feedback
+   - Upon successful upload, a preview is displayed
 
-The application implements a user-friendly content submission system:
+3. **Description and Submission**:
+   - User adds a description for their photo
+   - Form validates input (required, character limit)
+   - On submission, data is sent to the API
+   - User receives confirmation and is redirected to their submissions page
 
-1. **Submission Flow**:
-   - Three-step process with clear progression
-   - Each step becomes available after completing the previous one
-   - Visual feedback indicates current step and progress
-
-2. **Issue Selection**:
-   - Users select from currently active issues
-   - System filters issues based on submission period dates
-   - Clear presentation of issue details and guidelines
-
-3. **Photo Upload**:
-   - Interactive drag-and-drop or file browser interface
-   - Strict file type validation (only JPEG and PNG formats supported)
-   - File size limit of 20MB per submission
-   - Clear guidelines for multiple submissions (maximum 4 photos per issue)
-   - Progress indicator during upload
-   - Preview functionality before proceeding
-
-4. **Description Entry**:
-   - Form for adding context to submissions
-   - Character count with limits
-   - Validation to ensure complete submissions
-   - Success feedback upon completion
-
-### Modal Dialog System
-
-The application uses a consistent modal dialog system rather than multiple page transitions:
-
-1. **Dialog Architecture**:
-   - Centralized Modal component with customizable variants
-   - Overlay system with appropriate opacity levels for different contexts
-   - Content variants to support different visual styles (standard, glassmorphism)
-
-2. **User Experience Benefits**:
-   - Maintains browsing context without page reloads
-   - Provides focused interaction for specific tasks
-   - Reduces navigation complexity and improves flow
-
-3. **Implementation Approach**:
-   - Dialog content is component-based for reusability
-   - Animation effects enhance user experience
-   - Backdrop interactions (click to dismiss) improve usability
+4. **Error Handling**:
+   - Consistent error presentation across all steps
+   - Clear error messages with retry options
+   - Loading states with visual indicators
 
 ## API Integration
 

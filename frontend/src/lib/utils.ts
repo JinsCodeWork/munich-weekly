@@ -77,3 +77,25 @@ export function statusToColorClass(status: string, type: 'bg' | 'text' | 'border
   const color = statusColorMap[status.toLowerCase()] || defaultColor
   return `${prefix}-${color}-${intensity}`
 }
+
+/**
+ * Process image URLs to ensure they have the correct server prefix
+ * For locally uploaded images (/uploads/*), adds the server URL prefix
+ * 
+ * @param url - The image URL to process
+ * @param serverUrl - Optional server URL, defaults to http://localhost:8080
+ * @returns Properly formatted image URL
+ */
+export function getImageUrl(url: string, serverUrl: string = 'http://localhost:8080'): string {
+  if (!url) return '';
+  
+  // Check if this is a local upload (starts with /uploads/)
+  if (url.startsWith('/uploads/')) {
+    // 使用前端的API路由代理来避免CORS问题
+    // Next.js已在next.config.js中配置了代理
+    return `/uploads${url.substring('/uploads'.length)}`;
+  }
+  
+  // Return the original URL for external images
+  return url;
+}

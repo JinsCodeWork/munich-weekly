@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { issuesApi, submissionsApi } from "@/api"
-import { Issue, MySubmissionResponse, Submission, SubmissionStatus } from "@/types/submission"
+import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
 import { SubmissionCard } from "@/components/submission/SubmissionCard"
+import { getImageUrl } from "@/lib/utils"
 
 export default function SubmissionsPage() {
   const { user } = useAuth()
@@ -22,6 +23,9 @@ export default function SubmissionsPage() {
       const response = await submissionsApi.getUserSubmissions(selectedIssue)
       setSubmissions(response || [])
       console.log("Loaded submissions:", response)
+      if (response && response.length > 0) {
+        console.log("First submission image URL:", response[0].imageUrl)
+      }
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
@@ -126,7 +130,7 @@ export default function SubmissionsPage() {
             <i className="fa-solid fa-image text-4xl"></i>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            You don't have any submissions yet
+            You don&apos;t have any submissions yet
           </h3>
           <p className="text-gray-500 mb-4">
             Upload your photos to participate in Munich Weekly
@@ -139,33 +143,67 @@ export default function SubmissionsPage() {
 
       {/* Submissions list */}
       {!loading && !error && submissions && submissions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {submissions.map((submission) => (
-            <SubmissionCard
-              key={submission.id}
-              submission={{
-                id: submission.id,
-                imageUrl: submission.imageUrl,
-                description: submission.description,
-                status: submission.status as SubmissionStatus,
-                submittedAt: submission.submittedAt,
-                voteCount: submission.voteCount,
-                isCover: submission.isCover,
-                issue: issues.find(issue => submission.imageUrl.includes(`issue${issue.id}`)) || {
-                  id: 1,
-                  title: "Unknown Issue",
-                  description: "",
-                  submissionStart: "",
-                  submissionEnd: "",
-                  votingStart: "",
-                  votingEnd: "",
-                  createdAt: ""
-                },
-                userId: user?.id || 0
-              }}
-            />
-          ))}
-        </div>
+        <>
+          {/* 调试信息 */}
+          <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+            <h3 className="font-medium mb-2">Debug Info (First Submission):</h3>
+            {submissions[0] && (
+              <div>
+                <p><strong>Image URL:</strong> {submissions[0].imageUrl}</p>
+                <p><strong>Processed URL:</strong> {getImageUrl(submissions[0].imageUrl)}</p>
+                <p><strong>Direct Image Test:</strong></p>
+                <img 
+                  src={getImageUrl(submissions[0].imageUrl)} 
+                  alt="Debug" 
+                  className="max-h-40 border border-gray-300 mt-2" 
+                />
+                <p className="mt-4"><strong>通过Next.js代理检查:</strong></p>
+                <img 
+                  src={`/uploads/${submissions[0].imageUrl.split('/').pop()}`} 
+                  alt="Debug via Next.js proxy" 
+                  className="max-h-40 border border-gray-300 mt-2" 
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {submissions.map((submission) => {
+              // 调试信息
+              console.log(`Submission ${submission.id} image URL:`, submission.imageUrl);
+              console.log(`Submission ${submission.id} processed URL:`, getImageUrl(submission.imageUrl));
+              
+              return (
+                <SubmissionCard
+                  key={submission.id}
+                  submission={{
+                    id: submission.id,
+                    imageUrl: submission.imageUrl,
+                    description: submission.description,
+                    status: submission.status as SubmissionStatus,
+                    submittedAt: submission.submittedAt,
+                    voteCount: submission.voteCount,
+                    isCover: submission.isCover,
+                    issue: issues.find(issue => 
+                      // Try to find the matching issue from the image URL pattern or use the first issue as fallback
+                      submission.imageUrl.includes(`issue${issue.id}`)
+                    ) || (issues.length > 0 ? issues[0] : {
+                      id: 1,
+                      title: "Unknown Issue",
+                      description: "",
+                      submissionStart: "",
+                      submissionEnd: "",
+                      votingStart: "",
+                      votingEnd: "",
+                      createdAt: ""
+                    }),
+                    userId: user?.id || 0
+                  }}
+                />
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   )

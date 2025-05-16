@@ -17,6 +17,7 @@ export interface ThumbnailProps {
   quality?: number;
   rounded?: boolean;
   aspectRatio?: keyof typeof aspectRatioVariants | string;
+  unoptimized?: boolean;
 }
 
 /**
@@ -38,8 +39,13 @@ export function Thumbnail({
   objectFit = "cover",
   quality = 80,
   rounded = true,
-  aspectRatio = "square"
+  aspectRatio = "square",
+  unoptimized = false
 }: ThumbnailProps) {
+  // 处理本地上传的图片路径
+  const imageSrc = src;
+  const isLocalUpload = src.startsWith('/uploads/');
+
   return (
     <div
       className={getThumbnailContainerStyles({
@@ -52,7 +58,7 @@ export function Thumbnail({
       style={fill ? undefined : { width, height }}
     >
       <Image
-        src={src}
+        src={imageSrc}
         alt={alt}
         className={getThumbnailImageStyles({
           objectFit,
@@ -65,6 +71,7 @@ export function Thumbnail({
         sizes={sizes || (fill ? "100vw" : undefined)}
         priority={priority}
         quality={quality}
+        unoptimized={isLocalUpload || unoptimized}
       />
     </div>
   );

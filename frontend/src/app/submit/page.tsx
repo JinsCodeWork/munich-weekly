@@ -6,13 +6,15 @@ import { useAuth } from '@/context/AuthContext';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { Issue } from '@/types/submission';
-import { getAllIssues } from '@/api/issues';
-import IssueSelector from '@/app/submit/components/IssueSelector';
-import ImageUploader from '@/app/submit/components/ImageUploader';
-import SubmissionForm from '@/app/submit/components/SubmissionForm';
+import { IssueSelector } from '@/components/ui/IssueSelector';
+import { ImageUploader } from '@/components/ui/ImageUploader';
+import { SubmissionForm } from '@/components/ui/SubmissionForm';
+import { LoadingErrorStates } from '@/components/ui/LoadingErrorStates';
 import { LoginForm } from "@/components/auth/LoginForm";
+import { useIssues } from '@/hooks/useIssues';
+import { getFormContainerStyles } from '@/styles';
 import { cn } from '@/lib/utils';
+import { Issue } from '@/types/submission';
 
 /**
  * Submission Page
@@ -21,13 +23,11 @@ import { cn } from '@/lib/utils';
 export default function SubmitPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { activeIssues, isLoading, error, fetchIssues } = useIssues();
   
   // State for workflow steps
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [activeIssues, setActiveIssues] = useState<Issue[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -50,37 +50,6 @@ export default function SubmitPage() {
       router.push('/');
     }
   }, [user, loading, showInfoModal, isLoginOpen, router, initialAuthCheckDone]);
-
-  // Load available issues
-  useEffect(() => {
-    const fetchIssues = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        const issues = await getAllIssues();
-        
-        // Filter for active issues (within submission period)
-        const now = new Date();
-        const active = issues.filter(issue => {
-          const submissionStart = new Date(issue.submissionStart);
-          const submissionEnd = new Date(issue.submissionEnd);
-          return submissionStart <= now && now <= submissionEnd;
-        });
-        
-        setActiveIssues(active);
-      } catch (err) {
-        console.error('Failed to fetch issues:', err);
-        setError('Failed to load available issues. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchIssues();
-    }
-  }, [user]);
 
   // Handle image upload completion
   const handleImageUploaded = (imageUrl: string) => {
@@ -206,26 +175,22 @@ export default function SubmitPage() {
           </div>
         )}
         
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-        
-        {/* No active issues message */}
-        {!isLoading && activeIssues.length === 0 && !error && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-6">
-            There are no active issues accepting submissions at this time.
-            Please check back later.
-          </div>
-        )}
+        {/* Loading/Error/Empty states */}
+        <LoadingErrorStates 
+          isLoading={isLoading}
+          loadingMessage="Loading available issues..."
+          error={error}
+          onRetry={fetchIssues}
+          emptyState={activeIssues.length === 0 && !isLoading && !error}
+          emptyStateMessage="There are no active issues accepting submissions at this time. Please check back later."
+          emptyStateIcon="fa-solid fa-calendar-xmark"
+        />
         
         {/* Main submission flow */}
-        {!isLoading && activeIssues.length > 0 && !submissionSuccess && (
+        {!isLoading && !error && activeIssues.length > 0 && !submissionSuccess && (
           <div className="space-y-8">
             {/* Step 1: Select an issue */}
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className={getFormContainerStyles()}>
               <h2 className="text-lg font-medium mb-4">Step 1: Select an Issue</h2>
               <IssueSelector 
                 issues={activeIssues} 
@@ -236,7 +201,7 @@ export default function SubmitPage() {
             
             {/* Step 2: Upload Photo */}
             {selectedIssue && (
-              <div className="bg-white shadow rounded-lg p-6">
+              <div className={getFormContainerStyles()}>
                 <h2 className="text-lg font-medium mb-4">Step 2: Upload Photo</h2>
                 {!uploadedImageUrl ? (
                   <ImageUploader onImageUploaded={handleImageUploaded} />
@@ -260,7 +225,7 @@ export default function SubmitPage() {
             
             {/* Step 3: Add Description and Submit */}
             {selectedIssue && uploadedImageUrl && (
-              <div className="bg-white shadow rounded-lg p-6">
+              <div className={getFormContainerStyles()}>
                 <h2 className="text-lg font-medium mb-4">Step 3: Add Description</h2>
                 <SubmissionForm 
                   issueId={selectedIssue.id}
@@ -273,16 +238,9 @@ export default function SubmitPage() {
           </div>
         )}
         
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-gray-500">Loading available issues...</div>
-          </div>
-        )}
-        
         {/* Success state with option to submit another */}
         {submissionSuccess && (
-          <div className="bg-white shadow rounded-lg p-6 text-center">
+          <div className={getFormContainerStyles({ className: "text-center" })}>
             <h2 className="text-lg font-medium mb-4">Thank You for Your Submission!</h2>
             <p className="text-gray-600 mb-6">
               Your photo has been submitted and is awaiting review.
