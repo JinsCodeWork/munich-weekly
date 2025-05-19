@@ -16,24 +16,37 @@ export const getAuthHeader = (): Record<string, string> => {
   return {};
 };
 
+// 自定义请求头类型，使用索引签名允许任何字符串键
+interface RequestHeaders {
+  "Content-Type": string;
+  Authorization?: string;
+  [key: string]: string | undefined;
+}
+
 // 基础API请求函数
 export const fetchAPI = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  // 自动获取并添加认证头
+  const authHeader = getAuthHeader();
+  
   // 确保请求头正确合并
-  const headers = {
+  const headers: RequestHeaders = {
     "Content-Type": "application/json",
-    ...options.headers
+    ...authHeader, // 添加认证头
+    ...(options.headers as Record<string, string> || {})
   };
 
   try {
-    console.log(`API Request: ${options.method || 'GET'} ${url}`, { headers });
+    console.log(`API Request: ${options.method || 'GET'} ${url}`, { 
+      headers: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
+    });
     
     const response = await fetch(url, {
       ...options,
-      headers,
-      credentials: 'include'
+      headers: headers as Record<string, string>,
+      credentials: 'include' // 包含cookies，重要！
     });
 
     if (!response.ok) {
@@ -51,7 +64,7 @@ export const fetchAPI = async <T>(
         statusText: response.statusText,
         url,
         errorData,
-        requestHeaders: headers
+        requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
       });
       
       const errorMessage = 

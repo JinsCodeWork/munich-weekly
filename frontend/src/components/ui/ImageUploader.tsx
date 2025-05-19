@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { Button } from './Button';
-import { useFileUpload } from '@/hooks/useFileUpload';
 
 interface ImageUploaderProps {
-  onImageUploaded: (imageUrl: string) => void;
+  onFileSelected: (file: File | null) => void;
+  file: File | null;
   className?: string;
   maxFileSize?: number;
   allowedTypes?: string[];
@@ -16,64 +16,58 @@ interface ImageUploaderProps {
  * Uses useFileUpload hook for file handling logic
  */
 export function ImageUploader({ 
-  onImageUploaded,
+  onFileSelected,
+  file,
   className,
   maxFileSize = 20 * 1024 * 1024,
   allowedTypes = ['image/jpeg', 'image/png'],
   maxImagesMessage = "If you wish to submit multiple photos to the same issue, please make separate submissions. Maximum 4 photos per issue."
 }: ImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const {
-    file,
-    preview,
-    isUploading,
-    error,
-    uploadProgress,
-    handleFileSelect,
-    uploadFile,
-    clearFile
-  } = useFileUpload();
-  
-  /**
-   * Handle file input change
-   */
+  const [preview, setPreview] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  }, [file]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    handleFileSelect(selectedFile || null);
+    if (selectedFile) {
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError('Only JPEG and PNG images are allowed.');
+        onFileSelected(null);
+        return;
+      }
+      if (selectedFile.size > maxFileSize) {
+        setError('File size exceeds the limit.');
+        onFileSelected(null);
+        return;
+      }
+      setError(null);
+      onFileSelected(selectedFile);
+    } else {
+      setError(null);
+      onFileSelected(null);
+    }
   };
-  
-  /**
-   * Trigger file input click
-   */
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
-  
-  /**
-   * Handle file upload
-   */
-  const handleUpload = async () => {
-    try {
-      const imageUrl = await uploadFile();
-      if (imageUrl) {
-        onImageUploaded(imageUrl);
-      }
-    } catch (err) {
-      console.error('Upload failed:', err);
-    }
-  };
-  
-  /**
-   * Clear selected file and reset input
-   */
+
   const handleClear = () => {
-    clearFile();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    onFileSelected(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
-  
+
   return (
     <div className={`space-y-4 ${className || ''}`}>
       {/* File selection area */}
@@ -112,16 +106,6 @@ export function ImageUploader({
               >
                 Clear
               </Button>
-              
-              {!isUploading && (
-                <Button 
-                  onClick={handleUpload} 
-                  size="sm"
-                  type="button"
-                >
-                  Upload
-                </Button>
-              )}
             </div>
           </div>
         ) : (
@@ -160,22 +144,6 @@ export function ImageUploader({
       {error && (
         <div className="text-red-500 text-sm mt-2">
           {error}
-        </div>
-      )}
-      
-      {/* Upload progress */}
-      {isUploading && (
-        <div className="mt-2">
-          <div className="flex justify-between text-xs text-gray-600 mb-1">
-            <span>Uploading...</span>
-            <span>{uploadProgress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-gray-700 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
         </div>
       )}
     </div>

@@ -4,16 +4,22 @@
  */
 import { fetchAPI } from "../http";
 
+interface VoteResponse {
+  vote: any;
+  voteCount: number;
+}
+
 /**
  * 提交投票
  * POST /api/votes?submissionId={submissionId}
  * Backend reads visitorId from cookie.
+ * Returns the vote object and current vote count.
  */
-export const submitVote = async (submissionId: number): Promise<void> => {
+export const submitVote = async (submissionId: number): Promise<VoteResponse> => {
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
-  return fetchAPI<void>(url.toString(), {
+  return fetchAPI<VoteResponse>(url.toString(), {
     method: "POST",
   });
 };

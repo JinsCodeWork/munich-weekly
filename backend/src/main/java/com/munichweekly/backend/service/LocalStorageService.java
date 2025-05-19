@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,13 +61,16 @@ public class LocalStorageService implements StorageService {
     }
     
     /**
-     * Store a file in the local file system
+     * Store a file in the local file system (新签名)
      * 
      * @param file The MultipartFile to store
+     * @param issueId The ID of the issue
+     * @param userId The ID of the user
+     * @param submissionId The ID of the submission
      * @return URL path where the file can be accessed
      */
     @Override
-    public String storeFile(MultipartFile file) throws IOException {
+    public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException {
         // Check if file is empty
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot store empty file");
@@ -97,18 +99,28 @@ public class LocalStorageService implements StorageService {
             throw new IllegalArgumentException("Invalid file name");
         }
 
-        // Generate unique file name
-        String fileName = UUID.randomUUID().toString() + "." + extension;
-        
-        // Save file
-        Path destinationFile = rootLocation.resolve(fileName);
+        // Validate mandatory path parameters
+        if (issueId == null || issueId.trim().isEmpty()) {
+            throw new IllegalArgumentException("issueId cannot be null or empty");
+        }
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("userId cannot be null or empty");
+        }
+        if (submissionId == null || submissionId.trim().isEmpty()) {
+            throw new IllegalArgumentException("submissionId cannot be null or empty");
+        }
+
+        // Generate unique file path with timestamp and provided IDs
+        String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String fileName = String.format("%s_%s_%s.%s", userId, submissionId, timestamp, extension);
+        Path issueDir = rootLocation.resolve("issues").resolve(issueId).resolve("submissions");
+        java.nio.file.Files.createDirectories(issueDir);
+        Path destinationFile = issueDir.resolve(fileName);
         logger.info("Saving file to: " + destinationFile);
-        Files.copy(file.getInputStream(), destinationFile);
-        
+        java.nio.file.Files.copy(file.getInputStream(), destinationFile);
         logger.info("Stored file: " + fileName + " (" + file.getSize() + " bytes)");
-        
-        // Return accessible URL path
-        return "/uploads/" + fileName;
+        // 返回统一风格的URL路径
+        return "/uploads/issues/" + issueId + "/submissions/" + fileName;
     }
     
     /**

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { getOrGenerateVisitorId } from '@/lib/visitorId';
 import { votesApi } from '@/api'; // Corrected import based on @/api/index.ts
 import { ThumbsUp, Loader2, CheckCircle } from 'lucide-react'; // Using lucide-react icons
+import { useAuth } from '@/context/AuthContext';
 
 interface VoteButtonProps {
   submissionId: number;
@@ -15,36 +16,43 @@ interface VoteButtonProps {
 
 export function VoteButton({ 
   submissionId,
-  initialVoteCount,
   onVoteSuccess,
   className
 }: VoteButtonProps) {
+  const { user } = useAuth(); // 获取当前登录用户
   const [isLoading, setIsLoading] = useState(false);
   const [hasVoted, setHasVoted] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   // const [currentVoteCount, setCurrentVoteCount] = useState(initialVoteCount || 0);
 
   const checkStatus = useCallback(async () => {
-    // Ensure visitorId cookie is set. This needs to run client-side.
-    getOrGenerateVisitorId(); 
+    // 重置状态，因为用户可能变化了
+    setHasVoted(null);
+    setError(null);
+    
+    // 确保匿名用户有visitorId
+    if (!user) {
+      getOrGenerateVisitorId();
+    }
+    
     setIsLoading(true);
     try {
       const status = await votesApi.checkVoteStatus(submissionId);
       setHasVoted(status.voted);
-      // If API provided current vote count, could update here too
-    } catch (err: any) {
+      console.log(`VoteButton: Checked vote status for submission ${submissionId}, user ${user?.id || 'anonymous'}, status:`, status.voted);
+    } catch (err: Error | unknown) {
       console.error(`VoteButton: Failed to check vote status for submissionId: ${submissionId}. Raw Error:`, err);
-      if (err && err.message) {
+      if (err instanceof Error) {
         console.error(`VoteButton: Error message:`, err.message);
       }
-      // You can add more specific checks here if err has other properties like err.response or err.data
       setError(`Could not check vote status for ID ${submissionId}.`);
       setHasVoted(false);
     } finally {
       setIsLoading(false);
     }
-  }, [submissionId]);
+  }, [submissionId, user]); // 依赖项添加user，用户变化时重新检查
 
+  // 初始化和用户变化时检查投票状态
   useEffect(() => {
     checkStatus();
   }, [checkStatus]);
@@ -56,19 +64,19 @@ export function VoteButton({
     setIsLoading(true);
     setError(null);
     try {
-      await votesApi.submitVote(submissionId);
+      const response = await votesApi.submitVote(submissionId);
       setHasVoted(true);
-      // Optimistic update could happen here if desired
-      // setCurrentVoteCount(prev => prev + 1); 
-      if (onVoteSuccess) {
-        // If submitVote returned new count, pass it here
-        onVoteSuccess(submissionId);
+      
+      console.log(`Vote successful for submission ${submissionId}, user ${user?.id || 'anonymous'}. Server returned vote count: ${response.voteCount}`);
+      
+      // Use the vote count returned from the server
+      if (onVoteSuccess && response.voteCount) {
+        onVoteSuccess(submissionId, response.voteCount);
       }
-      // Potentially show a temporary success message or icon change
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error(`Failed to vote for submission ${submissionId}:`, err);
       // Check if error message is from our API (e.g. already voted, though checkStatus should prevent this)
-      if (err.message && err.message.includes("already voted")) { // Example check
+      if (err instanceof Error && err.message.includes("already voted")) { // Example check
         setHasVoted(true); // Sync state if backend says already voted
         setError("You have already voted for this item.");
       } else {

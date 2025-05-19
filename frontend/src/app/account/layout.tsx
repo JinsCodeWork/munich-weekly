@@ -45,7 +45,7 @@ export default function AccountLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, logout } = useAuth()
+  const { user, logout, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -66,10 +66,16 @@ export default function AccountLayout({
 
   // Redirect to homepage if user is not logged in
   React.useEffect(() => {
-    if (!user && typeof window !== "undefined") {
+    const preserveAuth = sessionStorage.getItem("preserve_auth")
+    
+    // 仅在以下情况重定向到主页：
+    // 1. 用户明确未登录（非加载状态且user为null）
+    // 2. 没有保存认证状态的标志
+    if (!user && !loading && !preserveAuth && typeof window !== "undefined") {
+      console.log("User not authenticated, redirecting to homepage")
       router.push("/")
     }
-  }, [user, router])
+  }, [user, router, loading])
 
   if (!user) {
     return null // Prevent flash, wait for redirect

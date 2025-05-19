@@ -3,10 +3,12 @@ package com.munichweekly.backend.devtools;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import com.munichweekly.backend.repository.*;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Profile("dev")
 public class DataResetService {
 
     private final VoteRepository voteRepository;

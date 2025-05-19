@@ -22,6 +22,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 | Backend  | Java 21 + Spring Boot 3    |
 | Database | PostgreSQL (via Docker)    |
 | Auth     | Email & Google login       |
+| Storage  | Local & Cloudflare R2      |
 | Hosting  | Hetzner Cloud (Germany)    |
 | Domain   | [munichweekly.art](https://munichweekly.art) |
 
@@ -46,6 +47,7 @@ munich-weekly/
 - 📊 [Server Changelog](./docs/server-changelog.md)
 - 📦 [API Reference](./docs/api.md)
 - 🗃️ [Database Design](./docs/database.md)
+- 💾 [Storage System](./docs/storage.md)
 - 👤 [User Guide](./docs/user-guide.md)
 - 🧑‍💻 [Developer Guide](./docs/dev-guide.md)
 - 🔐 [Auth & Security](./docs/auth.md)

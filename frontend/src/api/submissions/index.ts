@@ -8,24 +8,59 @@ import {
   SubmissionListResponse, 
   MySubmissionResponse, 
   AdminSubmissionResponse,
-  Submission
+  Submission,
+  PaginatedResponse
 } from "@/types/submission";
 
 /**
  * 获取用户自己的投稿
  * GET /api/submissions/mine
+ * @param issueId 可选的期刊ID过滤
+ * @param page 页码 (从0开始)
+ * @param size 每页数量
+ * @returns 分页的用户投稿列表
  */
 export const getUserSubmissions = async (
-  issueId?: number
-): Promise<MySubmissionResponse[]> => {
-  let url = `/api/submissions/mine`;
+  issueId?: number,
+  page: number = 0,
+  size: number = 8
+): Promise<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>> => {
+  // 构建查询参数
+  const params = new URLSearchParams();
   if (issueId) {
-    url += `?issueId=${issueId}`;
+    params.append('issueId', issueId.toString());
   }
+  params.append('page', page.toString());
+  params.append('size', size.toString());
+  
+  const url = `/api/submissions/mine?${params.toString()}`;
 
-  return fetchAPI<MySubmissionResponse[]>(url, {
+  // 请求API
+  const response = await fetchAPI<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>>(url, {
     headers: getAuthHeader()
   });
+  
+  // 后端可能已经支持分页，也可能还未支持
+  // 如果返回的是数组，我们手动将其转换为分页格式
+  if (Array.isArray(response)) {
+    // 手动分页
+    const startIndex = page * size;
+    const endIndex = startIndex + size;
+    const paginatedItems = response.slice(startIndex, endIndex);
+    
+    return {
+      content: paginatedItems,
+      pageable: {
+        pageNumber: page,
+        pageSize: size
+      },
+      totalElements: response.length,
+      totalPages: Math.ceil(response.length / size)
+    };
+  }
+  
+  // 否则直接返回后端的分页响应
+  return response;
 };
 
 /**
@@ -57,8 +92,8 @@ export const getAllSubmissionsByIssue = async (
  * 创建新投稿
  * POST /api/submissions
  */
-export const createSubmission = async (data: SubmissionRequest): Promise<MySubmissionResponse> => {
-  return fetchAPI<MySubmissionResponse>("/api/submissions", {
+export const createSubmission = async (data: SubmissionRequest): Promise<{ submissionId: number, uploadUrl: string }> => {
+  return fetchAPI<{ submissionId: number, uploadUrl: string }>("/api/submissions", {
     method: "POST",
     body: JSON.stringify(data),
     headers: getAuthHeader()

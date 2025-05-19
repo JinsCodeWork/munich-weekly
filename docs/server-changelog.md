@@ -119,3 +119,39 @@ munich-frontend │ fork │ online │ port 3000 │ dev 模式运行中
 - 系统启动时自动启动所有服务
 
 如需继续部署后端 Spring Boot，可补充 systemd 或容器化方案后添加部署文档。 
+
+---
+
+## ✅ 云存储集成 (2025-05-25)
+
+### 🔧 功能实现
+
+- 引入 Cloudflare R2 作为图片存储解决方案
+- 实现了双模式存储架构，支持本地和云端存储
+- 开发 R2StorageService 与现有业务逻辑集成
+- 前端适配云存储 URL，无缝支持本地和云端图片显示
+
+### 📦 架构升级
+
+- 封装 StorageService 接口统一存储操作
+- 实现可配置的策略模式选择存储实现:
+  - LOCAL: 本地文件系统存储 (开发环境)
+  - R2: Cloudflare R2 对象存储 (生产环境)
+
+### ⚙️ 环境变量配置
+
+添加以下环境变量支持:
+
+```
+STORAGE_MODE=R2
+CLOUDFLARE_R2_ACCESS_KEY=access-key
+CLOUDFLARE_R2_SECRET_KEY=secret-key
+CLOUDFLARE_R2_ENDPOINT=endpoint
+CLOUDFLARE_R2_BUCKET=bucket-name
+CLOUDFLARE_R2_PUBLIC_URL=public-url
+```
+
+### 📚 文档更新
+
+- 创建 [Storage Documentation](./storage.md) 详细说明存储系统
+- 更新开发指南和部署文档以反映新存储系统 

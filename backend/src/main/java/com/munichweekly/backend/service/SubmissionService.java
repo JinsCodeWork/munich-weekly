@@ -56,7 +56,7 @@ public class SubmissionService {
         }
 
         // 5️⃣ 创建投稿对象，状态为 pending
-        Submission submission = new Submission(user, issue, dto.getImageUrl(), dto.getDescription());
+        Submission submission = new Submission(user, issue, null, dto.getDescription());
         submission.setStatus("pending");
 
         return submissionRepository.save(submission);

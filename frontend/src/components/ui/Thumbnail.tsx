@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants } from "@/styles/components/thumbnail";
 
@@ -18,6 +18,8 @@ export interface ThumbnailProps {
   rounded?: boolean;
   aspectRatio?: keyof typeof aspectRatioVariants | string;
   unoptimized?: boolean;
+  fallbackSrc?: string;
+  showErrorMessage?: boolean;
 }
 
 /**
@@ -40,11 +42,18 @@ export function Thumbnail({
   quality = 80,
   rounded = true,
   aspectRatio = "square",
-  unoptimized = false
+  unoptimized = false,
+  fallbackSrc = '/placeholder.jpg',
+  showErrorMessage = false
 }: ThumbnailProps) {
+  const [hasError, setHasError] = useState(false);
   // 处理本地上传的图片路径
   const imageSrc = src;
   const isLocalUpload = src.startsWith('/uploads/');
+
+  const handleError = () => {
+    setHasError(true);
+  };
 
   return (
     <div
@@ -58,12 +67,12 @@ export function Thumbnail({
       style={fill ? undefined : { width, height }}
     >
       <Image
-        src={imageSrc}
+        src={hasError ? fallbackSrc : imageSrc}
         alt={alt}
         className={getThumbnailImageStyles({
           objectFit,
           isClickable: !!onClick,
-          className
+          className: `${className} ${hasError ? 'opacity-50' : ''}`
         })}
         width={fill ? undefined : width}
         height={fill ? undefined : height}
@@ -72,7 +81,13 @@ export function Thumbnail({
         priority={priority}
         quality={quality}
         unoptimized={isLocalUpload || unoptimized}
+        onError={handleError}
       />
+      {hasError && showErrorMessage && (
+        <div className="absolute inset-0 flex items-center justify-center text-red-500">
+          Loading Failed
+        </div>
+      )}
     </div>
   );
 } 

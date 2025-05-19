@@ -2,17 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 导入Poppins字体 */
+/* Import Poppins font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* 全局背景色设置，防止白屏闪烁 */
+/* Global background color setting - Default light background */
 @layer base {
   body {
-    @apply bg-[#161616];
+    @apply bg-gray-50;
   }
 }
 
-/* 导航链接悬停下划线效果 */
+/* Navigation link hover underline effect */
 .nav-link-hover {
   position: relative;
 }
@@ -33,7 +33,7 @@
   width: 100%;
 }
 
-/* 当前激活的导航项已有下划线 */
+/* Currently active navigation item with underline */
 .nav-link-active::after {
   content: '';
   position: absolute;
@@ -45,7 +45,7 @@
   background-color: currentColor;
 }
 
-/* 登录表单淡入动画 - 加快速度 */
+/* Fade in animation - unified definition */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -57,11 +57,7 @@
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* animate-in fade-in 补充定义 */
+/* Animation classes with consistent naming and behavior */
 .animate-in {
   animation-duration: 300ms;
   animation-timing-function: ease-out;
@@ -71,6 +67,10 @@
 .fade-in {
   opacity: 0;
   animation-name: fadeIn;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
 /* Component style abstractions */

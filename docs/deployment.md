@@ -10,7 +10,6 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 * Domain: `munichweekly.art` pointing to server IP
 * Nginx installed and running
 * Docker + Docker Compose installed (v28.0.4 and v2.34.0 confirmed)
-* Java 21 installed (Spring Boot uses Java 21)
 * Git installed
 
 ---
@@ -98,38 +97,53 @@ munich-weekly/
 Create a `.env` file inside the `backend/` directory:
 
 ```env
-# database config
+# Database config
 POSTGRES_DB=mydatabase
 POSTGRES_USER=myuser
 POSTGRES_PASSWORD=secret
 
-# JWT
+# JWT config
 JWT_SECRET=your-very-secure-secret
 JWT_EXPIRATION_MS=3600000
+
+# Cloudflare R2 storage (if using cloud storage)
+CLOUDFLARE_R2_ACCESS_KEY=your-access-key
+CLOUDFLARE_R2_SECRET_KEY=your-secret-key
+CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
+CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
+CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
+
+# Storage configuration (R2 for cloud storage, LOCAL for local storage)
+STORAGE_MODE=R2
+
+# Spring profiles
+SPRING_PROFILES_ACTIVE=dev
 ```
 
 These values are used by:
-
-* `compose.yaml` for launching PostgreSQL
+* `compose.yaml` for launching PostgreSQL and the backend container
 * Spring Boot via `${...}` variables in `application.properties`
 
 > ✅ Make sure `.env` is excluded from Git with `.gitignore`
 
 ---
 
-## 5. Backend Database Setup (Docker)
+## 5. Backend Deployment with Docker
 
-Launch the PostgreSQL container with volume persistence:
+The backend now uses Docker for deployment, incorporating both PostgreSQL and the Spring Boot application.
 
 ```bash
-cd backend
+cd /opt/munich-weekly/backend
 docker compose up -d
 ```
 
-This uses the following `compose.yaml`:
+This command starts two containers:
+1. **PostgreSQL database** (`mw-postgres`)
+2. **Spring Boot backend** (`mw-backend`)
+
+The `compose.yaml` file configures both services:
 
 ```yaml
-version: '3.8'
 services:
   postgres:
     image: postgres:15
@@ -144,38 +158,89 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  backend:
+    build: .
+    container_name: mw-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      - CLOUDFLARE_R2_ACCESS_KEY=${CLOUDFLARE_R2_ACCESS_KEY}
+      - CLOUDFLARE_R2_SECRET_KEY=${CLOUDFLARE_R2_SECRET_KEY}
+      - CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT}
+      - CLOUDFLARE_R2_BUCKET=${CLOUDFLARE_R2_BUCKET}
+      - CLOUDFLARE_R2_PUBLIC_URL=${CLOUDFLARE_R2_PUBLIC_URL}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - UPLOADS_DIR=/uploads
+    volumes:
+      - ./uploads:/uploads
+      - ../docs:/app/docs
+
 volumes:
   pgdata:
 ```
 
----
+### Building and Deploying Backend Changes
 
-## 6. Building & Running the Backend
-
-Option 1: Run via Gradle (development)
+When updating the backend code:
 
 ```bash
+cd /opt/munich-weekly
+git pull  # Get latest changes
+
+# Rebuild and restart the backend container
 cd backend
-./gradlew bootRun
+docker compose up -d --build backend
 ```
 
-Option 2: Build and run executable JAR (recommended for production)
+### Configuring Storage
+
+The platform offers two storage options for image uploads:
+
+1. **Local Storage** - Stores files on the server's filesystem
+2. **Cloudflare R2 Cloud Storage** - Stores files in Cloudflare's object storage service
+
+#### Using Local Storage
+
+For development or testing environments, you can use local storage:
+
+```env
+# Set in .env file
+STORAGE_MODE=LOCAL
+UPLOADS_DIR=/uploads
+```
+
+This will store uploaded files in the `/uploads` directory inside the container, which is mapped to `./uploads` on the host via Docker volume.
+
+#### Using Cloud Storage (Recommended for Production)
+
+For production environments, using Cloudflare R2 is recommended:
+
+```env
+# Set in .env file
+STORAGE_MODE=R2
+CLOUDFLARE_R2_ACCESS_KEY=your-access-key
+CLOUDFLARE_R2_SECRET_KEY=your-secret-key
+CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
+CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
+CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
+```
+
+The R2 storage service will automatically:
+- Create the bucket if it doesn't exist
+- Generate public URLs for uploaded images
+- Optimize storage structure for efficient retrieval
+
+For detailed information on the storage system, see the [Storage Documentation](./storage.md).
+
+### Checking Backend Container Logs
+
+To check logs for the backend container:
 
 ```bash
-./gradlew build
-java -jar build/libs/backend-0.0.1-SNAPSHOT.jar
-```
-
-> The application starts on port `8080` and uses config from `application.properties`
-
-Spring Boot config sample:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/mydatabase
-spring.datasource.username=myuser
-spring.datasource.password=secret
-spring.profiles.active=dev
-jwt.secret=${JWT_SECRET:this-is-a-very-secret-key-123456789077883932032328}
+docker logs -f mw-backend
 ```
 
 ---
@@ -335,6 +400,31 @@ If you encounter a 502 Bad Gateway error:
    tail -f /var/log/nginx/error.log
    ```
 
+### Backend Container Issues
+
+If the backend container is having issues:
+
+1. Check container status:
+   ```bash
+   docker ps -a | grep mw-backend
+   ```
+
+2. View container logs:
+   ```bash
+   docker logs mw-backend
+   ```
+
+3. Restart the container if needed:
+   ```bash
+   docker restart mw-backend
+   ```
+
+4. If problems persist, rebuild the container:
+   ```bash
+   cd /opt/munich-weekly/backend
+   docker compose up -d --build backend
+   ```
+
 ### SSH Access Issues
 
 If SSH key authentication fails:
@@ -357,7 +447,6 @@ If SSH key authentication fails:
 
 * Server IP: `188.245.71.169`
 * OS: Ubuntu 22.04 LTS
-* Java: 21 (via toolchain)
 * Docker: v28.0.4
 * Docker Compose: v2.34.0
 * Nginx: installed & SSL enabled
@@ -366,13 +455,14 @@ If SSH key authentication fails:
 * Ports:
 
   * 80/443 → Nginx
-  * 8080 → Spring Boot backend
+  * 8080 → Spring Boot backend (Docker container)
   * 3000 → Next.js frontend
+  * 5432 → PostgreSQL (Docker container)
 
 ---
 
 ## 📝 Notes
 
+* Backend and PostgreSQL now run in Docker containers
 * Frontend is deployed and managed with PM2
-* Backend sample app running on port 8080
 * SSH security has been hardened with key-based authentication

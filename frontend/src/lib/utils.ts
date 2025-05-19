@@ -89,13 +89,22 @@ export function statusToColorClass(status: string, type: 'bg' | 'text' | 'border
 export function getImageUrl(url: string, serverUrl: string = 'http://localhost:8080'): string {
   if (!url) return '';
   
-  // Check if this is a local upload (starts with /uploads/)
-  if (url.startsWith('/uploads/')) {
-    // 使用前端的API路由代理来避免CORS问题
-    // Next.js已在next.config.js中配置了代理
-    return `/uploads${url.substring('/uploads'.length)}`;
+  // 外部完整URL，例如Cloudflare R2的URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
   }
   
-  // Return the original URL for external images
+  // 本地上传图片处理
+  if (url.startsWith('/uploads/')) {
+    // 使用Next.js配置的API路由代理，避免CORS问题
+    return url; // 应已配置rewrite规则
+  }
+  
+  // 如果只有相对路径但不带/uploads前缀，添加/uploads前缀
+  if (url.includes('/issues/') && !url.startsWith('/uploads/')) {
+    return `/uploads/${url}`; 
+  }
+  
+  // 其他情况，保留原URL
   return url;
 }

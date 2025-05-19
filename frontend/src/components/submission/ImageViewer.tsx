@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { getImageCaptionStyles } from '@/styles';
-import Image from "next/image";
 import { getImageUrl } from "@/lib/utils";
+import { Thumbnail } from "@/components/ui/Thumbnail";
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -77,9 +77,6 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   };
 
-  // Check if this is a local upload (for rendering decisions)
-  const isLocalUpload = imageUrl.startsWith('/uploads/');
-
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
@@ -98,22 +95,17 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         
         {/* Image */}
         <div className="w-full flex justify-center">
-          {isLocalUpload ? (
-            <img 
+          <div className="max-h-[80vh] h-auto relative" style={{ width: '100%', maxWidth: '1200px' }}>
+            <Thumbnail 
               src={displayUrl} 
               alt={description} 
-              className="max-h-[80vh] max-w-full object-contain rounded shadow-2xl"
-            />
-          ) : (
-            <Image 
-              src={displayUrl} 
-              alt={description} 
-              className="max-h-[80vh] max-w-full object-contain rounded shadow-2xl"
+              className="rounded shadow-2xl"
               width={1200}
               height={800}
-              unoptimized={isLocalUpload}
+              objectFit="contain"
+              unoptimized={imageUrl.startsWith('/uploads/')}
             />
-          )}
+          </div>
         </div>
         
         {/* Description */}

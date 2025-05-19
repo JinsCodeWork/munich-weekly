@@ -50,8 +50,6 @@ export type SubmissionListResponse = PaginatedResponse<Submission>;
 export interface SubmissionRequest {
   issueId: number;
   description: string;
-  imageUrl?: string;
-  photoFile?: File;
 }
 
 // My submission response type

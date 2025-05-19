@@ -34,7 +34,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     implementation 'org.reflections:reflections:0.10.2'
+    //AWS S3
+    implementation 'software.amazon.awssdk:s3:2.21.37'
+    implementation 'software.amazon.awssdk:auth:2.21.37'
 }
+
 
 tasks.named('test') {
     useJUnitPlatform()

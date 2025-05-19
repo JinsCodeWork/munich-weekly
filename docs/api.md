@@ -18,11 +18,11 @@
 ## VoteController
 
 - **POST** `/api/votes`
-  > Submit a vote for a submission. Uses visitorId from cookie.
+  > Submit a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
 
   > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
 - **GET** `/api/votes/check`
-  > Check if current visitor has voted for a submission.
+  > Check if current user has voted for a submission.
 
   > **Params**: `Long submissionId, String visitorId`
 
@@ -67,26 +67,47 @@
   > Login with email and password, returns JWT token and user info
 
   > **Params**: `EmailLoginRequestDTO dto`
-- **POST** `/api/auth/bind`
-  > Bind a third-party provider (e.g. Google or WeChat) to the currently logged-in user
-
-  > **Params**: `BindRequestDTO dto`
-- **DELETE** `/api/auth/bind/{provider}`
-  > Unbind a third-party provider from the current user. Example: DELETE /api/auth/bind/google
-
-  > **Params**: `String provider`
 - **POST** `/api/auth/login/provider`
   > Login with a third-party provider (e.g. Google). Auto-creates user on first login
 
   > **Params**: `UserAuthProviderLoginRequestDTO dto`
+- **POST** `/api/auth/bind`
+  > Bind a third-party provider (e.g. Google or WeChat) to the currently logged-in user
+
+  > **Params**: `BindRequestDTO dto`
 - **GET** `/api/auth/providers`
   > Get all third-party providers linked to the current logged-in user
+- **DELETE** `/api/auth/bind/{provider}`
+  > Unbind a third-party provider from the current user. Example: DELETE /api/auth/bind/google
+
+  > **Params**: `String provider`
 
 ## FileUploadController
 
-- **POST** `/api/uploads/image`
+- **POST** `/api/submissions/{submissionId}/upload`
+  > Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.
 
-  > **Params**: `MultipartFile file`
+  > **Params**: `String submissionId, MultipartFile file`
+- **GET** `/api/submissions/{submissionId}/check-image`
+  > Check if an image exists for a submission. Returns true/false along with the image URL if it exists.
+
+  > **Params**: `String submissionId`
+- **GET** `/api/submissions/{submissionId}/direct-image`
+  > Get the actual image binary data for a submission, bypassing the normal URL. Used primarily for local storage access.
+
+  > **Params**: `String submissionId`
+
+## StorageController
+
+- **GET** `/api/storage/info`
+  > Get information about the current storage configuration. Admin only.
+  
+  > Returns mode (LOCAL/R2), status, and configuration details.
+
+- **GET** `/api/storage/status`
+  > Check the health and connectivity of the configured storage system. Admin only.
+  
+  > Returns connectivity status, performance metrics, and error details if any.
 
 ## IssueController
 

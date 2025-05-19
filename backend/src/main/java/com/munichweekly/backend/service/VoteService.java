@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 /**
- * Service layer for handling voting logic using anonymous visitorId.
+ * Service layer for handling voting logic using anonymous visitorId or userId.
  * Ensures voting constraints and saves vote entries.
  */
 @Service
@@ -30,7 +30,7 @@ public class VoteService {
     }
 
     /**
-     * Cast a vote for a submission using visitorId.
+     * Cast a vote for a submission using visitorId (for anonymous users).
      * Checks for duplicate votes and voting window.
      */
     public Vote vote(String visitorId, Submission submission, String ipAddress) {
@@ -61,10 +61,49 @@ public class VoteService {
     }
 
     /**
+     * Cast a vote for a submission using userId (for authenticated users).
+     * Checks for duplicate votes and voting window.
+     */
+    public Vote voteAsUser(Long userId, Submission submission, String ipAddress) {
+        Issue issue = submission.getIssue();
+
+        if (!"approved".equals(submission.getStatus())) {
+            throw new IllegalStateException("Only approved submissions can be voted on");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(issue.getVotingStart()) || now.isAfter(issue.getVotingEnd())) {
+            throw new IllegalStateException("Voting is not open at this time");
+        }
+
+        boolean alreadyVoted = voteRepository.existsByUserIdAndSubmission(userId, submission);
+        if (alreadyVoted) {
+            throw new IllegalStateException("You have already voted for this submission");
+        }
+
+        Vote vote = new Vote();
+        vote.setSubmission(submission);
+        vote.setIssue(issue);
+        vote.setUserId(userId);
+        vote.setVisitorId("user_" + userId);
+        vote.setIpAddress(ipAddress);
+        vote.setVotedAt(now);
+
+        return voteRepository.save(vote);
+    }
+
+    /**
      * Check if a visitor has already voted for a submission.
      */
     public boolean hasVoted(String visitorId, Submission submission) {
         return voteRepository.existsByVisitorIdAndSubmission(visitorId, submission);
+    }
+
+    /**
+     * Check if a registered user has already voted for a submission.
+     */
+    public boolean hasVotedAsUser(Long userId, Submission submission) {
+        return voteRepository.existsByUserIdAndSubmission(userId, submission);
     }
 
     public IssueRepository getIssueRepository() {

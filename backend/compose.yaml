@@ -1,18 +1,36 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15                # ✅ 建议指定具体版本，避免 future break
-    container_name: mw-postgres       # ✅ 给容器起个名字，便于管理
-    restart: unless-stopped           # ✅ 自动重启策略（推荐用于开发）
+    image: postgres:15
+    container_name: mw-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: secret
     ports:
-      - '5432:5432'                   # ✅ 显式映射端口（host:container）
+      - '5432:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data  # ✅ 数据持久化（即使重启也不会丢数据）
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: mw-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      - CLOUDFLARE_R2_ACCESS_KEY=${CLOUDFLARE_R2_ACCESS_KEY}
+      - CLOUDFLARE_R2_SECRET_KEY=${CLOUDFLARE_R2_SECRET_KEY}
+      - CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT}
+      - CLOUDFLARE_R2_BUCKET=${CLOUDFLARE_R2_BUCKET}
+      - CLOUDFLARE_R2_PUBLIC_URL=${CLOUDFLARE_R2_PUBLIC_URL}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - UPLOADS_DIR=/uploads
+    volumes:
+      - ./uploads:/uploads
+      - ../docs:/app/docs
 
 volumes:
   pgdata:

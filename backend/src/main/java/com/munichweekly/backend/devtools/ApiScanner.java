@@ -1,6 +1,7 @@
 package com.munichweekly.backend.devtools;
 
 import com.munichweekly.backend.devtools.annotation.Description;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@Profile("dev")
 public class ApiScanner {
 
     // List of all controller classes to scan
@@ -84,7 +86,8 @@ public class ApiScanner {
 
             markdown.append("\n");
         }
-        Path output = Paths.get("../docs/api.md");
+        Path output = Paths.get("docs/api.md"); // ⬅️ 注意不再是 ../docs
+        output.toFile().getParentFile().mkdirs(); // 确保目录存在
         // Save to file
         try (FileWriter writer = new FileWriter(String.valueOf(output))) {
             writer.write(markdown.toString());

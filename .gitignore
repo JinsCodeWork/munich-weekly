@@ -3,3 +3,10 @@ frontend/.next/
 
 # Ignore Node.js dependencies
 node_modules/
+
+# Ignore all files in the uploads directory
+uploads/
+
+.env
+
+

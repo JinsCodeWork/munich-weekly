@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import { getAuthHeader } from '@/api/http';
+import { formatFileSize } from '@/lib/utils';
+
+interface UploadOptions {
+  onProgress?: (progress: number) => void;
+  headers?: Record<string, string>;
+}
 
 /**
  * Custom hook for handling file uploads
@@ -22,12 +29,13 @@ export function useFileUpload() {
    */
   const handleFileSelect = (selectedFile: File | null) => {
     if (!selectedFile) {
+      clearFile();
       return;
     }
     
     // Validate file type
     if (!ALLOWED_TYPES.includes(selectedFile.type)) {
-      setError('Invalid file type. Please upload JPEG or PNG images only.');
+      setError('Only JPG and PNG images are allowed');
       return;
     }
     
@@ -61,13 +69,118 @@ export function useFileUpload() {
   };
   
   /**
-   * Upload file to server
+   * 使用fetch API上传文件
+   * @param url 上传接口的URL
+   * @returns 成功时返回响应结果，失败时抛出错误
+   */
+  const uploadFileWithFetch = async (url: string) => {
+    if (!file) {
+      setError('Please select a file to upload');
+      throw new Error('Please select a file to upload');
+    }
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+    
+    try {
+      console.log(`Starting upload of file "${file.name}" (${formatFileSize(file.size)}) to ${url}`);
+      
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // 发送请求
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          ...getAuthHeader()
+        },
+        credentials: 'include'
+      });
+      
+      // 处理响应
+      if (!response.ok) {
+        let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          console.error('Upload failed, server response:', responseText);
+          
+          try {
+            const errorData = JSON.parse(responseText);
+            if (errorData.error) {
+              errorMessage = errorData.error;
+            }
+          } catch {
+            // 如果响应不是JSON格式，在控制台记录原始响应
+            console.log('Server returned non-JSON response:', responseText);
+          }
+        } catch (textError) {
+          console.error('Unable to read response content:', textError);
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      // 处理成功响应
+      let responseText = '';
+      try {
+        responseText = await response.text();
+        
+        // 检查响应是否为空
+        if (!responseText.trim()) {
+          console.log('Server returned an empty response, but status code was successful');
+          setUploadProgress(100);
+          return { success: true, message: 'Upload successful, but server did not return any data' };
+        }
+        
+        const result = JSON.parse(responseText);
+        
+        if (!result.success && result.error) {
+          throw new Error(result.error);
+        }
+        
+        console.log('Upload successful, server response:', result);
+        setUploadProgress(100);
+        
+        if (result.imageUrl) {
+          setUploadedUrl(result.imageUrl);
+          console.log('Set uploaded image URL:', result.imageUrl);
+        }
+        
+        return result;
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError, 'Original response:', responseText);
+        
+        // 虽然解析失败，但HTTP状态是成功的，所以我们认为上传成功了
+        setUploadProgress(100);
+        return { 
+          success: true, 
+          message: 'Upload successful, but could not parse server response',
+          rawResponse: responseText
+        };
+      }
+    } catch (err) {
+      console.error('Error during upload process:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred during upload');
+      throw err;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  /**
+   * Upload file to server with progress tracking
    * @param endpoint API endpoint for upload
+   * @param options Upload options
    * @returns Promise that resolves with the uploaded file URL
    */
-  const uploadFile = async (endpoint: string = '/api/uploads/image'): Promise<string | null> => {
+  const uploadFile = async (endpoint: string, options?: UploadOptions): Promise<string | null> => {
     if (!file) {
-      setError('Please select a file to upload.');
+      setError('Please select a file to upload');
       return null;
     }
     
@@ -77,28 +190,29 @@ export function useFileUpload() {
     
     return new Promise((resolve, reject) => {
       try {
-        // Create form data
+        // 创建FormData
         const formData = new FormData();
         formData.append('file', file);
         
-        // Upload image with progress tracking
+        // 使用XMLHttpRequest跟踪进度
         const xhr = new XMLHttpRequest();
         
-        // Track upload progress
+        // 跟踪上传进度
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
             setUploadProgress(progress);
+            options?.onProgress?.(progress);
           }
         });
         
-        // Handle response
+        // 处理响应
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const response = JSON.parse(xhr.responseText);
               if (response.success === false) {
-                setError(response.error || 'Upload failed, please try again.');
+                setError(response.error || 'Upload failed, please try again');
                 setIsUploading(false);
                 reject(new Error(response.error || 'Upload failed'));
                 return;
@@ -109,7 +223,7 @@ export function useFileUpload() {
               setUploadProgress(100);
               resolve(response.imageUrl);
             } catch (parseError) {
-              console.error('Failed to parse response:', parseError);
+              console.error('Unable to parse response:', parseError);
               setError('Server response format error');
               setIsUploading(false);
               reject(parseError);
@@ -122,36 +236,38 @@ export function useFileUpload() {
               setError(`Upload failed (${xhr.status})`);
             }
             setIsUploading(false);
-            reject(new Error(`HTTP Error: ${xhr.status}`));
+            reject(new Error(`HTTP error: ${xhr.status}`));
           }
         };
         
-        // Handle errors
+        // 处理网络错误
         xhr.onerror = () => {
           setError('Network error, please check your connection');
           setIsUploading(false);
           reject(new Error('Network error'));
         };
         
-        // Open and send request
+        // 发送请求
         xhr.open('POST', endpoint);
         
-        // Add authentication header
-        const token = localStorage.getItem("jwt");
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        } else {
-          setError('You need to be logged in to upload files');
-          setIsUploading(false);
-          reject(new Error('Authentication required'));
-          return;
+        // 添加认证头
+        const authHeader = getAuthHeader();
+        Object.keys(authHeader).forEach(key => {
+          xhr.setRequestHeader(key, authHeader[key]);
+        });
+        
+        // 添加自定义头
+        if (options?.headers) {
+          Object.keys(options.headers!).forEach(key => {
+            xhr.setRequestHeader(key, options.headers![key]);
+          });
         }
         
         xhr.send(formData);
         
       } catch (err) {
         console.error('Upload error:', err);
-        setError('Failed to upload file, please try again');
+        setError('Upload file failed, please try again');
         setIsUploading(false);
         reject(err);
       }
@@ -167,6 +283,7 @@ export function useFileUpload() {
     uploadedUrl,
     handleFileSelect,
     uploadFile,
+    uploadFileWithFetch,
     clearFile,
     setError
   };

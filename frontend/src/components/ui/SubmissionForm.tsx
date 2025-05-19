@@ -5,8 +5,7 @@ import { createSubmission } from '@/api/submissions';
 
 interface SubmissionFormProps {
   issueId: number;
-  imageUrl: string;
-  onSuccess?: () => void;
+  onSuccess?: (submissionId: number) => void;
   onReset?: () => void;
   className?: string;
   redirectPath?: string;
@@ -19,7 +18,6 @@ interface SubmissionFormProps {
  */
 export function SubmissionForm({ 
   issueId, 
-  imageUrl, 
   onSuccess,
   onReset,
   className,
@@ -53,16 +51,14 @@ export function SubmissionForm({
     setError(null);
     
     try {
-      // Submit to API
-      await createSubmission({
+      // 只创建submission，不带imageUrl
+      const res = await createSubmission({
         issueId,
-        imageUrl,
         description: description.trim()
       });
-      
-      // Handle success
+      // 成功后回调返回submissionId
       if (onSuccess) {
-        onSuccess();
+        onSuccess(res.submissionId);
       }
       
       // Redirect after a delay

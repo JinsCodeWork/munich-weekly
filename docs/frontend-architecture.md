@@ -247,6 +247,33 @@ Components and hooks for development and debugging:
    - Clear error messages with retry options
    - Loading states with visual indicators
 
+### Image Storage Integration
+
+The frontend handles image display from multiple storage sources:
+
+1. **Storage URL Detection**:
+   - The `Thumbnail` component automatically detects image source type
+   - Local storage URLs have the format: `/uploads/issues/{issueId}/submissions/{filename}`
+   - Cloud storage URLs have the format: `https://{public-url}/issues/{issueId}/submissions/{filename}`
+
+2. **Image Optimization**:
+   - Local images use standard Next.js Image optimization
+   - Cloud-stored images (R2) use the `unoptimized` prop to prevent double optimization
+   - This distinction is handled by checking if the URL is external:
+     ```jsx
+     <Image
+       unoptimized={isCloudStorageUrl(imageUrl)}
+       // other props
+     />
+     ```
+
+3. **Error Handling**:
+   - Fallback mechanisms for broken image links
+   - Graceful degradation with placeholder imagery
+   - Loading state indicators during image fetch
+
+This approach ensures the frontend can seamlessly work with both local and cloud storage without requiring changes to the UI components when switching storage providers.
+
 ## API Integration
 
 ### Modular API Structure

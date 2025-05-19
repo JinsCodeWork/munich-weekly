@@ -12,6 +12,7 @@ This document serves as the entry point to the frontend development documentatio
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
+- [**Storage System**](./storage.md) - Image storage architecture and implementation details
 
 ## Technology Stack
 
@@ -20,6 +21,7 @@ This document serves as the entry point to the frontend development documentatio
 - **Styling**: Tailwind CSS
 - **State Management**: React Context API + Custom Hooks
 - **Authentication**: JWT tokens
+- **Storage System**: Dual-mode storage (Local & Cloudflare R2)
 - **API Integration**: Modular API structure organized by business functionality
 - **Image Optimization**: Next.js Image component
 
@@ -164,6 +166,7 @@ frontend/
 - Admin approval workflow
 - Voting mechanism
 - Issue management system
+- Dual-mode image storage (local/cloud)
 
 #### 3.1. Public Voting Page (`/vote`)
 

@@ -1,10 +1,17 @@
 package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.FileUploadResponseDTO;
+import com.munichweekly.backend.model.Submission;
+import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.service.StorageService;
+import com.munichweekly.backend.service.R2StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -12,60 +19,230 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.munichweekly.backend.devtools.annotation.Description;
 
 /**
  * REST controller for handling file uploads
  */
 @RestController
-@RequestMapping("/api/uploads")
+@RequestMapping("/api/submissions")
 public class FileUploadController {
 
     private static final Logger logger = Logger.getLogger(FileUploadController.class.getName());
     private final StorageService storageService;
+    private final SubmissionRepository submissionRepository;
+    private final R2StorageService r2StorageService;  // 直接注入R2服务用于调试
 
     @Autowired
-    public FileUploadController(StorageService storageService) {
+    public FileUploadController(StorageService storageService, 
+                               SubmissionRepository submissionRepository,
+                               R2StorageService r2StorageService) {
         this.storageService = storageService;
+        this.submissionRepository = submissionRepository;
+        this.r2StorageService = r2StorageService;
     }
 
     /**
-     * Handle image upload requests
-     * 
-     * @param file The image file to upload
-     * @return ResponseEntity with the upload result
+     * Upload an image file and associate it with a specific submission.
+     * The submissionId is used to look up the submission, and the image will be stored in the appropriate path (local or cloud).
+     * The imageUrl field of the submission will be updated after successful upload.
      */
-    @PostMapping("/image")
+    @Description("Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.")
+    @PostMapping("/{submissionId}/upload")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public ResponseEntity<FileUploadResponseDTO> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<FileUploadResponseDTO> uploadImageToSubmission(
+            @PathVariable("submissionId") String submissionId,
+            @RequestParam("file") MultipartFile file) {
+        logger.info("Starting image upload for submission ID: " + submissionId);
+        logger.info("File details - Name: " + file.getOriginalFilename() + 
+                   ", Size: " + file.getSize() + " bytes, Content Type: " + file.getContentType());
+        
         try {
-            String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unnamed file";
-            long fileSize = file.getSize();
-            String contentType = file.getContentType();
+            // Validate the submission ID
+            Long subId = Long.valueOf(submissionId);
+            logger.info("Looking up submission with ID: " + subId);
             
-            logger.info("Received file upload request: " + 
-                        "name=" + filename + 
-                        ", size=" + fileSize + " bytes" + 
-                        ", type=" + contentType);
+            // Fetch the submission
+            Submission submission = submissionRepository.findById(subId)
+                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
             
-            String imageUrl = storageService.storeFile(file);
+            logger.info("Submission found. Issue ID: " + submission.getIssue().getId() + 
+                       ", User ID: " + submission.getUser().getId());
             
-            logger.info("File uploaded successfully: " + imageUrl);
+            String issueId = submission.getIssue().getId().toString();
+            String userId = submission.getUser().getId().toString();
+            
+            logger.info("Storing file with issueId: " + issueId + ", userId: " + userId + 
+                       ", submissionId: " + submissionId);
+            
+            // Store the file using the storage service
+            String imageUrl = storageService.storeFile(file, issueId, userId, submissionId);
+            logger.info("File successfully stored. URL: " + imageUrl);
+            
+            // Check if the URL is valid and accessible
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                boolean fileExists = false;
+                try {
+                    fileExists = storageService.fileExists(imageUrl);
+                    logger.info("File existence check: " + (fileExists ? "File exists" : "File not found"));
+                } catch (Exception e) {
+                    logger.warning("Unable to verify file existence: " + e.getMessage());
+                }
+                
+                if (!fileExists) {
+                    logger.warning("Uploaded file could not be verified at URL: " + imageUrl + 
+                                  " but proceeding with database update anyway");
+                }
+            } else {
+                logger.severe("Storage service returned empty or null URL");
+                return ResponseEntity.internalServerError()
+                        .body(new FileUploadResponseDTO(false, "Storage service returned invalid URL"));
+            }
+            
+            // Update database with the image URL
+            logger.info("Updating submission with image URL: " + imageUrl);
+            submission.setImageUrl(imageUrl);
+            submissionRepository.save(submission);
+            
+            logger.info("File upload process completed successfully");
             return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
             
+        } catch (NumberFormatException e) {
+            logger.severe("Invalid submission ID format: " + submissionId);
+            return ResponseEntity.badRequest().body(
+                new FileUploadResponseDTO(false, "Invalid submission ID: " + submissionId)
+            );
         } catch (IllegalArgumentException e) {
             logger.warning("Invalid file upload: " + e.getMessage());
             return ResponseEntity.badRequest().body(new FileUploadResponseDTO(false, e.getMessage()));
-            
         } catch (IOException e) {
             logger.log(Level.SEVERE, "File upload error: " + e.getMessage(), e);
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "Failed to store file: " + e.getMessage()));
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Unexpected error during file upload", e);
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "An unexpected error occurred: " + e.getMessage()));
         }
     }
-} 
+    
+    /**
+     * 调试端点：检查文件是否存在于R2存储中
+     * 
+     * @param submissionId 提交ID
+     * @return 文件状态信息
+     */
+    @GetMapping("/{submissionId}/check-image")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<Map<String, Object>> checkImage(@PathVariable("submissionId") String submissionId) {
+        logger.info("Starting image verification for submission ID: " + submissionId);
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Long subId = Long.valueOf(submissionId);
+            Submission submission = submissionRepository.findById(subId)
+                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            
+            String imageUrl = submission.getImageUrl();
+            response.put("submissionId", submissionId);
+            response.put("imageUrl", imageUrl);
+            
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                response.put("status", "No image URL found for this submission");
+                return ResponseEntity.ok(response);
+            }
+            
+            boolean exists = r2StorageService.fileExists(imageUrl);
+            response.put("exists", exists);
+            
+            if (exists) {
+                response.put("status", "File exists in R2 storage");
+                
+                try {
+                    // 获取文件大小和其他元数据
+                    String objectKey = r2StorageService.extractObjectKeyFromUrl(imageUrl);
+                    if (objectKey != null) {
+                        software.amazon.awssdk.services.s3.model.HeadObjectRequest headRequest = 
+                            software.amazon.awssdk.services.s3.model.HeadObjectRequest.builder()
+                                .bucket(r2StorageService.getBucketName())
+                                .key(objectKey)
+                                .build();
+                        
+                        software.amazon.awssdk.services.s3.model.HeadObjectResponse headResponse = 
+                            r2StorageService.getS3Client().headObject(headRequest);
+                        
+                        response.put("fileSize", headResponse.contentLength());
+                        response.put("contentType", headResponse.contentType());
+                        response.put("eTag", headResponse.eTag());
+                        response.put("lastModified", headResponse.lastModified().toString());
+                    }
+                } catch (Exception e) {
+                    logger.warning("Failed to get file metadata: " + e.getMessage());
+                    response.put("metadata_error", e.getMessage());
+                }
+            } else {
+                response.put("status", "File does not exist in R2 storage");
+            }
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error checking image: " + e.getMessage(), e);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    /**
+     * 调试端点：直接从R2获取图片内容
+     * 
+     * @param submissionId 提交ID
+     * @return 图片内容
+     */
+    @GetMapping(value = "/{submissionId}/direct-image", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<byte[]> getImageDirectly(@PathVariable("submissionId") String submissionId) {
+        logger.info("Direct image retrieval request for submission ID: " + submissionId);
+        
+        try {
+            Long subId = Long.valueOf(submissionId);
+            Submission submission = submissionRepository.findById(subId)
+                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            
+            String imageUrl = submission.getImageUrl();
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                logger.warning("No image URL found for submission: " + submissionId);
+                return ResponseEntity.notFound().build();
+            }
+            
+            logger.info("Attempting to retrieve image directly from R2: " + imageUrl);
+            byte[] imageData = r2StorageService.getObjectBytes(imageUrl);
+            
+            if (imageData == null || imageData.length == 0) {
+                logger.warning("Failed to retrieve image data for URL: " + imageUrl);
+                return ResponseEntity.notFound().build();
+            }
+            
+            logger.info("Successfully retrieved image data. Size: " + imageData.length + " bytes");
+            
+            // 确定内容类型
+            String contentType = MediaType.IMAGE_JPEG_VALUE; // 默认为JPEG
+            if (imageUrl.toLowerCase().endsWith("png")) {
+                contentType = MediaType.IMAGE_PNG_VALUE;
+            }
+            
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(imageData);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error retrieving image: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+}

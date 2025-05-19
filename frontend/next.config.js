@@ -24,6 +24,16 @@ const nextConfig = {
         hostname: 'localhost',
         port: '8080',
         pathname: '/uploads/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-42cc142968d044e0b7182fa9177333cf.r2.dev',
+        pathname: '/munichweekly-photoupload/**'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+        pathname: '/**'
       }
     ]
   }

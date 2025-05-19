@@ -3,6 +3,7 @@ package com.munichweekly.backend.security;
 import com.munichweekly.backend.model.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Optional;
 
 /**
  * Utility class to retrieve the current authenticated user from the security context.
@@ -36,5 +37,15 @@ public class CurrentUserUtil {
             throw new IllegalStateException("You must be logged in to perform this action.");
         }
         return user.getId();
+    }
+
+    /**
+     * Get the ID of the current user as an Optional.
+     *
+     * @return Optional containing the user ID, or empty if not authenticated
+     */
+    public static Optional<Long> getCurrentUserId() {
+        User user = getUser();
+        return user != null ? Optional.of(user.getId()) : Optional.empty();
     }
 }

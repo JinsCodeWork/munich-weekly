@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 py-12">
       <Container>
-        {/* 临时内容占位，将来会替换为Hero和Gallery组件 */}
+        {/* Temporary content placeholder, will be replaced with Hero and Gallery components */}
         <div className="text-center my-20">
           <h1 className="text-4xl font-semibold tracking-tight text-gray-900 mb-4">
             Coming soon

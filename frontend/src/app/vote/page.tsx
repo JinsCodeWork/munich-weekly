@@ -5,13 +5,20 @@ import { Issue, Submission, SubmissionStatus } from '@/types/submission';
 import { issuesApi, submissionsApi } from '@/api';
 import { SubmissionCard } from '@/components/submission/SubmissionCard';
 import { Container } from '@/components/ui/Container';
-import { Button } from '@/components/ui/Button'; // For potential retry/reload
+import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function VotePage() {
   const [activeVotingIssue, setActiveVotingIssue] = useState<Issue | null>(null);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]); // 所有投稿
+  const [displayedSubmissions, setDisplayedSubmissions] = useState<Submission[]>([]); // 当前页显示的投稿
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 分页相关状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 16; // 固定每页显示16个项目
+  const [totalPages, setTotalPages] = useState(1);
 
   const loadVotingData = useCallback(async () => {
     setIsLoading(true);
@@ -21,7 +28,7 @@ export default function VotePage() {
       if (!allIssues || allIssues.length === 0) {
         setError("No issues found currently. Please check back later.");
         setIsLoading(false);
-        setSubmissions([]);
+        setAllSubmissions([]);
         return;
       }
 
@@ -44,36 +51,71 @@ export default function VotePage() {
             issue: currentVotingIssue,
             status: sub.status as SubmissionStatus, 
           }));
-        setSubmissions(submissionsWithIssueData);
+        
+        // 保存所有投稿
+        setAllSubmissions(submissionsWithIssueData);
+        
+        // 计算总页数
+        const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
+        setTotalPages(totalPagesCount);
+        
+        // 更新当前页的投稿
+        updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
       } else {
         setActiveVotingIssue(null);
-        setSubmissions([]);
+        setAllSubmissions([]);
+        setDisplayedSubmissions([]);
         setError("There are no issues currently open for voting. Please check back later.");
       }
     } catch (err) {
       console.error("Error loading voting data:", err);
       setError("Failed to load voting information. Please try again later.");
       setActiveVotingIssue(null);
-      setSubmissions([]);
+      setAllSubmissions([]);
+      setDisplayedSubmissions([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [itemsPerPage]);
+  
+  // 根据当前页码更新显示的投稿
+  const updateDisplayedSubmissions = (submissions: Submission[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    const paginatedItems = submissions.slice(startIndex, endIndex);
+    setDisplayedSubmissions(paginatedItems);
+  };
+  
+  // 处理页码变化
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateDisplayedSubmissions(allSubmissions, page, itemsPerPage);
+    // 滚动到页面顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     loadVotingData();
   }, [loadVotingData]);
 
-  const handleVoteSuccess = useCallback((submissionId: number) => {
-    console.log(`Vote successful for submission ${submissionId}. Incrementing vote count locally.`);
-    setSubmissions(prevSubmissions =>
-      prevSubmissions.map(sub =>
-        sub.id === submissionId
-          ? { ...sub, voteCount: (sub.voteCount || 0) + 1 }
-          : sub
-      )
-    );
-    // We could also add a small delay or a toast message here
+  const handleVoteSuccess = useCallback((submissionId: number, newVoteCount?: number) => {
+    console.log(`Vote successful for submission ${submissionId}. Using vote count ${newVoteCount} from server.`);
+    
+    // 如果后端返回了新的投票计数，使用它；否则使用本地计算（+1）作为后备方案
+    const voteUpdateFn = (sub: Submission) => {
+      if (sub.id === submissionId) {
+        // 如果服务器返回了新的投票计数，则使用它，否则递增本地计数
+        const updatedVoteCount = newVoteCount !== undefined ? newVoteCount : (sub.voteCount || 0) + 1;
+        return { ...sub, voteCount: updatedVoteCount };
+      }
+      return sub;
+    };
+
+    // 更新所有投稿中的投票计数
+    setAllSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
+    
+    // 同时更新当前页显示的投稿
+    setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
   }, []);
 
   if (isLoading) {
@@ -115,31 +157,38 @@ export default function VotePage() {
           Voting period: {new Date(activeVotingIssue.votingStart).toLocaleDateString()} - {new Date(activeVotingIssue.votingEnd).toLocaleDateString()}
         </p>
       </div>
-
-      {submissions.length === 0 ? (
+      
+      {allSubmissions.length === 0 ? (
         <div className="text-center text-gray-500 py-10">
           <p>No submissions currently available for voting in this issue.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {submissions.map(submission => (
-            <div key={submission.id} className="relative">
-              <SubmissionCard 
-                submission={submission} 
-                displayContext="voteView" 
-                onVoteSuccess={handleVoteSuccess}
-              />
-              {/* 
-                Future VoteButton will be placed here or inside SubmissionCard.
-                For example:
-                <div className="absolute bottom-4 right-4 z-20">
-                  <VoteButton submissionId={submission.id} />
-                </div>
-                Or integrated more neatly within the card's content area.
-              */}
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {displayedSubmissions.map(submission => (
+              <div key={submission.id} className="relative">
+                <SubmissionCard 
+                  submission={submission} 
+                  displayContext="voteView" 
+                  onVoteSuccess={handleVoteSuccess}
+                />
+              </div>
+            ))}
+          </div>
+          
+          {/* 分页组件 */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              showFirstLastButtons
+              showPageSelector
+              maxVisiblePages={5}
+              simplifyOnMobile
+            />
+          )}
+        </>
       )}
     </Container>
   );

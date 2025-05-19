@@ -1,8 +1,6 @@
 package com.munichweekly.backend;
 
 import com.munichweekly.backend.devtools.DataResetService;
-import com.munichweekly.backend.model.User;
-import com.munichweekly.backend.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,20 +1,20 @@
 package com.munichweekly.backend.repository;
 
 import com.munichweekly.backend.model.Vote;
-import com.munichweekly.backend.model.User;
-import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.model.Submission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
 
-    // 判断访客是否对某个作品投过票（防止重复投票）
+    // 判断匿名访客是否对某个作品投过票
     boolean existsByVisitorIdAndSubmission(String visitorId, Submission submission);
+    
+    // 判断登录用户是否对某个作品投过票
+    boolean existsByUserIdAndSubmission(Long userId, Submission submission);
 
     // 查询某个作品收到的所有投票（用于计算得票数）
     List<Vote> findBySubmission(Submission submission);

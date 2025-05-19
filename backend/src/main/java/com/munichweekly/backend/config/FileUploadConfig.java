@@ -2,6 +2,7 @@ package com.munichweekly.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -23,8 +24,10 @@ public class FileUploadConfig implements WebMvcConfigurer {
     /**
      * Configure resource handlers to serve uploaded files
      * This allows files in the uploads directory to be accessed via /uploads/** URLs
+     * Only used in dev profile with local storage
      */
     @Override
+    @Profile("dev")
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Convert to absolute path to ensure proper resource resolution
         Path uploadPath = Paths.get(uploadsDirectory).toAbsolutePath().normalize();

@@ -131,6 +131,38 @@ For more details on UI components, please refer to the [UI Component Library Doc
 - Add JWT token for authenticated requests
 - Implement consistent error handling strategy
 
+## Storage Configuration
+
+The application supports two storage options for image uploads:
+
+### Local Storage (Development)
+
+When working in development environments, local storage is used by default. To configure:
+
+```
+# In backend/application.properties
+storage.mode=LOCAL
+uploads.directory=./uploads
+```
+
+This stores files in the local filesystem under the `uploads` directory.
+
+### Cloudflare R2 Storage (Production)
+
+For production environments, Cloudflare R2 cloud storage is used:
+
+```
+# In backend/application.properties
+storage.mode=R2
+cloudflare.r2.access-key=${CLOUDFLARE_R2_ACCESS_KEY}
+cloudflare.r2.secret-key=${CLOUDFLARE_R2_SECRET_KEY}
+cloudflare.r2.endpoint=${CLOUDFLARE_R2_ENDPOINT}
+cloudflare.r2.bucket=${CLOUDFLARE_R2_BUCKET:munichweekly-photoupload}
+cloudflare.r2.public-url=${CLOUDFLARE_R2_PUBLIC_URL}
+```
+
+For development testing with R2 storage, set up a local `.env` file with your Cloudflare R2 credentials. See [Storage Documentation](./storage.md) for details.
+
 ## Custom Hooks
 
 ### useAuth

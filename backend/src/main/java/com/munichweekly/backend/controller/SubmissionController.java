@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller for handling photo submissions.
@@ -38,7 +39,10 @@ public class SubmissionController {
     public ResponseEntity<?> submit(@RequestBody SubmissionRequestDTO dto) {
         Long actualId = CurrentUserUtil.getUserIdOrThrow();
         Submission saved = submissionService.submit(actualId, dto);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(Map.of(
+            "submissionId", saved.getId(),
+            "uploadUrl", "/api/submissions/" + saved.getId() + "/upload"
+        ));
     }
 
     /**

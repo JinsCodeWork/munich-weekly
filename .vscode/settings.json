@@ -3,5 +3,6 @@
         "Dongkai",
         "Glassmorphism",
         "munichweekly"
-    ]
+    ],
+    "java.compile.nullAnalysis.mode": "automatic"
 }

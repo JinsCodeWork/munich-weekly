@@ -14,11 +14,14 @@ public interface StorageService {
      * Store a file and return its accessible URL
      * 
      * @param file The MultipartFile to store
+     * @param issueId The ID of the issue
+     * @param userId The ID of the user
+     * @param submissionId The ID of the submission
      * @return URL string where the file can be accessed
      * @throws IOException If an I/O error occurs during storage
      * @throws IllegalArgumentException If the file is invalid (empty, wrong format, etc.)
      */
-    String storeFile(MultipartFile file) throws IOException, IllegalArgumentException;
+    String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException, IllegalArgumentException;
     
     /**
      * Delete a file by its URL

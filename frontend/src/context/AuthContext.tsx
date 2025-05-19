@@ -33,9 +33,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt")
+    const preserveAuth = sessionStorage.getItem("preserve_auth")
+    
     if (storedToken) {
       setToken(storedToken)
       fetchUserData()
+      
+      // 如果有preserve_auth标志，清除它
+      if (preserveAuth === "true") {
+        console.log("Preserving authentication during redirect")
+        sessionStorage.removeItem("preserve_auth")
+      }
     } else {
       setLoading(false)
     }

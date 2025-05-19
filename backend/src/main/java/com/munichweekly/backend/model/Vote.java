@@ -6,9 +6,14 @@ import java.time.LocalDateTime;
 /**
  * Entity representing a single vote by a user on a submission in a specific issue.
  * Each user can vote once per submission.
+ * User can be identified either by visitorId (for anonymous) or userId (for authenticated).
  */
 @Entity
-@Table(name = "votes", uniqueConstraints = @UniqueConstraint(columnNames = {"visitorId", "submission_id"}))
+@Table(name = "votes", 
+       uniqueConstraints = {
+           @UniqueConstraint(columnNames = {"visitorId", "submission_id"}),
+           @UniqueConstraint(columnNames = {"user_id", "submission_id"})
+       })
 public class Vote {
 
     @Id
@@ -23,8 +28,11 @@ public class Vote {
     @JoinColumn(name = "issue_id")
     private Issue issue;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String visitorId;
+
+    @Column(name = "user_id", nullable = true)
+    private Long userId;
 
     @Column(nullable = true)
     private String browserFingerprint;
@@ -36,11 +44,12 @@ public class Vote {
 
     public Vote() {}
 
-    public Vote(Long id, Submission submission, Issue issue, String visitorId, String browserFingerprint, String ipAddress, LocalDateTime votedAt) {
+    public Vote(Long id, Submission submission, Issue issue, String visitorId, Long userId, String browserFingerprint, String ipAddress, LocalDateTime votedAt) {
         this.id = id;
         this.submission = submission;
         this.issue = issue;
         this.visitorId = visitorId;
+        this.userId = userId;
         this.browserFingerprint = browserFingerprint;
         this.ipAddress = ipAddress;
         this.votedAt = votedAt;
@@ -86,6 +95,14 @@ public class Vote {
 
     public void setVisitorId(String visitorId) {
         this.visitorId = visitorId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getBrowserFingerprint() {

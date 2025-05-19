@@ -4,6 +4,17 @@ import React, { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { usersApi } from "@/api"
 
+// 定义一个类型但不作为catch子句的类型注解
+interface ApiErrorShape {
+  response?: {
+    status?: number;
+    data?: {
+      error?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function SettingsPage() {
   const { user } = useAuth()
   const [oldPassword, setOldPassword] = useState("");
@@ -66,14 +77,17 @@ export default function SettingsPage() {
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // 使用类型断言
+      const apiError = error as ApiErrorShape;
+      
       // Handle specific error types
-      if (error.response?.status === 401 || 
-          error.response?.data?.error?.toLowerCase().includes("incorrect") || 
-          error.response?.data?.error?.toLowerCase().includes("wrong")) {
+      if (apiError.response?.status === 401 || 
+          apiError.response?.data?.error?.toLowerCase().includes("incorrect") || 
+          apiError.response?.data?.error?.toLowerCase().includes("wrong")) {
         setMessage({ type: "error", text: "Current password is incorrect. Please try again." });
       } else {
-        const errorMessage = error.response?.data?.error || "Failed to update password";
+        const errorMessage = apiError.response?.data?.error || apiError.message || "Failed to update password";
         setMessage({ type: "error", text: errorMessage });
       }
       console.error("Password change error:", error);

@@ -35,9 +35,6 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   const imageUrl = submission.imageUrl;
   const displayUrl = getImageUrl(imageUrl);
   
-  // Check if this is a local upload (for rendering decisions)
-  const isLocalUpload = imageUrl.startsWith('/uploads/');
-  
   // Debug information
   console.log("SubmissionCard original URL:", imageUrl);
   console.log("SubmissionCard display URL:", displayUrl);
@@ -56,24 +53,16 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
       >
         {/* Image area */}
         <div className={getSubmissionCardElementStyles('imageContainer')}>
-          {isLocalUpload ? (
-            // Use standard img tag for local uploads
-            <img
-              src={displayUrl}
-              alt={submission.description}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            // Use Thumbnail component for remote images
-            <Thumbnail
-              src={displayUrl}
-              alt={submission.description}
-              fill={true}
-              objectFit="cover"
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
-              priority={false}
-            />
-          )}
+          <Thumbnail
+            src={displayUrl}
+            alt={submission.description}
+            fill={true}
+            objectFit="cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
+            priority={false}
+            unoptimized={imageUrl.startsWith('/uploads/')}
+          />
+          
           {/* Status badge - conditional rendering */}
           {showStatusBadge && (
             <div className={getSubmissionCardElementStyles('badgeTopRight')}>
