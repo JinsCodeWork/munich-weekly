@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "timestamp", LocalDateTime.now(),
-                        "error", "操作不合法",
+                        "error", "Invalid Operation",
                         "message", ex.getMessage()
                 ));
     }
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "timestamp", LocalDateTime.now(),
-                        "error", "参数错误",
+                        "error", "Invalid Request",
                         "message", ex.getMessage()
                 ));
     }

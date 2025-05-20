@@ -13,25 +13,31 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 public class SubmissionService {
 
+    private static final Logger logger = Logger.getLogger(SubmissionService.class.getName());
+    
     private final SubmissionRepository submissionRepository;
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
+    private final StorageService storageService;
     private static final int MAX_SUBMISSIONS_PER_ISSUE = 4;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              IssueRepository issueRepository,
                              UserRepository userRepository,
-                             VoteRepository voteRepository) {
+                             VoteRepository voteRepository,
+                             StorageService storageService) {
         this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
         this.voteRepository = voteRepository;
+        this.storageService = storageService;
     }
 
     public Submission submit(Long userId, SubmissionRequestDTO dto) {
@@ -54,8 +60,13 @@ public class SubmissionService {
         if (count >= MAX_SUBMISSIONS_PER_ISSUE) {
             throw new IllegalStateException("Maximum " + MAX_SUBMISSIONS_PER_ISSUE + " submissions per issue");
         }
+        
+        // 5️⃣ 验证描述长度，不能超过200个字符
+        if (dto.getDescription() != null && dto.getDescription().length() > 200) {
+            throw new IllegalArgumentException("Description must be 200 characters or less");
+        }
 
-        // 5️⃣ 创建投稿对象，状态为 pending
+        // 6️⃣ 创建投稿对象，状态为 pending
         Submission submission = new Submission(user, issue, null, dto.getDescription());
         submission.setStatus("pending");
 
@@ -177,6 +188,55 @@ public class SubmissionService {
                     return new AdminSubmissionResponseDTO(s, voteCount);
                 })
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Delete a submission and its associated image file.
+     * Users can only delete their own submissions.
+     * Admins can delete any submission.
+     * 
+     * @param submissionId ID of the submission to delete
+     * @throws IllegalArgumentException if submission not found
+     * @throws SecurityException if user is not authorized to delete the submission
+     */
+    @Transactional
+    public void deleteSubmission(Long submissionId) {
+        Long currentUserId = CurrentUserUtil.getUserIdOrThrow();
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+        
+        // Check if current user is the owner or an admin
+        boolean isOwner = submission.getUser().getId().equals(currentUserId);
+        boolean isAdmin = "admin".equals(currentUser.getRole());
+        
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("Not authorized to delete this submission");
+        }
+        
+        // 获取图片URL
+        String imageUrl = submission.getImageUrl();
+        
+        // Delete any votes associated with this submission
+        voteRepository.deleteBySubmission(submission);
+        
+        // Delete the submission from database
+        submissionRepository.delete(submission);
+        
+        // 删除存储在云端的图片文件
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            logger.info("Deleting image file: " + imageUrl);
+            boolean deleteSuccessful = storageService.deleteFile(imageUrl);
+            if (deleteSuccessful) {
+                logger.info("Successfully deleted image file: " + imageUrl);
+            } else {
+                logger.warning("Failed to delete image file: " + imageUrl);
+            }
+        } else {
+            logger.warning("No image URL found for submission " + submissionId);
+        }
     }
 
     public SubmissionRepository getSubmissionRepository() {

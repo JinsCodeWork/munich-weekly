@@ -1,0 +1,17 @@
+name = "image-worker"
+main = "src/index.js"
+compatibility_date = "2025-05-19"
+
+# 启用观察性
+[observability]
+enabled = true
+
+# R2存储桶绑定
+[[r2_buckets]]
+binding = "PHOTO_BUCKET"
+bucket_name = "munichweekly-photoupload"
+preview_bucket_name = "munichweekly-photoupload"
+
+# 环境变量
+[vars]
+BUCKET_NAME = "munichweekly-photoupload" 

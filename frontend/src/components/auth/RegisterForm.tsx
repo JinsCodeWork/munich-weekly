@@ -123,7 +123,10 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting || success}
             />
-            <i className="fa-solid fa-envelope text-white text-lg"></i>
+            <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
           </div>
         </div>
 
@@ -140,7 +143,10 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
               onChange={(e) => setNickname(e.target.value)}
               disabled={isSubmitting || success}
             />
-            <i className="fa-solid fa-user text-white text-lg"></i>
+            <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </div>
         </div>
 
@@ -157,7 +163,10 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting || success}
             />
-            <i className="fa-solid fa-lock text-white text-lg"></i>
+            <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
           </div>
         </div>
 
@@ -173,7 +182,10 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting || success}
             />
-            <i className="fa-solid fa-lock text-white text-lg"></i>
+            <svg className="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
           </div>
         </div>
 
@@ -187,7 +199,10 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
         {/* Success message */}
         {success && (
           <div className="bg-green-500/20 text-green-200 px-4 py-3 rounded-md w-full mb-4 flex items-center justify-center animate-fadeIn opacity-0" style={{ animationDelay: '0s' }}>
-            <i className="fa-solid fa-check-circle mr-2"></i>
+            <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
             Registration successful! Redirecting...
           </div>
         )}

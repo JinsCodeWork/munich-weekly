@@ -11,7 +11,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'sans-serif'],
+        sans: ['var(--font-dm-sans)', 'sans-serif'],
+        heading: ['var(--font-space-grotesk)', 'sans-serif'],
+        playfair: ['var(--font-playfair)', 'serif'],
       },
       colors: {
         // Add any custom color values here if needed

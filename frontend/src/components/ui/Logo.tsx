@@ -36,7 +36,7 @@ export function Logo({ className, showText = true, size = 'md' }: LogoProps) {
       {showText && (
         <div className={cn(
           fontSize, 
-          "font-semibold tracking-tight whitespace-nowrap"
+          "font-playfair font-semibold tracking-tight whitespace-nowrap"
         )}>
           Munich Weekly
         </div>

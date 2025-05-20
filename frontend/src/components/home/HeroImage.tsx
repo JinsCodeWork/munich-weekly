@@ -1,0 +1,95 @@
+import Image from 'next/image';
+import { createImageUrl, cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+
+interface HeroImageProps {
+  imageUrl: string;
+  description: string;
+  imageCaption?: string;
+  className?: string;
+}
+
+/**
+ * Large hero image component, displays description and bottom caption on hover
+ * Supports click to show/hide text on mobile
+ */
+export function HeroImage({ imageUrl, description, imageCaption, className }: HeroImageProps) {
+  const [imgSrc, setImgSrc] = useState('');
+  const [imgError, setImgError] = useState(false);
+  const [isTextVisible, setIsTextVisible] = useState(false);
+
+  // 当imageUrl改变时更新图片源
+  useEffect(() => {
+    console.log('图片URL:', imageUrl);
+    // 添加随机时间戳防止缓存
+    const url = imageUrl.includes('?') 
+      ? imageUrl 
+      : `${imageUrl}?t=${Date.now()}`;
+    setImgSrc(createImageUrl(url, { quality: 90 }));
+    setImgError(false);
+  }, [imageUrl]);
+
+  // 处理图片加载错误
+  const handleError = () => {
+    console.log('图片加载失败，尝试使用默认图片');
+    if (!imgError) {
+      // 如果是自定义图片路径加载失败，尝试加载默认图片
+      setImgSrc('/placeholder.jpg');
+      setImgError(true);
+    }
+  };
+
+  // 处理点击事件（主要用于移动设备）
+  const handleClick = () => {
+    setIsTextVisible(prev => !prev);
+  };
+
+  return (
+    <div 
+      className={cn(
+        "relative w-full h-[70vh] min-h-[500px] max-h-[800px] group overflow-hidden",
+        isTextVisible && "text-active", // 添加激活类，用于移动端
+        className
+      )}
+      onClick={handleClick}
+    >
+      {imgSrc && (
+        <Image
+          src={imgSrc}
+          fill
+          priority
+          alt="Munich Weekly Featured Photography"
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          onError={handleError}
+        />
+      )}
+      
+      {/* 悬停时的暗色遮罩 - 同时支持移动端点击 */}
+      <div className="absolute inset-0 bg-black/0 transition-all duration-500 
+                      group-hover:bg-black/50 
+                      text-active:bg-black/50"></div>
+      
+      {/* 中间主要描述文本 */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <p className="font-heading text-white text-center text-xl md:text-2xl lg:text-3xl font-bold italic px-6 max-w-3xl tracking-wide
+                     opacity-0 transform translate-y-4 transition-all duration-500
+                     group-hover:opacity-100 group-hover:translate-y-0
+                     text-active:opacity-100 text-active:translate-y-0">
+          {description}
+        </p>
+      </div>
+      
+      {/* 底部图片说明 */}
+      {imageCaption && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-6 px-4 md:px-8 
+                        opacity-0 transform translate-y-6 transition-all duration-500
+                        group-hover:opacity-100 group-hover:translate-y-0
+                        text-active:opacity-100 text-active:translate-y-0">
+          <div className="text-white/90 text-sm md:text-base text-right">
+            <p className="font-sans font-light">{imageCaption}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+} 

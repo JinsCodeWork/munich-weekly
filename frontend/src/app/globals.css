@@ -12,6 +12,35 @@
   }
 }
 
+/* 移动端支持 - 为HeroImage组件添加点击态 */
+@media (hover: none) {
+  /* 在不支持悬停的设备上隐藏悬停效果，使用text-active类代替 */
+  .group:hover .group-hover\:opacity-100,
+  .group:hover .group-hover\:translate-y-0,
+  .group:hover .group-hover\:bg-black\/50,
+  .group:hover .group-hover\:scale-105 {
+    /* 在移动设备上禁用悬停效果 */
+    opacity: inherit;
+    transform: inherit;
+    background-color: inherit;
+    --tw-scale-x: inherit;
+    --tw-scale-y: inherit;
+  }
+  
+  /* 为点击态添加样式 */
+  .text-active .text-active\:opacity-100 {
+    opacity: 1 !important;
+  }
+  
+  .text-active .text-active\:translate-y-0 {
+    transform: translateY(0) !important;
+  }
+  
+  .text-active .text-active\:bg-black\/50 {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
 /* Navigation link hover underline effect */
 .nav-link-hover {
   position: relative;

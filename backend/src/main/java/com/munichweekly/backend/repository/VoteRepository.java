@@ -5,6 +5,7 @@ import com.munichweekly.backend.model.Submission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,15 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     // 查询某个作品收到的所有投票（用于计算得票数）
     List<Vote> findBySubmission(Submission submission);
 
+    // 查询用户投过的所有票
+    List<Vote> findByUserId(Long userId);
+
+    // 删除用户投过的所有票
+    void deleteByUserId(Long userId);
+    
+    // 删除某个作品收到的所有投票
+    @Transactional
+    void deleteBySubmission(Submission submission);
 
     @Query("SELECT v.submission.id AS submissionId, COUNT(v) AS voteCount " +
             "FROM Vote v WHERE v.issue.id = :issueId GROUP BY v.submission.id")

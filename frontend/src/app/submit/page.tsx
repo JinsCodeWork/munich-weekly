@@ -25,7 +25,7 @@ export default function SubmitPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const { activeIssues, isLoading, error: issuesError, fetchIssues } = useIssues();
-  const { file, handleFileSelect, error: fileError, isUploading, uploadFileWithFetch } = useFileUpload();
+  const { file, handleFileSelect, error: fileError, uploadFileWithFetch } = useFileUpload();
   
   // State for workflow steps
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
@@ -80,6 +80,12 @@ export default function SubmitPage() {
   const handleSubmit = async () => {
     if (!selectedIssue || !description.trim() || !file) {
       setSubmitError("Please select an issue, upload a photo and add a description");
+      return;
+    }
+    
+    // 验证描述长度
+    if (description.trim().length > 200) {
+      setSubmitError("Description must be 200 characters or less");
       return;
     }
     
@@ -156,18 +162,18 @@ export default function SubmitPage() {
             "p-8 w-[90vw] max-w-md",
             "flex flex-col items-center"
           )}>
-            <h3 className="text-3xl font-bold text-white mb-8 tracking-wider animate-fadeIn opacity-0" style={{ animationDelay: "0.1s" }}>
+            <h3 className="font-heading text-3xl font-bold text-white mb-8 tracking-wider animate-fadeIn opacity-0" style={{ animationDelay: "0.1s" }}>
               Share Your Perspective
             </h3>
             
-            <p className="text-white text-center mb-8 animate-fadeIn opacity-0" style={{ animationDelay: "0.2s" }}>
+            <p className="font-sans text-white text-center mb-8 animate-fadeIn opacity-0" style={{ animationDelay: "0.2s" }}>
               Ready to share your unique view of the world? Please log in to upload your work.
             </p>
             
             <button
               onClick={handleLoginClick}
               className={cn(
-                "w-full max-w-xs py-4 rounded-full text-lg font-semibold tracking-wide transition-colors",
+                "font-sans w-full max-w-xs py-4 rounded-full text-lg font-semibold tracking-wide transition-colors",
                 "animate-fadeIn opacity-0 bg-white text-gray-900 hover:bg-gray-200",
                 "shadow-md shadow-white/20"
               )}
@@ -191,7 +197,7 @@ export default function SubmitPage() {
   return (
     <Container className="py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Submit Your Photo</h1>
+        <h1 className="font-heading text-2xl font-bold mb-6">Submit Your Photo</h1>
         
         {/* Success message */}
         {submissionSuccess && (
@@ -201,10 +207,10 @@ export default function SubmitPage() {
                 <i className="fa-solid fa-check-circle text-green-400"></i>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium">
+                <p className="font-sans text-sm font-medium">
                   Your photo has been submitted successfully!
                 </p>
-                <p className="text-sm mt-1">
+                <p className="font-sans text-sm mt-1">
                   Redirecting to your submissions...
                 </p>
               </div>
@@ -228,7 +234,7 @@ export default function SubmitPage() {
           <div className="space-y-8">
             {/* Step 1: Select an issue */}
             <div className={getFormContainerStyles()}>
-              <h2 className="text-lg font-medium mb-4">Step 1: Select an Issue</h2>
+              <h2 className="font-heading text-lg font-medium mb-4">Step 1: Select an Issue</h2>
               <IssueSelector 
                 issues={activeIssues} 
                 selectedIssue={selectedIssue}
@@ -239,50 +245,56 @@ export default function SubmitPage() {
             {/* Step 2: Upload Photo - 始终显示，不管是否已上传图片 */}
             {selectedIssue && (
               <div className={getFormContainerStyles()}>
-                <h2 className="text-lg font-medium mb-4">Step 2: Upload Photo</h2>
+                <h2 className="font-heading text-lg font-medium mb-4">Step 2: Upload Photo</h2>
                 <ImageUploader
                   onFileSelected={handleFileSelect}
                   file={file}
                 />
                 
-                {/* 只有在未上传图片时显示错误消息 */}
-                {!file && getDisplayError() && (
+                {/* Display error message */}
+                {getDisplayError() && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-                    <p className="text-sm">{getDisplayError()}</p>
+                    <p className="font-sans text-sm">
+                      {getDisplayError()}
+                    </p>
                   </div>
                 )}
               </div>
             )}
             
-            {/* Step 3: Add Description - 只有在上传图片后显示 */}
-            {file && selectedIssue && !submissionSuccess && (
-              <div className={getFormContainerStyles()}>
-                <h2 className="text-lg font-medium mb-4">Step 3: Add Description</h2>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter your description here..."
-                  className={cn(
-                    "w-full p-2 border border-gray-300 rounded-md",
-                    "focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  )}
-                />
-                
-                {/* 显示错误消息 */}
-                {getDisplayError() && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-                    <p className="text-sm">{getDisplayError()}</p>
+            {/* Step 3: Add description */}
+            {file && (
+              <div className="mt-6">
+                <h2 className="font-heading text-lg font-medium mb-4">Step 3: Add Description</h2>
+                <div className="mb-4">
+                  <label className="font-heading block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    maxLength={200}
+                    className="font-sans block w-full rounded-md border border-gray-300 focus:border-gray-500 focus:ring focus:ring-gray-500 focus:ring-opacity-50"
+                    placeholder="Tell us about your photo..."
+                  />
+                  <div className="flex justify-between mt-2">
+                    <p className="font-sans text-sm text-gray-500">
+                      Max 200 characters. Tell us about your photo.
+                    </p>
+                    <p className="font-sans text-sm text-gray-500">
+                      {description.length}/200
+                    </p>
                   </div>
-                )}
-                
-                <div className="flex justify-end mt-4">
-                  <Button 
-                    onClick={handleSubmit} 
-                    disabled={isSubmitting || isUploading || !description.trim()}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
-                  </Button>
                 </div>
+                
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !description.trim()}
+                  className="w-full"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Photo'}
+                </Button>
               </div>
             )}
           </div>

@@ -195,6 +195,44 @@ Components and hooks for development and debugging:
 - **LoadingErrorStates**: Components for handling loading and error states
 - **mockData**: Mock data utilities for development and testing
 
+### Home Page Components and Architecture
+
+The home page provides an engaging entry point to the platform with the following components:
+
+1. **HeroImage Component**: 
+   - Located at `/components/home/HeroImage.tsx`
+   - Displays a large, visually engaging image with hover/tap interaction effects
+   - Handles responsive behavior automatically (hover for desktop, tap for mobile)
+   - Implements transition animations for text visibility
+   - Implements image loading error fallback mechanism
+   - Uses Next.js Image component for optimized loading
+
+2. **Home Page Component**:
+   - Located at `/app/page.tsx`
+   - Client-side component with dynamic content loading
+   - Fetches configuration from API with cache-busting mechanism
+   - Handles loading states for improved user experience
+   - Presents intro text and platform description below hero image
+
+3. **Home Settings Admin Interface**:
+   - Located at `/app/account/home-settings/page.tsx`
+   - Restricted to admin users (implements role-based access control)
+   - Features:
+     - Image upload with preview functionality
+     - Description text editing
+     - Image caption editing
+     - Server-side image storage management
+     - Configuration file updates
+   - Implements proper form validation and error handling
+
+4. **Configuration Management**:
+   - Default configuration defined in `/lib/config.ts`
+   - Dynamic configuration stored in `/public/config/homepage.json`
+   - API endpoints:
+     - `GET /api/config` - Retrieves current configuration
+     - `POST /api/admin/config` - Updates configuration (admin only)
+     - `POST /api/admin/upload` - Handles image uploads (admin only)
+
 ### Authentication Flow
 
 1. **Registration**:

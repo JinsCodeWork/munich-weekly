@@ -16,6 +16,8 @@ export const buttonVariants = {
     primary: 'bg-black text-white hover:bg-gray-800 focus:ring-gray-700',
     secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
     ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-300',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    outline: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-400',
   },
   size: {
     sm: 'text-xs px-2 py-1',

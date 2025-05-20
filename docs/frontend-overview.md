@@ -13,6 +13,7 @@ This document serves as the entry point to the frontend development documentatio
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
 - [**Storage System**](./storage.md) - Image storage architecture and implementation details
+- [**Image CDN System**](./image-cdn.md) - Advanced image optimization and delivery architecture
 
 ## Technology Stack
 
@@ -22,8 +23,9 @@ This document serves as the entry point to the frontend development documentatio
 - **State Management**: React Context API + Custom Hooks
 - **Authentication**: JWT tokens
 - **Storage System**: Dual-mode storage (Local & Cloudflare R2)
+- **Image Processing**: Cloudflare Worker + Image Resizing
 - **API Integration**: Modular API structure organized by business functionality
-- **Image Optimization**: Next.js Image component
+- **Image Optimization**: Next.js Image component with CDN integration
 
 ## Project Structure
 
@@ -159,7 +161,15 @@ frontend/
 - Component-based architecture
 - Image optimization techniques
 
-### 3. Content Management
+### 3. Home Page Experience
+
+- **Dynamic Hero Image**: Large, attention-grabbing hero image with interactive hover effects
+- **Responsive Interaction**: Desktop users see descriptions on hover, mobile users see them on tap
+- **Content Management**: Admin-configurable hero image, description text, and caption through dedicated interface
+- **Animation Effects**: Subtle scaling and fade effects create an engaging, modern user experience
+- **Contextual Information**: Page introduction section provides key information about the platform's purpose
+
+### 4. Content Management
 
 - User profile management
 - Work submission system
@@ -168,7 +178,7 @@ frontend/
 - Issue management system
 - Dual-mode image storage (local/cloud)
 
-#### 3.1. Public Voting Page (`/vote`)
+#### 4.1. Public Voting Page (`/vote`)
 
 To enhance user engagement and broaden participation, a new public voting page has been introduced at the `/vote` route. This page allows anonymous users (i.e., users not logged in) to participate in the voting process for active issues.
 
@@ -185,20 +195,39 @@ This feature is supported by:
 *   The `visitorId.ts` utility for managing anonymous user identification.
 *   Updates to the `votesApi` client to handle cookie-based `visitorId` transmission.
 
-### 4. Navigation System
+### 5. Image Processing System
+
+The platform implements an advanced image processing system utilizing Cloudflare Workers and Image Resizing:
+
+- **On-demand Image Optimization** - Images are processed at request time based on usage context
+- **Format-aware Delivery** - Automatic detection and delivery of modern formats (WebP, AVIF)
+- **Responsive Loading** - Different image sizes are served based on device requirements
+- **Performance Optimization** - Only thumbnails are loaded in list views, with high-quality versions loaded on demand
+- **CDN Integration** - Efficient global delivery through Cloudflare's edge network
+
+This system is implemented through:
+
+- Cloudflare Worker (`image-worker`) that processes image requests
+- Frontend utility functions that generate appropriate image URLs with transformation parameters
+- Integration with Next.js Image component for client-side optimization
+- Specialized viewing components that request high-quality versions only when needed
+
+For complete details, see the [Image CDN System](./image-cdn.md) documentation.
+
+### 6. Navigation System
 
 - Responsive navigation
 - Mobile sidebar menu
 - User-state aware elements
 
-### 5. API Integration System
+### 7. API Integration System
 
 - Modular API structure
 - Grouped by business function (authentication, users, submissions, issues, votes)
 - Unified error handling
 - TypeScript type safety
 
-### 6. Style Management System
+### 8. Style Management System
 
 - Centralized style functions
 - Type-safe style variants

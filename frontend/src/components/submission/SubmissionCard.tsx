@@ -35,6 +35,9 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   const imageUrl = submission.imageUrl;
   const displayUrl = getImageUrl(imageUrl);
   
+  // 为查看大图准备的URL，不添加大小限制参数
+  const fullImageUrl = getImageUrl(imageUrl);
+  
   // Debug information
   console.log("SubmissionCard original URL:", imageUrl);
   console.log("SubmissionCard display URL:", displayUrl);
@@ -93,18 +96,18 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
               <>
                 {/* 在移动端隐藏日期和Issue信息 */}
                 <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
-                  <i className={`fa-solid fa-calendar-days ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                   <span>{formatDate(submission.submittedAt)}</span>
                 </div>
                 
                 <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
-                  <i className={`fa-solid fa-book ${getSubmissionCardElementStyles('metaIcon')}`}></i>
                   <span>Issue {submission.issue.id}</span>
                 </div>
                 
                 {/* 移动端只显示投票数 */}
                 <div className={cn(getSubmissionCardElementStyles('metaItem'), "sm:hidden w-full text-xs")}>
-                  <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+                  <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
                   <span>{submission.voteCount} votes</span>
                 </div>
               </>
@@ -124,9 +127,11 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
                 />
               </div>
             ) : (
-              /* Default display for vote count when not in voteView - 只在非移动端显示 */
-              <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
-                <i className={`fa-solid fa-thumbs-up ${getSubmissionCardElementStyles('metaIcon')}`}></i>
+              // Default display for vote count when not in voteView - only shown on non-mobile
+              <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}> 
+                <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                </svg>
                 <span>{submission.voteCount} votes</span>
               </div>
             )}
@@ -136,7 +141,7 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
 
       {/* Image Viewer Modal */}
       <ImageViewer 
-        imageUrl={submission.imageUrl}
+        imageUrl={fullImageUrl}
         description={submission.description}
         isOpen={isViewerOpen}
         onClose={handleCloseViewer}

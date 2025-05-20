@@ -3,6 +3,8 @@
 import React, { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { usersApi } from "@/api"
+import { useRouter } from "next/navigation"
+import { Modal } from '@/components/ui/Modal'
 
 // 定义一个类型但不作为catch子句的类型注解
 interface ApiErrorShape {
@@ -16,12 +18,16 @@ interface ApiErrorShape {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const router = useRouter()
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Password strength validation
   const validatePasswordStrength = (password: string) => {
@@ -96,10 +102,43 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      console.log("Attempting to delete account...");
+      await usersApi.deleteCurrentUser();
+      console.log("Account deletion successful, logging out...");
+      
+      // Only logout AFTER successful API call
+      setTimeout(() => {
+        logout();
+        router.push('/');
+      }, 100);
+    } catch (err: unknown) {
+      console.error("Account deletion failed:", err);
+      
+      // 更详细地记录错误
+      if (err instanceof Error) {
+        setDeleteError(`Failed to delete account: ${err.message}`);
+        console.error("Error details:", err);
+        
+        // 如果是401错误，提示用户可能需要重新登录
+        if (err.message.includes("401") || err.message.toLowerCase().includes("unauthorized")) {
+          setDeleteError("Authorization error. Please try logging out and back in before deleting your account.");
+        }
+      } else {
+        setDeleteError('Failed to delete account. Please try again.');
+      }
+      
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="border-b border-gray-200 pb-5 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 font-heading">Account Settings</h1>
         <p className="mt-2 text-sm text-gray-500">
           Manage your account and security settings
         </p>
@@ -107,7 +146,7 @@ export default function SettingsPage() {
 
       {/* Password change section */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
-        <h2 className="text-xl font-medium mb-4">Change Password</h2>
+        <h2 className="text-xl font-medium mb-4 font-heading">Change Password</h2>
         
         {message && (
           <div className={`p-3 rounded mb-4 ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
@@ -168,7 +207,7 @@ export default function SettingsPage() {
 
       {/* Account security section */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-medium mb-4">Account Security</h2>
+        <h2 className="text-xl font-medium mb-4 font-heading">Account Security</h2>
         
         <div className="space-y-6">
           <div>
@@ -186,12 +225,40 @@ export default function SettingsPage() {
             <button 
               type="button" 
               className="text-red-500 border border-red-300 px-4 py-2 rounded-md hover:bg-red-50"
+              onClick={() => setShowDeleteModal(true)}
             >
               Delete My Account
             </button>
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} contentVariant="dark-glass">
+          <div className="p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4 text-white font-heading">Delete Account</h2>
+            <p className="mb-4 text-white">Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently removed.</p>
+            {deleteError && <div className="text-red-300 mb-2">{deleteError}</div>}
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete My Account'}
+              </button>
+              <button
+                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 } 

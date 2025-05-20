@@ -2,15 +2,30 @@
 
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Space_Grotesk, DM_Sans, Playfair_Display } from 'next/font/google'
 import { AuthProvider } from '@/context/AuthContext'
 import MainNav from '@/components/navigation/MainNav'
 
-// 配置Inter字体
-const inter = Inter({
+// 配置DM Sans字体（替代Inter）
+const dmSans = DM_Sans({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-dm-sans',
+})
+
+// 配置Space Grotesk字体（用于标题）
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
+})
+
+// 配置Playfair Display字体（保留用于LOGO）
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '600'],
+  variable: '--font-playfair',
 })
 
 export const metadata: Metadata = {
@@ -27,16 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <head>
-        <link 
-          rel="stylesheet" 
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-          integrity="sha512-YLVtSjb/VXY29fqxrGqA13Ml6Iaq5rARImpIRvac0JERsav8+pkFN50GJHQv4W0UIHPTkc/3dqGcKmCrOi80Q==" 
-          crossOrigin="anonymous" 
-          referrerPolicy="no-referrer" 
-        />
-      </head>
+    <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased bg-gray-50 min-h-screen">
         <AuthProvider>
           <MainNav />

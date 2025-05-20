@@ -1,9 +1,9 @@
 /**
- * 应用常量
- * 集中管理应用中使用的常量值，方便维护和修改
+ * Application constants
+ * Centralized management of constant values used in the app for easy maintenance and modification
  */
 
-// 站点信息
+// Site info
 export const SITE = {
   name: 'Munich Weekly',
   description: 'Photography submissions and voting platform.',
@@ -19,7 +19,7 @@ export const API_PATHS = {
   votes: '/api/votes',
 };
 
-// 导航链接
+// Navigation links
 export const NAV_LINKS = [
   { label: 'Gallery', href: '/gallery' },
   { label: 'Submit', href: '/submit' },
@@ -27,13 +27,13 @@ export const NAV_LINKS = [
   { label: 'About', href: '/about' },
 ];
 
-// 本地存储键
+// Local storage keys
 export const STORAGE_KEYS = {
   token: 'jwt',
   theme: 'theme',
 };
 
-// 主题变量
+// Theme variables
 export const THEME = {
   colors: {
     primary: '#3B82F6', // blue-500
@@ -46,7 +46,7 @@ export const THEME = {
       light: '#9CA3AF', // gray-400
     },
   },
-  // 断点
+  // Breakpoints
   breakpoints: {
     sm: '640px',
     md: '768px',

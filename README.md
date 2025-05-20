@@ -11,6 +11,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 - 🗳️ Authenticated users can vote (named voting)
 - ⚙️ Admin tools for managing users, reviewing entries, exporting data
 - 🔐 JWT-based authentication with role-based access control
+- 🖼️ Advanced image optimization and on-demand processing
 
 ---
 
@@ -23,6 +24,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 | Database | PostgreSQL (via Docker)    |
 | Auth     | Email & Google login       |
 | Storage  | Local & Cloudflare R2      |
+| CDN      | Cloudflare Workers + Images |
 | Hosting  | Hetzner Cloud (Germany)    |
 | Domain   | [munichweekly.art](https://munichweekly.art) |
 
@@ -34,6 +36,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 munich-weekly/
 ├── backend/       # Spring Boot application
 ├── frontend/      # Next.js frontend
+├── image-worker/  # Cloudflare Worker for image processing
 ├── db/            # SQL init/backup scripts
 └── docs/          # Project documentation
 ```
@@ -48,6 +51,7 @@ munich-weekly/
 - 📦 [API Reference](./docs/api.md)
 - 🗃️ [Database Design](./docs/database.md)
 - 💾 [Storage System](./docs/storage.md)
+- 🖼️ [Image CDN System](./docs/image-cdn.md)
 - 👤 [User Guide](./docs/user-guide.md)
 - 🧑‍💻 [Developer Guide](./docs/dev-guide.md)
 - 🔐 [Auth & Security](./docs/auth.md)
@@ -57,7 +61,7 @@ munich-weekly/
 - 📱 [Frontend Overview](./docs/frontend-overview.md)
 - 🏗️ [Frontend Architecture](./docs/frontend-architecture.md)
 - 🧩 [UI Component Library](./docs/ui-components.md)
-- 🎨 [Style System](./docs/style-system.md)
+- 🎨 [Style System](./docs/style-system.md) - *Updated with enhanced typography system*
 
 ⸻
 

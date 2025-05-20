@@ -193,6 +193,70 @@ const {
 - Use Next.js Image component for image optimization
 - Implement code splitting and lazy loading
 
+## Home Page Development
+
+### Hero Image Component
+
+The home page features a large hero image component with interactive hover/tap effects:
+
+```tsx
+// Import the HeroImage component
+import { HeroImage } from '@/components/home/HeroImage';
+
+// Usage in page component
+<HeroImage 
+  imageUrl={heroImage.imageUrl} 
+  description={heroImage.description} 
+  imageCaption={heroImage.imageCaption}
+/>
+```
+
+When modifying the HeroImage component, follow these guidelines:
+
+1. **Responsiveness**: Maintain separate interaction models for desktop (hover) and mobile (tap)
+2. **Animation Performance**: Keep animations smooth by using hardware-accelerated properties (transform, opacity)
+3. **Accessibility**: Ensure content is accessible even with animations disabled
+
+### Home Page Configuration
+
+The home page content is dynamically configurable:
+
+1. **Default Configuration**: Located in `/src/lib/config.ts`
+   ```ts
+   export const homePageConfig = {
+     heroImage: {
+       imageUrl: '/images/home/hero.jpg',
+       description: 'Your description text here',
+       imageCaption: 'Caption text here'
+     },
+     introText: {
+       title: 'Section Title',
+       description: 'Section description text'
+     }
+   };
+   ```
+
+2. **Dynamic Configuration**: Stored in `/public/config/homepage.json`
+   - Updated through the admin interface
+   - Read via API endpoint at runtime
+
+### Home Settings Admin Interface
+
+When working with the home settings admin interface, consider:
+
+1. **Access Control**: Only users with `admin` role can access this page
+2. **Image Optimization**: Large uploaded images are processed server-side
+3. **Error Handling**: Implement comprehensive validation and error reporting
+4. **Preview Functionality**: Provide visual preview before saving changes
+
+### Testing Home Page Features
+
+1. Test the home page across multiple device sizes to ensure responsive behavior
+2. Verify hover effects work on desktop and tap interactions work on mobile
+3. Test image loading with both valid and invalid image paths
+4. Check admin interface with different image formats and sizes
+5. Verify configuration changes are correctly applied to the home page
+
 ## Testing
 
 - Use Jest and React Testing Library for unit testing

@@ -9,7 +9,7 @@ const nextConfig = {
       },
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:8080/uploads/:path*' // 添加对上传文件的代理
+        destination: 'https://img.munichweekly.art/uploads/:path*' // 使用CDN而不是本地后端
       }
     ]
   },
@@ -34,6 +34,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.r2.dev',
         pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.munichweekly.art',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com'
       }
     ]
   }

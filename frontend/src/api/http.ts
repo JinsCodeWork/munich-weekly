@@ -38,6 +38,12 @@ export const fetchAPI = async <T>(
     ...(options.headers as Record<string, string> || {})
   };
 
+  // 对DELETE请求特殊处理，确保认证头被正确添加
+  if (options.method === "DELETE") {
+    console.log("Making DELETE request to:", url);
+    console.log("Authorization header present:", !!headers.Authorization);
+  }
+
   try {
     console.log(`API Request: ${options.method || 'GET'} ${url}`, { 
       headers: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
@@ -59,13 +65,25 @@ export const fetchAPI = async <T>(
         console.warn("API Error response was not valid JSON. Raw text:", responseText);
       }
       
-      console.error("API Error:", {
-        status: response.status,
-        statusText: response.statusText,
-        url,
-        errorData,
-        requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
-      });
+      // 特别记录401错误和DELETE请求的详细信息
+      if (response.status === 401) {
+        console.error("Authentication Error (401):", {
+          method: options.method || 'GET',
+          url,
+          errorData,
+          authHeader: headers.Authorization ? 'Present' : 'Missing',
+          requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
+        });
+      } else {
+        console.error("API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          method: options.method || 'GET',
+          url,
+          errorData,
+          requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
+        });
+      }
       
       const errorMessage = 
         (errorData as Record<string, unknown>).message as string || 

@@ -60,6 +60,13 @@ export const theme = {
     },
   },
   
+  // Font families
+  fontFamily: {
+    heading: 'font-heading',
+    body: 'font-sans',
+    logo: 'font-playfair',
+  },
+  
   // Font sizes following current usage
   fontSizes: {
     xs: 'text-xs',
@@ -119,4 +126,5 @@ export type ThemeSpacing = keyof typeof theme.spacing;
 export type ThemeFontWeight = keyof typeof theme.fontWeights;
 export type ThemeBorderRadius = keyof typeof theme.borderRadius;
 export type ThemeShadow = keyof typeof theme.shadows;
-export type ThemeTransition = keyof typeof theme.transitions; 
+export type ThemeTransition = keyof typeof theme.transitions;
+export type ThemeFontFamily = keyof typeof theme.fontFamily; 

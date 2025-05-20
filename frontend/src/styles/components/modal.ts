@@ -21,6 +21,7 @@ export const modalContentVariants = {
   default: 'bg-white rounded-lg shadow-lg',
   glassmorphism: 'bg-white/90 backdrop-blur-md rounded-lg shadow-lg border border-white/20',
   'dark-glass': 'bg-black/20 backdrop-blur-md rounded-lg shadow-lg border border-white/30',
+  'dark': 'bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 text-white',
 };
 
 /**

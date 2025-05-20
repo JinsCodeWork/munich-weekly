@@ -115,7 +115,10 @@ export function Pagination({
               aria-label="Go to first page"
               tabIndex={currentPage === 1 ? -1 : 0}
             >
-              <i className="fa-solid fa-angles-left text-sm"></i>
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="11 17 6 12 11 7"></polyline>
+                <polyline points="18 17 13 12 18 7"></polyline>
+              </svg>
             </button>
           </li>
         )}
@@ -129,7 +132,9 @@ export function Pagination({
             aria-label="Previous page"
             tabIndex={currentPage === 1 ? -1 : 0}
           >
-            <i className="fa-solid fa-chevron-left text-sm"></i>
+            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
           </button>
         </li>
         
@@ -198,7 +203,9 @@ export function Pagination({
             aria-label="Next page"
             tabIndex={currentPage === totalPages ? -1 : 0}
           >
-            <i className="fa-solid fa-chevron-right text-sm"></i>
+            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </button>
         </li>
         
@@ -212,7 +219,10 @@ export function Pagination({
               aria-label="Go to last page"
               tabIndex={currentPage === totalPages ? -1 : 0}
             >
-              <i className="fa-solid fa-angles-right text-sm"></i>
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="13 17 18 12 13 7"></polyline>
+                <polyline points="6 17 11 12 6 7"></polyline>
+              </svg>
             </button>
           </li>
         )}

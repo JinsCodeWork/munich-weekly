@@ -102,7 +102,7 @@ export default function MainNav() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`${getNavLinkStyles({
+                  className={`font-heading ${getNavLinkStyles({
                     isActive: pathname === link.href
                   })} ${pathname === link.href ? 'nav-link-active' : ''}`}
                 >
@@ -117,13 +117,13 @@ export default function MainNav() {
             {/* Login button/user menu - Now hidden on small screens, flex on medium+ */}
             <div className="hidden md:flex items-center text-base cursor-pointer flex-shrink-0 whitespace-nowrap">
               {loading ? (
-                <span className="opacity-70">Loading...</span>
+                <span className="font-heading opacity-70">Loading...</span>
               ) : user ? (
                 <div className={getUserMenuStyles('container')} ref={menuRef}>
                   <button 
                     onClick={() => setIsMenuOpen(!isMenuOpen)} 
                     onDoubleClick={handleDoubleClick}
-                    className={getUserMenuStyles('trigger')}
+                    className={`font-heading ${getUserMenuStyles('trigger')}`}
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                       {user.avatarUrl ? (
@@ -152,7 +152,7 @@ export default function MainNav() {
                     <div className={getUserMenuStyles('dropdown')}>
                       <Link
                         href="/account"
-                        className={getUserMenuStyles('item')}
+                        className={`font-heading ${getUserMenuStyles('item')}`}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -163,7 +163,7 @@ export default function MainNav() {
                       </Link>
                       <Link
                         href="/account/submissions"
-                        className={getUserMenuStyles('item')}
+                        className={`font-heading ${getUserMenuStyles('item')}`}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -175,7 +175,7 @@ export default function MainNav() {
                       </Link>
                       <Link
                         href="/account/settings"
-                        className={getUserMenuStyles('item')}
+                        className={`font-heading ${getUserMenuStyles('item')}`}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +188,7 @@ export default function MainNav() {
                       <div className={getUserMenuStyles('separator')}></div>
                       <button
                         onClick={handleLogout}
-                        className={getUserMenuStyles('logout')}
+                        className={`font-heading ${getUserMenuStyles('logout')}`}
                       >
                         <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -202,12 +202,12 @@ export default function MainNav() {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <button onClick={handleOpenLogin} className="text-gray-600 hover:text-black nav-link-hover">
+                  <button onClick={handleOpenLogin} className="font-heading text-gray-600 hover:text-black nav-link-hover">
                     Login
                   </button>
                   <button 
                     onClick={handleOpenRegister} 
-                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
+                    className="font-heading px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
                   >
                     Register
                   </button>

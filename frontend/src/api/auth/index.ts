@@ -1,6 +1,6 @@
 /**
- * 认证相关API模块
- * 提供用户注册、登录、第三方认证等功能
+ * Auth related API module
+ * Provides user registration, login, third-party authentication, etc.
  */
 import { fetchAPI, getAuthHeader } from "../http";
 
@@ -38,7 +38,7 @@ interface AuthResponse {
 }
 
 /**
- * 用户注册
+ * User registration
  * POST /api/auth/register
  */
 export const register = async (data: UserRegisterRequest): Promise<AuthResponse> => {
@@ -49,7 +49,7 @@ export const register = async (data: UserRegisterRequest): Promise<AuthResponse>
 };
 
 /**
- * 邮箱登录
+ * Email login
  * POST /api/auth/login/email
  */
 export const loginWithEmail = async (data: EmailLoginRequest): Promise<AuthResponse> => {
@@ -60,7 +60,7 @@ export const loginWithEmail = async (data: EmailLoginRequest): Promise<AuthRespo
 };
 
 /**
- * 第三方登录
+ * Third-party login
  * POST /api/auth/login/provider
  */
 export const loginWithProvider = async (data: UserProviderLoginRequest): Promise<AuthResponse> => {
@@ -71,7 +71,7 @@ export const loginWithProvider = async (data: UserProviderLoginRequest): Promise
 };
 
 /**
- * 绑定第三方账号
+ * Bind third-party account
  * POST /api/auth/bind
  */
 export const bindProvider = async (data: BindRequest): Promise<void> => {
@@ -83,7 +83,7 @@ export const bindProvider = async (data: BindRequest): Promise<void> => {
 };
 
 /**
- * 解绑第三方账号
+ * Unbind third-party account
  * DELETE /api/auth/bind/{provider}
  */
 export const unbindProvider = async (provider: string): Promise<void> => {
@@ -94,7 +94,7 @@ export const unbindProvider = async (provider: string): Promise<void> => {
 };
 
 /**
- * 获取用户绑定的所有第三方提供商
+ * Get all linked third-party providers
  * GET /api/auth/providers
  */
 export const getLinkedProviders = async (): Promise<string[]> => {

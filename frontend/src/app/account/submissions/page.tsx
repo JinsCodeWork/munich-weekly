@@ -9,7 +9,8 @@ import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { Pagination } from "@/components/ui/Pagination"
-import { Thumbnail } from "@/components/ui/Thumbnail"
+import { Modal } from "@/components/ui/Modal"
+import { cn } from "@/lib/utils"
 
 export default function SubmissionsPage() {
   const { user } = useAuth()
@@ -20,7 +21,11 @@ export default function SubmissionsPage() {
   const [selectedIssue, setSelectedIssue] = useState<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const pageSize = 16 // 固定每页显示16个提交
+  const pageSize = 16 // Fixed number of submissions per page
+  const [isManageMode, setIsManageMode] = useState(false)
+  const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Load submissions data
   const loadSubmissions = useCallback(async () => {
@@ -30,7 +35,7 @@ export default function SubmissionsPage() {
       
       console.log("Loading user submissions, page:", currentPage, "filter:", selectedIssue);
       
-      // 注意：API中的页码是从0开始的，但UI中是从1开始的
+      // Note: API page index starts from 0, but UI page starts from 1
       const response = await submissionsApi.getUserSubmissions(
         selectedIssue, 
         currentPage - 1, 
@@ -38,18 +43,18 @@ export default function SubmissionsPage() {
       )
       
       if (Array.isArray(response)) {
-        // 兼容处理：如果返回的是数组（API尚未支持分页）
+        // Compatibility handling: if returned as array (API doesn't support pagination yet)
         setSubmissions(response)
         setTotalPages(Math.ceil(response.length / pageSize))
       } else {
-        // 处理分页响应
+        // Handle paginated response
         setSubmissions(response.content)
         setTotalPages(response.totalPages)
       }
       
       console.log("Successfully loaded user submissions:", response)
       
-      // 检查图片URL
+      // Check image URLs
       if ((Array.isArray(response) && response.length > 0) || 
           (!Array.isArray(response) && response.content.length > 0)) {
         const firstSubmission = Array.isArray(response) ? response[0] : response.content[0];
@@ -95,10 +100,10 @@ export default function SubmissionsPage() {
     loadIssues()
   }, [])
 
-  // 处理页码变化
+  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // 可以选择滚动到页面顶部
+    // Option to scroll to top of page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -106,19 +111,59 @@ export default function SubmissionsPage() {
   const handleIssueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setSelectedIssue(value === "all" ? undefined : parseInt(value))
-    setCurrentPage(1) // 切换筛选条件时，重置到第一页
+    setCurrentPage(1) // Reset to first page when changing filter
   }
 
-  // 渲染提交卡片
+  // Toggle management mode
+  const toggleManageMode = () => {
+    setIsManageMode(!isManageMode);
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = (submissionId: number) => {
+    setSubmissionToDelete(submissionId);
+    setShowDeleteDialog(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    if (submissionToDelete === null) return;
+    
+    try {
+      setIsDeleting(true);
+      await submissionsApi.deleteSubmission(submissionToDelete);
+      
+      // Update UI state after successful deletion
+      setSubmissions(prevSubmissions => 
+        prevSubmissions.filter(submission => submission.id !== submissionToDelete)
+      );
+      
+      setShowDeleteDialog(false);
+      setSubmissionToDelete(null);
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      // Can show error message
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Cancel delete operation
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
+    setSubmissionToDelete(null);
+  };
+
+  // Render submission card
   const renderSubmissionCard = (submission: MySubmissionResponse) => {
-    // 检查图片URL
+    // Check image URL
     console.log(`Rendering submission ${submission.id}:`, {
       imageUrl: submission.imageUrl,
       processedUrl: getImageUrl(submission.imageUrl)
     });
     
     const issue = issues.find(issue => 
-      // 尝试从图片URL中提取期刊ID，如果无法提取则使用第一个期刊作为默认值
+      // Try to extract issue ID from image URL, if not possible use first issue as default
       submission.imageUrl && (
         submission.imageUrl.includes(`issues/${issue.id}/`) || 
         submission.imageUrl.includes(`issue${issue.id}`)
@@ -135,20 +180,33 @@ export default function SubmissionsPage() {
     });
     
     return (
-      <SubmissionCard
-        key={submission.id}
-        submission={{
-          id: submission.id,
-          imageUrl: submission.imageUrl,
-          description: submission.description,
-          status: submission.status as SubmissionStatus,
-          submittedAt: submission.submittedAt,
-          voteCount: submission.voteCount,
-          isCover: submission.isCover,
-          issue: issue,
-          userId: user?.id || 0
-        }}
-      />
+      <div key={submission.id} className="relative">
+        <SubmissionCard
+          submission={{
+            id: submission.id,
+            imageUrl: submission.imageUrl,
+            description: submission.description,
+            status: submission.status as SubmissionStatus,
+            submittedAt: submission.submittedAt,
+            voteCount: submission.voteCount,
+            isCover: submission.isCover,
+            issue: issue,
+            userId: user?.id || 0
+          }}
+        />
+        {isManageMode && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(submission.id);
+            }}
+            className="absolute top-2 left-2 bg-red-500 rounded-full w-8 h-8 flex items-center justify-center text-white hover:bg-red-600 z-10 shadow-md"
+            aria-label="Delete"
+          >
+            <span className="text-xl font-bold leading-none" style={{ marginTop: "-2px" }}>×</span>
+          </button>
+        )}
+      </div>
     );
   };
 
@@ -156,7 +214,7 @@ export default function SubmissionsPage() {
     <div>
       <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b border-gray-200 pb-5 mb-6">
         <div className="mb-4 md:mb-0">
-          <h1 className="text-2xl font-bold text-gray-900">My Submissions</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-heading">My Submissions</h1>
           <p className="mt-2 text-sm text-gray-500">
             View and manage all your submitted photos
           </p>
@@ -185,6 +243,33 @@ export default function SubmissionsPage() {
         </div>
       </div>
 
+      {/* Management button */}
+      {submissions && submissions.length > 0 && !loading && (
+        <div className="mb-6">
+          <Button 
+            variant={isManageMode ? "danger" : "outline"}
+            onClick={toggleManageMode}
+            className={cn(
+              "border border-red-500 hover:bg-red-50 whitespace-nowrap px-4 min-w-[210px] flex items-center", 
+              isManageMode && "bg-red-500 text-white hover:bg-red-600"
+            )}
+          >
+            {isManageMode ? (
+              <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            )}
+            <span className="inline-block">{isManageMode ? 'Exit Management' : 'Manage My Submissions'}</span>
+          </Button>
+        </div>
+      )}
+
       {/* Loading state */}
       {loading && (
         <div className="flex justify-center items-center py-20">
@@ -196,9 +281,13 @@ export default function SubmissionsPage() {
       {error && !loading && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <div className="text-red-500 mb-4">
-            <i className="fa-solid fa-circle-exclamation text-4xl"></i>
+            <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
           </div>
-          <h3 className="text-lg font-medium text-red-800 mb-2">
+          <h3 className="text-lg font-medium text-red-800 mb-2 font-heading">
             Error
           </h3>
           <p className="text-red-600 mb-4">
@@ -217,9 +306,13 @@ export default function SubmissionsPage() {
       {!loading && !error && submissions && submissions.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <div className="text-gray-400 mb-4">
-            <i className="fa-solid fa-image text-4xl"></i>
+            <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 mb-2 font-heading">
             You don&apos;t have any submissions yet
           </h3>
           <p className="text-gray-500 mb-4">
@@ -236,98 +329,13 @@ export default function SubmissionsPage() {
       {/* Submissions list */}
       {!loading && !error && submissions && submissions.length > 0 && (
         <>
-          {/* 调试信息 */}
-          <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-            <h3 className="font-medium mb-2">Image Display Diagnostics (First Submission):</h3>
-            {submissions[0] && (
-              <div className="space-y-4">
-                <div>
-                  <p><strong>ID:</strong> {submissions[0].id}</p>
-                  <p><strong>Status:</strong> {submissions[0].status}</p>
-                  <p><strong>Original Image URL:</strong> {submissions[0].imageUrl}</p>
-                  <p><strong>Processed URL:</strong> {getImageUrl(submissions[0].imageUrl)}</p>
-                </div>
-                
-                <div>
-                  <p className="font-medium mt-4">Using Original URL:</p>
-                  <div className="max-h-40 mt-2 relative bg-gray-200 rounded">
-                    <Thumbnail 
-                      src={submissions[0].imageUrl} 
-                      alt="Original URL" 
-                      className="max-w-xs object-contain h-32"
-                      width={320}
-                      height={128}
-                      objectFit="contain"
-                      rounded={false}
-                      unoptimized
-                      showErrorMessage
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="font-medium mt-4">Using Processed URL:</p>
-                  <div className="max-h-40 mt-2 relative bg-gray-200 rounded">
-                    <Thumbnail 
-                      src={getImageUrl(submissions[0].imageUrl)} 
-                      alt="Processed URL" 
-                      className="max-w-xs object-contain h-32"
-                      width={320}
-                      height={128}
-                      objectFit="contain"
-                      rounded={false}
-                      unoptimized
-                      showErrorMessage
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="font-medium mt-4">Via Next.js Thumbnail Component:</p>
-                  <div className="max-h-40 mt-2">
-                    <Thumbnail 
-                      src={getImageUrl(submissions[0].imageUrl)} 
-                      alt="Next.js Thumbnail" 
-                      className="border border-gray-300"
-                      width={320}
-                      height={180}
-                      objectFit="contain"
-                      showErrorMessage
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="font-medium mt-4">Via Next.js Proxy Auto-constructed URL:</p>
-                  <div className="max-h-40 mt-2 relative bg-gray-200 rounded">
-                    <Thumbnail 
-                      src={`/uploads/${submissions[0].imageUrl.split('/').pop()}`} 
-                      alt="Via Proxy" 
-                      className="max-w-xs object-contain h-32"
-                      width={320}
-                      height={128}
-                      objectFit="contain"
-                      rounded={false}
-                      unoptimized
-                      showErrorMessage
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {submissions.map((submission) => {
-              // 调试信息
-              console.log(`Submission ${submission.id} image URL:`, submission.imageUrl);
-              console.log(`Submission ${submission.id} processed URL:`, getImageUrl(submission.imageUrl));
-              
               return renderSubmissionCard(submission);
             })}
           </div>
           
-          {/* 添加分页组件 */}
+          {/* Add pagination component */}
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -341,6 +349,44 @@ export default function SubmissionsPage() {
           )}
         </>
       )}
+      
+      {/* Delete confirmation dialog */}
+      <Modal
+        isOpen={showDeleteDialog}
+        onClose={handleCancelDelete}
+        contentVariant="dark-glass"
+      >
+        <div className="p-6 text-center">
+          <h2 className="text-2xl font-bold mb-4 text-white font-heading">Delete Photo</h2>
+          <p className="mb-4 text-white">Are you sure you want to delete this photo? This action cannot be undone. The photo will be permanently removed from our system.</p>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleConfirmDelete}
+              className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <span className="inline-flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : "Yes, Delete Photo"}
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleCancelDelete}
+              className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 } 

@@ -9,7 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   overlayVariant?: 'default' | 'dark' | 'light';
-  contentVariant?: 'default' | 'glassmorphism' | 'dark-glass';
+  contentVariant?: 'default' | 'glassmorphism' | 'dark-glass' | 'dark';
 }
 
 /**

@@ -3,16 +3,22 @@ package com.munichweekly.backend.service;
 import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.UserAuthProvider;
+import com.munichweekly.backend.model.Submission;
+import com.munichweekly.backend.model.Vote;
 import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.repository.UserAuthProviderRepository;
+import com.munichweekly.backend.repository.SubmissionRepository;
+import com.munichweekly.backend.repository.VoteRepository;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 /**
  * Service for handling user login and identity linking.
@@ -20,17 +26,25 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
 
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
+
     private final UserRepository userRepository;
     private final UserAuthProviderRepository authProviderRepository;
+    private final SubmissionRepository submissionRepository;
+    private final VoteRepository voteRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final StorageService storageService;
 
     public UserService(UserRepository userRepository,
-                       UserAuthProviderRepository authProviderRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+                       UserAuthProviderRepository authProviderRepository, SubmissionRepository submissionRepository, VoteRepository voteRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, StorageService storageService) {
         this.userRepository = userRepository;
         this.authProviderRepository = authProviderRepository;
+        this.submissionRepository = submissionRepository;
+        this.voteRepository = voteRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
+        this.storageService = storageService;
     }
 
     /**
@@ -39,10 +53,10 @@ public class UserService {
      */
     public LoginResponseDTO loginWithEmail(EmailLoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid password");
+            throw new IllegalArgumentException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(user.getId());
@@ -66,7 +80,7 @@ public class UserService {
             // Create new user using info from third-party
             User newUser = new User();
             newUser.setEmail(null);
-            newUser.setNickname(dto.getDisplayName() != null ? dto.getDisplayName() : "用户" + System.currentTimeMillis());
+            newUser.setNickname(dto.getDisplayName() != null ? dto.getDisplayName() : "User" + System.currentTimeMillis());
             newUser.setAvatarUrl(dto.getAvatarUrl());
             newUser.setRole("user");
 
@@ -226,5 +240,62 @@ public class UserService {
         }
 
         authProviderRepository.delete(existing.get());
+    }
+
+    /**
+     * Delete the currently authenticated user and all their data.
+     * Uses transaction to ensure atomic operation.
+     */
+    @Transactional
+    public void deleteCurrentUser() {
+        Long userId = CurrentUserUtil.getUserIdOrThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                
+        logger.info("Deleting user with ID: " + userId);
+        
+        // Find user's submissions using repository
+        List<Submission> userSubmissions = submissionRepository.findByUserId(userId);
+        if (!userSubmissions.isEmpty()) {
+            logger.info("Deleting " + userSubmissions.size() + " submissions for user: " + userId);
+            
+            // Delete votes associated with user's submissions first
+            for (Submission submission : userSubmissions) {
+                List<Vote> submissionVotes = voteRepository.findBySubmission(submission);
+                if (!submissionVotes.isEmpty()) {
+                    logger.info("Deleting " + submissionVotes.size() + " votes for submission: " + submission.getId());
+                    voteRepository.deleteAll(submissionVotes);
+                }
+                
+                // Delete the image file from cloud storage
+                String imageUrl = submission.getImageUrl();
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    logger.info("Deleting image file: " + imageUrl + " for submission: " + submission.getId());
+                    boolean deleteSuccessful = storageService.deleteFile(imageUrl);
+                    if (deleteSuccessful) {
+                        logger.info("Successfully deleted image file: " + imageUrl);
+                    } else {
+                        logger.warning("Failed to delete image file: " + imageUrl);
+                    }
+                }
+            }
+            
+            // Now delete the submissions
+            submissionRepository.deleteAll(userSubmissions);
+        }
+        
+        // Delete votes cast by the user
+        voteRepository.deleteByUserId(userId);
+                
+        // Delete third-party bindings
+        List<UserAuthProvider> providers = authProviderRepository.findByUser(user);
+        if (!providers.isEmpty()) {
+            logger.info("Deleting " + providers.size() + " auth providers for user: " + userId);
+            authProviderRepository.deleteAll(providers);
+        }
+        
+        // Finally delete the user
+        userRepository.delete(user);
+        logger.info("User with ID: " + userId + " has been deleted");
     }
 }

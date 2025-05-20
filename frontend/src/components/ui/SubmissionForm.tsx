@@ -51,7 +51,7 @@ export function SubmissionForm({
     setError(null);
     
     try {
-      // 只创建submission，不带imageUrl
+      // Only create submission, without imageUrl
       const res = await createSubmission({
         issueId,
         description: description.trim()

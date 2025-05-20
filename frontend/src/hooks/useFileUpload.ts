@@ -69,9 +69,9 @@ export function useFileUpload() {
   };
   
   /**
-   * 使用fetch API上传文件
-   * @param url 上传接口的URL
-   * @returns 成功时返回响应结果，失败时抛出错误
+   * Upload file using fetch API
+   * @param url Upload endpoint URL
+   * @returns Returns response on success, throws error on failure
    */
   const uploadFileWithFetch = async (url: string) => {
     if (!file) {
@@ -115,7 +115,7 @@ export function useFileUpload() {
               errorMessage = errorData.error;
             }
           } catch {
-            // 如果响应不是JSON格式，在控制台记录原始响应
+            // If response is not JSON, log the raw response
             console.log('Server returned non-JSON response:', responseText);
           }
         } catch (textError) {

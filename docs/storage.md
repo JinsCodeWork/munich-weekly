@@ -8,6 +8,7 @@ The platform implements a flexible storage strategy with two main implementation
 
 1. **Local Storage** - Used primarily for development and testing environments
 2. **Cloudflare R2 Storage** - Used for production environments
+3. **Cloudflare Worker Image CDN** - Optimizes image delivery and processing
 
 The storage implementation is selected based on configuration, allowing seamless switching between different storage providers without changing application code.
 
@@ -30,6 +31,9 @@ cloudflare.r2.secret-key=${CLOUDFLARE_R2_SECRET_KEY:}
 cloudflare.r2.endpoint=${CLOUDFLARE_R2_ENDPOINT:}
 cloudflare.r2.bucket=${CLOUDFLARE_R2_BUCKET:munichweekly-photoupload}
 cloudflare.r2.public-url=${CLOUDFLARE_R2_PUBLIC_URL:}
+
+# Cloudflare Worker CDN
+cloudflare.worker.url=${CLOUDFLARE_WORKER_URL:https://img.munichweekly.art}
 ```
 
 These settings can be overridden through environment variables in your Docker configuration.
@@ -99,6 +103,142 @@ The `R2StorageService` class:
 
 ---
 
+## Cloudflare Worker Image CDN
+
+To enhance image delivery performance and enable on-demand image transformations, Munich Weekly implements a Cloudflare Worker as a CDN layer between clients and the R2 storage.
+
+### Image Worker Architecture
+
+The Image Worker serves as a processing middleware that:
+
+1. Receives image requests from clients
+2. Retrieves original images from R2 private storage
+3. Applies real-time transformations based on URL parameters
+4. Delivers optimized images with appropriate caching headers
+
+### Key Features
+
+- **On-demand Image Resizing** - Dynamically resize images based on client requirements
+- **Format Optimization** - Convert images to modern formats like WebP and AVIF based on browser support
+- **Quality Control** - Adjust compression levels for different use cases
+- **Responsive Delivery** - Serve appropriately sized images for different devices
+- **Bandwidth Optimization** - Reduce data transfer by delivering optimized images
+- **Edge Caching** - Leverage Cloudflare's global CDN for faster delivery
+
+### URL Structure and Parameters
+
+Images are served from the worker domain (img.munichweekly.art) with the following pattern:
+
+```
+https://img.munichweekly.art/uploads/issues/{issueId}/submissions/{fileName}?width=300&height=200&quality=80&fit=cover
+```
+
+Supported transformation parameters include:
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| width     | Target width in pixels | `width=300` |
+| height    | Target height in pixels | `height=200` |
+| quality   | Compression quality (1-100) | `quality=80` |
+| fit       | Resizing strategy | `fit=cover`, `fit=contain`, `fit=scale-down` |
+| format    | Output format | `format=webp`, `format=auto` |
+| dpr       | Device pixel ratio | `dpr=2` |
+
+### Worker Configuration
+
+The Image Worker is configured using `wrangler.toml`:
+
+```toml
+name = "image-worker"
+main = "src/index.js"
+compatibility_date = "2025-05-19"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "PHOTO_BUCKET"
+bucket_name = "munichweekly-photoupload"
+preview_bucket_name = "munichweekly-photoupload"
+```
+
+### Implementation Details
+
+The Worker code handles various aspects of image processing:
+
+- **Path Parsing** - Extracts object keys from request paths
+- **Parameter Extraction** - Parses transformation parameters from URL query
+- **Format Detection** - Identifies optimal image formats based on Accept headers
+- **Content-Type Handling** - Ensures correct MIME types for transformed images
+- **Error Handling** - Gracefully handles missing images or invalid parameters
+- **Caching Strategy** - Sets appropriate cache headers for optimized delivery
+
+### Frontend Integration
+
+The frontend uses utility functions to generate appropriate image URLs:
+
+1. `getImageUrl()` - Transforms raw storage URLs to CDN URLs
+2. `createImageUrl()` - Adds transformation parameters based on display context
+
+Implementation example:
+
+```tsx
+// For thumbnails in lists
+<Thumbnail 
+  src={getImageUrl(imageUrl)}
+  width={300}
+  height={200}
+  quality={80}
+  fit="cover"
+  useImageOptimization={true}
+/>
+
+// For full-size viewing
+<ImageViewer
+  imageUrl={getImageUrl(imageUrl)}
+  useHighQuality={true}
+/>
+```
+
+### On-Demand Loading Strategy
+
+The platform implements an on-demand image loading strategy:
+
+1. **Thumbnail View** - Small, optimized images are loaded in list views
+   - Lower resolution (e.g., 300×200)
+   - Medium quality (e.g., 80%)
+   - Cropped to fit display area
+
+2. **Full Image View** - High-quality images are loaded only when explicitly requested
+   - Higher resolution (up to original size)
+   - Higher quality (95%)
+   - Preserved aspect ratio
+
+This approach significantly reduces bandwidth usage while maintaining excellent user experience.
+
+## Frontend Integration
+
+The frontend uses a consistent API for image uploads and display, regardless of the backend storage implementation.
+
+### Upload Process
+1. Create a submission record via API
+2. Receive an upload URL in the response
+3. Upload the image directly to that URL
+
+### Image Display Process
+1. Receive image URL from the backend (either local path or R2 URL)
+2. Transform URLs to use the Image CDN for production environments
+3. Add appropriate transformation parameters based on display context
+4. Load optimized images through Next.js Image component
+
+### Key Frontend Components
+
+- **Thumbnail Component** - Displays optimized thumbnails with appropriate size/quality
+- **ImageViewer Component** - Shows high-quality images when users request full view
+- **URL Utility Functions** - Handle URL transformations and parameter additions
+
+This integration ensures efficient image loading across different environments and use cases.
+
+---
+
 ## Storage Selection Logic
 
 The `StorageConfig` class determines which storage implementation to use:
@@ -125,6 +265,101 @@ public class StorageConfig {
 ```
 
 This configuration allows you to switch storage providers by changing a single configuration value.
+
+---
+
+## Cloud-Only Storage Migration
+
+As of the latest update, the platform has migrated to exclusively use cloud storage (Cloudflare R2) for production environments. This migration brings several advantages:
+
+1. **Enhanced Scalability** - Better handling of growing storage needs
+2. **Improved Performance** - Faster global access through CDN
+3. **Higher Reliability** - Redundant storage with automated backups
+4. **Simplified Operations** - Consistent storage mechanism across all deployments
+
+Local storage is now reserved exclusively for development and testing environments.
+
+---
+
+## GDPR Compliance and Data Deletion
+
+The platform implements comprehensive data deletion capabilities to comply with the European General Data Protection Regulation (GDPR) and other privacy regulations. These features ensure that user data can be completely removed from the system upon request.
+
+### Submission Deletion
+
+When a submission is deleted, the system:
+
+1. **Removes Database Records** - Deletes the submission entry from the database
+2. **Deletes Associated Votes** - Removes all votes related to the submission
+3. **Removes Cloud Storage Files** - Permanently deletes the image file from Cloudflare R2 storage
+4. **Logs Deletion Activities** - Records all deletion actions for audit purposes
+
+Users can delete their own submissions through the user interface, and administrators can delete any submission through the admin panel.
+
+### User Account Deletion
+
+When a user requests account deletion, the system executes a comprehensive deletion process:
+
+1. **Submission Cleanup** - Identifies and deletes all submissions by the user
+   - For each submission, deletes associated votes
+   - For each submission, removes the image file from cloud storage
+   
+2. **Personal Data Removal** - Removes all personal information:
+   - Deletes all votes cast by the user
+   - Removes third-party authentication bindings
+   - Purges personal profile information
+
+3. **Account Termination** - Finally deletes the user account record
+
+This multi-step process ensures complete data removal across the system and cloud storage, meeting GDPR requirements for the "right to be forgotten."
+
+### Implementation
+
+The deletion process is implemented as transactional operations to ensure atomicity:
+
+```java
+@Transactional
+public void deleteCurrentUser() {
+    // Get authenticated user
+    Long userId = CurrentUserUtil.getUserIdOrThrow();
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            
+    // Delete user's submissions and associated cloud storage files
+    List<Submission> userSubmissions = submissionRepository.findByUserId(userId);
+    for (Submission submission : userSubmissions) {
+        // Delete votes for this submission
+        voteRepository.deleteBySubmission(submission);
+        
+        // Delete image file from cloud storage
+        if (submission.getImageUrl() != null && !submission.getImageUrl().isEmpty()) {
+            storageService.deleteFile(submission.getImageUrl());
+        }
+    }
+    
+    // Delete the submissions from database
+    submissionRepository.deleteAll(userSubmissions);
+    
+    // Delete votes cast by the user
+    voteRepository.deleteByUserId(userId);
+    
+    // Delete third-party auth bindings
+    authProviderRepository.deleteByUser(user);
+    
+    // Delete the user account
+    userRepository.delete(user);
+}
+```
+
+### User Interface
+
+The frontend provides intuitive interfaces for these deletion operations:
+
+1. **Submission Management** - Users can manage and delete their submissions from the "My Submissions" page
+2. **Account Deletion** - Users can request account deletion from account settings
+3. **Confirmation Dialogs** - Clear warnings about the permanent nature of deletion actions
+
+These features ensure the platform maintains compliance with data protection regulations while giving users control over their data.
 
 ---
 
@@ -158,19 +393,6 @@ Both implementations provide robust error handling for common issues:
 - File size exceeding limits
 - Storage service unavailability
 - Permission errors
-
----
-
-## Frontend Integration
-
-The frontend uses a consistent API for image uploads, regardless of the backend storage implementation. The upload process:
-
-1. Create a submission record via API
-2. Receive an upload URL in the response
-3. Upload the image directly to that URL
-4. Images are served from their respective URLs in the UI
-
-The frontend components are designed to handle both local and cloud storage URLs seamlessly, with special handling for local uploads when needed.
 
 ---
 

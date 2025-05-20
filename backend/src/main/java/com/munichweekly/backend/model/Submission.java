@@ -19,7 +19,7 @@ public class Submission {
 
     private String imageUrl;
 
-    @Column(length = 1000)
+    @Column(length = 200)
     private String description;
 
     private Boolean isCover = false;

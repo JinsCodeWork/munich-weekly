@@ -16,7 +16,7 @@ export function useDebugTools(token: string | null, selectedIssue: number | null
   // Debug states
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [apiTestResult, setApiTestResult] = useState<string | null>(null);
-  const [useMockData, setUseMockData] = useState(true); // Default to using mock data
+  const [useMockData, setUseMockData] = useState(false); // Default to using real data
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     userLoggedIn: false,
     userRole: 'none',

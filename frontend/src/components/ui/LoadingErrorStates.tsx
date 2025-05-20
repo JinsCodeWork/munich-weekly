@@ -3,7 +3,6 @@ import {
   getLoadingSpinnerStyles, 
   getLoadingContainerStyles, 
   getErrorContainerStyles,
-  getErrorButtonStyles,
   loadingSpinnerVariants,
   loadingContainerVariants,
   errorContainerVariants
@@ -57,7 +56,11 @@ export function ErrorState({
   return (
     <div className={getErrorContainerStyles({ variant, className })}>
       <div className="text-red-500 mb-4">
-        <i className="fa-solid fa-circle-exclamation text-4xl"></i>
+        <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
       </div>
       <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
       <p className="text-red-600 mb-4">{message}</p>
@@ -75,7 +78,7 @@ export function ErrorState({
 
 interface EmptyStateProps {
   message: string;
-  icon?: string;
+  icon?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
 }
@@ -85,14 +88,20 @@ interface EmptyStateProps {
  */
 export function EmptyState({
   message,
-  icon = "fa-solid fa-inbox",
+  icon,
   action,
   className
 }: EmptyStateProps) {
   return (
     <div className={`bg-gray-50 border border-gray-200 rounded-lg p-6 text-center ${className || ''}`}>
       <div className="text-gray-400 mb-4">
-        <i className={`${icon} text-4xl`}></i>
+        {icon || (
+          <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <path d="M3 9h18"></path>
+            <path d="M9 21V9"></path>
+          </svg>
+        )}
       </div>
       <h3 className="text-lg font-medium text-gray-900 mb-2">
         {message}
@@ -113,7 +122,7 @@ interface LoadingErrorStatesProps {
   onRetry?: () => void;
   emptyState?: boolean;
   emptyStateMessage?: string;
-  emptyStateIcon?: string;
+  emptyStateIcon?: React.ReactNode;
   emptyStateAction?: React.ReactNode;
   className?: string;
 }

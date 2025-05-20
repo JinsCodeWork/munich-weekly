@@ -165,15 +165,15 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     )}
                   </div>
                   <div>
-                    <p className="font-medium">{user.nickname || 'User'}</p>
-                    <p className="text-xs text-gray-500">{user.email || ''}</p>
+                    <p className="font-heading font-medium">{user.nickname || 'User'}</p>
+                    <p className="font-sans text-xs text-gray-500">{user.email || ''}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-center space-y-2 text-center">
                   <Link
                     href="/account"
-                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
+                    className={`font-heading ${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
                     <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -184,7 +184,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                   </Link>
                   <Link
                     href="/account/submissions"
-                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
+                    className={`font-heading ${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
                     <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,7 +196,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                   </Link>
                   <Link
                     href="/account/settings"
-                    className={`${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
+                    className={`font-heading ${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center`}
                     onClick={() => setIsOpen(false)}
                   >
                     <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -215,7 +215,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`${pathname === link.href 
+                  className={`font-heading ${pathname === link.href 
                     ? getMobileNavStyles('navItemActive') 
                     : getMobileNavStyles('navItem')
                   } relative nav-link-hover ${pathname === link.href ? 'nav-link-active' : ''}`}
@@ -231,7 +231,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
               <div className="flex justify-center w-full">
                 <button
                   onClick={handleLogout}
-                  className="text-center py-2 text-red-500 flex items-center justify-center"
+                  className="font-heading text-center py-2 text-red-500 flex items-center justify-center"
                 >
                   <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -248,13 +248,8 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     if (onLoginClick) onLoginClick();
                     setIsOpen(false);
                   }}
-                  className="btn bg-black text-white py-2 px-4 rounded-md hover:bg-gray-900 w-3/4"
+                  className="font-heading w-full py-2 text-gray-800"
                 >
-                  <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                    <polyline points="10 17 15 12 10 7"></polyline>
-                    <line x1="15" y1="12" x2="3" y2="12"></line>
-                  </svg>
                   Login
                 </button>
                 <button
@@ -262,14 +257,8 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     if (onRegisterClick) onRegisterClick();
                     setIsOpen(false);
                   }}
-                  className="btn bg-black text-white py-2 px-4 rounded-md hover:bg-gray-900 w-3/4"
+                  className="font-heading w-full bg-black text-white py-2 px-4 rounded-md"
                 >
-                  <svg className="inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="8.5" cy="7" r="4"></circle>
-                    <line x1="20" y1="8" x2="20" y2="14"></line>
-                    <line x1="23" y1="11" x2="17" y2="11"></line>
-                  </svg>
                   Register
                 </button>
               </div>

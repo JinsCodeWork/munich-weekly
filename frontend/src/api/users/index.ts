@@ -64,4 +64,15 @@ export const getAllUsers = async (): Promise<User[]> => {
   return fetchAPI<User[]>("/api/users", {
     headers: getAuthHeader()
   });
+};
+
+/**
+ * Delete the currently authenticated user and all their data
+ * DELETE /api/users/me
+ */
+export const deleteCurrentUser = async (): Promise<void> => {
+  return fetchAPI<void>("/api/users/me", {
+    method: "DELETE",
+    headers: getAuthHeader()
+  });
 }; 

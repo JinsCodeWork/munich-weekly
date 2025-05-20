@@ -93,4 +93,15 @@ public class UserController {
             ));
         }
     }
+
+    /**
+     * Delete the currently authenticated user and all their data.
+     */
+    @Description("Delete the currently authenticated user and all their data.")
+    @DeleteMapping("/me")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    public ResponseEntity<?> deleteCurrentUser() {
+        userService.deleteCurrentUser();
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+    }
 }

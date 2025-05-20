@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants } from "@/styles/components/thumbnail";
+import { createImageUrl } from "@/lib/utils";
 
 export interface ThumbnailProps {
   src: string;
@@ -20,6 +21,7 @@ export interface ThumbnailProps {
   unoptimized?: boolean;
   fallbackSrc?: string;
   showErrorMessage?: boolean;
+  useImageOptimization?: boolean;
 }
 
 /**
@@ -44,15 +46,47 @@ export function Thumbnail({
   aspectRatio = "square",
   unoptimized = false,
   fallbackSrc = '/placeholder.jpg',
-  showErrorMessage = false
+  showErrorMessage = false,
+  useImageOptimization = true
 }: ThumbnailProps) {
   const [hasError, setHasError] = useState(false);
-  // 处理本地上传的图片路径
-  const imageSrc = src;
+  
+  // 添加调试信息，在控制台中打印URL转换前后的结果
+  if (src.includes('.r2.dev/')) {
+    console.log('原始R2 URL:', src);
+  }
+  
+  // 强制确保生产环境使用完整URL
+  const isDevEnv = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  let processedSrc = src;
+  
+  // 如果是相对路径且不是开发环境，确保添加CDN域名
+  if (!isDevEnv && processedSrc.startsWith('/')) {
+    processedSrc = `https://img.munichweekly.art${processedSrc}`;
+  }
+  
+  // 根据是否使用图像优化来处理图像URL
+  const imageSrc = useImageOptimization && processedSrc.startsWith('/uploads/')
+    ? createImageUrl(processedSrc, {
+        width: fill ? undefined : width,
+        height: fill ? undefined : height,
+        quality,
+        fit: objectFit === 'cover' ? 'cover' 
+           : objectFit === 'contain' ? 'contain'
+           : 'scale-down'
+      })
+    : processedSrc;
+  
+  // 打印最终使用的URL
+  if (src.includes('.r2.dev/') || src.startsWith('/uploads/')) {
+    console.log('最终图片URL:', imageSrc);
+  }
+    
   const isLocalUpload = src.startsWith('/uploads/');
 
   const handleError = () => {
     setHasError(true);
+    console.error('图片加载失败:', imageSrc);
   };
 
   return (

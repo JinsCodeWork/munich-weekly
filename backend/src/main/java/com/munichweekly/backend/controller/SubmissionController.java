@@ -118,4 +118,17 @@ public class SubmissionController {
         List<AdminSubmissionResponseDTO> submissions = submissionService.listAllSubmissions(issueId);
         return ResponseEntity.ok(submissions);
     }
+    
+    /**
+     * Delete a submission by ID.
+     * Users can only delete their own submissions.
+     * Admins can delete any submission.
+     */
+    @Description("Delete a submission by ID. User can only delete their own submissions.")
+    @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteSubmission(@PathVariable Long id) {
+        submissionService.deleteSubmission(id);
+        return ResponseEntity.ok().body(Map.of("message", "Submission deleted successfully"));
+    }
 }

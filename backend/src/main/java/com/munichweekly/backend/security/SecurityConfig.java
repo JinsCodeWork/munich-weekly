@@ -47,7 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/submissions").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
-                        .requestMatchers("/api/users/me").hasAnyAuthority("user", "admin")
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").hasAnyAuthority("user", "admin")
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/me").hasAnyAuthority("user", "admin")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/me").hasAnyAuthority("user", "admin")
                         .anyRequest().authenticated()                // Everything else requires login
                 )
                 .addFilterBefore(

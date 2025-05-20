@@ -5,7 +5,6 @@
 import { fetchAPI, getAuthHeader } from "../http";
 import { 
   SubmissionRequest, 
-  SubmissionListResponse, 
   MySubmissionResponse, 
   AdminSubmissionResponse,
   Submission,
@@ -129,6 +128,17 @@ export const rejectSubmission = async (submissionId: number): Promise<void> => {
 export const selectSubmission = async (submissionId: number): Promise<void> => {
   return fetchAPI<void>(`/api/submissions/${submissionId}/select`, {
     method: "PATCH",
+    headers: getAuthHeader()
+  });
+};
+
+/**
+ * 删除投稿
+ * DELETE /api/submissions/{id}
+ */
+export const deleteSubmission = async (submissionId: number): Promise<void> => {
+  return fetchAPI<void>(`/api/submissions/${submissionId}`, {
+    method: "DELETE",
     headers: getAuthHeader()
   });
 }; 

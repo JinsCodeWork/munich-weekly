@@ -6,6 +6,8 @@
   > Change the authenticated user's password.
 
   > **Params**: `ChangePasswordRequestDTO dto`
+- **DELETE** `/api/users/me`
+  > Delete the currently authenticated user and all their data.
 - **GET** `/api/users`
   > Get a list of all users. Admin only.
 - **GET** `/api/users/me`
@@ -32,6 +34,10 @@
   > Submit a new photo to a specific issue. Requires authentication.
 
   > **Params**: `SubmissionRequestDTO dto`
+- **GET** `/api/submissions/mine`
+  > Get the current user's own submissions, optionally filtered by issue.
+
+  > **Params**: `Long issueId`
 - **PATCH** `/api/submissions/{id}/approve`
   > Approve a submission by ID. Admin only.
 
@@ -44,12 +50,12 @@
   > Select a submission as featured. Admin only.
 
   > **Params**: `Long id`
+- **DELETE** `/api/submissions/{id}`
+  > Delete a submission by ID. User can only delete their own submissions.
+
+  > **Params**: `Long id`
 - **GET** `/api/submissions`
   > Get all approved submissions under a given issue, including vote counts.
-
-  > **Params**: `Long issueId`
-- **GET** `/api/submissions/mine`
-  > Get the current user's own submissions, optionally filtered by issue.
 
   > **Params**: `Long issueId`
 - **GET** `/api/submissions/all`
@@ -89,25 +95,17 @@
 
   > **Params**: `String submissionId, MultipartFile file`
 - **GET** `/api/submissions/{submissionId}/check-image`
-  > Check if an image exists for a submission. Returns true/false along with the image URL if it exists.
 
   > **Params**: `String submissionId`
 - **GET** `/api/submissions/{submissionId}/direct-image`
-  > Get the actual image binary data for a submission, bypassing the normal URL. Used primarily for local storage access.
 
   > **Params**: `String submissionId`
 
-## StorageController
+  > **Params**: `String arg0`
 
-- **GET** `/api/storage/info`
-  > Get information about the current storage configuration. Admin only.
-  
-  > Returns mode (LOCAL/R2), status, and configuration details.
+  > **Params**: `String arg0`
 
-- **GET** `/api/storage/status`
-  > Check the health and connectivity of the configured storage system. Admin only.
-  
-  > Returns connectivity status, performance metrics, and error details if any.
+  > **Params**: `String arg0`
 
 ## IssueController
 
