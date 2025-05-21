@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { getImageCaptionStyles } from '@/styles';
 import Image from "next/image";
 import { createImageUrl } from "@/lib/utils";
+import { useGesture } from '@use-gesture/react';
+import useMeasure from 'react-use-measure';
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -11,30 +13,38 @@ interface ImageViewerProps {
 }
 
 /**
- * 全屏图像查看器组件
- * 显示高分辨率图像和可选的说明文字
+ * A fullscreen image viewer component with zoom and pan functionality
+ * Displays high resolution images with optional captions
+ * Supports double-tap to zoom and drag to pan on mobile devices
  */
 export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageViewerProps) {
   const [imgDimensions, setImgDimensions] = useState({ width: 0, height: 0, isPortrait: false });
   const [imgLoaded, setImgLoaded] = useState(false);
-  
-  // 创建高质量大图URL（但不指定宽高，让Worker根据原图和屏幕适配）
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [ref, bounds] = useMeasure();
+  const lastTapRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialPosRef = useRef({ x: 0, y: 0 });
+  const initialScaleRef = useRef(1);
+
+  // Create high quality image URL (without specifying width/height, letting the Worker adapt based on the original image and screen)
   const highQualityUrl = useMemo(() => {
     if (!imageUrl) return '';
     
-    // 对于上传的图片，添加高质量参数但不限制尺寸
+    // For uploaded images, add high quality parameters without limiting dimensions
     if (imageUrl.startsWith('/uploads/') || imageUrl.includes('.r2.dev/')) {
       return createImageUrl(imageUrl, {
         quality: 95,
-        format: 'auto' // 使用客户端支持的最佳格式
+        format: 'auto' // Use the best format supported by the client
       });
     }
     
-    // 对于外部图片，直接使用原URL
+    // For external images, use the original URL
     return imageUrl;
   }, [imageUrl]);
   
-  // 预加载图片以获取尺寸信息
+  // Preload image to get dimension information
   useEffect(() => {
     if (isOpen && highQualityUrl) {
       const img = new window.Image();
@@ -48,9 +58,15 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       };
       img.src = highQualityUrl;
     }
+    
+    // Reset zoom and position when opening
+    if (isOpen) {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+    }
   }, [isOpen, highQualityUrl]);
   
-  // 根据描述长度决定标题样式
+  // Determine caption style based on description length
   const captionStyle = useMemo(() => {
     if (!description) return null;
     
@@ -65,12 +81,12 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   }, [description]);
   
-  // 图片加载完成
+  // Handle image load completion
   const handleImageLoad = () => {
     setImgLoaded(true);
   };
   
-  // 处理Escape键关闭
+  // Handle Escape key to close
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -87,16 +103,76 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     };
   }, [isOpen, onClose]);
   
-  // 处理背景点击关闭
+  // Handle backdrop click to close
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
+
+  // Handle double tap for zoom
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; // ms
+    
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      setScale(scale === 1 ? 2.5 : 1);
+      setPosition({ x: 0, y: 0 });
+    }
+    
+    lastTapRef.current = now;
+  };
+
+  // Set up gesture handlers
+  useGesture(
+    {
+      onDrag: ({ movement: [mx, my], first }) => {
+        if (scale > 1) {
+          // Only allow dragging when zoomed in
+          if (first) {
+            // Store initial position on drag start
+            initialPosRef.current = { ...position };
+          }
+          
+          // Calculate bounds for dragging
+          const maxX = (bounds.width * scale - bounds.width) / 2;
+          const maxY = (bounds.height * scale - bounds.height) / 2;
+          
+          // Update position with boundaries
+          setPosition({
+            x: Math.max(-maxX, Math.min(maxX, initialPosRef.current.x + mx / scale)),
+            y: Math.max(-maxY, Math.min(maxY, initialPosRef.current.y + my / scale))
+          });
+        }
+      },
+      onPinch: ({ offset: [s], first }) => {
+        if (first) {
+          // Reset position when starting a new pinch gesture
+          initialScaleRef.current = scale;
+        }
+        
+        const newScale = Math.max(1, Math.min(4, initialScaleRef.current * s));
+        setScale(newScale);
+        
+        // If zooming out to scale 1, reset position
+        if (newScale === 1) {
+          setPosition({ x: 0, y: 0 });
+        }
+      },
+      onClick: () => {
+        handleDoubleTap();
+      }
+    },
+    {
+      target: containerRef,
+      eventOptions: { passive: false }
+    }
+  );
   
   if (!isOpen) return null;
 
-  // 计算合适的图片尺寸
+  // Calculate appropriate image dimensions
   const calculateImageDimensions = () => {
     const maxHeight = Math.min(window.innerHeight * 0.7, 800);
     const maxWidth = Math.min(window.innerWidth * 0.9, 1200);
@@ -108,12 +184,12 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     const aspectRatio = imgDimensions.width / imgDimensions.height;
     
     if (imgDimensions.isPortrait) {
-      // 竖向图片，高度优先
+      // Portrait image, prioritize height
       const height = maxHeight;
       const width = height * aspectRatio;
       return { width, height };
     } else {
-      // 横向图片，宽度优先
+      // Landscape image, prioritize width
       const width = maxWidth;
       const height = width / aspectRatio;
       return { width, height };
@@ -138,13 +214,35 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
           </svg>
         </button>
         
-        {/* Image Container - 使用flex-1自动占用可用空间 */}
-        <div className="flex justify-center items-center flex-1 w-full overflow-hidden">
-          <div className={`relative flex justify-center items-center ${
-            imgDimensions.isPortrait ? 'max-h-[70vh]' : 'max-w-full max-h-[70vh]'
-          }`}>
-            {/* 使用Next.js优化的Image组件 */}
-            <div className="relative" style={{ width, height }}>
+        {/* Image help text for mobile devices */}
+        <div className="absolute top-4 left-4 right-16 flex justify-center z-10 md:hidden">
+          <div className="px-3 py-1 bg-black bg-opacity-60 text-white text-xs rounded-full">
+            Double-tap to zoom, drag to pan
+          </div>
+        </div>
+        
+        {/* Image Container with gesture support */}
+        <div className="flex justify-center items-center flex-1 w-full overflow-hidden" ref={containerRef}>
+          <div
+            ref={ref}
+            className={`relative flex justify-center items-center ${
+              imgDimensions.isPortrait ? 'max-h-[70vh]' : 'max-w-full max-h-[70vh]'
+            }`}
+            style={{
+              touchAction: scale > 1 ? 'none' : 'auto', // Disable browser touch actions when zoomed
+            }}
+          >
+            {/* Use Next.js optimized Image component */}
+            <div 
+              className="relative"
+              style={{ 
+                width, 
+                height,
+                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+                transformOrigin: 'center center',
+                transition: scale === 1 ? 'transform 0.3s ease-out' : 'none'
+              }}
+            >
               <Image
                 src={highQualityUrl}
                 alt={description}
@@ -155,11 +253,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
                 quality={100}
                 priority={true}
                 onLoad={handleImageLoad}
-                unoptimized={false} // 让Next.js优化图片
+                unoptimized={false} // Let Next.js optimize the image
               />
             </div>
             
-            {/* 加载指示器 */}
+            {/* Loading indicator */}
             {!imgLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -168,7 +266,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
           </div>
         </div>
         
-        {/* Description - 固定在底部，与图片分离 */}
+        {/* Description - fixed at the bottom, separate from the image */}
         {description && captionStyle && (
           <div className="mt-4 w-full flex justify-center">
             <div className={getImageCaptionStyles({
