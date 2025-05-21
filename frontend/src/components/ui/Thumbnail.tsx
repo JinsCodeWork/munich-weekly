@@ -73,7 +73,7 @@ export function Thumbnail({
         quality,
         fit: objectFit === 'cover' ? 'cover' 
            : objectFit === 'contain' ? 'contain'
-           : 'scale-down'
+           : 'contain'
       })
     : processedSrc;
   
