@@ -37,6 +37,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+
+        // ✅ 1. Skip JWT check for public auth endpoints
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ✅ 2. Try to extract token from Authorization header
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -71,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Proceed with the next filter in the chain
+        // ✅ 3. Always continue with the chain
         filterChain.doFilter(request, response);
     }
 }
