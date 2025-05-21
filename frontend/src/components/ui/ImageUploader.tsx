@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Button } from './Button';
+import Image from 'next/image';
 
 interface ImageUploaderProps {
   onFileSelected: (file: File | null) => void;
@@ -80,9 +81,11 @@ export function ImageUploader({
           // Image preview
           <div className="relative w-full">
             <div className="relative max-h-64 overflow-hidden rounded">
-              <img 
+              <Image 
                 src={preview} 
                 alt="Preview" 
+                width={400}
+                height={300}
                 className="mx-auto object-contain"
               />
             </div>

@@ -245,9 +245,11 @@ export default function HomeSettingsPage() {
               </div>
             ) : (
               <div className="w-full aspect-[16/9] relative mb-4 bg-gray-100 flex items-center justify-center">
-                <img 
+                <Image 
                   src={createImageUrl(currentImageUrl, { width: 800 })}
                   alt="Current Home Page Image"
+                  width={800}
+                  height={450}
                   className="max-h-full max-w-full object-contain"
                 />
               </div>

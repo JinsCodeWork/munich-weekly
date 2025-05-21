@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 interface RegisterFormProps {
@@ -16,7 +15,6 @@ interface RegisterFormProps {
  * Registration form component - Glassmorphism effect
  */
 export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProps) {
-  const router = useRouter();
   const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');

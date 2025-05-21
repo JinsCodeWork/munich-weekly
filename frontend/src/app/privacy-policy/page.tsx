@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
             1. Use of Cookies
           </h2>
           <p>
-            We use a single technical cookie to help enforce the rule of "one vote per person" in our weekly photo voting system. 
+            We use a single technical cookie to help enforce the rule of &quot;one vote per person&quot; in our weekly photo voting system. 
             This cookie is:
           </p>
           <ul>
@@ -102,7 +102,7 @@ export default function PrivacyPolicyPage() {
           </h2>
           <p>
             We are fully committed to compliance with the European General Data Protection Regulation (GDPR) 
-            and implement the "right to be forgotten" as follows:
+            and implement the &quot;right to be forgotten&quot; as follows:
           </p>
           
           <h3 className="text-xl font-heading font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">
@@ -130,7 +130,7 @@ export default function PrivacyPolicyPage() {
             <li>
               <strong>Voting History Removal</strong>
               <ul>
-                <li>All votes you've cast for other submissions are permanently deleted</li>
+                <li>All votes you&apos;ve cast for other submissions are permanently deleted</li>
               </ul>
             </li>
             <li>
@@ -157,8 +157,8 @@ export default function PrivacyPolicyPage() {
             How to Request Deletion
           </h3>
           <ul>
-            <li><strong>For Submission Deletion</strong>: Use the "Manage My Submissions" feature in your account dashboard</li>
-            <li><strong>For Account Deletion</strong>: Access "Account Settings" and select "Delete Account"</li>
+            <li><strong>For Submission Deletion</strong>: Use the &quot;Manage My Submissions&quot; feature in your account dashboard</li>
+            <li><strong>For Account Deletion</strong>: Access &quot;Account Settings&quot; and select &quot;Delete Account&quot;</li>
             <li><strong>For Manual Requests</strong>: Contact us directly at <a href="mailto:dongkai.jin@tum.de">dongkai.jin@tum.de</a></li>
           </ul>
           <p>All deletion operations are carried out as soon as technically feasible, typically within 72 hours.</p>

@@ -5,7 +5,7 @@
 import { fetchAPI } from "../http";
 
 interface VoteResponse {
-  vote: any;
+  vote: { id: number; submissionId: number; visitorId: string };
   voteCount: number;
 }
 
