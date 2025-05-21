@@ -1,44 +1,70 @@
 /**
- * HTTP请求工具模块
- * 提供基础的API请求函数和认证相关辅助函数
+ * HTTP request utility module
+ * Provides basic API request functions and authentication-related helper functions
  */
 
-// 获取认证请求头
+// Get authentication headers
 export const getAuthHeader = (): Record<string, string> => {
-  const token = localStorage.getItem("jwt");
-  if (token) {
-    console.log("Using auth token:", token.substring(0, 10) + "...");
-    return {
-      Authorization: `Bearer ${token}`
-    };
+  try {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      console.log("Using auth token:", token.substring(0, 10) + "...");
+      return {
+        Authorization: `Bearer ${token}`
+      };
+    }
+    console.warn("No JWT token found in localStorage");
+  } catch (error) {
+    console.error("Unable to access localStorage:", error);
+    // Possible private browsing mode or disabled cookies environment
   }
-  console.warn("No JWT token found in localStorage");
   return {};
 };
 
-// 自定义请求头类型，使用索引签名允许任何字符串键
+// Custom request headers type, using index signature to allow any string key
 interface RequestHeaders {
   "Content-Type": string;
   Authorization?: string;
   [key: string]: string | undefined;
 }
 
-// 基础API请求函数
+// API request timeout setting (15 seconds)
+const API_TIMEOUT = 15000;
+
+// Create fetch request with timeout
+const fetchWithTimeout = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const controller = new AbortController();
+  const { signal } = controller;
+  
+  // Set timeout
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  
+  try {
+    const response = await fetch(url, { ...options, signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
+// Base API request function
 export const fetchAPI = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  // 自动获取并添加认证头
+  // Automatically get and add auth headers
   const authHeader = getAuthHeader();
   
-  // 确保请求头正确合并
+  // Ensure request headers are correctly merged
   const headers: RequestHeaders = {
     "Content-Type": "application/json",
-    ...authHeader, // 添加认证头
+    ...authHeader, // Add auth headers
     ...(options.headers as Record<string, string> || {})
   };
 
-  // 对DELETE请求特殊处理，确保认证头被正确添加
+  // Special handling for DELETE requests, ensure auth headers are correctly added
   if (options.method === "DELETE") {
     console.log("Making DELETE request to:", url);
     console.log("Authorization header present:", !!headers.Authorization);
@@ -49,10 +75,10 @@ export const fetchAPI = async <T>(
       headers: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
     });
     
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       ...options,
       headers: headers as Record<string, string>,
-      credentials: 'include' // 包含cookies，重要！
+      credentials: 'include' // Include cookies, for anonymous voting mechanism
     });
 
     if (!response.ok) {
@@ -65,7 +91,7 @@ export const fetchAPI = async <T>(
         console.warn("API Error response was not valid JSON. Raw text:", responseText);
       }
       
-      // 特别记录401错误和DELETE请求的详细信息
+      // Specifically log 401 errors and DELETE request details
       if (response.status === 401) {
         console.error("Authentication Error (401):", {
           method: options.method || 'GET',
@@ -74,6 +100,16 @@ export const fetchAPI = async <T>(
           authHeader: headers.Authorization ? 'Present' : 'Missing',
           requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
         });
+        
+        // Check if token is expired, clear invalid token
+        if (url !== "/api/auth/login/email" && url !== "/api/auth/register") {
+          try {
+            localStorage.removeItem("jwt");
+            console.warn("Cleared potentially expired JWT token");
+          } catch (err) {
+            console.error("Unable to remove token from localStorage:", err);
+          }
+        }
       } else {
         console.error("API Error:", {
           status: response.status,
@@ -101,6 +137,10 @@ export const fetchAPI = async <T>(
     const data = JSON.parse(responseText);
     return data;
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      console.error(`API Request Timeout for ${url} after ${API_TIMEOUT}ms`);
+      throw new Error(`Request timeout: ${url}`);
+    }
     console.error(`API Request Failed for ${url}:`, error);
     throw error;
   }

@@ -1,17 +1,33 @@
 /**
- * API模块索引文件
- * 统一导出所有API功能，方便在组件中引用
+ * API module index file
+ * Exports all API functionality for easy import in components
  */
 
-// 导出基础HTTP工具
+// Export base HTTP utilities
 export * from "./http";
 
-// 导出按模块组织的API
+// Export APIs organized by module
 export * as authApi from "./auth";
 export * as usersApi from "./users";
 export * as issuesApi from "./issues";
 export * as submissionsApi from "./submissions";
 export * as votesApi from "./votes";
 
-// 导出常用类型
+// Export common types
 export type { default as ApiError } from "./types.ts";
+
+/**
+ * Check if browser storage is available (e.g., in private browsing mode)
+ */
+export const isStorageAvailable = (type: 'localStorage' | 'sessionStorage'): boolean => {
+  // Check browser storage availability
+  const storage = window[type];
+  try {
+    const testKey = `__storage_test__${new Date().getTime()}`;
+    storage.setItem(testKey, "test");
+    storage.removeItem(testKey);
+    return true;
+  } catch {
+    return false;
+  }
+};
