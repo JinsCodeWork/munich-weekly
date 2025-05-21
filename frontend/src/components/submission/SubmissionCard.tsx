@@ -116,14 +116,14 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
             {/* Vote count and VoteButton for voteView context */}
             {displayContext === 'voteView' ? (
               <div className={`${getSubmissionCardElementStyles('metaItem')} w-full flex justify-between items-center`}>
-                <span className="text-sm text-gray-700 font-medium">
+                <span className="text-sm text-gray-700 font-medium truncate max-w-[45%] whitespace-nowrap">
                   {submission.voteCount} votes
                 </span>
                 <VoteButton 
                   submissionId={submission.id} 
                   onVoteSuccess={onVoteSuccess} 
                   initialVoteCount={submission.voteCount}
-                  className="ml-2 sm:text-sm text-xs sm:py-2 py-1"
+                  className="ml-2 sm:text-sm text-xs sm:py-2 py-1 min-w-[80px] flex-shrink-0"
                 />
               </div>
             ) : (

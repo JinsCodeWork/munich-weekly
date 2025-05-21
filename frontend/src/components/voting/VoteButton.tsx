@@ -87,22 +87,22 @@ export function VoteButton({
     }
   };
 
-  let buttonContent = <><ThumbsUp size={16} className="mr-2" /> Vote</>;
+  let buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
   let buttonVariant: 'primary' | 'secondary' | 'ghost' = 'secondary';
   let isDisabled = isLoading || hasVoted === true;
 
   if (isLoading && hasVoted === null) { // Initial loading of status
-    buttonContent = <><Loader2 size={16} className="mr-2 animate-spin" /> Loading...</>;
+    buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Loading</>;
     buttonVariant = 'ghost';
   } else if (isLoading) { // Loading during vote submission
-    buttonContent = <><Loader2 size={16} className="mr-2 animate-spin" /> Voting...</>;
+    buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Voting</>;
     buttonVariant = 'secondary';
   } else if (hasVoted === true) {
-    buttonContent = <><CheckCircle size={16} className="mr-2 text-green-500" /> Voted</>;
+    buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
     buttonVariant = 'ghost';
     isDisabled = true;
   } else if (hasVoted === false) {
-    buttonContent = <><ThumbsUp size={16} className="mr-2" /> Vote</>;
+    buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
     buttonVariant = 'primary'; // Or 'primary' for more emphasis
   }
   // else hasVoted is null and not loading (e.g. initial state or error in checkStatus)
@@ -111,7 +111,7 @@ export function VoteButton({
     // Optionally, render error message near the button or rely on a toast system
     // For now, the button might just be enabled to retry unless it's an "already voted" error.
     if (error.includes("already voted")) {
-        buttonContent = <><CheckCircle size={16} className="mr-2 text-green-500" /> Voted</>;
+        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
         buttonVariant = 'ghost';
         isDisabled = true;
     } else {
@@ -125,7 +125,7 @@ export function VoteButton({
       disabled={isDisabled} 
       variant={buttonVariant} 
       size="md"
-      className={`flex items-center ${className || ''}`}
+      className={`flex items-center justify-center text-center whitespace-nowrap ${className || ''}`}
     >
       {buttonContent}
     </Button>
