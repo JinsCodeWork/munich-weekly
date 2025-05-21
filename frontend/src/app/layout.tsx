@@ -32,7 +32,13 @@ export const metadata: Metadata = {
   title: 'Munich Weekly',
   description: 'Photography submissions and voting platform.',
   icons: {
-    icon: { url: '/logo.svg', type: 'image/svg+xml' }
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ]
   },
 }
 

@@ -81,6 +81,7 @@ interface EmptyStateProps {
   icon?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  hideIcon?: boolean;
 }
 
 /**
@@ -90,19 +91,22 @@ export function EmptyState({
   message,
   icon,
   action,
-  className
+  className,
+  hideIcon
 }: EmptyStateProps) {
   return (
     <div className={`bg-gray-50 border border-gray-200 rounded-lg p-6 text-center ${className || ''}`}>
-      <div className="text-gray-400 mb-4">
-        {icon || (
-          <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <path d="M3 9h18"></path>
-            <path d="M9 21V9"></path>
-          </svg>
-        )}
-      </div>
+      {!hideIcon && (
+        <div className="text-gray-400 mb-4">
+          {icon || (
+            <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <path d="M3 9h18"></path>
+              <path d="M9 21V9"></path>
+            </svg>
+          )}
+        </div>
+      )}
       <h3 className="text-lg font-medium text-gray-900 mb-2">
         {message}
       </h3>
@@ -125,6 +129,7 @@ interface LoadingErrorStatesProps {
   emptyStateIcon?: React.ReactNode;
   emptyStateAction?: React.ReactNode;
   className?: string;
+  hideEmptyStateIcon?: boolean;
 }
 
 /**
@@ -139,7 +144,8 @@ export function LoadingErrorStates({
   emptyStateMessage = "No data available",
   emptyStateIcon,
   emptyStateAction,
-  className
+  className,
+  hideEmptyStateIcon
 }: LoadingErrorStatesProps) {
   if (isLoading) {
     return <LoadingState message={loadingMessage} className={className} />;
@@ -156,6 +162,7 @@ export function LoadingErrorStates({
         icon={emptyStateIcon} 
         action={emptyStateAction}
         className={className}
+        hideIcon={hideEmptyStateIcon}
       />
     );
   }

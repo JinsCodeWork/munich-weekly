@@ -118,22 +118,10 @@
 
 ## PasswordResetController
 
-- **POST** `/api/auth/forgot-password`
-  > Initiates the password reset process by sending a reset email to the user.
-  > For security, returns success regardless of whether the email exists.
-
-  > **Params**: `ForgotPasswordRequestDTO dto` (contains user email)
-  
-  > **Response**: `{"message": "If your email exists in our system, you will receive an email with a password reset link shortly"}`
-
 - **POST** `/api/auth/reset-password`
-  > Completes the password reset process by verifying the token and setting a new password.
 
-  > **Params**: `ResetPasswordRequestDTO dto` (contains token and new password)
-  
-  > **Response**: `{"message": "Password reset successful"}`
-  
-  > **Errors**: 
-  > - 400: Invalid or expired token
-  > - 400: Token has already been used
+  > **Params**: `ResetPasswordRequestDTO dto`
+- **POST** `/api/auth/forgot-password`
+
+  > **Params**: `ForgotPasswordRequestDTO dto`
 

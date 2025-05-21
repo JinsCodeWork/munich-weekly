@@ -29,120 +29,67 @@ This document serves as the entry point to the frontend development documentatio
 
 ## Project Structure
 
-The frontend project follows a feature-based and component-based architecture, with clear separation of concerns. Here's the actual project structure:
+The frontend project follows a feature-based and component-based architecture, with clear separation of concerns. Here's the overall project folder structure:
 
 ```
 frontend/
 ├── public/                 # Static assets
-│   ├── favicon.png         # Site favicon
-│   ├── logo.svg            # Brand logo
-│   ├── globe.svg           # UI icons
-│   ├── file.svg            # UI icons
-│   ├── next.svg            # Next.js logo
-│   ├── vercel.svg          # Vercel logo
-│   └── window.svg          # UI icons
+│   ├── config/             # Configuration files
+│   ├── images/             # Image assets
+│   │   └── home/           # Home page images
+│   └── uploads/            # User uploaded files
 ├── scripts/                # Utility scripts
-│   ├── convert-favicon.js  # Favicon conversion tool
-│   └── generate-favicon.js # Favicon generation script
 ├── src/
 │   ├── api/                # Modular API directory
 │   │   ├── auth/           # Authentication-related APIs
-│   │   │   └── index.ts    # Authentication API exports
 │   │   ├── issues/         # Issue-related APIs
-│   │   │   └── index.ts    # Issue API exports
 │   │   ├── submissions/    # Submission-related APIs
-│   │   │   └── index.ts    # Submission API exports
 │   │   ├── users/          # User-related APIs
-│   │   │   └── index.ts    # User API exports
-│   │   ├── votes/          # Voting-related APIs
-│   │   │   └── index.ts    # Voting API exports
-│   │   ├── http.ts         # Base HTTP request utilities
-│   │   ├── types.ts        # API-related type definitions
-│   │   └── index.ts        # Unified API exports
+│   │   └── votes/          # Voting-related APIs
 │   ├── app/                # Next.js App Router pages
 │   │   ├── account/        # User account section
-│   │   │   ├── layout.tsx  # Account layout with sidebar
-│   │   │   ├── page.tsx    # Main account page
-│   │   │   ├── settings/   # User settings
-│   │   │   ├── submissions/# User submissions management
-│   │   │   ├── manage-submissions/ # Admin submission management
-│   │   │   └── manage-issues/ # Admin issue management
+│   │   │   ├── home-settings/ # Home page settings
+│   │   │   ├── manage-issues/ # Issue management
+│   │   │   │   └── create/    # Create new issue
+│   │   │   ├── manage-submissions/ # Submission management
+│   │   │   ├── settings/     # User settings
+│   │   │   ├── submissions/  # User submissions
+│   │   │   └── users/        # User management
 │   │   ├── admin/          # Admin panel routes
-│   │   │   └── submissions/# Admin submission management
+│   │   │   └── submissions/ # Admin submission management
+│   │   ├── about/          # About page
+│   │   ├── api/            # API routes
+│   │   │   ├── admin/      # Admin API routes
+│   │   │   │   ├── config/ # Admin config API
+│   │   │   │   └── upload/ # Admin upload API
+│   │   │   └── config/     # Config API routes
 │   │   ├── content/        # Content pages
-│   │   ├── login/          # Login page
-│   │   │   └── page.tsx    # Login page component
+│   │   ├── forgot-password/# Password recovery
+│   │   ├── gallery/        # Gallery page
+│   │   ├── privacy-policy/ # Privacy policy page
 │   │   ├── register/       # Registration page
+│   │   ├── reset-password/ # Password reset page
+│   │   ├── submit/         # Submission page
 │   │   ├── test/           # Test pages
-│   │   │   └── page.tsx    # Test component
-│   │   ├── globals.css     # Global CSS
-│   │   ├── layout.tsx      # Root layout
-│   │   └── page.tsx        # Homepage
+│   │   └── vote/           # Voting page
 │   ├── components/         # UI components
 │   │   ├── admin/          # Admin components
 │   │   │   └── submissions/# Admin submission components
-│   │   │       ├── DebugTools.tsx     # Development debugging interface
-│   │   │       ├── IssueSelector.tsx  # Issue selection component
-│   │   │       ├── LoadingErrorStates.tsx # Loading/error handling
-│   │   │       └── SubmissionTable.tsx # Submission management table
 │   │   ├── auth/           # Authentication components
-│   │   │   ├── LoginForm.tsx   # Login form component
-│   │   │   └── RegisterForm.tsx # Registration form component
+│   │   ├── home/           # Home page components
 │   │   ├── navigation/     # Navigation components
-│   │   │   ├── MainNav.tsx     # Desktop navigation bar
-│   │   │   └── MobileNav.tsx   # Mobile navigation menu
 │   │   ├── submission/     # Submission components
-│   │   │   ├── ImageGrid.tsx   # Grid layout for images
-│   │   │   ├── ImageViewer.tsx # Image viewing modal
-│   │   │   └── SubmissionCard.tsx # Submission card component
 │   │   ├── ui/             # Core UI components
-│   │   │   ├── Button.tsx      # Button component
-│   │   │   ├── Container.tsx   # Container layout component
-│   │   │   ├── Link.tsx        # Link component
-│   │   │   ├── Logo.tsx        # Logo component
-│   │   │   ├── Modal.tsx       # Modal dialog component
-│   │   │   ├── Pagination.tsx  # Pagination component
-│   │   │   └── Thumbnail.tsx   # Image thumbnail component
-│   │   ├── Header.tsx      # Main header component
-│   │   └── MainHeader.tsx  # Alternative header component
+│   │   └── voting/         # Voting components
 │   ├── context/            # React Context providers
-│   │   └── AuthContext.tsx # Authentication context
 │   ├── hooks/              # Custom React hooks
-│   │   ├── useAuth.ts      # Authentication hook
-│   │   ├── useSubmissions.ts # Submissions data hook
-│   │   └── useDebugTools.ts # Development debugging tools
 │   ├── lib/                # Utility functions and constants
-│   │   ├── constants.ts    # Application constants
-│   │   └── utils.ts        # Utility helper functions
 │   ├── styles/             # Style management system
-│   │   ├── components/     # Component-specific styles
-│   │   │   ├── badge.ts    # Badge component styles
-│   │   │   ├── button.ts   # Button component styles
-│   │   │   ├── card.ts     # Card component styles
-│   │   │   ├── container.ts # Container component styles 
-│   │   │   ├── loadingError.ts # Loading/error styles
-│   │   │   ├── modal.ts    # Modal component styles
-│   │   │   ├── navigation/ # Navigation styles
-│   │   │   │   ├── header.ts # Header styles
-│   │   │   │   └── navBar.ts # Navigation bar styles
-│   │   │   ├── table.ts    # Table component styles
-│   │   │   └── thumbnail.ts # Thumbnail component styles
-│   │   ├── index.ts        # Style function exports
-│   │   ├── theme.ts        # Theme configuration
-│   │   └── variants.ts     # Style variants definition
-│   ├── theme/              # Theme-related directory (reserved)
+│   │   └── components/     # Component-specific styles
+│   │       └── navigation/ # Navigation-specific styles
+│   ├── theme/              # Theme-related directory
 │   ├── types/              # TypeScript type definitions
-│   │   └── submission.ts   # Submission-related types
 │   └── utils/              # Additional utilities
-│       └── mockData.ts     # Mock data for development
-├── components.json         # Components configuration
-├── eslint.config.mjs       # ESLint configuration
-├── next.config.js          # Next.js configuration
-├── next-env.d.ts           # Next.js TypeScript declarations
-├── package.json            # Project dependencies
-├── postcss.config.mjs      # PostCSS configuration
-├── tailwind.config.ts      # Tailwind CSS configuration
-└── tsconfig.json           # TypeScript configuration
 ```
 
 ## Core Features
@@ -162,6 +109,7 @@ frontend/
 - Glassmorphism design elements
 - Component-based architecture
 - Image optimization techniques
+- **Footer Component**: Persistent footer with contact information and navigation links (visible at page bottom)
 
 ### 3. Home Page Experience
 
@@ -170,6 +118,7 @@ frontend/
 - **Content Management**: Admin-configurable hero image, description text, and caption through dedicated interface
 - **Animation Effects**: Subtle scaling and fade effects create an engaging, modern user experience
 - **Contextual Information**: Page introduction section provides key information about the platform's purpose
+- **Footer Display**: Contact information and essential links displayed at the bottom of the page
 
 ### 4. Content Management
 

@@ -3,6 +3,7 @@
 // app/page.tsx
 import { Container } from '@/components/ui/Container';
 import { HeroImage } from '@/components/home/HeroImage';
+import { AnimatedFooter } from '@/components/home/AnimatedFooter';
 import { homePageConfig } from '@/lib/config';
 import { useState, useEffect } from 'react';
 
@@ -62,6 +63,9 @@ export default function Home() {
               </p>
             </div>
           </Container>
+
+          {/* Animated footer - only shown on home page */}
+          <AnimatedFooter />
         </>
       )}
     </main>

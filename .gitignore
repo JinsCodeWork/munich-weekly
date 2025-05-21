@@ -4,9 +4,18 @@ frontend/.next/
 # Ignore Node.js dependencies
 node_modules/
 
-# Ignore all files in the uploads directory
+# PostgreSQL 数据库文件（本地挂载目录）
+pgdata/
+
+# 上传文件（如果上传路径在项目里）
 uploads/
 
+# 本地备份文件（如果你用 pg_dump）
+backups/
+*.sql
+
+# 环境变量文件
 .env
+.env.*
 
 

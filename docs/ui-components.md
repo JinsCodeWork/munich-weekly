@@ -146,6 +146,7 @@ The application employs a systematic approach to styling components:
 
 - **Container**: A responsive container with consistent padding and maximum width
 - **Modal**: A flexible modal dialog with glassmorphism styling and backdrop blur
+- **AnimatedFooter**: A page footer component displaying contact information and navigation links at the bottom of the page
 
 ### Navigation Components
 
@@ -251,3 +252,23 @@ All components are designed with a mobile-first approach and respond to standard
 - Additional component variants
 - Animation system expansion
 - Color scheme customization
+
+## Static Content Pages
+
+### About Page
+
+The About page provides comprehensive information about the Munich Weekly platform:
+
+- **Location**: `/app/about/page.tsx`
+- **Key Sections**:
+  - Project Overview: Description of the platform's purpose and operational workflow
+  - Independent Development: Technical development information
+  - Selection Process: Explanation of how photos are selected for publication
+  - Privacy Policy: Link to detailed privacy policy
+  - Ongoing Development: Information about platform's development status
+- **Features**:
+  - Responsive layout with clear section hierarchy
+  - Visual elements including logo and branded styling
+  - WeChat Official Account information (`【慕尼黑学联CSSA】`) for cross-platform availability
+  - External links to GitHub repository and privacy policy
+  - Consistent typography with the rest of the platform

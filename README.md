@@ -47,7 +47,6 @@ munich-weekly/
 
 ### General Documentation
 - 🧭 [Deployment Guide](./docs/deployment.md)
-- 📊 [Server Changelog](./docs/server-changelog.md)
 - 📦 [API Reference](./docs/api.md)
 - 🗃️ [Database Design](./docs/database.md)
 - 💾 [Storage System](./docs/storage.md)

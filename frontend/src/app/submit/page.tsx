@@ -204,7 +204,10 @@ export default function SubmitPage() {
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
-                <i className="fa-solid fa-check-circle text-green-400"></i>
+                <svg className="w-5 h-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
               </div>
               <div className="ml-3">
                 <p className="font-sans text-sm font-medium">
@@ -226,7 +229,7 @@ export default function SubmitPage() {
           onRetry={fetchIssues}
           emptyState={activeIssues.length === 0 && !isLoading && !issuesError}
           emptyStateMessage="There are no active issues accepting submissions at this time. Please check back later."
-          emptyStateIcon="fa-solid fa-calendar-xmark"
+          hideEmptyStateIcon={true}
         />
         
         {/* Main submission flow */}
