@@ -115,16 +115,20 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
             
             {/* Vote count and VoteButton for voteView context */}
             {displayContext === 'voteView' ? (
-              <div className={`${getSubmissionCardElementStyles('metaItem')} w-full flex justify-between items-center`}>
-                <span className="text-sm text-gray-700 font-medium truncate max-w-[45%] whitespace-nowrap">
-                  {submission.voteCount} votes
-                </span>
-                <VoteButton 
-                  submissionId={submission.id} 
-                  onVoteSuccess={onVoteSuccess} 
-                  initialVoteCount={submission.voteCount}
-                  className="ml-2 sm:text-sm text-xs sm:py-2 py-1 min-w-[80px] flex-shrink-0"
-                />
+              <div className={`${getSubmissionCardElementStyles('metaItem')} w-full flex items-center`}>
+                <div className="flex-grow mr-2">
+                  <span className="text-sm text-gray-700 font-medium whitespace-nowrap">
+                    {submission.voteCount} votes
+                  </span>
+                </div>
+                <div className="flex-shrink-0">
+                  <VoteButton 
+                    submissionId={submission.id} 
+                    onVoteSuccess={onVoteSuccess} 
+                    initialVoteCount={submission.voteCount}
+                    className="sm:text-sm text-xs sm:py-2 py-1 min-w-[70px]"
+                  />
+                </div>
               </div>
             ) : (
               // Default display for vote count when not in voteView - only shown on non-mobile

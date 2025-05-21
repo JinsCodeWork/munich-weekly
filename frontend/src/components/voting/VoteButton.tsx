@@ -87,35 +87,51 @@ export function VoteButton({
     }
   };
 
-  let buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
+  // 在移动端使用更简短的文本
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  let buttonContent;
+  if (isMobile) {
+    // 移动端上使用更紧凑的文本
+    if (isLoading && hasVoted === null) {
+      buttonContent = <Loader2 size={16} className="animate-spin" />;
+    } else if (isLoading) {
+      buttonContent = <Loader2 size={16} className="animate-spin" />;
+    } else if (hasVoted === true) {
+      buttonContent = <CheckCircle size={16} className="text-green-500" />;
+    } else {
+      buttonContent = <ThumbsUp size={16} />;
+    }
+  } else {
+    // 桌面端使用正常文本
+    if (isLoading && hasVoted === null) {
+      buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Loading</>;
+    } else if (isLoading) {
+      buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Voting</>;
+    } else if (hasVoted === true) {
+      buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+    } else {
+      buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
+    }
+  }
+
   let buttonVariant: 'primary' | 'secondary' | 'ghost' = 'secondary';
   let isDisabled = isLoading || hasVoted === true;
 
-  if (isLoading && hasVoted === null) { // Initial loading of status
-    buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Loading</>;
-    buttonVariant = 'ghost';
-  } else if (isLoading) { // Loading during vote submission
-    buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Voting</>;
-    buttonVariant = 'secondary';
-  } else if (hasVoted === true) {
-    buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+  if (hasVoted === true) {
     buttonVariant = 'ghost';
     isDisabled = true;
   } else if (hasVoted === false) {
-    buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
-    buttonVariant = 'primary'; // Or 'primary' for more emphasis
+    buttonVariant = 'primary';
   }
-  // else hasVoted is null and not loading (e.g. initial state or error in checkStatus)
 
   if (error && !isLoading) {
-    // Optionally, render error message near the button or rely on a toast system
-    // For now, the button might just be enabled to retry unless it's an "already voted" error.
     if (error.includes("already voted")) {
-        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
-        buttonVariant = 'ghost';
-        isDisabled = true;
-    } else {
-        // Show error or allow retry
+      buttonContent = isMobile 
+        ? <CheckCircle size={16} className="text-green-500" />
+        : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+      buttonVariant = 'ghost';
+      isDisabled = true;
     }
   }
 
@@ -125,7 +141,7 @@ export function VoteButton({
       disabled={isDisabled} 
       variant={buttonVariant} 
       size="md"
-      className={`flex items-center justify-center text-center whitespace-nowrap ${className || ''}`}
+      className={`flex items-center justify-center text-center ${className || ''}`}
     >
       {buttonContent}
     </Button>
