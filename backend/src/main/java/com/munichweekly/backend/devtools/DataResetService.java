@@ -16,6 +16,7 @@ public class DataResetService {
     private final IssueRepository issueRepository;
     private final UserAuthProviderRepository authProviderRepository;
     private final UserRepository userRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
 
     @PersistenceContext
@@ -25,12 +26,14 @@ public class DataResetService {
                             SubmissionRepository submissionRepository,
                             IssueRepository issueRepository,
                             UserAuthProviderRepository authProviderRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            PasswordResetTokenRepository passwordResetTokenRepository) {
         this.voteRepository = voteRepository;
         this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
         this.authProviderRepository = authProviderRepository;
         this.userRepository = userRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @Transactional
@@ -39,13 +42,15 @@ public class DataResetService {
         voteRepository.deleteAll();
         submissionRepository.deleteAll();
         issueRepository.deleteAll();
-        authProviderRepository.deleteAll(); // 如果你还没用到，这行无害
+        passwordResetTokenRepository.deleteAll(); // 先删除密码重置令牌
+        authProviderRepository.deleteAll();
         userRepository.deleteAll();
 
         entityManager.createNativeQuery("ALTER SEQUENCE users_id_seq RESTART WITH 1").executeUpdate();
         entityManager.createNativeQuery("ALTER SEQUENCE issues_id_seq RESTART WITH 1").executeUpdate();
         entityManager.createNativeQuery("ALTER SEQUENCE submissions_id_seq RESTART WITH 1").executeUpdate();
         entityManager.createNativeQuery("ALTER SEQUENCE votes_id_seq RESTART WITH 1").executeUpdate();
+        entityManager.createNativeQuery("ALTER SEQUENCE password_reset_tokens_id_seq RESTART WITH 1").executeUpdate();
 
         System.out.println("✅ 数据清空完成！");
     }

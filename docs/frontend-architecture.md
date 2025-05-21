@@ -125,12 +125,15 @@ A complete JWT-based authentication system is implemented with:
 
 - **User Registration**: Email-based registration with password validation
 - **User Login**: Secure login with JWT token storage
+- **Password Reset**: Complete password recovery flow with email verification via Mailjet
 - **Session Management**: Persistent sessions using localStorage
 - **Logout Functionality**: Complete session termination
 
 Authentication components:
-- `LoginForm`: A modal-based login form with email/password fields
+- `LoginForm`: A modal-based login form with email/password fields and "Forgot password?" link
 - `RegisterForm`: A modal-based registration form with validation
+- `ForgotPasswordPage`: Standalone page for initiating password reset
+- `ResetPasswordPage`: Token-secured page for setting a new password
 - `AuthContext`: React Context for managing authentication state and user data
 - `useAuth`: Custom hook for accessing authentication functionality
 

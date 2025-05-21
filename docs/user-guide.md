@@ -41,6 +41,22 @@ We recommend:
 - Enabling any additional security features as they become available
 - Keeping your login information private
 
+### Password Recovery
+
+If you forget your password:
+
+1. Click "Log In" in the top navigation bar
+2. Select "Forgot password?" beneath the login form
+3. Enter the email address associated with your account
+4. Check your email inbox for a password reset link
+5. Follow the link to set a new password
+6. Use your new password to log in
+
+For security reasons:
+- Password reset links expire after 30 minutes
+- Each link can only be used once
+- You must create a password that's at least 6 characters long
+
 ---
 
 ## Photo Submissions

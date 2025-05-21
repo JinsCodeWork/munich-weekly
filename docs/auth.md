@@ -137,3 +137,46 @@ To enable anonymous access to the voting endpoints, the following Spring Securit
 .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()
 ```
 This ensures that requests to these specific endpoints do not require JWT authentication, allowing anonymous users (identified by their `visitorId` cookie) to participate in voting. All other protected endpoints still require JWT authentication as described earlier.
+
+## 10. Password Reset Flow
+
+The password reset system enables users to regain access to their accounts when they forget their passwords. This feature utilizes Mailjet email service for delivering secure password reset links.
+
+### 10.1. Overview
+
+*   Users can request a password reset from the login screen by clicking "Forgot password?"
+*   A secure, time-limited token is generated and sent via email
+*   Users follow the emailed link to set a new password
+*   For security, tokens expire after 30 minutes and can only be used once
+
+### 10.2. Implementation Details
+
+*   **Frontend Flow**:
+    *   The `LoginForm` component provides a "Forgot password?" link
+    *   The `/forgot-password` page allows users to enter their email address
+    *   The `/reset-password` page (with token parameter) enables setting a new password
+
+*   **Backend Components**:
+    *   `PasswordResetController` handles API endpoints:
+        *   `POST /api/auth/forgot-password` - Initiates reset process
+        *   `POST /api/auth/reset-password` - Completes password change
+    *   `PasswordResetToken` model stores tokens with security controls
+    *   `MailjetEmailService` sends password reset emails using Mailjet API
+
+### 10.3. Token Security
+
+*   Tokens are cryptographically secure random strings
+*   The system tracks:
+    *   Token creation time
+    *   Token usage status
+    *   User association
+*   Tokens expire after 30 minutes (configurable parameter)
+*   One-time use: once used, a token cannot be reused
+
+### 10.4. Email Delivery
+
+*   Password reset emails are sent via **Mailjet**, a reliable transactional email service
+*   Email templates are responsive and work across all major email clients
+*   Both HTML and plaintext versions are provided for maximum compatibility
+
+This secure, user-friendly flow follows industry best practices for account recovery while protecting user security and privacy.

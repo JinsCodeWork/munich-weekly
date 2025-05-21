@@ -153,6 +153,8 @@ frontend/
 - User registration and login
 - Session persistence
 - Permission control
+- Password reset flow with email verification
+- Integration with third-party authentication providers
 
 ### 2. User Interface
 

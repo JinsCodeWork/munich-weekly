@@ -28,6 +28,8 @@ services:
       - CLOUDFLARE_R2_PUBLIC_URL=${CLOUDFLARE_R2_PUBLIC_URL}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
       - UPLOADS_DIR=/uploads
+      - MAILJET_API_KEY=${MAILJET_API_KEY}
+      - MAILJET_API_SECRET=${MAILJET_API_SECRET}
     volumes:
       - ./uploads:/uploads
       - ../docs:/app/docs

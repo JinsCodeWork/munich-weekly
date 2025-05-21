@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Modal } from "@/components/ui/Modal"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
+import Link from "next/link"
 
 interface LoginFormProps {
   isOpen: boolean
@@ -145,13 +146,13 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
             />
             Remember me
           </label>
-          <button
-            type="button"
+          <Link
+            href="/forgot-password"
             className="font-sans text-white text-lg cursor-pointer hover:underline"
-            disabled={isSubmitting || success}
+            onClick={() => onClose()}
           >
             Forgot password?
-          </button>
+          </Link>
         </div>
 
         {/* Error message */}

@@ -5,10 +5,12 @@ import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.UserAuthProvider;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.model.Vote;
+import com.munichweekly.backend.model.PasswordResetToken;
 import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.repository.UserAuthProviderRepository;
 import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.repository.VoteRepository;
+import com.munichweekly.backend.repository.PasswordResetTokenRepository;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.stereotype.Service;
@@ -35,9 +37,11 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     public UserService(UserRepository userRepository,
-                       UserAuthProviderRepository authProviderRepository, SubmissionRepository submissionRepository, VoteRepository voteRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, StorageService storageService) {
+                       UserAuthProviderRepository authProviderRepository, SubmissionRepository submissionRepository, VoteRepository voteRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, StorageService storageService, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.authProviderRepository = authProviderRepository;
         this.submissionRepository = submissionRepository;
@@ -45,6 +49,8 @@ public class UserService {
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.storageService = storageService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
     }
 
     /**
@@ -297,5 +303,70 @@ public class UserService {
         // Finally delete the user
         userRepository.delete(user);
         logger.info("User with ID: " + userId + " has been deleted");
+    }
+
+    /**
+     * Send password reset email
+     * Does not indicate if the email exists to prevent information leakage
+     * 
+     * @param dto DTO containing user email
+     */
+    public void requestPasswordReset(ForgotPasswordRequestDTO dto) {
+        // Check if user exists
+        Optional<User> userOpt = userRepository.findByEmail(dto.getEmail());
+        
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            
+            // Remove unused tokens for this user (if any)
+            passwordResetTokenRepository.deleteByUserAndUsedAtIsNull(user);
+            
+            // Create new token
+            PasswordResetToken token = new PasswordResetToken(user);
+            passwordResetTokenRepository.save(token);
+            
+            // Send email
+            emailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
+        }
+        
+        // Return success regardless of whether the email exists, to prevent leaking user information
+        logger.info("Password reset request for email: " + dto.getEmail());
+    }
+
+    /**
+     * 重置密码
+     * 
+     * @param dto 包含令牌和新密码的DTO
+     * @throws IllegalArgumentException 如果令牌无效或过期
+     */
+    public void resetPassword(ResetPasswordRequestDTO dto) {
+        // 查找令牌
+        PasswordResetToken token = passwordResetTokenRepository.findByToken(dto.getToken())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+        
+        // 验证令牌有效性
+        if (token.isExpired()) {
+            throw new IllegalArgumentException("Token has expired");
+        }
+        
+        if (token.isUsed()) {
+            throw new IllegalArgumentException("Token has already been used");
+        }
+        
+        // 获取用户
+        User user = token.getUser();
+        
+        // 更新密码
+        String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
+        user.setPassword(hashedPassword);
+        
+        // 标记令牌为已使用
+        token.markAsUsed();
+        
+        // 保存更改
+        userRepository.save(user);
+        passwordResetTokenRepository.save(token);
+        
+        logger.info("User password reset successful: " + user.getEmail());
     }
 }

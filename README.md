@@ -10,7 +10,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 - 🧾 Submissions go through review and approval
 - 🗳️ Authenticated users can vote (named voting)
 - ⚙️ Admin tools for managing users, reviewing entries, exporting data
-- 🔐 JWT-based authentication with role-based access control
+- 🔐 JWT-based authentication with role-based access control and password recovery
 - 🖼️ Advanced image optimization and on-demand processing
 
 ---
