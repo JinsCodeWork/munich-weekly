@@ -23,6 +23,50 @@ function getAuthToken(request: NextRequest): string | null {
   return null;
 }
 
+// Get configuration API
+export async function GET(request: NextRequest) {
+  try {
+    // Check authentication
+    const token = getAuthToken(request);
+    if (!token) {
+      console.warn('No authentication token found for config GET');
+      return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
+    }
+    
+    // Check admin role
+    const isAdmin = request.headers.get('X-Admin-Role') === 'true';
+    if (!isAdmin) {
+      console.warn('Request missing admin role marker for config GET');
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+    
+    console.log('Processing admin config GET request');
+    
+    // Read existing configuration
+    const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
+    
+    let config = {};
+    try {
+      const fileContent = await fs.readFile(configPath, 'utf-8');
+      config = JSON.parse(fileContent);
+    } catch {
+      console.log('Configuration file not found or invalid, returning empty config');
+    }
+    
+    return NextResponse.json({
+      success: true,
+      config
+    });
+    
+  } catch (error) {
+    console.error('Configuration GET error:', error);
+    return NextResponse.json(
+      { error: `Failed to retrieve configuration: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    );
+  }
+}
+
 // Configuration update API
 export async function POST(request: NextRequest) {
   try {

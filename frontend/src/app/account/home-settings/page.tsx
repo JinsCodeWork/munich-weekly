@@ -61,8 +61,46 @@ export default function HomeSettingsPage() {
     const loadConfig = async () => {
       try {
         // Use auth header from our utility
-        const headers = getAuthHeader();
+        const headers = {
+          ...getAuthHeader(),
+          'X-Admin-Role': 'true' // Add special admin marker
+        };
         
+        console.log('Loading config with headers:', headers);
+        
+        // Try fetching from admin endpoint first
+        try {
+          const response = await fetch('/api/admin/config', {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.config?.heroImage) {
+              const { heroImage } = data.config;
+              
+              // Update form state
+              setMainDescription(heroImage.description || homePageConfig.heroImage.description);
+              setImageCaption(heroImage.imageCaption || homePageConfig.heroImage.imageCaption || '');
+              
+              // Update image URL
+              if (heroImage.imageUrl) {
+                setCurrentImageUrl(heroImage.imageUrl);
+              }
+              
+              setIsLoading(false);
+              return;
+            }
+          } else {
+            console.warn('Admin config fetch failed, falling back to public config');
+          }
+        } catch (adminError) {
+          console.error('Error fetching admin config:', adminError);
+        }
+        
+        // Fall back to public config endpoint
         const response = await fetch('/api/config', {
           headers,
           credentials: 'include'
@@ -82,6 +120,10 @@ export default function HomeSettingsPage() {
               setCurrentImageUrl(heroImage.imageUrl);
             }
           }
+        } else {
+          // If both requests fail, use default config
+          console.warn('Both config fetches failed, using default config');
+          setMessage({ type: 'warning', content: 'Could not load configuration, using default settings' });
         }
       } catch (error) {
         console.error('Failed to load config:', error);
