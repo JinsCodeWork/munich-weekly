@@ -197,12 +197,8 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   // 静态图片特殊处理 - 不应用CDN转换和参数
   if (url.startsWith('/images/')) {
     console.log('为静态图片创建URL:', url);
-    // 仅添加时间戳参数以避免缓存问题，不添加其他转换参数
-    if (url.includes('?')) {
-      return url; // 已经有参数了，保持原样
-    } else {
-      return `${url}?t=${Date.now()}`; // 仅添加时间戳
-    }
+    // 不再添加时间戳，允许浏览器正常缓存静态图片
+    return url;
   }
 
   // 首先通过getImageUrl获取适合环境的基础URL

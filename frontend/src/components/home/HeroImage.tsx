@@ -26,13 +26,11 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       // 判断是本地静态图片还是上传图片
       const isLocalStaticImage = imageUrl.startsWith('/images/');
       
-      // 添加随机时间戳防止缓存
+      // 处理图片URL，使用正确的缓存策略
       let url;
       if (isLocalStaticImage) {
-        // 本地静态图片简单处理
-        url = imageUrl.includes('?') 
-          ? imageUrl 
-          : `${imageUrl}?t=${Date.now()}`;
+        // 本地静态图片不添加时间戳，允许浏览器缓存
+        url = imageUrl;
       } else {
         // 上传图片使用createImageUrl处理
         url = createImageUrl(imageUrl, { quality: 90 });

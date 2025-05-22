@@ -23,10 +23,16 @@ export async function GET(request: NextRequest) {
       console.log('未找到配置文件，使用默认配置');
     }
     
-    return NextResponse.json({
+    // 创建响应对象并添加缓存控制响应头
+    const response = NextResponse.json({
       success: true,
       config
     });
+    
+    // 设置缓存头，允许浏览器缓存响应24小时
+    response.headers.set('Cache-Control', 'public, max-age=86400');
+    
+    return response;
   } catch (error) {
     console.error('获取配置失败:', error);
     return NextResponse.json(

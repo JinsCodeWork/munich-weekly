@@ -16,8 +16,8 @@ export default function Home() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        // Add random query param to prevent cache
-        const response = await fetch(`/api/config?t=${new Date().getTime()}`);
+        // 不再添加随机时间戳，允许浏览器缓存请求
+        const response = await fetch('/api/config');
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.config?.heroImage) {
