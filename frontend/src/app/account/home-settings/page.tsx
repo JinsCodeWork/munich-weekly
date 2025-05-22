@@ -75,7 +75,7 @@ Auth Status: ${user ? `Logged in as ${user.role}` : 'Not logged in'}
 Token exists: ${token ? 'Yes' : 'No'}
 Token preview: ${token ? `${token.substring(0, 15)}...` : 'None'}
 Environment: ${process.env.NODE_ENV}
-Cookie has jwt: ${document.cookie.includes('jwt') ? 'Yes' : 'No'}
+Using fetchAPI: Yes
       `;
       setDebugInfo(debugText);
       setShowDebug(true);
@@ -86,12 +86,11 @@ Cookie has jwt: ${document.cookie.includes('jwt') ? 'Yes' : 'No'}
   
   // Add a retry button for manual loading
   const retryLoadConfig = () => {
-    // Clear any stale tokens that might be causing issues
     try {
       const token = localStorage.getItem("jwt");
       console.log("Current token before retry:", token ? token.substring(0, 10) + "..." : "none");
       
-      // Do not clear token - just retry with existing credentials
+      // Retry loading using hook's loadConfig method
       setMessage({ type: 'info', content: 'Retrying configuration load...' });
       loadConfig();
     } catch (err) {

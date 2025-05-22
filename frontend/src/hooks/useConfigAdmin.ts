@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { fetchAPI } from '@/api/http';
 import { homePageConfig } from '@/lib/config';
 
 // Homepage configuration type
@@ -40,122 +41,76 @@ export function useConfigAdmin() {
     setError(null);
 
     try {
-      // Debug token state
-      const token = localStorage.getItem("jwt");
-      console.log("Token state before request:", {
-        exists: !!token,
-        value: token ? token.substring(0, 10) + "..." : "none",
-        cookieExists: document.cookie.includes("jwt")
-      });
-
-      // Prepare headers with token from localStorage
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      };
+      console.log('Loading admin configuration using fetchAPI');
       
-      console.log('Loading config with headers:', { 
-        ...headers, 
-        Authorization: headers.Authorization ? "Bearer [REDACTED]" : "none" 
-      });
+      // Use fetchAPI which automatically handles auth headers from localStorage
+      const response = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/admin/config');
       
-      // Direct fetch call to admin config endpoint
-      const response = await fetch('/api/admin/config', {
-        method: 'GET',
-        headers,
-        credentials: 'include' // Include cookies for additional auth
-      });
-      
-      console.log('Config API response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Config API response data:', data);
-        
-        if (data.success && data.config?.heroImage) {
-          setConfig(data.config);
-          console.log('Successfully loaded config');
-        } else {
-          console.warn('Invalid config data format, using defaults');
-          setConfig({
-            heroImage: homePageConfig.heroImage
-          });
-        }
+      if (response.success && response.config) {
+        setConfig(response.config);
+        console.log('Successfully loaded config');
       } else {
-        // Try fallback to public config on auth failure
-        console.warn('Admin config fetch failed, falling back to public config');
-        const publicResponse = await fetch('/api/config', {
-          credentials: 'include'
+        console.warn('Invalid config data format, using defaults');
+        setConfig({
+          heroImage: homePageConfig.heroImage
         });
-        
-        if (publicResponse.ok) {
-          const publicData = await publicResponse.json();
-          if (publicData.success && publicData.config?.heroImage) {
-            setConfig(publicData.config);
-            console.log('Successfully loaded public config');
-          } else {
-            throw new Error('Invalid data from public config API');
-          }
-        } else {
-          throw new Error(`Admin request failed with status ${response.status}, public fallback failed with status ${publicResponse.status}`);
-        }
       }
     } catch (err) {
       console.error('Failed to load config:', err);
-      setError('Failed to load configuration, using default settings');
-      // Use default config when error occurs
-      setConfig({
-        heroImage: homePageConfig.heroImage
-      });
+      
+      // Try fallback to public config
+      try {
+        console.log('Attempting to load public config as fallback');
+        const publicResponse = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/config');
+        
+        if (publicResponse.success && publicResponse.config) {
+          setConfig(publicResponse.config);
+          console.log('Successfully loaded public config');
+        } else {
+          throw new Error('Invalid data from public config API');
+        }
+      } catch (publicErr) {
+        console.error('Public config fallback also failed:', publicErr);
+        setError('Failed to load configuration, using default settings');
+        
+        // Use default config when error occurs
+        setConfig({
+          heroImage: homePageConfig.heroImage
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Upload image
+  // Upload image using the admin upload API
   const uploadImage = async (file: File): Promise<string> => {
     setIsUploading(true);
     setError(null);
     
     try {
-      // Debug token state
-      const token = localStorage.getItem("jwt");
-      console.log("Token state before upload:", {
-        exists: !!token,
-        value: token ? token.substring(0, 10) + "..." : "none"
-      });
-      
       // Create FormData
       const formData = new FormData();
       formData.append('file', file);
       formData.append('path', 'images/home');
       formData.append('filename', 'hero.jpg');
-      
-      // Also add token to form data as fallback
-      if (token) {
-        formData.append('token', token);
-      }
 
-      // Prepare headers with token - ensure it's always a valid value for TypeScript
-      const headers: Record<string, string> = {}; 
+      // Use fetch to directly upload file (fetchAPI doesn't handle FormData well)
+      const token = localStorage.getItem('jwt');
+      const headers: HeadersInit = {};
       if (token) {
-        headers.Authorization = `Bearer ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
       
-      console.log('Upload headers:', { 
-        Authorization: headers.Authorization ? "Bearer [REDACTED]" : "none" 
-      });
-
-      // Direct call to admin upload endpoint
+      console.log('Uploading image to admin upload API');
+      
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
-        headers,
         body: formData,
-        credentials: 'include' // Include cookies for auth
+        headers,
+        credentials: 'include'
       });
 
-      console.log('Upload response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Upload failed:', response.status, errorText);
@@ -163,11 +118,12 @@ export function useConfigAdmin() {
       }
 
       const data = await response.json() as UploadResponse;
-      console.log('Upload response data:', data);
       
       if (!data.success || !data.url) {
         throw new Error(data.error || 'Upload returned invalid data');
       }
+      
+      console.log('Image upload successful:', data.url);
       
       // Add timestamp to prevent caching
       return data.url.includes('?') 
@@ -190,48 +146,20 @@ export function useConfigAdmin() {
     setSuccess(null);
     
     try {
-      // Debug token state
-      const token = localStorage.getItem("jwt");
-      console.log("Token state before saving config:", {
-        exists: !!token,
-        value: token ? token.substring(0, 10) + "..." : "none"
-      });
+      console.log('Saving admin configuration using fetchAPI');
       
-      // Prepare headers with token
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      };
-      
-      console.log('Config update headers:', { 
-        ...headers, 
-        Authorization: headers.Authorization ? "Bearer [REDACTED]" : "none" 
-      });
-      
-      // Direct call to admin config endpoint
-      const response = await fetch('/api/admin/config', {
+      // Use fetchAPI which automatically adds auth headers from localStorage
+      const response = await fetchAPI<{success: boolean, message: string}>('/api/admin/config', {
         method: 'POST',
-        headers,
-        body: JSON.stringify(configData),
-        credentials: 'include' // Include cookies for auth
+        body: JSON.stringify(configData)
       });
       
-      console.log('Config update response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Config update failed:', response.status, errorText);
-        throw new Error(`Failed to update config: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Config update response data:', data);
-      
-      if (data.success) {
+      if (response.success) {
         setConfig(configData);
-        setSuccess('Settings updated successfully');
+        setSuccess(response.message || 'Settings updated successfully');
+        console.log('Config successfully updated');
       } else {
-        throw new Error(data.error || 'Configuration update returned invalid data');
+        throw new Error('Configuration update returned invalid data');
       }
     } catch (err) {
       console.error('Failed to save config:', err);
