@@ -15,18 +15,18 @@ function getAuthToken(request: NextRequest): string | null {
   // Try to get token from cookies
   const authCookie = request.cookies.get('jwt')?.value;
   if (authCookie) {
+    console.log('Found JWT token in cookies');
     return authCookie;
   }
   
   // If not in cookies, try authorization header
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
+    console.log('Found JWT token in Authorization header');
     return authHeader.substring(7);
   }
   
-  // Try local storage in browser (via authorization header set by client)
-  // This is already covered by the Authorization header check above
-  
+  console.log('No JWT token found in standard locations');
   return null;
 }
 
@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
     const uploadPath = formData.get('path') as string;
     const fileName = formData.get('filename') as string;
     
+    // Also check for token in form data (as a fallback)
+    const tokenFromForm = formData.get('token') as string;
+    
     if (!file || !uploadPath) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
@@ -47,13 +50,20 @@ export async function POST(request: NextRequest) {
     if (isProduction) {
       console.log('Production environment: Forwarding upload request to backend API');
       
-      // Get authentication token
-      const token = getAuthToken(request);
+      // Get authentication token with fallback to form data
+      let token = getAuthToken(request);
+      
+      // If no token found in standard places, check form data
+      if (!token && tokenFromForm) {
+        console.log('Using token from form data');
+        token = tokenFromForm;
+      }
       
       if (!token) {
-        console.warn('No authentication token found in cookies or headers');
+        console.warn('No authentication token found in cookies, headers, or form data');
         // List all cookies for debugging
         console.log('Available cookies:', [...request.cookies.getAll()].map(c => c.name));
+        console.log('Available headers:', [...request.headers.entries()].map(([key, value]) => `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
       } else {
         console.log('Authentication token found, length:', token.length);
       }

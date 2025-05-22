@@ -7,12 +7,13 @@ import { Container } from '@/components/ui/Container';
 import { homePageConfig } from '@/lib/config';
 import Image from 'next/image';
 import { createImageUrl } from '@/lib/utils';
+import { getAuthHeader } from '@/api/http';
 
 export default function HomeSettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   
-  // 表单状态
+  // Form state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [mainDescription, setMainDescription] = useState(homePageConfig.heroImage.description);
@@ -21,29 +22,62 @@ export default function HomeSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', content: '' });
   const [currentImageUrl, setCurrentImageUrl] = useState(homePageConfig.heroImage.imageUrl);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   
-  // 检查用户权限
+  // Check user permissions and auth status
   useEffect(() => {
+    // Redirect non-admin users
     if (user && user.role !== 'admin') {
       router.push('/account');
+      return;
     }
-  }, [user, router]);
+    
+    // Check authentication
+    if (!user && !isLoading) {
+      setMessage({ 
+        type: 'error', 
+        content: 'You must be logged in as an admin to access this page. Please log in and try again.' 
+      });
+      
+      // Try to refresh auth status after a short delay
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, router, isLoading]);
   
-  // 加载当前配置
+  // Check authentication on mount
+  useEffect(() => {
+    // Debug authentication info
+    const token = localStorage.getItem("jwt");
+    const authHeader = getAuthHeader();
+    setDebugInfo(`Auth status: ${user ? 'Logged in' : 'Not logged in'}, Token exists: ${token ? 'Yes' : 'No'}, Auth header exists: ${Object.keys(authHeader).length > 0 ? 'Yes' : 'No'}`);
+  }, [user]);
+  
+  // Load current config
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const response = await fetch('/api/config');
+        // Use auth header from our utility
+        const headers = getAuthHeader();
+        
+        const response = await fetch('/api/config', {
+          headers,
+          credentials: 'include'
+        });
+        
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.config?.heroImage) {
             const { heroImage } = data.config;
             
-            // 更新表单状态
+            // Update form state
             setMainDescription(heroImage.description || homePageConfig.heroImage.description);
             setImageCaption(heroImage.imageCaption || homePageConfig.heroImage.imageCaption || '');
             
-            // 更新图片URL
+            // Update image URL
             if (heroImage.imageUrl) {
               setCurrentImageUrl(heroImage.imageUrl);
             }
@@ -60,18 +94,18 @@ export default function HomeSettingsPage() {
     loadConfig();
   }, []);
   
-  // 处理图片选择
+  // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // 检查文件类型
+    // Check file type
     if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
       setMessage({ type: 'error', content: 'Only JPG and PNG images are supported' });
       return;
     }
     
-    // 检查文件大小
+    // Check file size
     if (file.size > 30 * 1024 * 1024) { // 30MB
       setMessage({ type: 'error', content: 'Image size must not exceed 30MB' });
       return;
@@ -82,9 +116,32 @@ export default function HomeSettingsPage() {
     setMessage({ type: '', content: '' });
   };
   
-  // 处理表单提交
+  // Handle authentication errors with retry
+  const handleAuthError = async () => {
+    // Clear any stale tokens
+    localStorage.removeItem("jwt");
+    sessionStorage.removeItem("preserve_auth");
+    
+    setMessage({ 
+      type: 'error', 
+      content: 'Authentication error. Please refresh the page to log in again.' 
+    });
+    
+    // Reload the page after a short delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  };
+  
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is logged in
+    if (!user) {
+      handleAuthError();
+      return;
+    }
     
     if (!imageFile && !mainDescription) {
       setMessage({ type: 'error', content: 'Please upload an image or modify the description text' });
@@ -95,32 +152,47 @@ export default function HomeSettingsPage() {
     setMessage({ type: 'info', content: 'Submitting...' });
     
     try {
-      // 定义图片URL变量
+      // Define image URL variable
       let newImageUrl = currentImageUrl;
       
-      // 如果有新图片，先上传图片
+      // If there's a new image, upload it first
       if (imageFile) {
+        // Get auth headers using our utility function
+        const authHeaders = getAuthHeader();
+        console.log('Auth headers for upload:', authHeaders);
+        
         const formData = new FormData();
         formData.append('file', imageFile);
         formData.append('path', 'images/home');
         formData.append('filename', 'hero.jpg');
         
-        console.log('上传图片到:', 'images/home/hero.jpg');
-        
-        // Get JWT token from localStorage
+        // Also add token directly to form data as a fallback
         const token = localStorage.getItem("jwt");
-        const headers: Record<string, string> = {};
-        
         if (token) {
-          console.log('Adding authorization header with token');
-          headers['Authorization'] = `Bearer ${token}`;
+          formData.append('token', token);
+        }
+        
+        console.log('Uploading image to:', 'images/home/hero.jpg');
+        
+        // More detailed debugging
+        if (token) {
+          console.log('JWT token found in localStorage, length:', token.length);
+          // Log the first few characters for debugging (don't log the entire token)
+          console.log('Token starts with:', token.substring(0, 10) + '...');
         } else {
           console.warn('No JWT token found in localStorage');
         }
         
+        // Combine auth headers with other headers
+        const uploadHeaders: Record<string, string> = {
+          ...authHeaders
+        };
+        
+        console.log('Final upload headers:', uploadHeaders);
+        
         const imageResponse = await fetch('/api/admin/upload', {
           method: 'POST',
-          headers,
+          headers: uploadHeaders,
           body: formData,
           credentials: 'include', // Include cookies for auth
         });
@@ -131,21 +203,21 @@ export default function HomeSettingsPage() {
           throw new Error(`Image upload failed: ${errorText || imageResponse.statusText}`);
         }
         
-        // 上传成功后解析响应
+        // Parse successful response
         const imageData = await imageResponse.json();
-        console.log('上传响应:', imageData);
+        console.log('Upload response:', imageData);
         
         if (imageData.success && imageData.url) {
-          // 更新图片URL，添加时间戳
+          // Update image URL, add timestamp
           newImageUrl = imageData.url.includes('?') 
             ? imageData.url 
             : `${imageData.url}?t=${Date.now()}`;
-          console.log('新图片URL:', newImageUrl);
+          console.log('New image URL:', newImageUrl);
           setCurrentImageUrl(newImageUrl);
         }
       }
       
-      // 构建配置数据
+      // Build config data
       const configData = {
         heroImage: {
           imageUrl: newImageUrl,
@@ -154,22 +226,20 @@ export default function HomeSettingsPage() {
         }
       };
       
-      console.log('更新配置:', configData);
+      console.log('Updating config:', configData);
       
-      // Get JWT token for config update
-      const token = localStorage.getItem("jwt");
-      const headers: Record<string, string> = {
+      // Get auth headers
+      const configHeaders = {
         'Content-Type': 'application/json',
+        ...getAuthHeader() // Use our utility to get auth headers
       };
       
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      console.log('Config update headers:', configHeaders);
       
-      // 更新配置信息
+      // Update config
       const configUpdateResponse = await fetch('/api/admin/config', {
         method: 'POST',
-        headers,
+        headers: configHeaders,
         body: JSON.stringify(configData),
         credentials: 'include', // Include cookies for auth
       });
@@ -178,13 +248,13 @@ export default function HomeSettingsPage() {
         throw new Error('Failed to update config');
       }
       
-      // 获取配置更新结果
+      // Get config update result
       const configResult = await configUpdateResponse.json();
-      console.log('配置更新结果:', configResult);
+      console.log('Config update result:', configResult);
       
       setMessage({ type: 'success', content: 'Home page settings updated' });
       
-      // 清除预览
+      // Clear preview
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
@@ -199,7 +269,7 @@ export default function HomeSettingsPage() {
     }
   };
   
-  // 重置表单
+  // Reset form
   const handleReset = () => {
     setMessage({ type: '', content: '' });
     
@@ -242,6 +312,18 @@ export default function HomeSettingsPage() {
           {message.content}
         </div>
       )}
+      
+      {/* Debug info */}
+      <div className="p-4 mb-6 bg-gray-100 border border-gray-300 rounded text-xs font-mono">
+        <details>
+          <summary className="cursor-pointer">Debug Info (Click to expand)</summary>
+          <div className="mt-2">
+            <p>{debugInfo}</p>
+            <p className="mt-1">Environment: {process.env.NODE_ENV}</p>
+            <p className="mt-1">User: {user ? `Logged in (${user.role})` : 'Not logged in'}</p>
+          </div>
+        </details>
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image upload area */}
