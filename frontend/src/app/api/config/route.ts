@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { homePageConfig } from '@/lib/config';
 
-// 获取主页配置
+// 获取主页配置 - 公开API，不需要身份验证
 export async function GET() {
   try {
     // 尝试从文件读取配置

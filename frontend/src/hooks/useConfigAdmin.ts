@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchAPI } from '@/api/http';
+import { getAuthHeader } from '@/api/http';
 import { homePageConfig } from '@/lib/config';
 
 // Homepage configuration type
@@ -35,19 +35,32 @@ export function useConfigAdmin() {
   const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Load configuration
+    // Load configuration
   const loadConfig = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('Loading admin configuration using fetchAPI');
+      console.log('Loading admin configuration');
       
-      // Use fetchAPI which automatically handles auth headers
-      const response = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/admin/config');
+      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      const response = await fetch('/api/admin/config', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        credentials: 'include'
+      });
       
-      if (response.success && response.config) {
-        setConfig(response.config);
+      if (!response.ok) {
+        throw new Error(`Admin config API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.config) {
+        setConfig(data.config);
         console.log('Successfully loaded config');
       } else {
         console.warn('Invalid config data format, using defaults');
@@ -61,10 +74,17 @@ export function useConfigAdmin() {
       // Try fallback to public config
       try {
         console.log('Attempting to load public config as fallback');
-        const publicResponse = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/config');
+        // 公共API不需要认证头
+        const publicResponse = await fetch('/api/config');
         
-        if (publicResponse.success && publicResponse.config) {
-          setConfig(publicResponse.config);
+        if (!publicResponse.ok) {
+          throw new Error(`Public API error: ${publicResponse.status}`);
+        }
+        
+        const publicData = await publicResponse.json();
+        
+        if (publicData.success && publicData.config) {
+          setConfig(publicData.config);
           console.log('Successfully loaded public config');
         } else {
           throw new Error('Invalid data from public config API');
@@ -95,26 +115,36 @@ export function useConfigAdmin() {
       formData.append('path', 'images/home');
       formData.append('filename', 'hero.jpg');
       
-      console.log('Uploading image to admin upload API using fetchAPI');
+      console.log('Uploading image to admin upload API');
       
-      // We need to convert FormData to a type without JSON.stringify
-      // fetchAPI will handle the auth headers automatically
-      const response = await fetchAPI<UploadResponse>('/api/admin/upload', {
+      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      const response = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
-        headers: {} // Let fetchAPI add the auth header, but don't add Content-Type for FormData
+        headers: {
+          ...getAuthHeader()
+        },
+        credentials: 'include'
       });
       
-      if (!response.success || !response.url) {
-        throw new Error(response.error || 'Upload returned invalid data');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed:', response.status, errorText);
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json() as UploadResponse;
+      
+      if (!data.success || !data.url) {
+        throw new Error(data.error || 'Upload returned invalid data');
       }
       
-      console.log('Image upload successful:', response.url);
+      console.log('Image upload successful:', data.url);
       
       // Add timestamp to prevent caching
-      return response.url.includes('?') 
-        ? response.url 
-        : `${response.url}?t=${Date.now()}`;
+      return data.url.includes('?') 
+        ? data.url 
+        : `${data.url}?t=${Date.now()}`;
       
     } catch (err) {
       console.error('Image upload failed:', err);
@@ -141,20 +171,33 @@ export function useConfigAdmin() {
     setSuccess(null);
     
     try {
-      console.log('Saving admin configuration using fetchAPI');
+      console.log('Saving admin configuration');
       
-      // Use fetchAPI which automatically adds auth headers
-      const response = await fetchAPI<{success: boolean, message: string}>('/api/admin/config', {
+      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      const response = await fetch('/api/admin/config', {
         method: 'POST',
-        body: JSON.stringify(configData)
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(configData),
+        credentials: 'include'
       });
       
-      if (response.success) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Save config failed:', response.status, errorText);
+        throw new Error(`Save configuration failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
         setConfig(configData);
-        setSuccess(response.message || 'Settings updated successfully');
+        setSuccess(data.message || 'Settings updated successfully');
         console.log('Config successfully updated');
       } else {
-        throw new Error('Configuration update returned invalid data');
+        throw new Error(data.error || 'Configuration update returned invalid data');
       }
     } catch (err) {
       console.error('Failed to save config:', err);
