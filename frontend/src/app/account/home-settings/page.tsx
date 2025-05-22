@@ -21,7 +21,8 @@ export default function HomeSettingsPage() {
     isUploading,
     success,
     uploadImage,
-    saveConfig
+    saveConfig,
+    loadConfig
   } = useConfigAdmin();
   
   // Form state
@@ -30,6 +31,8 @@ export default function HomeSettingsPage() {
   const [mainDescription, setMainDescription] = useState(config.heroImage.description);
   const [imageCaption, setImageCaption] = useState(config.heroImage.imageCaption || '');
   const [message, setMessage] = useState({ type: '', content: '' });
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
   
   // Check user permissions and auth status
   React.useEffect(() => {
@@ -62,6 +65,40 @@ export default function HomeSettingsPage() {
       setMessage({ type: '', content: '' });
     }
   }, [error, success]);
+  
+  // Get debug info
+  const updateDebugInfo = () => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const debugText = `
+Auth Status: ${user ? `Logged in as ${user.role}` : 'Not logged in'}
+Token exists: ${token ? 'Yes' : 'No'}
+Token preview: ${token ? `${token.substring(0, 15)}...` : 'None'}
+Environment: ${process.env.NODE_ENV}
+Cookie has jwt: ${document.cookie.includes('jwt') ? 'Yes' : 'No'}
+      `;
+      setDebugInfo(debugText);
+      setShowDebug(true);
+    } catch (err) {
+      console.error('Error getting debug info:', err);
+    }
+  };
+  
+  // Add a retry button for manual loading
+  const retryLoadConfig = () => {
+    // Clear any stale tokens that might be causing issues
+    try {
+      const token = localStorage.getItem("jwt");
+      console.log("Current token before retry:", token ? token.substring(0, 10) + "..." : "none");
+      
+      // Do not clear token - just retry with existing credentials
+      setMessage({ type: 'info', content: 'Retrying configuration load...' });
+      loadConfig();
+    } catch (err) {
+      console.error('Error during retry:', err);
+      setMessage({ type: 'error', content: 'Failed to retry loading configuration' });
+    }
+  };
   
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +202,21 @@ export default function HomeSettingsPage() {
           <div className="text-center">
             <div className="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading settings...</p>
+            
+            <div className="mt-4">
+              <button 
+                onClick={updateDebugInfo}
+                className="text-xs underline text-blue-600"
+              >
+                Show Debug Info
+              </button>
+              
+              {showDebug && (
+                <pre className="mt-4 p-4 bg-gray-100 text-left text-xs font-mono overflow-auto max-h-64 rounded border border-gray-300">
+                  {debugInfo}
+                </pre>
+              )}
+            </div>
           </div>
         </div>
       </Container>
@@ -181,8 +233,35 @@ export default function HomeSettingsPage() {
       {message.content && (
         <div className={`p-4 mb-6 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
           {message.content}
+          {message.type === 'error' && (
+            <button 
+              onClick={retryLoadConfig}
+              className="ml-4 px-3 py-1 bg-white text-red-600 rounded text-sm border border-red-300 hover:bg-red-50"
+            >
+              Retry Loading
+            </button>
+          )}
         </div>
       )}
+      
+      {/* Debug info */}
+      <div className="p-4 mb-6 bg-gray-50 border border-gray-200 rounded text-xs">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">Debug Tools</span>
+          <button 
+            onClick={updateDebugInfo} 
+            className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+          >
+            {showDebug ? 'Refresh Debug Info' : 'Show Debug Info'}
+          </button>
+        </div>
+        
+        {showDebug && (
+          <pre className="mt-4 bg-gray-100 p-4 font-mono overflow-auto max-h-64 rounded border border-gray-300">
+            {debugInfo}
+          </pre>
+        )}
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image upload area */}
