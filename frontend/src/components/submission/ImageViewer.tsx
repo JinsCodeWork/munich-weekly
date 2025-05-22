@@ -73,11 +73,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     const length = description.trim().length;
     
     if (length < 60) {
-      return { variant: 'default' as const, maxWidth: 'max-w-lg' };
+      return { variant: 'default' as const, maxWidth: 'max-w-[90%]' };
     } else if (length < 120) {
-      return { variant: 'default' as const, maxWidth: 'max-w-2xl' };
+      return { variant: 'default' as const, maxWidth: 'max-w-[90%]' };
     } else {
-      return { variant: 'card' as const, maxWidth: 'max-w-3xl' };
+      return { variant: 'card' as const, maxWidth: 'max-w-[90%]' };
     }
   }, [description]);
   
@@ -275,7 +275,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
                 maxWidth: captionStyle.maxWidth
               })}
             >
-              <div className="text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto pr-2 custom-scrollbar" onClick={(e) => e.stopPropagation()}>
+              <div 
+                className="text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden text-left w-full px-1 custom-scrollbar" 
+                onClick={(e) => e.stopPropagation()}
+                style={{ textAlign: 'left', wordWrap: 'break-word', textOverflow: 'clip' }}
+              >
                 &ldquo;{description.trim()}&rdquo;
               </div>
             </div>

@@ -28,9 +28,9 @@ export const modalContentVariants = {
  * Image caption variants
  */
 export const imageCaptionVariants = {
-  default: 'px-6 py-3 bg-black/25 backdrop-blur-sm rounded-full mx-auto inline-block',
-  pill: 'px-5 py-2 bg-black/20 backdrop-blur-sm rounded-full mx-auto inline-block',
-  card: 'px-6 py-3 bg-black/15 backdrop-blur-sm rounded-lg mx-auto inline-block',
+  default: 'px-6 py-3 bg-black/25 backdrop-blur-sm rounded-full mx-auto inline-block text-left',
+  pill: 'px-5 py-2 bg-black/20 backdrop-blur-sm rounded-full mx-auto inline-block text-left',
+  card: 'px-6 py-3 bg-black/15 backdrop-blur-sm rounded-lg mx-auto inline-block text-left',
 };
 
 /**
@@ -89,9 +89,18 @@ export function getImageCaptionStyles({
   className?: string;
   maxWidth?: string;
 } = {}) {
+  let widthClass = '';
+  
+  if (maxWidth.includes('max-w-')) {
+    widthClass = maxWidth;
+  } else {
+    widthClass = `max-w-[${maxWidth}] w-full`;
+  }
+  
   return cn(
     imageCaptionVariants[variant],
-    maxWidth.includes('max-w-') ? maxWidth : `max-w-[${maxWidth}]`,
+    widthClass,
+    'w-full',
     className
   );
 } 

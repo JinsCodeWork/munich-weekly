@@ -27,6 +27,12 @@
 .custom-scrollbar {
   scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
   scrollbar-width: thin;
+  /* 确保移动端文本容器正确显示 */
+  word-break: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 /* Global background color setting - Default light background */
