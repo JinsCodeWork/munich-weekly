@@ -49,6 +49,12 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
     (displayContext === 'voteView' && 
       (submission.status === SubmissionStatus.SELECTED || submission.isCover)); // In voteView, only show 'selected' or 'cover' badge
 
+  // 防止投票按钮点击事件冒泡
+  const handleButtonContainerClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
     <>
       <div 
@@ -122,7 +128,10 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
                     {submission.voteCount} votes
                   </span>
                 </div>
-                <div className="flex-shrink-0">
+                <div 
+                  className="flex-shrink-0 z-10" 
+                  onClick={handleButtonContainerClick}
+                >
                   <VoteButton 
                     submissionId={submission.id} 
                     onVoteSuccess={onVoteSuccess}

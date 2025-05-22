@@ -63,6 +63,7 @@ export function VoteButton({
 
   const handleVoteClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    event.preventDefault(); // 添加这一行，防止事件冒泡
     if (isLoading) return;
 
     // 如果已经投票且允许取消投票，则取消投票
@@ -134,7 +135,17 @@ export function VoteButton({
     } else if (isLoading) {
       buttonContent = <Loader2 size={16} className="animate-spin" />;
     } else if (hasVoted === true) {
-      buttonContent = <CheckCircle size={16} className="text-green-500" />;
+      if (allowUnvote) {
+        // 如果允许取消投票，显示更明显的"取消"提示
+        buttonContent = (
+          <div className="flex items-center">
+            <CheckCircle size={16} className="text-green-500 mr-1" />
+            <span className="text-xs">取消</span>
+          </div>
+        );
+      } else {
+        buttonContent = <CheckCircle size={16} className="text-green-500" />;
+      }
     } else {
       buttonContent = <ThumbsUp size={16} />;
     }
@@ -145,7 +156,11 @@ export function VoteButton({
     } else if (isLoading) {
       buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Voting</>;
     } else if (hasVoted === true) {
-      buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+      if (allowUnvote) {
+        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Cancel</>;
+      } else {
+        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+      }
     } else {
       buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
     }
@@ -157,32 +172,49 @@ export function VoteButton({
 
   if (hasVoted === true) {
     // 如果已投票且允许取消，使用一个特殊样式但不禁用
-    buttonVariant = allowUnvote ? 'secondary' : 'ghost';
+    buttonVariant = allowUnvote ? 'primary' : 'ghost';
   } else if (hasVoted === false) {
     buttonVariant = 'primary';
   }
 
   if (error && !isLoading) {
     if (error.includes("already voted")) {
-      buttonContent = isMobile 
-        ? <CheckCircle size={16} className="text-green-500" />
-        : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
-      buttonVariant = allowUnvote ? 'secondary' : 'ghost';
+      if (allowUnvote) {
+        buttonContent = isMobile 
+          ? <div className="flex items-center"><CheckCircle size={16} className="text-green-500 mr-1" /><span className="text-xs">取消</span></div>
+          : <><CheckCircle size={16} className="mr-1 text-green-500" /> Cancel</>;
+        buttonVariant = 'primary';
+      } else {
+        buttonContent = isMobile 
+          ? <CheckCircle size={16} className="text-green-500" />
+          : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+        buttonVariant = 'ghost';
+      }
       isDisabled = !allowUnvote;
     }
   }
 
   // 如果用户已投票且允许取消，添加提示信息
-  const buttonTitle = hasVoted && allowUnvote ? "Click to cancel your vote" : "";
+  const buttonTitle = hasVoted && allowUnvote ? "点击取消投票" : "";
+
+  // 为移动端增加触摸区域
+  const mobileClass = isMobile ? "p-2" : "";
 
   return (
     <Button 
       onClick={handleVoteClick} 
       disabled={isDisabled} 
       variant={buttonVariant} 
-      size="md"
+      size={isMobile ? "sm" : "md"}
       title={buttonTitle}
-      className={`flex items-center justify-center text-center ${className || ''}`}
+      className={`flex items-center justify-center text-center ${mobileClass} ${className || ''}`}
+      onTouchEnd={(e) => {
+        // 确保触摸事件在移动端正常工作
+        e.preventDefault();
+        if (!isDisabled && !isLoading) {
+          handleVoteClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
+        }
+      }}
     >
       {buttonContent}
     </Button>
