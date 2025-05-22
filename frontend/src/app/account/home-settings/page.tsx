@@ -61,10 +61,7 @@ export default function HomeSettingsPage() {
     const loadConfig = async () => {
       try {
         // Use auth header from our utility
-        const headers = {
-          ...getAuthHeader(),
-          'X-Admin-Role': 'true' // Add special admin marker
-        };
+        const headers = getAuthHeader();
         
         console.log('Loading config with headers:', headers);
         
@@ -267,8 +264,7 @@ export default function HomeSettingsPage() {
       // Get auth headers
       const configHeaders = {
         'Content-Type': 'application/json',
-        ...getAuthHeader(), // Use our utility to get auth headers
-        'X-Admin-Role': 'true' // Add special admin marker
+        ...getAuthHeader() // Use our utility to get auth headers
       };
       
       console.log('Config update headers:', configHeaders);

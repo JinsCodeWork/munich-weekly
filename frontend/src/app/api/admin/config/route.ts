@@ -18,7 +18,6 @@ function getAuthToken(request: NextRequest): string | null {
     return authHeader.substring(7);
   }
   
-  // Also check for token in form data (as a fallback)
   console.log('No JWT token found in standard locations');
   return null;
 }
@@ -31,13 +30,6 @@ export async function GET(request: NextRequest) {
     if (!token) {
       console.warn('No authentication token found for config GET');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
-    }
-    
-    // Check admin role
-    const isAdmin = request.headers.get('X-Admin-Role') === 'true';
-    if (!isAdmin) {
-      console.warn('Request missing admin role marker for config GET');
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
     
     console.log('Processing admin config GET request');
@@ -77,14 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
     }
     
-    // Check admin role
-    const isAdmin = request.headers.get('X-Admin-Role') === 'true';
-    if (!isAdmin) {
-      console.warn('Request missing admin role marker');
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
-    
-    console.log('Processing config update with admin authentication');
+    console.log('Processing config update with authentication');
     
     // Get request data
     const data = await request.json();
