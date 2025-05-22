@@ -26,9 +26,9 @@ export default function VotePage() {
     try {
       const allIssues = await issuesApi.getAllIssues();
       if (!allIssues || allIssues.length === 0) {
-        setError("No issues found currently. Please check back later.");
         setIsLoading(false);
         setAllSubmissions([]);
+        setActiveVotingIssue(null);
         return;
       }
 
@@ -65,7 +65,6 @@ export default function VotePage() {
         setActiveVotingIssue(null);
         setAllSubmissions([]);
         setDisplayedSubmissions([]);
-        setError("There are no issues currently open for voting. Please check back later.");
       }
     } catch (err) {
       console.error("Error loading voting data:", err);
@@ -141,9 +140,31 @@ export default function VotePage() {
 
   if (!activeVotingIssue) {
     return (
-      <Container className="py-10 text-center">
-        <h1 className="text-2xl font-semibold mb-4">Voting Closed</h1>
-        <p className="text-gray-600">There are no issues currently open for voting. Please check back later!</p>
+      <Container className="py-10">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-8 text-center">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="mx-auto h-12 w-12 text-gray-400" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1.5} 
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              />
+            </svg>
+            <h2 className="mt-4 text-xl font-semibold text-gray-800">
+              No Current Voting Period
+            </h2>
+            <p className="mt-2 text-gray-600">
+              There are no issues currently open for voting. Please check back later!
+            </p>
+          </div>
+        </div>
       </Container>
     );
   }
