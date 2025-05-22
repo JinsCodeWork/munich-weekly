@@ -73,11 +73,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     const length = description.trim().length;
     
     if (length < 60) {
-      return { variant: 'default' as const, maxWidth: 'max-w-[90%]' };
+      return { variant: 'default' as const, maxWidth: 'max-w-[90%]', textAlign: 'center' as const };
     } else if (length < 120) {
-      return { variant: 'default' as const, maxWidth: 'max-w-[90%]' };
+      return { variant: 'default' as const, maxWidth: 'max-w-[90%]', textAlign: 'center' as const };
     } else {
-      return { variant: 'card' as const, maxWidth: 'max-w-[90%]' };
+      return { variant: 'card' as const, maxWidth: 'max-w-[90%]', textAlign: 'left' as const };
     }
   }, [description]);
   
@@ -276,9 +276,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
               })}
             >
               <div 
-                className="text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden text-left w-full px-1 custom-scrollbar" 
+                className={`text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden w-full px-1 custom-scrollbar ${captionStyle.textAlign === 'center' ? 'text-center' : 'text-left'}`} 
                 onClick={(e) => e.stopPropagation()}
-                style={{ textAlign: 'left', wordWrap: 'break-word', textOverflow: 'clip' }}
+                style={{ 
+                  textAlign: captionStyle.textAlign,
+                  wordWrap: 'break-word', 
+                  textOverflow: 'clip' 
+                }}
               >
                 &ldquo;{description.trim()}&rdquo;
               </div>
