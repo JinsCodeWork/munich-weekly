@@ -20,13 +20,31 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
 
   // 当imageUrl改变时更新图片源
   useEffect(() => {
-    console.log('图片URL:', imageUrl);
-    // 添加随机时间戳防止缓存
-    const url = imageUrl.includes('?') 
-      ? imageUrl 
-      : `${imageUrl}?t=${Date.now()}`;
-    setImgSrc(createImageUrl(url, { quality: 90 }));
-    setImgError(false);
+    try {
+      console.log('图片URL:', imageUrl);
+      
+      // 判断是本地静态图片还是上传图片
+      const isLocalStaticImage = imageUrl.startsWith('/images/');
+      
+      // 添加随机时间戳防止缓存
+      let url;
+      if (isLocalStaticImage) {
+        // 本地静态图片简单处理
+        url = imageUrl.includes('?') 
+          ? imageUrl 
+          : `${imageUrl}?t=${Date.now()}`;
+      } else {
+        // 上传图片使用createImageUrl处理
+        url = createImageUrl(imageUrl, { quality: 90 });
+      }
+      
+      console.log('处理后的图片URL:', url);
+      setImgSrc(url);
+      setImgError(false);
+    } catch (err) {
+      console.error('图片URL处理出错:', err);
+      setImgError(true);
+    }
   }, [imageUrl]);
 
   // 处理图片加载错误
@@ -53,7 +71,7 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       )}
       onClick={handleClick}
     >
-      {imgSrc && (
+      {imgSrc ? (
         <Image
           src={imgSrc}
           fill
@@ -61,7 +79,13 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
           alt="Munich Weekly Featured Photography"
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           onError={handleError}
+          unoptimized={imgSrc.startsWith('/images/')} // 本地静态图片不优化
         />
+      ) : (
+        // 图片加载失败或没有URL时显示默认占位符
+        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+          <p className="text-gray-500">图片加载中或无法显示</p>
+        </div>
       )}
       
       {/* 悬停时的暗色遮罩 - 同时支持移动端点击 */}

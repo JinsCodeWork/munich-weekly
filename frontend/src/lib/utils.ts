@@ -91,6 +91,12 @@ export function getImageUrl(url: string): string {
   // 测试环境
   const isDevEnv = typeof window !== 'undefined' && window.location.hostname === 'localhost';
   
+  // 静态图片路径特殊处理 - 保持原样不转换为CDN URL
+  if (url.startsWith('/images/')) {
+    console.log('使用本地静态图片路径:', url);
+    return url; // 不做任何转换，使用本地路径
+  }
+  
   // 外部完整URL，例如Cloudflare R2的URL
   if (url.startsWith('http://') || url.startsWith('https://')) {
     // 如果URL包含pub-xxx.r2.dev，则将其转换为标准路径
@@ -188,6 +194,17 @@ export interface ImageOptions {
 }
 
 export function createImageUrl(url: string, options: ImageOptions = {}): string {
+  // 静态图片特殊处理 - 不应用CDN转换和参数
+  if (url.startsWith('/images/')) {
+    console.log('为静态图片创建URL:', url);
+    // 仅添加时间戳参数以避免缓存问题，不添加其他转换参数
+    if (url.includes('?')) {
+      return url; // 已经有参数了，保持原样
+    } else {
+      return `${url}?t=${Date.now()}`; // 仅添加时间戳
+    }
+  }
+
   // 首先通过getImageUrl获取适合环境的基础URL
   const baseUrl = getImageUrl(url);
   
@@ -196,7 +213,7 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   let finalBaseUrl = baseUrl;
   
   // 如果是相对路径且不是本地环境，转换为完整CDN URL
-  if (!isDevEnv && finalBaseUrl.startsWith('/')) {
+  if (!isDevEnv && finalBaseUrl.startsWith('/') && !finalBaseUrl.startsWith('/images/')) {
     finalBaseUrl = `https://img.munichweekly.art${finalBaseUrl}`;
   }
   
