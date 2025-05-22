@@ -10,20 +10,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_
 // Remove trailing slash if present to ensure correct URL concatenation
 const NORMALIZED_API_URL = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-// Helper function to get JWT token from request
+// 改进的获取JWT token的函数，与用户上传保持一致的认证机制
 function getAuthToken(request: NextRequest): string | null {
-  // Try to get token from cookies
-  const authCookie = request.cookies.get('jwt')?.value;
-  if (authCookie) {
-    console.log('Found JWT token in cookies');
-    return authCookie;
-  }
-  
-  // If not in cookies, try authorization header
+  // 优先使用Authorization头中的token，这与前端getAuthHeader()函数生成的头一致
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     console.log('Found JWT token in Authorization header');
     return authHeader.substring(7);
+  }
+  
+  // 再尝试从cookies获取token
+  const authCookie = request.cookies.get('jwt')?.value;
+  if (authCookie) {
+    console.log('Found JWT token in cookies');
+    return authCookie;
   }
   
   console.log('No JWT token found in standard locations');
@@ -50,20 +50,21 @@ export async function POST(request: NextRequest) {
     if (isProduction) {
       console.log('Production environment: Forwarding upload request to backend API');
       
-      // Get authentication token with fallback to form data
+      // 获取认证token，使用与用户上传相同的逻辑
       let token = getAuthToken(request);
       
-      // If no token found in standard places, check form data
+      // 仅当没有获取到token时才使用表单数据中的token作为后备
       if (!token && tokenFromForm) {
-        console.log('Using token from form data');
+        console.log('Using token from form data (fallback)');
         token = tokenFromForm;
       }
       
       if (!token) {
-        console.warn('No authentication token found in cookies, headers, or form data');
-        // List all cookies for debugging
+        console.warn('No authentication token found in headers, cookies, or form data');
+        // 记录请求信息用于调试
         console.log('Available cookies:', [...request.cookies.getAll()].map(c => c.name));
         console.log('Available headers:', [...request.headers.entries()].map(([key, value]) => `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       } else {
         console.log('Authentication token found, length:', token.length);
       }

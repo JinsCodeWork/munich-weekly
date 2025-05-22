@@ -38,8 +38,8 @@ export default function HomeSettingsPage() {
   
   // Check for JWT token and redirect if missing
   useEffect(() => {
-    const token = localStorage.getItem("jwt");
-    if (!token && !authLoading) {
+    // 优先使用auth上下文中的token
+    if (!token && !localStorage.getItem("jwt") && !authLoading) {
       setTokenMissing(true);
       setMessage({ 
         type: 'error', 
@@ -48,7 +48,7 @@ export default function HomeSettingsPage() {
     } else {
       setTokenMissing(false);
     }
-  }, [authLoading]);
+  }, [authLoading, token]);
 
   // Check user permissions and auth status
   useEffect(() => {
@@ -181,9 +181,9 @@ Using fetchAPI: Yes
       return;
     }
     
-    // Check if token exists
-    const token = localStorage.getItem("jwt");
-    if (!token) {
+    // 优先使用auth上下文中的token，再使用本地存储的token
+    const authToken = token || localStorage.getItem("jwt");
+    if (!authToken) {
       setTokenMissing(true);
       setMessage({ type: 'error', content: 'Authentication token is missing. Please log in again.' });
       return;

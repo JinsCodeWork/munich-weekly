@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchAPI } from '@/api/http';
+import { fetchAPI, getAuthHeader } from '@/api/http';
 import { homePageConfig } from '@/lib/config';
 
 // Homepage configuration type
@@ -95,22 +95,18 @@ export function useConfigAdmin() {
       formData.append('path', 'images/home');
       formData.append('filename', 'hero.jpg');
 
-      // 使用fetch上传文件，并考虑localStorage中的token可能已被清除的情况
-      const token = localStorage.getItem('jwt');
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log('Using token from localStorage for image upload');
-      } else {
-        console.warn('No token found in localStorage for image upload, will use cookie auth if available');
-      }
+      // 使用通用的getAuthHeader函数获取认证头，与用户上传图片保持一致
+      const authHeaders = getAuthHeader();
+      console.log('Using getAuthHeader for admin image upload');
       
       console.log('Uploading image to admin upload API');
       
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
-        headers,
+        headers: {
+          ...authHeaders
+        },
         credentials: 'include'
       });
 

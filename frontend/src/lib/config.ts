@@ -13,9 +13,9 @@ export const homePageConfig = {
     // Use path format compatible with existing CDN system
     imageUrl: '/images/home/hero.jpg',
     // Image description text (displayed in the center on hover)
-    description: 'Munich Weekly Photography Community is dedicated to showcasing the wonderful works of student photographers in Munich. Different themes every week, each work is a unique perspective.',
+    description: 'A weekly celebration of munich student photography — each image, a distinct point of view',
     // Image caption at the bottom (displayed at the bottom on hover)
-    imageCaption: 'Photographer: Max Mustermann | Marienplatz, Munich | June 2023'
+    imageCaption: 'Alpspitz, Bavaria'
   },
   
   // Page introduction text
