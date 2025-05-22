@@ -28,7 +28,7 @@ public class LocalStorageService implements StorageService {
     
     private final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
     private final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList("image/jpeg", "image/png");
-    private final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    private final long MAX_FILE_SIZE = 30 * 1024 * 1024; // 20MB
     
     private Path rootLocation;
     
@@ -78,7 +78,7 @@ public class LocalStorageService implements StorageService {
 
         // Check file size
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds the limit of 20MB");
+            throw new IllegalArgumentException("File size exceeds the limit of 30MB");
         }
 
         // Check file type

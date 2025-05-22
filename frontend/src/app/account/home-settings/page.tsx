@@ -107,13 +107,28 @@ export default function HomeSettingsPage() {
         
         console.log('上传图片到:', 'images/home/hero.jpg');
         
+        // Get JWT token from localStorage
+        const token = localStorage.getItem("jwt");
+        const headers: Record<string, string> = {};
+        
+        if (token) {
+          console.log('Adding authorization header with token');
+          headers['Authorization'] = `Bearer ${token}`;
+        } else {
+          console.warn('No JWT token found in localStorage');
+        }
+        
         const imageResponse = await fetch('/api/admin/upload', {
           method: 'POST',
+          headers,
           body: formData,
+          credentials: 'include', // Include cookies for auth
         });
         
         if (!imageResponse.ok) {
-          throw new Error('图片上传失败');
+          const errorText = await imageResponse.text();
+          console.error('Upload failed:', imageResponse.status, errorText);
+          throw new Error(`Image upload failed: ${errorText || imageResponse.statusText}`);
         }
         
         // 上传成功后解析响应
@@ -141,13 +156,22 @@ export default function HomeSettingsPage() {
       
       console.log('更新配置:', configData);
       
+      // Get JWT token for config update
+      const token = localStorage.getItem("jwt");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       // 更新配置信息
       const configUpdateResponse = await fetch('/api/admin/config', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(configData),
+        credentials: 'include', // Include cookies for auth
       });
       
       if (!configUpdateResponse.ok) {

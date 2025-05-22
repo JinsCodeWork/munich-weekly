@@ -134,6 +134,113 @@ public class FileUploadController {
     }
     
     /**
+     * Admin upload interface for static resources such as homepage images
+     * 
+     * @param file The uploaded file
+     * @param path Relative path, e.g. "images/home"
+     * @param filename Filename, e.g. "hero.jpg"
+     * @return Upload result
+     */
+    @Description("Admin upload interface for static resources such as homepage images")
+    @PostMapping("/admin/upload")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<Map<String, Object>> adminUploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("path") String path,
+            @RequestParam(value = "filename", required = false) String filename) {
+        
+        logger.info("Starting admin static resource upload - Path: " + path + ", Filename: " + (filename != null ? filename : file.getOriginalFilename()));
+        logger.info("File details - Name: " + file.getOriginalFilename() + 
+                   ", Size: " + file.getSize() + " bytes, Content Type: " + file.getContentType());
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Simple validation for path and filename
+            if (path == null || path.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Upload path cannot be empty"
+                ));
+            }
+            
+            // Use fixed ID parameters for static resource uploads
+            String staticIssueId = "static";
+            String adminUserId = "admin";
+            String staticSubmissionId = path.replace("/", "_");
+            
+            // If filename is provided, handle file extension
+            String finalFilename = filename;
+            if (finalFilename != null && !finalFilename.isEmpty()) {
+                // Ensure filename has extension
+                if (!finalFilename.contains(".")) {
+                    String originalExtension = "";
+                    String originalFilename = file.getOriginalFilename();
+                    if (originalFilename != null && originalFilename.contains(".")) {
+                        originalExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                        finalFilename += originalExtension;
+                    }
+                }
+                // Set static resource ID
+                staticSubmissionId = path.replace("/", "_") + "_" + finalFilename.replace(".", "_");
+            }
+            
+            logger.info("Storing static file - Path: " + path + 
+                       ", Static IssueID: " + staticIssueId + 
+                       ", Admin UserID: " + adminUserId + 
+                       ", Static ResourceID: " + staticSubmissionId);
+            
+            // Use storage service to save the file
+            String fileUrl = storageService.storeFile(file, staticIssueId, adminUserId, staticSubmissionId);
+            logger.info("File stored successfully. URL: " + fileUrl);
+            
+            // Validate URL
+            if (fileUrl != null && !fileUrl.isEmpty()) {
+                boolean fileExists = false;
+                try {
+                    fileExists = storageService.fileExists(fileUrl);
+                    logger.info("File existence check: " + (fileExists ? "File exists" : "File not found"));
+                } catch (Exception e) {
+                    logger.warning("Unable to verify file existence: " + e.getMessage());
+                }
+                
+                if (!fileExists) {
+                    logger.warning("Unable to verify uploaded file at URL: " + fileUrl + ", but continuing with processing");
+                }
+                
+                // Return success response
+                response.put("success", true);
+                response.put("message", "File uploaded successfully");
+                response.put("url", fileUrl);
+                return ResponseEntity.ok(response);
+            } else {
+                logger.severe("Storage service returned empty or null URL");
+                response.put("success", false);
+                response.put("error", "Storage service returned invalid URL");
+                return ResponseEntity.internalServerError().body(response);
+            }
+            
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid file upload: " + e.getMessage());
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "File upload error: " + e.getMessage(), e);
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("error", "Failed to store file: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error during file upload", e);
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("error", "An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
      * 调试端点：检查文件是否存在于R2存储中
      * 
      * @param submissionId 提交ID

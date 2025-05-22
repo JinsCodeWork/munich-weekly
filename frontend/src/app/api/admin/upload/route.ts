@@ -3,57 +3,147 @@ import { writeFile } from 'fs/promises';
 import path from 'path';
 import { mkdir } from 'fs/promises';
 
-// 处理图片上传
+// Check if in production environment
+const isProduction = process.env.NODE_ENV === 'production';
+// Backend API base URL - Use environment variables or default
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/api';
+// Remove trailing slash if present to ensure correct URL concatenation
+const NORMALIZED_API_URL = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+
+// Helper function to get JWT token from request
+function getAuthToken(request: NextRequest): string | null {
+  // Try to get token from cookies
+  const authCookie = request.cookies.get('jwt')?.value;
+  if (authCookie) {
+    return authCookie;
+  }
+  
+  // If not in cookies, try authorization header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  
+  // Try local storage in browser (via authorization header set by client)
+  // This is already covered by the Authorization header check above
+  
+  return null;
+}
+
+// Handle image upload
 export async function POST(request: NextRequest) {
   try {
-    // 解析 multipart/form-data 请求
+    // Parse multipart/form-data request
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const uploadPath = formData.get('path') as string;
     const fileName = formData.get('filename') as string;
     
     if (!file || !uploadPath) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // 创建存储路径
-    // uploadPath应该是 "images/home"
-    console.log('上传路径:', uploadPath);
+    // In production environment, forward request to backend API
+    if (isProduction) {
+      console.log('Production environment: Forwarding upload request to backend API');
+      
+      // Get authentication token
+      const token = getAuthToken(request);
+      
+      if (!token) {
+        console.warn('No authentication token found in cookies or headers');
+        // List all cookies for debugging
+        console.log('Available cookies:', [...request.cookies.getAll()].map(c => c.name));
+      } else {
+        console.log('Authentication token found, length:', token.length);
+      }
+      
+      // Create new FormData to forward the request
+      const newFormData = new FormData();
+      newFormData.append('file', file);
+      newFormData.append('path', uploadPath);
+      if (fileName) {
+        newFormData.append('filename', fileName);
+      }
+      
+      try {
+        // Ensure correct API path
+        const uploadEndpoint = `${NORMALIZED_API_URL}/submissions/admin/upload`;
+        console.log('Using upload endpoint:', uploadEndpoint);
+        
+        // Prepare headers with authentication
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Call backend API for upload
+        const response = await fetch(uploadEndpoint, {
+          method: 'POST',
+          body: newFormData,
+          headers,
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Backend upload API returned error:', response.status, errorText);
+          return NextResponse.json({ 
+            error: `Upload failed: Server returned ${response.status}` 
+          }, { status: response.status });
+        }
+        
+        // Return backend API response
+        const result = await response.json();
+        return NextResponse.json(result);
+      } catch (error) {
+        console.error('Failed to call backend upload API:', error);
+        return NextResponse.json({ 
+          error: `Failed to upload to backend server: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        }, { status: 500 });
+      }
+    }
+    
+    // Local development environment: Save to local filesystem
+    console.log('Development environment: Saving file to local filesystem');
+    
+    // Create storage path
+    console.log('Upload path:', uploadPath);
     const uploadsDir = path.join(process.cwd(), 'public', uploadPath);
     
     try {
       await mkdir(uploadsDir, { recursive: true });
-      console.log('创建目录:', uploadsDir);
+      console.log('Created directory:', uploadsDir);
     } catch (error) {
-      console.error('创建目录失败:', error);
+      console.error('Failed to create directory:', error);
     }
     
-    // 获取文件字节数据
+    // Get file byte data
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // 文件保存路径
+    // File save path
     const finalFileName = fileName || file.name;
     const filePath = path.join(uploadsDir, finalFileName);
-    console.log('文件将保存至:', filePath);
+    console.log('File will be saved to:', filePath);
     
-    // 保存文件
+    // Save file
     await writeFile(filePath, buffer);
     
-    // 返回成功信息和文件URL
+    // Return success info and file URL
     const fileUrl = `/${uploadPath}/${finalFileName}`;
-    console.log('文件URL:', fileUrl);
+    console.log('File URL:', fileUrl);
     
     return NextResponse.json({ 
       success: true,
-      message: '文件上传成功',
+      message: 'File uploaded successfully',
       url: fileUrl 
     });
     
   } catch (error) {
-    console.error('文件上传处理错误:', error);
+    console.error('File upload processing error:', error);
     return NextResponse.json(
-      { error: `文件上传失败: ${error instanceof Error ? error.message : '未知错误'}` },
+      { error: `File upload failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
