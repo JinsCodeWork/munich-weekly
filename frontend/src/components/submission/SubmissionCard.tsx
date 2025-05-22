@@ -13,14 +13,15 @@ interface SubmissionCardProps {
   submission: Submission;
   className?: string;
   displayContext?: 'default' | 'voteView';
-  onVoteSuccess?: (submissionId: number) => void;
+  onVoteSuccess?: (submissionId: number, newVoteCount?: number) => void;
+  onVoteCancelled?: (submissionId: number, newVoteCount?: number) => void;
 }
 
 /**
  * Card component for displaying submission content 
  * Includes thumbnail image, status badge, description and metadata
  */
-export function SubmissionCard({ submission, className, displayContext = 'default', onVoteSuccess }: SubmissionCardProps) {
+export function SubmissionCard({ submission, className, displayContext = 'default', onVoteSuccess, onVoteCancelled }: SubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleOpenViewer = () => {
@@ -124,7 +125,8 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
                 <div className="flex-shrink-0">
                   <VoteButton 
                     submissionId={submission.id} 
-                    onVoteSuccess={onVoteSuccess} 
+                    onVoteSuccess={onVoteSuccess}
+                    onVoteCancelled={onVoteCancelled}
                     initialVoteCount={submission.voteCount}
                     className="sm:text-sm text-xs sm:py-2 py-1 min-w-[70px]"
                   />

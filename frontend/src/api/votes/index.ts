@@ -9,6 +9,11 @@ interface VoteResponse {
   voteCount: number;
 }
 
+interface CancelVoteResponse {
+  success: boolean;
+  voteCount: number;
+}
+
 /**
  * 提交投票
  * POST /api/votes?submissionId={submissionId}
@@ -34,4 +39,19 @@ export const checkVoteStatus = async (submissionId: number): Promise<{ voted: bo
   url.searchParams.append("submissionId", submissionId.toString());
   
   return fetchAPI<{ voted: boolean }>(url.toString(), { method: "GET" });
+};
+
+/**
+ * 取消投票
+ * DELETE /api/votes?submissionId={submissionId}
+ * Backend reads visitorId from cookie.
+ * Returns success status and updated vote count.
+ */
+export const cancelVote = async (submissionId: number): Promise<CancelVoteResponse> => {
+  const url = new URL("/api/votes", window.location.origin);
+  url.searchParams.append("submissionId", submissionId.toString());
+  
+  return fetchAPI<CancelVoteResponse>(url.toString(), {
+    method: "DELETE",
+  });
 }; 

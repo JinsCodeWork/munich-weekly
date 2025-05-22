@@ -9,6 +9,7 @@ import com.munichweekly.backend.repository.VoteRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Service layer for handling voting logic using anonymous visitorId or userId.
@@ -90,6 +91,56 @@ public class VoteService {
         vote.setVotedAt(now);
 
         return voteRepository.save(vote);
+    }
+
+    /**
+     * Cancel a vote for a submission using visitorId (for anonymous users).
+     * Checks if the vote exists and the voting window is still open.
+     */
+    public boolean cancelVote(String visitorId, Submission submission) {
+        Issue issue = submission.getIssue();
+
+        if (!"approved".equals(submission.getStatus())) {
+            throw new IllegalStateException("Only approved submissions can be voted on");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(issue.getVotingStart()) || now.isAfter(issue.getVotingEnd())) {
+            throw new IllegalStateException("Voting window is closed");
+        }
+
+        Optional<Vote> existingVote = voteRepository.findByVisitorIdAndSubmission(visitorId, submission);
+        if (existingVote.isEmpty()) {
+            throw new IllegalStateException("You have not voted for this submission");
+        }
+
+        voteRepository.delete(existingVote.get());
+        return true;
+    }
+
+    /**
+     * Cancel a vote for a submission using userId (for authenticated users).
+     * Checks if the vote exists and the voting window is still open.
+     */
+    public boolean cancelVoteAsUser(Long userId, Submission submission) {
+        Issue issue = submission.getIssue();
+
+        if (!"approved".equals(submission.getStatus())) {
+            throw new IllegalStateException("Only approved submissions can be voted on");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(issue.getVotingStart()) || now.isAfter(issue.getVotingEnd())) {
+            throw new IllegalStateException("Voting window is closed");
+        }
+
+        Optional<Vote> existingVote = voteRepository.findByUserIdAndSubmission(userId, submission);
+        if (existingVote.isEmpty()) {
+            throw new IllegalStateException("You have not voted for this submission");
+        }
+
+        voteRepository.delete(existingVote.get());
+        return true;
     }
 
     /**

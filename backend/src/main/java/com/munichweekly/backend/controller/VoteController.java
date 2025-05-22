@@ -107,4 +107,49 @@ public class VoteController {
         
         return ResponseEntity.ok(Map.of("voted", voted));
     }
+    
+    /**
+     * Cancel a vote for a submission.
+     * For authenticated users, we use their userId.
+     * For anonymous users, we use visitorId from cookie.
+     * Returns success status and updated vote count.
+     */
+    @Description("Cancel a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.")
+    @DeleteMapping
+    public ResponseEntity<?> cancelVote(
+            @RequestParam Long submissionId,
+            @CookieValue(name = "visitorId", required = false) String visitorId) {
+            
+        // 获取当前登录用户ID（如果已登录）
+        Optional<Long> currentUserId = CurrentUserUtil.getCurrentUserId();
+        
+        // 如果未登录且没有visitorId，则返回错误
+        if (currentUserId.isEmpty() && (visitorId == null || visitorId.isEmpty())) {
+            return ResponseEntity.badRequest().body("Authentication required: either login or enable cookies for visitorId.");
+        }
+        
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
+
+        try {
+            boolean success;
+            if (currentUserId.isPresent()) {
+                success = voteService.cancelVoteAsUser(currentUserId.get(), submission);
+            } else {
+                success = voteService.cancelVote(visitorId, submission);
+            }
+            
+            // Get updated vote count
+            int updatedVoteCount = voteRepository.findBySubmission(submission).size();
+            
+            // Create response with success status and updated count
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("voteCount", updatedVoteCount);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

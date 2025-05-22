@@ -11,13 +11,17 @@ interface VoteButtonProps {
   submissionId: number;
   initialVoteCount?: number; // Optional initial vote count for display
   onVoteSuccess?: (submissionId: number, newVoteCount?: number) => void;
+  onVoteCancelled?: (submissionId: number, newVoteCount?: number) => void;
   className?: string;
+  allowUnvote?: boolean; // Whether to allow users to cancel their vote
 }
 
 export function VoteButton({ 
   submissionId,
   onVoteSuccess,
-  className
+  onVoteCancelled,
+  className,
+  allowUnvote = true // By default, allow users to cancel votes
 }: VoteButtonProps) {
   const { user } = useAuth(); // 获取当前登录用户
   const [isLoading, setIsLoading] = useState(false);
@@ -59,8 +63,15 @@ export function VoteButton({
 
   const handleVoteClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    if (hasVoted === true || isLoading) return;
+    if (isLoading) return;
 
+    // 如果已经投票且允许取消投票，则取消投票
+    if (hasVoted === true && allowUnvote) {
+      await handleCancelVote();
+      return;
+    }
+
+    // 否则，提交新投票
     setIsLoading(true);
     setError(null);
     try {
@@ -82,6 +93,31 @@ export function VoteButton({
       } else {
         setError("Vote failed. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelVote = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await votesApi.cancelVote(submissionId);
+      
+      if (response.success) {
+        setHasVoted(false);
+        console.log(`Vote cancelled for submission ${submissionId}, user ${user?.id || 'anonymous'}. Server returned vote count: ${response.voteCount}`);
+        
+        // Use the vote count returned from the server
+        if (onVoteCancelled && response.voteCount !== undefined) {
+          onVoteCancelled(submissionId, response.voteCount);
+        }
+      } else {
+        throw new Error("Failed to cancel vote");
+      }
+    } catch (err: Error | unknown) {
+      console.error(`Failed to cancel vote for submission ${submissionId}:`, err);
+      setError("Failed to cancel vote. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -116,11 +152,12 @@ export function VoteButton({
   }
 
   let buttonVariant: 'primary' | 'secondary' | 'ghost' = 'secondary';
-  let isDisabled = isLoading || hasVoted === true;
+  // 如果已投票且允许取消，就不禁用按钮
+  let isDisabled = isLoading || (hasVoted === true && !allowUnvote);
 
   if (hasVoted === true) {
-    buttonVariant = 'ghost';
-    isDisabled = true;
+    // 如果已投票且允许取消，使用一个特殊样式但不禁用
+    buttonVariant = allowUnvote ? 'secondary' : 'ghost';
   } else if (hasVoted === false) {
     buttonVariant = 'primary';
   }
@@ -130,10 +167,13 @@ export function VoteButton({
       buttonContent = isMobile 
         ? <CheckCircle size={16} className="text-green-500" />
         : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
-      buttonVariant = 'ghost';
-      isDisabled = true;
+      buttonVariant = allowUnvote ? 'secondary' : 'ghost';
+      isDisabled = !allowUnvote;
     }
   }
+
+  // 如果用户已投票且允许取消，添加提示信息
+  const buttonTitle = hasVoted && allowUnvote ? "Click to cancel your vote" : "";
 
   return (
     <Button 
@@ -141,6 +181,7 @@ export function VoteButton({
       disabled={isDisabled} 
       variant={buttonVariant} 
       size="md"
+      title={buttonTitle}
       className={`flex items-center justify-center text-center ${className || ''}`}
     >
       {buttonContent}

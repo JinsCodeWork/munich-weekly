@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
 
@@ -22,6 +23,12 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
 
     // 查询用户投过的所有票
     List<Vote> findByUserId(Long userId);
+    
+    // 查找特定访客对特定投稿的投票
+    Optional<Vote> findByVisitorIdAndSubmission(String visitorId, Submission submission);
+    
+    // 查找特定用户对特定投稿的投票
+    Optional<Vote> findByUserIdAndSubmission(Long userId, Submission submission);
 
     // 删除用户投过的所有票
     void deleteByUserId(Long userId);

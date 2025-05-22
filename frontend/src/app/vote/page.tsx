@@ -116,6 +116,26 @@ export default function VotePage() {
     // 同时更新当前页显示的投稿
     setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
   }, []);
+  
+  const handleVoteCancelled = useCallback((submissionId: number, newVoteCount?: number) => {
+    console.log(`Vote cancelled for submission ${submissionId}. Using vote count ${newVoteCount} from server.`);
+    
+    // 如果后端返回了新的投票计数，使用它；否则使用本地计算（-1）作为后备方案
+    const voteUpdateFn = (sub: Submission) => {
+      if (sub.id === submissionId) {
+        // 如果服务器返回了新的投票计数，则使用它，否则减少本地计数
+        const updatedVoteCount = newVoteCount !== undefined ? newVoteCount : Math.max(0, (sub.voteCount || 0) - 1);
+        return { ...sub, voteCount: updatedVoteCount };
+      }
+      return sub;
+    };
+
+    // 更新所有投稿中的投票计数
+    setAllSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
+    
+    // 同时更新当前页显示的投稿
+    setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
+  }, []);
 
   if (isLoading) {
     return (
@@ -192,6 +212,7 @@ export default function VotePage() {
                   submission={submission} 
                   displayContext="voteView" 
                   onVoteSuccess={handleVoteSuccess}
+                  onVoteCancelled={handleVoteCancelled}
                 />
               </div>
             ))}
