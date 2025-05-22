@@ -225,7 +225,8 @@ export default function HomeSettingsPage() {
       // Get auth headers
       const configHeaders = {
         'Content-Type': 'application/json',
-        ...getAuthHeader() // Use our utility to get auth headers
+        ...getAuthHeader(), // Use our utility to get auth headers
+        'X-Admin-Role': 'true' // Add special admin marker
       };
       
       console.log('Config update headers:', configHeaders);

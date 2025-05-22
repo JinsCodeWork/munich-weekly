@@ -2,56 +2,93 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-// 配置更新API
+// Helper function to get JWT token from request
+function getAuthToken(request: NextRequest): string | null {
+  // Try to get token from cookies
+  const authCookie = request.cookies.get('jwt')?.value;
+  if (authCookie) {
+    console.log('Found JWT token in cookies');
+    return authCookie;
+  }
+  
+  // If not in cookies, try authorization header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    console.log('Found JWT token in Authorization header');
+    return authHeader.substring(7);
+  }
+  
+  // Also check for token in form data (as a fallback)
+  console.log('No JWT token found in standard locations');
+  return null;
+}
+
+// Configuration update API
 export async function POST(request: NextRequest) {
   try {
-    // 获取请求数据
+    // Check authentication
+    const token = getAuthToken(request);
+    if (!token) {
+      console.warn('No authentication token found');
+      return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
+    }
+    
+    // Check admin role
+    const isAdmin = request.headers.get('X-Admin-Role') === 'true';
+    if (!isAdmin) {
+      console.warn('Request missing admin role marker');
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+    
+    console.log('Processing config update with admin authentication');
+    
+    // Get request data
     const data = await request.json();
     
     if (!data) {
-      return NextResponse.json({ error: '无效的请求数据' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
     
-    // 读取现有配置
+    // Read existing configuration
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
     
-    // 确保目录存在
+    // Ensure directory exists
     try {
       await fs.mkdir(path.dirname(configPath), { recursive: true });
     } catch (error) {
-      console.error('创建配置目录失败:', error);
+      console.error('Failed to create config directory:', error);
     }
     
-    // 检查文件是否存在，不存在则创建初始配置
+    // Check if file exists, if not create initial configuration
     let currentConfig = {};
     try {
       const fileContent = await fs.readFile(configPath, 'utf-8');
       currentConfig = JSON.parse(fileContent);
     } catch {
-      // 文件不存在或无法解析，使用空对象
-      console.log('未找到现有配置或配置无效，将创建新配置');
+      // File doesn't exist or can't be parsed, use empty object
+      console.log('Existing configuration not found or invalid, will create new config');
     }
     
-    // 合并配置
+    // Merge configuration
     const newConfig = {
       ...currentConfig,
       ...data,
       lastUpdated: new Date().toISOString()
     };
     
-    // 写入配置文件
+    // Write to configuration file
     await fs.writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf-8');
     
     return NextResponse.json({
       success: true,
-      message: '配置已更新',
+      message: 'Configuration updated successfully',
       config: newConfig
     });
     
   } catch (error) {
-    console.error('配置更新处理错误:', error);
+    console.error('Configuration update error:', error);
     return NextResponse.json(
-      { error: `配置更新失败: ${error instanceof Error ? error.message : '未知错误'}` },
+      { error: `Configuration update failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
