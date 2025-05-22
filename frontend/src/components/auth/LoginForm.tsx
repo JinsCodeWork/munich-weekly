@@ -63,7 +63,14 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data?.error || "Login failed")
+        // 处理特定错误类型，提供更友好的错误信息
+        if (data.error === "Invalid Request" && data.message && data.message.includes("Invalid email or password")) {
+          throw new Error("Incorrect email or password")
+        } else if (data.error === "Invalid Request") {
+          throw new Error(data.message || "Login failed. Please check your credentials.")
+        } else {
+          throw new Error(data?.error || data?.message || "Login failed")
+        }
       }
 
       const { token } = await res.json()

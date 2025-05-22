@@ -82,7 +82,14 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data?.error || 'Registration failed');
+        // 处理特定错误类型，提供更友好的错误信息
+        if (data.error === "Invalid Request" && data.message && data.message.includes("Email already registered")) {
+          throw new Error("Email already registered. Please use a different email address.");
+        } else if (data.error === "Invalid Request") {
+          throw new Error(data.message || "Registration failed. Please try again.");
+        } else {
+          throw new Error(data?.error || data?.message || "Registration failed");
+        }
       }
 
       const { token } = await res.json();
