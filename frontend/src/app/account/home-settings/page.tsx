@@ -71,14 +71,18 @@ export default function HomeSettingsPage() {
     }
   }, [config, isLoading]);
   
-  // Sync error messages
+  // Sync error messages and handle auth errors more specifically
   useEffect(() => {
     if (error) {
       setMessage({ type: 'error', content: error });
       
-      // 不要检查token是否被清除，避免误判
-      // 仅当明确判断需要重新登录时再设置tokenMissing
-      // 管理页面401错误可能是权限问题，不一定是token过期
+      // Check for authentication errors specifically
+      if (error.includes('Authentication failed') || 
+          error.includes('token') || 
+          error.includes('401')) {
+        console.log('Authentication error detected, prompting login');
+        setTokenMissing(true);
+      }
     } else if (success) {
       setMessage({ type: 'success', content: success });
     } else {
@@ -105,7 +109,7 @@ Auth Context Token: ${token ? 'Present' : 'Missing'}
 localStorage Token: ${localToken ? 'Present' : 'Missing'}
 Token preview: ${localToken ? `${localToken.substring(0, 15)}...` : 'None'}
 Environment: ${process.env.NODE_ENV}
-Using fetchAPI: Yes
+Using fetchAPI: No (Direct fetch with auth headers)
       `;
       setDebugInfo(debugText);
       setShowDebug(true);

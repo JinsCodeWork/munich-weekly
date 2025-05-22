@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchAPI, getAuthHeader } from '@/api/http';
+import { getAuthHeader } from '@/api/http';
 import { homePageConfig } from '@/lib/config';
 
 // Homepage configuration type
@@ -41,13 +41,33 @@ export function useConfigAdmin() {
     setError(null);
 
     try {
-      console.log('Loading admin configuration using fetchAPI');
+      console.log('Loading admin configuration with explicit auth headers');
       
-      // Use fetchAPI which automatically handles auth headers from localStorage
-      const response = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/admin/config');
+      // Use explicit auth headers from getAuthHeader() instead of relying on fetchAPI
+      const authHeaders = getAuthHeader();
       
-      if (response.success && response.config) {
-        setConfig(response.config);
+      const response = await fetch('/api/admin/config', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error('Authentication failed (401)', response.statusText);
+          throw new Error('Authentication failed. Please log in again.');
+        } else {
+          throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.config) {
+        setConfig(data.config);
         console.log('Successfully loaded config');
       } else {
         console.warn('Invalid config data format, using defaults');
@@ -61,10 +81,21 @@ export function useConfigAdmin() {
       // Try fallback to public config
       try {
         console.log('Attempting to load public config as fallback');
-        const publicResponse = await fetchAPI<{success: boolean, config: HomePageConfig}>('/api/config');
+        const publicResponse = await fetch('/api/config', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         
-        if (publicResponse.success && publicResponse.config) {
-          setConfig(publicResponse.config);
+        if (!publicResponse.ok) {
+          throw new Error(`Public API error: ${publicResponse.status}`);
+        }
+        
+        const publicData = await publicResponse.json();
+        
+        if (publicData.success && publicData.config) {
+          setConfig(publicData.config);
           console.log('Successfully loaded public config');
         } else {
           throw new Error('Invalid data from public config API');
@@ -145,20 +176,38 @@ export function useConfigAdmin() {
     setSuccess(null);
     
     try {
-      console.log('Saving admin configuration using fetchAPI');
+      console.log('Saving admin configuration with explicit auth headers');
       
-      // Use fetchAPI which automatically adds auth headers from localStorage
-      const response = await fetchAPI<{success: boolean, message: string}>('/api/admin/config', {
+      // Use the same auth header approach as uploadImage for consistency
+      const authHeaders = getAuthHeader();
+      
+      const response = await fetch('/api/admin/config', {
         method: 'POST',
-        body: JSON.stringify(configData)
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        body: JSON.stringify(configData),
+        credentials: 'include'
       });
       
-      if (response.success) {
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error('Authentication failed (401)', response.statusText);
+          throw new Error('Authentication failed. Please log in again.');
+        } else {
+          throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
         setConfig(configData);
-        setSuccess(response.message || 'Settings updated successfully');
+        setSuccess(data.message || 'Settings updated successfully');
         console.log('Config successfully updated');
       } else {
-        throw new Error('Configuration update returned invalid data');
+        throw new Error(data.error || 'Configuration update returned invalid data');
       }
     } catch (err) {
       console.error('Failed to save config:', err);
