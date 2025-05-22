@@ -172,7 +172,7 @@ export default function HomeSettingsPage() {
           formData.append('token', token);
         }
         
-        console.log('Uploading image to:', 'images/home/hero.jpg');
+        console.log('直接调用后端API上传图片');
         
         // More detailed debugging
         if (token) {
@@ -183,16 +183,10 @@ export default function HomeSettingsPage() {
           console.warn('No JWT token found in localStorage');
         }
         
-        // Combine auth headers with other headers
-        const uploadHeaders: Record<string, string> = {
-          ...authHeaders
-        };
-        
-        console.log('Final upload headers:', uploadHeaders);
-        
-        const imageResponse = await fetch('/api/admin/upload', {
+        // 直接调用后端API，绕过Next.js API路由
+        const imageResponse = await fetch('/api/submissions/admin/upload', {
           method: 'POST',
-          headers: uploadHeaders,
+          headers: authHeaders,
           body: formData,
           credentials: 'include', // Include cookies for auth
         });
@@ -226,7 +220,7 @@ export default function HomeSettingsPage() {
         }
       };
       
-      console.log('Updating config:', configData);
+      console.log('通过Next.js API路由更新配置');
       
       // Get auth headers
       const configHeaders = {
@@ -236,7 +230,7 @@ export default function HomeSettingsPage() {
       
       console.log('Config update headers:', configHeaders);
       
-      // Update config
+      // 使用Next.js API路由更新配置
       const configUpdateResponse = await fetch('/api/admin/config', {
         method: 'POST',
         headers: configHeaders,
