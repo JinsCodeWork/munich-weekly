@@ -91,7 +91,7 @@ export function getImageCaptionStyles({
 } = {}) {
   return cn(
     imageCaptionVariants[variant],
-    `max-w-[${maxWidth}]`,
+    maxWidth.includes('max-w-') ? maxWidth : `max-w-[${maxWidth}]`,
     className
   );
 } 

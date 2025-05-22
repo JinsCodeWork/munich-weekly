@@ -2,10 +2,13 @@
 const nextConfig = {
   // 配置API代理
   async rewrites() {
+    // 根据环境确定API后端地址
+    const apiDestination = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*' // 后端默认端口为8080
+        destination: `${apiDestination}/:path*` // 使用环境变量或默认值
       },
       {
         source: '/uploads/:path*',

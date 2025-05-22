@@ -222,11 +222,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         </div>
         
         {/* Image Container with gesture support */}
-        <div className="flex justify-center items-center flex-1 w-full overflow-hidden" ref={containerRef}>
+        <div className="flex justify-center items-center flex-grow w-full overflow-hidden" ref={containerRef}>
           <div
             ref={ref}
             className={`relative flex justify-center items-center ${
-              imgDimensions.isPortrait ? 'max-h-[70vh]' : 'max-w-full max-h-[70vh]'
+              imgDimensions.isPortrait ? 'max-h-[65vh]' : 'max-w-full max-h-[65vh]'
             }`}
             style={{
               touchAction: scale > 1 ? 'none' : 'auto', // Disable browser touch actions when zoomed
@@ -268,14 +268,16 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         
         {/* Description - fixed at the bottom, separate from the image */}
         {description && captionStyle && (
-          <div className="mt-4 w-full flex justify-center">
-            <div className={getImageCaptionStyles({
-              variant: captionStyle.variant,
-              maxWidth: captionStyle.maxWidth
-            })}>
-              <p className="text-white text-lg font-light leading-relaxed italic">
+          <div className="w-full mt-4 flex justify-center flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div 
+              className={getImageCaptionStyles({
+                variant: captionStyle.variant,
+                maxWidth: captionStyle.maxWidth
+              })}
+            >
+              <div className="text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto pr-2 custom-scrollbar" onClick={(e) => e.stopPropagation()}>
                 &ldquo;{description.trim()}&rdquo;
-              </p>
+              </div>
             </div>
           </div>
         )}

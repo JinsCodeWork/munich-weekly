@@ -81,8 +81,8 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
           )}
         </div>
 
-        {/* Content area */}
-        <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-2")}>
+        {/* Content area - 减小移动端的间距 */}
+        <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-1")}>
           <h3 className={cn(getSubmissionCardElementStyles('title'), "sm:text-lg text-base sm:mb-1 mb-0")}>
             {submission.description.split('\n')[0]}
           </h3>
