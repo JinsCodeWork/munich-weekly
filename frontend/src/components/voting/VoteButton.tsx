@@ -27,23 +27,28 @@ export function VoteButton({
   const [isLoading, setIsLoading] = useState(false);
   const [hasVoted, setHasVoted] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [visitorId, setVisitorId] = useState<string | null>(null);
   // const [currentVoteCount, setCurrentVoteCount] = useState(initialVoteCount || 0);
+
+  // 初始化visitorId
+  useEffect(() => {
+    if (!user) {
+      const id = getOrGenerateVisitorId();
+      setVisitorId(id);
+      console.log("Set visitorId:", id);
+    }
+  }, [user]);
 
   const checkStatus = useCallback(async () => {
     // 重置状态，因为用户可能变化了
     setHasVoted(null);
     setError(null);
     
-    // 确保匿名用户有visitorId
-    if (!user) {
-      getOrGenerateVisitorId();
-    }
-    
     setIsLoading(true);
     try {
       const status = await votesApi.checkVoteStatus(submissionId);
       setHasVoted(status.voted);
-      console.log(`VoteButton: Checked vote status for submission ${submissionId}, user ${user?.id || 'anonymous'}, status:`, status.voted);
+      console.log(`VoteButton: Checked vote status for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}, status:`, status.voted);
     } catch (err: Error | unknown) {
       console.error(`VoteButton: Failed to check vote status for submissionId: ${submissionId}. Raw Error:`, err);
       if (err instanceof Error) {
@@ -54,7 +59,7 @@ export function VoteButton({
     } finally {
       setIsLoading(false);
     }
-  }, [submissionId, user]); // 依赖项添加user，用户变化时重新检查
+  }, [submissionId, user, visitorId]); // 依赖项添加user和visitorId，状态变化时重新检查
 
   // 初始化和用户变化时检查投票状态
   useEffect(() => {
@@ -66,6 +71,8 @@ export function VoteButton({
     event.preventDefault(); // 添加这一行，防止事件冒泡
     if (isLoading) return;
 
+    console.log(`VoteButton: Click handler, hasVoted=${hasVoted}, allowUnvote=${allowUnvote}, user=${user?.id || 'anonymous'}, visitorId=${visitorId}`);
+
     // 如果已经投票且允许取消投票，则取消投票
     if (hasVoted === true && allowUnvote) {
       await handleCancelVote();
@@ -76,10 +83,17 @@ export function VoteButton({
     setIsLoading(true);
     setError(null);
     try {
+      // 重新确保我们有visitorId（对于未登录用户）
+      if (!user && !visitorId) {
+        const newVisitorId = getOrGenerateVisitorId();
+        setVisitorId(newVisitorId);
+        console.log(`VoteButton: Generated new visitorId before vote: ${newVisitorId}`);
+      }
+      
       const response = await votesApi.submitVote(submissionId);
       setHasVoted(true);
       
-      console.log(`Vote successful for submission ${submissionId}, user ${user?.id || 'anonymous'}. Server returned vote count: ${response.voteCount}`);
+      console.log(`Vote successful for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}. Server returned vote count: ${response.voteCount}`);
       
       // Use the vote count returned from the server
       if (onVoteSuccess && response.voteCount) {
@@ -103,11 +117,20 @@ export function VoteButton({
     setIsLoading(true);
     setError(null);
     try {
+      // 确保未登录用户有visitorId
+      if (!user && !visitorId) {
+        const newVisitorId = getOrGenerateVisitorId();
+        setVisitorId(newVisitorId);
+        console.log(`VoteButton: Generated new visitorId before cancel vote: ${newVisitorId}`);
+      }
+      
+      console.log(`Attempting to cancel vote for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}`);
+      
       const response = await votesApi.cancelVote(submissionId);
       
       if (response.success) {
         setHasVoted(false);
-        console.log(`Vote cancelled for submission ${submissionId}, user ${user?.id || 'anonymous'}. Server returned vote count: ${response.voteCount}`);
+        console.log(`Vote cancelled for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}. Server returned vote count: ${response.voteCount}`);
         
         // Use the vote count returned from the server
         if (onVoteCancelled && response.voteCount !== undefined) {
@@ -119,6 +142,8 @@ export function VoteButton({
     } catch (err: Error | unknown) {
       console.error(`Failed to cancel vote for submission ${submissionId}:`, err);
       setError("Failed to cancel vote. Please try again.");
+      // 投票失败时刷新状态
+      checkStatus();
     } finally {
       setIsLoading(false);
     }
@@ -135,17 +160,7 @@ export function VoteButton({
     } else if (isLoading) {
       buttonContent = <Loader2 size={16} className="animate-spin" />;
     } else if (hasVoted === true) {
-      if (allowUnvote) {
-        // 如果允许取消投票，显示更明显的"取消"提示
-        buttonContent = (
-          <div className="flex items-center">
-            <CheckCircle size={16} className="text-green-500 mr-1" />
-            <span className="text-xs">取消</span>
-          </div>
-        );
-      } else {
-        buttonContent = <CheckCircle size={16} className="text-green-500" />;
-      }
+      buttonContent = <CheckCircle size={16} className="text-green-500" />;
     } else {
       buttonContent = <ThumbsUp size={16} />;
     }
@@ -156,11 +171,7 @@ export function VoteButton({
     } else if (isLoading) {
       buttonContent = <><Loader2 size={16} className="mr-1 animate-spin" /> Voting</>;
     } else if (hasVoted === true) {
-      if (allowUnvote) {
-        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Cancel</>;
-      } else {
-        buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
-      }
+      buttonContent = <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
     } else {
       buttonContent = <><ThumbsUp size={16} className="mr-1" /> Vote</>;
     }
@@ -172,24 +183,17 @@ export function VoteButton({
 
   if (hasVoted === true) {
     // 如果已投票且允许取消，使用一个特殊样式但不禁用
-    buttonVariant = allowUnvote ? 'primary' : 'ghost';
+    buttonVariant = 'ghost';
   } else if (hasVoted === false) {
     buttonVariant = 'primary';
   }
 
   if (error && !isLoading) {
     if (error.includes("already voted")) {
-      if (allowUnvote) {
-        buttonContent = isMobile 
-          ? <div className="flex items-center"><CheckCircle size={16} className="text-green-500 mr-1" /><span className="text-xs">取消</span></div>
-          : <><CheckCircle size={16} className="mr-1 text-green-500" /> Cancel</>;
-        buttonVariant = 'primary';
-      } else {
-        buttonContent = isMobile 
-          ? <CheckCircle size={16} className="text-green-500" />
-          : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
-        buttonVariant = 'ghost';
-      }
+      buttonContent = isMobile 
+        ? <CheckCircle size={16} className="text-green-500" />
+        : <><CheckCircle size={16} className="mr-1 text-green-500" /> Voted</>;
+      buttonVariant = 'ghost';
       isDisabled = !allowUnvote;
     }
   }

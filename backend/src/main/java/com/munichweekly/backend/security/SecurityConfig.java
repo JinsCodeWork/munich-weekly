@@ -40,8 +40,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll() // Assuming public GET for submissions
-                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll() // <<< ADD THIS
-                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()     // <<< ADD THIS
+                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll() // 允许检查投票状态
+                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()     // 允许投票
+                        .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()   // 允许取消投票
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
                         .requestMatchers("/uploads/**").permitAll()

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.repository.VoteRepository;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.RequestAttributes;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -20,6 +24,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/votes")
 public class VoteController {
+    private static final Logger logger = LoggerFactory.getLogger(VoteController.class);
 
     private final VoteService voteService;
     private final SubmissionRepository submissionRepository;
@@ -47,8 +52,12 @@ public class VoteController {
         // 获取当前登录用户ID（如果已登录）
         Optional<Long> currentUserId = CurrentUserUtil.getCurrentUserId();
         
+        logger.info("Submit vote: submissionId={}, visitorId={}, userId={}", 
+                 submissionId, visitorId, currentUserId.orElse(null));
+        
         // 如果未登录且没有visitorId，则返回错误
         if (currentUserId.isEmpty() && (visitorId == null || visitorId.isEmpty())) {
+            logger.warn("Vote attempt without authentication: submissionId={}", submissionId);
             return ResponseEntity.badRequest().body("Authentication required: either login or enable cookies for visitorId.");
         }
 
@@ -61,8 +70,10 @@ public class VoteController {
         Vote vote;
         if (currentUserId.isPresent()) {
             vote = voteService.voteAsUser(currentUserId.get(), submission, ipAddress);
+            logger.info("User vote successful: userId={}, submissionId={}", currentUserId.get(), submissionId);
         } else {
             vote = voteService.vote(visitorId, submission, ipAddress);
+            logger.info("Anonymous vote successful: visitorId={}, submissionId={}", visitorId, submissionId);
         }
         
         // Get current vote count
@@ -90,8 +101,12 @@ public class VoteController {
         // 获取当前登录用户ID（如果已登录）
         Optional<Long> currentUserId = CurrentUserUtil.getCurrentUserId();
         
+        logger.debug("Check vote status: submissionId={}, visitorId={}, userId={}", 
+                   submissionId, visitorId, currentUserId.orElse(null));
+        
         // 如果既没有登录也没有visitorId，则视为未投票
         if (currentUserId.isEmpty() && (visitorId == null || visitorId.isEmpty())) {
+            logger.debug("No visitorId or user found, assuming not voted");
             return ResponseEntity.ok(Map.of("voted", false));
         }
 
@@ -101,8 +116,12 @@ public class VoteController {
         boolean voted;
         if (currentUserId.isPresent()) {
             voted = voteService.hasVotedAsUser(currentUserId.get(), submission);
+            logger.debug("User vote check: userId={}, submissionId={}, voted={}", 
+                       currentUserId.get(), submissionId, voted);
         } else {
             voted = voteService.hasVoted(visitorId, submission);
+            logger.debug("Anonymous vote check: visitorId={}, submissionId={}, voted={}", 
+                       visitorId, submissionId, voted);
         }
         
         return ResponseEntity.ok(Map.of("voted", voted));
@@ -123,8 +142,13 @@ public class VoteController {
         // 获取当前登录用户ID（如果已登录）
         Optional<Long> currentUserId = CurrentUserUtil.getCurrentUserId();
         
+        logger.info("Cancel vote request: submissionId={}, visitorId={}, userId={}, cookies={}", 
+                 submissionId, visitorId, currentUserId.orElse(null), 
+                 java.util.Arrays.toString(((HttpServletRequest)RequestContextHolder.currentRequestAttributes().resolveReference(RequestAttributes.REFERENCE_REQUEST)).getCookies()));
+        
         // 如果未登录且没有visitorId，则返回错误
         if (currentUserId.isEmpty() && (visitorId == null || visitorId.isEmpty())) {
+            logger.warn("Cancel vote attempt without authentication: submissionId={}", submissionId);
             return ResponseEntity.badRequest().body("Authentication required: either login or enable cookies for visitorId.");
         }
         
@@ -134,9 +158,17 @@ public class VoteController {
         try {
             boolean success;
             if (currentUserId.isPresent()) {
+                logger.info("Attempting to cancel user vote: userId={}, submissionId={}", 
+                         currentUserId.get(), submissionId);
                 success = voteService.cancelVoteAsUser(currentUserId.get(), submission);
+                logger.info("User vote cancelled: userId={}, submissionId={}, success={}", 
+                         currentUserId.get(), submissionId, success);
             } else {
+                logger.info("Attempting to cancel anonymous vote: visitorId={}, submissionId={}", 
+                         visitorId, submissionId);
                 success = voteService.cancelVote(visitorId, submission);
+                logger.info("Anonymous vote cancelled: visitorId={}, submissionId={}, success={}", 
+                         visitorId, submissionId, success);
             }
             
             // Get updated vote count
@@ -149,6 +181,8 @@ public class VoteController {
             
             return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {
+            logger.error("Failed to cancel vote: submissionId={}, visitorId={}, userId={}, error={}", 
+                       submissionId, visitorId, currentUserId.orElse(null), e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

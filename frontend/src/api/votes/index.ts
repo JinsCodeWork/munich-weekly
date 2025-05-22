@@ -3,6 +3,7 @@
  * 提供投票功能和投票状态检查
  */
 import { fetchAPI } from "../http";
+import { getOrGenerateVisitorId } from "@/lib/visitorId";
 
 interface VoteResponse {
   vote: { id: number; submissionId: number; visitorId: string };
@@ -24,6 +25,9 @@ export const submitVote = async (submissionId: number): Promise<VoteResponse> =>
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
+  // 确保已设置visitorId cookie
+  getOrGenerateVisitorId();
+  
   return fetchAPI<VoteResponse>(url.toString(), {
     method: "POST",
   });
@@ -38,6 +42,9 @@ export const checkVoteStatus = async (submissionId: number): Promise<{ voted: bo
   const url = new URL("/api/votes/check", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
+  // 确保已设置visitorId cookie
+  getOrGenerateVisitorId();
+  
   return fetchAPI<{ voted: boolean }>(url.toString(), { method: "GET" });
 };
 
@@ -51,7 +58,12 @@ export const cancelVote = async (submissionId: number): Promise<CancelVoteRespon
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
+  // 确保已设置visitorId cookie
+  const visitorId = getOrGenerateVisitorId();
+  console.log("Cancelling vote with visitorId:", visitorId);
+  
   return fetchAPI<CancelVoteResponse>(url.toString(), {
     method: "DELETE",
+    credentials: 'include', // 确保包含cookie
   });
 }; 
