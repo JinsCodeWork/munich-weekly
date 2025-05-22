@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import Image from 'next/image';
 import { createImageUrl } from '@/lib/utils';
 import { useConfigAdmin } from '@/hooks/useConfigAdmin';
+import Link from 'next/link';
 
 export default function HomeSettingsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
   const router = useRouter();
   
   // Use our custom hook to manage configuration
@@ -33,22 +34,37 @@ export default function HomeSettingsPage() {
   const [message, setMessage] = useState({ type: '', content: '' });
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
+  const [tokenMissing, setTokenMissing] = useState(false);
   
+  // Check for JWT token and redirect if missing
+  useEffect(() => {
+    const token = localStorage.getItem("jwt");
+    if (!token && !authLoading) {
+      setTokenMissing(true);
+      setMessage({ 
+        type: 'error', 
+        content: 'Authentication token is missing. Please log in again.'
+      });
+    } else {
+      setTokenMissing(false);
+    }
+  }, [authLoading]);
+
   // Check user permissions and auth status
-  React.useEffect(() => {
+  useEffect(() => {
     // Redirect non-admin users
     if (user && user.role !== 'admin') {
       router.push('/account');
     }
     
     // Check authentication
-    if (!user && !isLoading) {
+    if (!user && !isLoading && !authLoading) {
       router.push('/account');
     }
-  }, [user, router, isLoading]);
+  }, [user, router, isLoading, authLoading]);
   
   // Sync config updates to form
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading) {
       setMainDescription(config.heroImage.description);
       setImageCaption(config.heroImage.imageCaption || '');
@@ -56,9 +72,15 @@ export default function HomeSettingsPage() {
   }, [config, isLoading]);
   
   // Sync error messages
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       setMessage({ type: 'error', content: error });
+      
+      // Check if token was cleared due to 401 error
+      const token = localStorage.getItem("jwt");
+      if (!token) {
+        setTokenMissing(true);
+      }
     } else if (success) {
       setMessage({ type: 'success', content: success });
     } else {
@@ -66,14 +88,24 @@ export default function HomeSettingsPage() {
     }
   }, [error, success]);
   
+  // Sync token from auth context to localStorage if needed
+  useEffect(() => {
+    if (token && !localStorage.getItem("jwt")) {
+      console.log("Restoring token from auth context to localStorage");
+      localStorage.setItem("jwt", token);
+      setTokenMissing(false);
+    }
+  }, [token]);
+  
   // Get debug info
   const updateDebugInfo = () => {
     try {
-      const token = localStorage.getItem("jwt");
+      const localToken = localStorage.getItem("jwt");
       const debugText = `
 Auth Status: ${user ? `Logged in as ${user.role}` : 'Not logged in'}
-Token exists: ${token ? 'Yes' : 'No'}
-Token preview: ${token ? `${token.substring(0, 15)}...` : 'None'}
+Auth Context Token: ${token ? 'Present' : 'Missing'}
+localStorage Token: ${localToken ? 'Present' : 'Missing'}
+Token preview: ${localToken ? `${localToken.substring(0, 15)}...` : 'None'}
 Environment: ${process.env.NODE_ENV}
 Using fetchAPI: Yes
       `;
@@ -121,6 +153,26 @@ Using fetchAPI: Yes
     setMessage({ type: '', content: '' });
   };
   
+  // Show login required message if token is missing
+  if (tokenMissing) {
+    return (
+      <Container className="py-8">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-4">Authentication Error</h2>
+            <p className="text-gray-700 mb-6">Your authentication token is missing or has expired. Please log in again to continue.</p>
+            <Link 
+              href="/login"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow transition"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+  
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +180,14 @@ Using fetchAPI: Yes
     // Check if logged in
     if (!user) {
       router.push('/account');
+      return;
+    }
+    
+    // Check if token exists
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+      setTokenMissing(true);
+      setMessage({ type: 'error', content: 'Authentication token is missing. Please log in again.' });
       return;
     }
     
