@@ -43,7 +43,11 @@ export function useConfigAdmin() {
     try {
       console.log('Loading admin configuration');
       
-      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      // 添加额外的验证措施 - 明确将token作为cookie也发送
+      const token = localStorage.getItem('jwt');
+      // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
+      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
+      
       const response = await fetch('/api/admin/config', {
         method: 'GET',
         headers: {
@@ -117,7 +121,14 @@ export function useConfigAdmin() {
       
       console.log('Uploading image to admin upload API');
       
-      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      // 添加额外的验证措施 - 确保cookie中也有token
+      const token = localStorage.getItem('jwt');
+      // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
+      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
+      
+      // 在表单中也添加token
+      formData.append('token', token || '');
+      
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
@@ -173,7 +184,11 @@ export function useConfigAdmin() {
     try {
       console.log('Saving admin configuration');
       
-      // 直接照抄用户上传的方式 - 使用直接的fetch和getAuthHeader
+      // 添加额外的验证措施 - 确保cookie中也有token
+      const token = localStorage.getItem('jwt');
+      // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
+      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
+      
       const response = await fetch('/api/admin/config', {
         method: 'POST',
         headers: {

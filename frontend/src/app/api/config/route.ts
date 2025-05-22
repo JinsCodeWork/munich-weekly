@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { homePageConfig } from '@/lib/config';
 
 // 获取主页配置 - 公开API，不需要身份验证
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // 打印cookie和头信息用于调试
+    console.log('Config API cookies:', [...request.cookies.getAll()].map(c => c.name));
+    console.log('Config API headers:', [...request.headers.entries()].map(([key, value]) => 
+      `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
     // 尝试从文件读取配置
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
     let config;
