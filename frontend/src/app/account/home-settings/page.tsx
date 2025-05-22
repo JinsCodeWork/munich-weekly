@@ -1,137 +1,67 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
-import { homePageConfig } from '@/lib/config';
 import Image from 'next/image';
 import { createImageUrl } from '@/lib/utils';
-import { getAuthHeader } from '@/api/http';
+import { useConfigAdmin } from '@/hooks/useConfigAdmin';
 
 export default function HomeSettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   
+  // Use our custom hook to manage configuration
+  const {
+    config,
+    isLoading,
+    error,
+    isSaving,
+    isUploading,
+    success,
+    uploadImage,
+    saveConfig
+  } = useConfigAdmin();
+  
   // Form state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [mainDescription, setMainDescription] = useState(homePageConfig.heroImage.description);
-  const [imageCaption, setImageCaption] = useState(homePageConfig.heroImage.imageCaption || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [mainDescription, setMainDescription] = useState(config.heroImage.description);
+  const [imageCaption, setImageCaption] = useState(config.heroImage.imageCaption || '');
   const [message, setMessage] = useState({ type: '', content: '' });
-  const [currentImageUrl, setCurrentImageUrl] = useState(homePageConfig.heroImage.imageUrl);
-  const [debugInfo, setDebugInfo] = useState<string>('');
   
   // Check user permissions and auth status
-  useEffect(() => {
+  React.useEffect(() => {
     // Redirect non-admin users
     if (user && user.role !== 'admin') {
       router.push('/account');
-      return;
     }
     
     // Check authentication
     if (!user && !isLoading) {
-      setMessage({ 
-        type: 'error', 
-        content: 'You must be logged in as an admin to access this page. Please log in and try again.' 
-      });
-      
-      // Try to refresh auth status after a short delay
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+      router.push('/account');
     }
   }, [user, router, isLoading]);
   
-  // Check authentication on mount
-  useEffect(() => {
-    // Debug authentication info
-    const token = localStorage.getItem("jwt");
-    const authHeader = getAuthHeader();
-    setDebugInfo(`Auth status: ${user ? 'Logged in' : 'Not logged in'}, Token exists: ${token ? 'Yes' : 'No'}, Auth header exists: ${Object.keys(authHeader).length > 0 ? 'Yes' : 'No'}`);
-  }, [user]);
+  // Sync config updates to form
+  React.useEffect(() => {
+    if (!isLoading) {
+      setMainDescription(config.heroImage.description);
+      setImageCaption(config.heroImage.imageCaption || '');
+    }
+  }, [config, isLoading]);
   
-  // Load current config
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        // Use auth header from our utility
-        const headers = getAuthHeader();
-        
-        console.log('Loading config with headers:', headers);
-        
-        // Try fetching from admin endpoint first
-        try {
-          const response = await fetch('/api/admin/config', {
-            method: 'GET',
-            headers,
-            credentials: 'include'
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.config?.heroImage) {
-              const { heroImage } = data.config;
-              
-              // Update form state
-              setMainDescription(heroImage.description || homePageConfig.heroImage.description);
-              setImageCaption(heroImage.imageCaption || homePageConfig.heroImage.imageCaption || '');
-              
-              // Update image URL
-              if (heroImage.imageUrl) {
-                setCurrentImageUrl(heroImage.imageUrl);
-              }
-              
-              setIsLoading(false);
-              return;
-            }
-          } else {
-            console.warn('Admin config fetch failed, falling back to public config');
-          }
-        } catch (adminError) {
-          console.error('Error fetching admin config:', adminError);
-        }
-        
-        // Fall back to public config endpoint
-        const response = await fetch('/api/config', {
-          headers,
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.config?.heroImage) {
-            const { heroImage } = data.config;
-            
-            // Update form state
-            setMainDescription(heroImage.description || homePageConfig.heroImage.description);
-            setImageCaption(heroImage.imageCaption || homePageConfig.heroImage.imageCaption || '');
-            
-            // Update image URL
-            if (heroImage.imageUrl) {
-              setCurrentImageUrl(heroImage.imageUrl);
-            }
-          }
-        } else {
-          // If both requests fail, use default config
-          console.warn('Both config fetches failed, using default config');
-          setMessage({ type: 'warning', content: 'Could not load configuration, using default settings' });
-        }
-      } catch (error) {
-        console.error('Failed to load config:', error);
-        setMessage({ type: 'error', content: 'Failed to load config, using default settings' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadConfig();
-  }, []);
+  // Sync error messages
+  React.useEffect(() => {
+    if (error) {
+      setMessage({ type: 'error', content: error });
+    } else if (success) {
+      setMessage({ type: 'success', content: success });
+    } else {
+      setMessage({ type: '', content: '' });
+    }
+  }, [error, success]);
   
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,30 +85,13 @@ export default function HomeSettingsPage() {
     setMessage({ type: '', content: '' });
   };
   
-  // Handle authentication errors with retry
-  const handleAuthError = async () => {
-    // Clear any stale tokens
-    localStorage.removeItem("jwt");
-    sessionStorage.removeItem("preserve_auth");
-    
-    setMessage({ 
-      type: 'error', 
-      content: 'Authentication error. Please refresh the page to log in again.' 
-    });
-    
-    // Reload the page after a short delay
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  };
-  
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if user is logged in
+    // Check if logged in
     if (!user) {
-      handleAuthError();
+      router.push('/account');
       return;
     }
     
@@ -187,66 +100,18 @@ export default function HomeSettingsPage() {
       return;
     }
     
-    setIsSubmitting(true);
-    setMessage({ type: 'info', content: 'Submitting...' });
-    
     try {
       // Define image URL variable
-      let newImageUrl = currentImageUrl;
+      let newImageUrl = config.heroImage.imageUrl;
       
       // If there's a new image, upload it first
       if (imageFile) {
-        // Get auth headers using our utility function
-        const authHeaders = getAuthHeader();
-        console.log('Auth headers for upload:', authHeaders);
-        
-        const formData = new FormData();
-        formData.append('file', imageFile);
-        formData.append('path', 'images/home');
-        formData.append('filename', 'hero.jpg');
-        
-        // Also add token directly to form data as a fallback
-        const token = localStorage.getItem("jwt");
-        if (token) {
-          formData.append('token', token);
-        }
-        
-        console.log('直接调用后端API上传图片');
-        
-        // More detailed debugging
-        if (token) {
-          console.log('JWT token found in localStorage, length:', token.length);
-          // Log the first few characters for debugging (don't log the entire token)
-          console.log('Token starts with:', token.substring(0, 10) + '...');
-        } else {
-          console.warn('No JWT token found in localStorage');
-        }
-        
-        // 直接调用后端API，绕过Next.js API路由
-        const imageResponse = await fetch('/api/submissions/admin/upload', {
-          method: 'POST',
-          headers: authHeaders,
-          body: formData,
-          credentials: 'include', // Include cookies for auth
-        });
-        
-        if (!imageResponse.ok) {
-          const errorText = await imageResponse.text();
-          console.error('Upload failed:', imageResponse.status, errorText);
-          throw new Error(`Image upload failed: ${errorText || imageResponse.statusText}`);
-        }
-        
-        // Parse successful response
-        const imageData = await imageResponse.json();
-        console.log('Upload response:', imageData);
-        
-        if (imageData.success && imageData.url) {
-          // Update image URL, add timestamp
-          newImageUrl = imageData.url.includes('?') 
-            ? imageData.url 
-            : `${imageData.url}?t=${Date.now()}`;
-          console.log('New image URL:', newImageUrl);
-          setCurrentImageUrl(newImageUrl);
+        try {
+          newImageUrl = await uploadImage(imageFile);
+        } catch (err) {
+          // uploadImage already sets error state, no need to repeat
+          console.error('Image upload failed:', err);
+          return;
         }
       }
       
@@ -259,33 +124,8 @@ export default function HomeSettingsPage() {
         }
       };
       
-      console.log('通过Next.js API路由更新配置');
-      
-      // Get auth headers
-      const configHeaders = {
-        'Content-Type': 'application/json',
-        ...getAuthHeader() // Use our utility to get auth headers
-      };
-      
-      console.log('Config update headers:', configHeaders);
-      
-      // 使用Next.js API路由更新配置
-      const configUpdateResponse = await fetch('/api/admin/config', {
-        method: 'POST',
-        headers: configHeaders,
-        body: JSON.stringify(configData),
-        credentials: 'include', // Include cookies for auth
-      });
-      
-      if (!configUpdateResponse.ok) {
-        throw new Error('Failed to update config');
-      }
-      
-      // Get config update result
-      const configResult = await configUpdateResponse.json();
-      console.log('Config update result:', configResult);
-      
-      setMessage({ type: 'success', content: 'Home page settings updated' });
+      // Save configuration
+      await saveConfig(configData);
       
       // Clear preview
       if (previewUrl) {
@@ -294,11 +134,9 @@ export default function HomeSettingsPage() {
       }
       setImageFile(null);
       
-    } catch (error) {
-      console.error('Update failed:', error);
-      setMessage({ type: 'error', content: `Update failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      // saveConfig already sets error state, no need to repeat
+      console.error('Failed to save config:', err);
     }
   };
   
@@ -312,8 +150,8 @@ export default function HomeSettingsPage() {
     }
     
     setImageFile(null);
-    setMainDescription(homePageConfig.heroImage.description);
-    setImageCaption(homePageConfig.heroImage.imageCaption || '');
+    setMainDescription(config.heroImage.description);
+    setImageCaption(config.heroImage.imageCaption || '');
   };
   
   if (!user || user.role !== 'admin') {
@@ -346,18 +184,6 @@ export default function HomeSettingsPage() {
         </div>
       )}
       
-      {/* Debug info */}
-      <div className="p-4 mb-6 bg-gray-100 border border-gray-300 rounded text-xs font-mono">
-        <details>
-          <summary className="cursor-pointer">Debug Info (Click to expand)</summary>
-          <div className="mt-2">
-            <p>{debugInfo}</p>
-            <p className="mt-1">Environment: {process.env.NODE_ENV}</p>
-            <p className="mt-1">User: {user ? `Logged in (${user.role})` : 'Not logged in'}</p>
-          </div>
-        </details>
-      </div>
-      
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image upload area */}
         <div className="space-y-4">
@@ -370,7 +196,7 @@ export default function HomeSettingsPage() {
               accept="image/jpeg,image/png"
               className="hidden"
               onChange={handleImageChange}
-              disabled={isSubmitting}
+              disabled={isSaving || isUploading}
             />
             
             {previewUrl ? (
@@ -385,7 +211,7 @@ export default function HomeSettingsPage() {
             ) : (
               <div className="w-full aspect-[16/9] relative mb-4 bg-gray-100 flex items-center justify-center">
                 <Image 
-                  src={createImageUrl(currentImageUrl, { width: 800 })}
+                  src={createImageUrl(config.heroImage.imageUrl, { width: 800 })}
                   alt="Current Home Page Image"
                   width={800}
                   height={450}
@@ -420,7 +246,7 @@ export default function HomeSettingsPage() {
             placeholder="Enter the main description text to display in the center of the image"
             inputMode="text"
             autoCorrect="off"
-            disabled={isSubmitting}
+            disabled={isSaving || isUploading}
           />
         </div>
         
@@ -437,7 +263,7 @@ export default function HomeSettingsPage() {
             placeholder="e.g. Photographer: Max Mustermann | Marienplatz, Munich | June 2023"
             inputMode="text"
             autoCorrect="off"
-            disabled={isSubmitting}
+            disabled={isSaving || isUploading}
           />
         </div>
         
@@ -446,16 +272,16 @@ export default function HomeSettingsPage() {
           <button
             type="submit"
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSubmitting}
+            disabled={isSaving || isUploading}
           >
-            {isSubmitting ? 'Saving...' : 'Save Settings'}
+            {isSaving ? 'Saving...' : isUploading ? 'Uploading...' : 'Save Settings'}
           </button>
           
           <button
             type="button"
             onClick={handleReset}
             className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSubmitting}
+            disabled={isSaving || isUploading}
           >
             Reset Form
           </button>
