@@ -109,7 +109,7 @@ Auth Context Token: ${token ? 'Present' : 'Missing'}
 localStorage Token: ${localToken ? 'Present' : 'Missing'}
 Token preview: ${localToken ? `${localToken.substring(0, 15)}...` : 'None'}
 Environment: ${process.env.NODE_ENV}
-Using fetchAPI: No (Direct fetch with auth headers)
+Using fetchAPI: Yes (Standard API pattern)
       `;
       setDebugInfo(debugText);
       setShowDebug(true);
