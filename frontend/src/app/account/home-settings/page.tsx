@@ -76,11 +76,9 @@ export default function HomeSettingsPage() {
     if (error) {
       setMessage({ type: 'error', content: error });
       
-      // Check if token was cleared due to 401 error
-      const token = localStorage.getItem("jwt");
-      if (!token) {
-        setTokenMissing(true);
-      }
+      // 不要检查token是否被清除，避免误判
+      // 仅当明确判断需要重新登录时再设置tokenMissing
+      // 管理页面401错误可能是权限问题，不一定是token过期
     } else if (success) {
       setMessage({ type: 'success', content: success });
     } else {
@@ -119,15 +117,15 @@ Using fetchAPI: Yes
   // Add a retry button for manual loading
   const retryLoadConfig = () => {
     try {
-      const token = localStorage.getItem("jwt");
-      console.log("Current token before retry:", token ? token.substring(0, 10) + "..." : "none");
+      // 使用auth context中的token，即使localStorage中的token被清空也能正常工作
+      console.log("Attempting to retry with auth context token:", token ? "present" : "missing");
       
       // Retry loading using hook's loadConfig method
-      setMessage({ type: 'info', content: 'Retrying configuration load...' });
+      setMessage({ type: 'info', content: '正在重新加载配置...' });
       loadConfig();
     } catch (err) {
       console.error('Error during retry:', err);
-      setMessage({ type: 'error', content: 'Failed to retry loading configuration' });
+      setMessage({ type: 'error', content: '重新加载配置失败' });
     }
   };
   
