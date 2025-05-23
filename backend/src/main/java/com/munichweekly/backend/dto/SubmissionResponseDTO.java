@@ -23,7 +23,7 @@ public class SubmissionResponseDTO {
 
     public SubmissionResponseDTO(Submission s, long voteCount) {
         this.id = s.getId();
-        this.imageUrl = s.getImageUrl();
+        this.imageUrl = s.getImageUrl() != null ? s.getImageUrl() : "";
         this.description = s.getDescription();
         this.nickname = s.getUser().getNickname();
         this.submittedAt = s.getSubmittedAt();

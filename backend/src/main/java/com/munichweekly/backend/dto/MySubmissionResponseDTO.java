@@ -26,7 +26,7 @@ public class MySubmissionResponseDTO {
 
     public MySubmissionResponseDTO(Submission s, int voteCount) {
         this.id = s.getId();
-        this.imageUrl = s.getImageUrl();
+        this.imageUrl = s.getImageUrl() != null ? s.getImageUrl() : "";
         this.description = s.getDescription();
         this.status = s.getStatus();
         this.submittedAt = s.getSubmittedAt();

@@ -28,9 +28,20 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const initialPosRef = useRef({ x: 0, y: 0 });
   const initialScaleRef = useRef(1);
 
+  // 检查imageUrl是否有效
+  const hasValidImage = imageUrl && imageUrl.trim() !== '';
+  
+  // 如果没有有效图片，直接关闭viewer
+  useEffect(() => {
+    if (isOpen && !hasValidImage) {
+      console.warn('ImageViewer: No valid image URL provided, closing viewer');
+      onClose();
+    }
+  }, [isOpen, hasValidImage, onClose]);
+
   // Create high quality image URL (without specifying width/height, letting the Worker adapt based on the original image and screen)
   const highQualityUrl = useMemo(() => {
-    if (!imageUrl) return '';
+    if (!hasValidImage) return '';
     
     // For uploaded images, add high quality parameters without limiting dimensions
     if (imageUrl.startsWith('/uploads/') || imageUrl.includes('.r2.dev/')) {
@@ -42,7 +53,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     
     // For external images, use the original URL
     return imageUrl;
-  }, [imageUrl]);
+  }, [imageUrl, hasValidImage]);
   
   // Preload image to get dimension information
   useEffect(() => {

@@ -45,11 +45,51 @@ export function Thumbnail({
   rounded = true,
   aspectRatio = "square",
   unoptimized = false,
-  fallbackSrc = '/placeholder.jpg',
+  fallbackSrc = '/placeholder.svg',
   showErrorMessage = false,
   useImageOptimization = true
 }: ThumbnailProps) {
   const [hasError, setHasError] = useState(false);
+  
+  // 检查src是否为空或无效
+  const isValidSrc = src && src.trim() !== '';
+  
+  // 如果src为空或无效，直接使用fallback图片
+  if (!isValidSrc) {
+    console.warn('Thumbnail: Invalid or empty src provided, using fallback image');
+    return (
+      <div
+        className={getThumbnailContainerStyles({
+          rounded,
+          fill,
+          aspectRatio,
+          className: containerClassName
+        })}
+        onClick={onClick}
+        style={fill ? undefined : { width, height }}
+      >
+        <Image
+          src={fallbackSrc}
+          alt={alt || 'Image not available'}
+          className={getThumbnailImageStyles({
+            objectFit,
+            isClickable: !!onClick,
+            className: `${className} opacity-50`
+          })}
+          width={fill ? undefined : width}
+          height={fill ? undefined : height}
+          fill={fill}
+          sizes={sizes || (fill ? "100vw" : undefined)}
+          priority={priority}
+          quality={quality}
+          unoptimized={true}
+        />
+        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
+          No Image
+        </div>
+      </div>
+    );
+  }
   
   // 添加调试信息，在控制台中打印URL转换前后的结果
   if (src.includes('.r2.dev/')) {
@@ -118,7 +158,7 @@ export function Thumbnail({
         onError={handleError}
       />
       {hasError && showErrorMessage && (
-        <div className="absolute inset-0 flex items-center justify-center text-red-500">
+        <div className="absolute inset-0 flex items-center justify-center text-red-500 text-xs">
           Loading Failed
         </div>
       )}

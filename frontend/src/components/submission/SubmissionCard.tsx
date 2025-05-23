@@ -25,7 +25,10 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleOpenViewer = () => {
-    setIsViewerOpen(true);
+    // 只有在有有效图片时才打开查看器
+    if (hasValidImage) {
+      setIsViewerOpen(true);
+    }
   };
 
   const handleCloseViewer = () => {
@@ -34,13 +37,19 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   
   // Process the image URL to ensure it has the correct server prefix
   const imageUrl = submission.imageUrl;
-  const displayUrl = getImageUrl(imageUrl);
+  
+  // 检查imageUrl是否为空或无效
+  const hasValidImage = imageUrl && imageUrl.trim() !== '';
+  
+  // 只有在有有效图片URL时才处理URL
+  const displayUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
   // 为查看大图准备的URL，不添加大小限制参数
-  const fullImageUrl = getImageUrl(imageUrl);
+  const fullImageUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
   // Debug information
   console.log("SubmissionCard original URL:", imageUrl);
+  console.log("SubmissionCard has valid image:", hasValidImage);
   console.log("SubmissionCard display URL:", displayUrl);
 
   // Determine if status badge should be shown based on context
@@ -66,13 +75,15 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
         {/* Image area */}
         <div className={getSubmissionCardElementStyles('imageContainer')}>
           <Thumbnail
-            src={displayUrl}
+            src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
             fill={true}
             objectFit="cover"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
             priority={false}
             unoptimized={imageUrl.startsWith('/uploads/')}
+            showErrorMessage={true}
+            fallbackSrc="/placeholder.svg"
           />
           
           {/* Status badge - conditional rendering */}
@@ -163,13 +174,15 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
         </div>
       </div>
 
-      {/* Image Viewer Modal */}
-      <ImageViewer 
-        imageUrl={fullImageUrl}
-        description={submission.description}
-        isOpen={isViewerOpen}
-        onClose={handleCloseViewer}
-      />
+      {/* 只有在有有效图片时才显示ImageViewer */}
+      {hasValidImage && fullImageUrl && (
+        <ImageViewer
+          imageUrl={fullImageUrl}
+          description={submission.description}
+          isOpen={isViewerOpen}
+          onClose={handleCloseViewer}
+        />
+      )}
     </>
   );
 } 

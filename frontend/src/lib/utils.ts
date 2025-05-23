@@ -86,7 +86,11 @@ export function statusToColorClass(status: string, type: 'bg' | 'text' | 'border
  * @returns Properly formatted image URL
  */
 export function getImageUrl(url: string): string {
-  if (!url) return '';
+  // 处理空或无效的URL
+  if (!url || url.trim() === '') {
+    console.warn('getImageUrl: Empty or invalid URL provided');
+    return '/placeholder.svg'; // 返回占位图片
+  }
   
   // 测试环境
   const isDevEnv = typeof window !== 'undefined' && window.location.hostname === 'localhost';
@@ -194,6 +198,12 @@ export interface ImageOptions {
 }
 
 export function createImageUrl(url: string, options: ImageOptions = {}): string {
+  // 处理空或无效的URL
+  if (!url || url.trim() === '') {
+    console.warn('createImageUrl: Empty or invalid URL provided');
+    return '/placeholder.svg'; // 返回占位图片
+  }
+  
   // 静态图片特殊处理 - 不应用CDN转换和参数
   if (url.startsWith('/images/')) {
     console.log('为静态图片创建URL:', url);

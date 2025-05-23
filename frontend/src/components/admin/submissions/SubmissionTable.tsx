@@ -200,13 +200,15 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
                     onClick={() => onViewSubmission(submission)}
                   >
                     <Thumbnail 
-                      src={submission.imageUrl} 
-                      alt={submission.description}
+                      src={submission.imageUrl || '/placeholder.svg'} 
+                      alt={submission.description || 'No description'}
                       width={64}
                       height={64}
                       rounded={true}
                       objectFit="cover"
                       containerClassName="cursor-pointer"
+                      showErrorMessage={true}
+                      fallbackSrc="/placeholder.svg"
                     />
                   </div>
                   <div className="ml-4">

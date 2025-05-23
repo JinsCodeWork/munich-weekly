@@ -26,8 +26,11 @@ export function ImageGrid({
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleOpenImage = (submission: Submission) => {
-    setSelectedImage(submission);
-    setIsViewerOpen(true);
+    // 只有在有有效图片时才打开查看器
+    if (submission.imageUrl && submission.imageUrl.trim() !== '') {
+      setSelectedImage(submission);
+      setIsViewerOpen(true);
+    }
   };
 
   const handleCloseViewer = () => {
@@ -67,8 +70,8 @@ export function ImageGrid({
         {submissions.map((submission) => (
           <div key={submission.id} className="group relative">
             <Thumbnail
-              src={submission.imageUrl}
-              alt={submission.description}
+              src={submission.imageUrl || '/placeholder.svg'}
+              alt={submission.description || 'No description'}
               fill={true}
               aspectRatio={aspectRatio}
               objectFit="cover"
@@ -76,6 +79,8 @@ export function ImageGrid({
               containerClassName="cursor-pointer"
               onClick={() => handleOpenImage(submission)}
               sizes={`(max-width: 640px) 100vw, (max-width: 768px) 50vw, ${columns > 3 ? '25vw' : '33vw'}`}
+              showErrorMessage={true}
+              fallbackSrc="/placeholder.svg"
             />
             
             {/* 可选的图片标题或描述悬停效果 */}
@@ -91,7 +96,7 @@ export function ImageGrid({
       </div>
 
       {/* 图片查看器 */}
-      {selectedImage && (
+      {selectedImage && selectedImage.imageUrl && selectedImage.imageUrl.trim() !== '' && (
         <ImageViewer
           imageUrl={selectedImage.imageUrl}
           description={selectedImage.description}
