@@ -5,6 +5,7 @@ import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.service.StorageService;
 import com.munichweekly.backend.service.R2StorageService;
+import com.munichweekly.backend.service.LocalStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,14 +38,17 @@ public class FileUploadController {
     private final StorageService storageService;
     private final SubmissionRepository submissionRepository;
     private final R2StorageService r2StorageService;  // 直接注入R2服务用于调试
+    private final LocalStorageService localStorageService;
 
     @Autowired
     public FileUploadController(StorageService storageService, 
                                SubmissionRepository submissionRepository,
-                               R2StorageService r2StorageService) {
+                               R2StorageService r2StorageService,
+                               LocalStorageService localStorageService) {
         this.storageService = storageService;
         this.submissionRepository = submissionRepository;
         this.r2StorageService = r2StorageService;
+        this.localStorageService = localStorageService;
     }
 
     /**
@@ -350,6 +354,130 @@ public class FileUploadController {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error retrieving image: " + e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
+     * 专门用于主页hero图片上传的端点
+     * 上传的图片将直接保存为 /uploads/hero.jpg，覆盖现有文件
+     * 
+     * @param file 上传的图片文件
+     * @return 上传结果
+     */
+    @Description("Upload hero image for homepage. The image will be saved as /uploads/hero.jpg, replacing any existing file.")
+    @PostMapping("/admin/upload-hero")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<Map<String, Object>> uploadHeroImage(@RequestParam("file") MultipartFile file) {
+        logger.info("Starting hero image upload - File: " + file.getOriginalFilename() + 
+                   ", Size: " + file.getSize() + " bytes, Content Type: " + file.getContentType());
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // 基本验证
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Cannot upload empty file"
+                ));
+            }
+            
+            // 文件大小检查 (30MB)
+            long maxSize = 30 * 1024 * 1024;
+            if (file.getSize() > maxSize) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "File size exceeds the limit of 30MB"
+                ));
+            }
+            
+            // 文件类型检查
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "File type not supported. Only JPEG and PNG are allowed"
+                ));
+            }
+            
+            // 如果使用LocalStorageService，我们需要手动保存到特定位置
+            if (storageService instanceof LocalStorageService) {
+                // 使用特殊的路径来保存hero图片
+                String heroFileUrl = saveHeroImageLocally(file, localStorageService);
+                
+                if (heroFileUrl != null) {
+                    response.put("success", true);
+                    response.put("message", "Hero image uploaded successfully");
+                    response.put("url", heroFileUrl);
+                    logger.info("Hero image uploaded successfully: " + heroFileUrl);
+                    return ResponseEntity.ok(response);
+                } else {
+                    return ResponseEntity.internalServerError().body(Map.of(
+                        "success", false,
+                        "error", "Failed to save hero image"
+                    ));
+                }
+            } else {
+                // 对于R2存储，使用现有逻辑但保存到特定路径
+                String fileUrl = storageService.storeFile(file, "static", "admin", "hero");
+                response.put("success", true);
+                response.put("message", "Hero image uploaded successfully");
+                response.put("url", fileUrl);
+                return ResponseEntity.ok(response);
+            }
+            
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid hero image upload: " + e.getMessage());
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Hero image upload error: " + e.getMessage(), e);
+            response.put("success", false);
+            response.put("error", "Failed to store hero image: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error during hero image upload", e);
+            response.put("success", false);
+            response.put("error", "An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * 将hero图片保存到本地存储的特定位置
+     */
+    private String saveHeroImageLocally(MultipartFile file, LocalStorageService localService) throws IOException {
+        // 获取uploads目录的根路径
+        try {
+            java.lang.reflect.Field rootLocationField = LocalStorageService.class.getDeclaredField("rootLocation");
+            rootLocationField.setAccessible(true);
+            java.nio.file.Path rootLocation = (java.nio.file.Path) rootLocationField.get(localService);
+            
+            // 确定文件扩展名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "jpg"; // 默认
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            }
+            
+            // 固定保存为 hero.jpg
+            java.nio.file.Path heroImagePath = rootLocation.resolve("hero." + extension);
+            
+            logger.info("Saving hero image to: " + heroImagePath);
+            
+            // 保存文件，覆盖现有文件
+            java.nio.file.Files.copy(file.getInputStream(), heroImagePath, 
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            
+            logger.info("Hero image saved successfully: " + heroImagePath);
+            
+            // 返回可访问的URL路径
+            return "/uploads/hero." + extension;
+            
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to save hero image locally: " + e.getMessage(), e);
+            throw new IOException("Failed to save hero image: " + e.getMessage(), e);
         }
     }
 }

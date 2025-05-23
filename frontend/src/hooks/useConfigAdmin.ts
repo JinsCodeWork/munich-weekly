@@ -116,20 +116,16 @@ export function useConfigAdmin() {
       // Create FormData
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('path', 'images/home');
-      formData.append('filename', 'hero.jpg');
       
-      console.log('Uploading image to admin upload API');
+      console.log('Uploading hero image to backend local storage');
       
       // 添加额外的验证措施 - 确保cookie中也有token
       const token = localStorage.getItem('jwt');
       // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
       
-      // 在表单中也添加token
-      formData.append('token', token || '');
-      
-      const response = await fetch('/frontend-api/admin/upload', {
+      // 使用新的hero图片专用上传端点
+      const response = await fetch('/api/submissions/admin/upload-hero', {
         method: 'POST',
         body: formData,
         headers: {
@@ -140,7 +136,7 @@ export function useConfigAdmin() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Upload failed:', response.status, errorText);
+        console.error('Hero image upload failed:', response.status, errorText);
         throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
       }
 
@@ -150,15 +146,42 @@ export function useConfigAdmin() {
         throw new Error(data.error || 'Upload returned invalid data');
       }
       
-      console.log('Image upload successful:', data.url);
+      console.log('Hero image upload successful:', data.url);
       
-      // Add timestamp to prevent caching
-      return data.url.includes('?') 
-        ? data.url 
-        : `${data.url}?t=${Date.now()}`;
+      // 图片上传到后端成功后，需要同步到前端目录
+      console.log('Syncing hero image to frontend directory...');
+      
+      try {
+        const syncResponse = await fetch('/frontend-api/admin/sync-hero', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader()
+          },
+          credentials: 'include'
+        });
+        
+        if (!syncResponse.ok) {
+          console.warn('Failed to sync hero image to frontend:', syncResponse.status);
+          // 不抛出错误，因为后端上传已经成功
+        } else {
+          const syncData = await syncResponse.json();
+          if (syncData.success) {
+            console.log('Hero image synced to frontend successfully');
+          } else {
+            console.warn('Sync API returned error:', syncData.error);
+          }
+        }
+      } catch (syncError) {
+        console.warn('Error during hero image sync:', syncError);
+        // 不抛出错误，因为后端上传已经成功
+      }
+      
+      // 返回前端的本地路径
+      return '/images/home/hero.jpg';
       
     } catch (err) {
-      console.error('Image upload failed:', err);
+      console.error('Hero image upload failed:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown upload error';
       setError(`Image upload failed: ${errorMessage}`);
       
