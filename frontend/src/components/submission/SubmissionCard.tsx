@@ -78,12 +78,16 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
             src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
             fill={true}
-            objectFit="cover"
+            aspectRatio="auto"
+            objectFit="contain"
+            autoDetectAspectRatio={true}
+            preserveAspectRatio={true}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
             priority={false}
             unoptimized={imageUrl.startsWith('/uploads/')}
             showErrorMessage={true}
             fallbackSrc="/placeholder.svg"
+            quality={85}
           />
           
           {/* Status badge - conditional rendering */}

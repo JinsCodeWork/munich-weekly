@@ -47,7 +47,8 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     if (imageUrl.startsWith('/uploads/') || imageUrl.includes('.r2.dev/')) {
       return createImageUrl(imageUrl, {
         quality: 95,
-        format: 'auto' // Use the best format supported by the client
+        format: 'auto', // Use the best format supported by the client
+        fit: 'contain' // 强制使用contain，确保完整显示图片
       });
     }
     

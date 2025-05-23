@@ -94,9 +94,15 @@ function detectBestImageFormat(request) {
 function setDefaultImageParams(params, detectedFormat) {
 	const defaultParams = { ...params };
 	
-	// 如果未指定fit参数，默认使用scale-down（避免图像被不必要地放大）
+	// 优化fit参数的默认处理
 	if (!defaultParams.fit) {
-		defaultParams.fit = 'scale-down';
+		// 如果同时提供了宽度和高度，默认使用contain保持原图比例
+		if (defaultParams.width && defaultParams.height) {
+			defaultParams.fit = 'contain';
+		} else {
+			// 如果只提供了一个维度，使用scale-down避免图像被不必要地放大
+			defaultParams.fit = 'scale-down';
+		}
 	}
 	
 	// 如果format设置为auto或未设置，并且检测到支持的格式，则使用检测到的格式
@@ -109,6 +115,11 @@ function setDefaultImageParams(params, detectedFormat) {
 	// 如果设置了宽度但没有设置高度，保持原图宽高比
 	if (defaultParams.width && !defaultParams.height) {
 		defaultParams.fit = defaultParams.fit || 'scale-down';
+	}
+	
+	// 特殊处理：如果明确指定了cover且同时指定了尺寸，发出警告
+	if (defaultParams.fit === 'cover' && defaultParams.width && defaultParams.height) {
+		console.warn('使用cover模式可能会裁剪图片内容，建议使用contain模式保持完整图片');
 	}
 	
 	// 强化质量参数处理 - 确保移动端和高质量请求得到最佳处理
@@ -140,6 +151,13 @@ function setDefaultImageParams(params, detectedFormat) {
 			defaultParams.quality = 95; // 强制提高高DPR设备的质量
 		}
 	}
+	
+	// 添加调试信息
+	console.log('图片处理参数:', {
+		original: params,
+		processed: defaultParams,
+		detectedFormat: detectedFormat
+	});
 	
 	return defaultParams;
 }

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants } from "@/styles/components/thumbnail";
+import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants, detectAspectRatio } from "@/styles/components/thumbnail";
 import { createImageUrl } from "@/lib/utils";
 
 export interface ThumbnailProps {
@@ -17,17 +17,20 @@ export interface ThumbnailProps {
   objectFit?: keyof typeof objectFitVariants;
   quality?: number;
   rounded?: boolean;
-  aspectRatio?: keyof typeof aspectRatioVariants | string;
+  aspectRatio?: keyof typeof aspectRatioVariants | string | 'auto';
   unoptimized?: boolean;
   fallbackSrc?: string;
   showErrorMessage?: boolean;
   useImageOptimization?: boolean;
+  autoDetectAspectRatio?: boolean;
+  preserveAspectRatio?: boolean;
 }
 
 /**
  * Generic thumbnail component
  * Uses Next.js Image component for image optimization
  * Supports different sizes, ratios and style configurations
+ * Now includes automatic aspect ratio detection for better display of various image sizes
  */
 export function Thumbnail({
   src,
@@ -40,19 +43,89 @@ export function Thumbnail({
   priority = false,
   sizes,
   fill = false,
-  objectFit = "cover",
+  objectFit = "contain",
   quality = 80,
   rounded = true,
-  aspectRatio = "square",
+  aspectRatio = "auto",
   unoptimized = false,
   fallbackSrc = '/placeholder.svg',
   showErrorMessage = false,
-  useImageOptimization = true
+  useImageOptimization = true,
+  autoDetectAspectRatio = true,
+  preserveAspectRatio = true
 }: ThumbnailProps) {
   const [hasError, setHasError] = useState(false);
+  const [detectedRatio, setDetectedRatio] = useState<keyof typeof aspectRatioVariants | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   // 检查src是否为空或无效
   const isValidSrc = src && src.trim() !== '';
+  
+  // 获取处理后的图片源 - 使用useCallback优化
+  const getProcessedSrc = useCallback(() => {
+    if (!isValidSrc) return fallbackSrc;
+    
+    const isDevEnv = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    let processedSrc = src;
+    
+    // 如果是相对路径且不是开发环境，确保添加CDN域名
+    if (!isDevEnv && processedSrc.startsWith('/')) {
+      processedSrc = `https://img.munichweekly.art${processedSrc}`;
+    }
+    
+    return processedSrc;
+  }, [src, isValidSrc, fallbackSrc]);
+  
+  // 图片尺寸检测
+  useEffect(() => {
+    if (!isValidSrc || !autoDetectAspectRatio) return;
+    
+    const img = new window.Image();
+    img.onload = () => {
+      const detected = detectAspectRatio(img.naturalWidth, img.naturalHeight);
+      setDetectedRatio(detected);
+      setImageLoaded(true);
+      console.log(`图片尺寸检测: ${img.naturalWidth}x${img.naturalHeight}, 检测到比例: ${detected}`);
+    };
+    img.onerror = () => {
+      setImageLoaded(true);
+    };
+    
+    // 使用处理过的图片源进行检测
+    const processedSrc = getProcessedSrc();
+    img.src = processedSrc;
+  }, [src, autoDetectAspectRatio, isValidSrc, getProcessedSrc]);
+  
+  // 确定最终使用的宽高比
+  const finalAspectRatio = (() => {
+    if (aspectRatio !== 'auto') return aspectRatio;
+    if (detectedRatio && autoDetectAspectRatio) return detectedRatio;
+    return 'square'; // 后备选项
+  })();
+  
+  // 确定最终使用的objectFit
+  const finalObjectFit = (() => {
+    if (!preserveAspectRatio) return objectFit;
+    
+    // 如果需要保持原图比例，根据容器和图片比例关系选择合适的fit模式
+    if (detectedRatio) {
+      // 对于竖图 (9:16, 3:4 等)，如果容器不是竖向的，使用contain避免裁剪
+      if (['tallportrait', 'portrait'].includes(detectedRatio)) {
+        if (!['tallportrait', 'portrait'].includes(finalAspectRatio as string)) {
+          return 'contain';
+        }
+      }
+      
+      // 对于横图，如果容器不是横向的，使用contain避免裁剪
+      if (['widescreen', 'landscape', 'ultrawide', 'cinema'].includes(detectedRatio)) {
+        if (!['widescreen', 'landscape', 'ultrawide', 'cinema'].includes(finalAspectRatio as string)) {
+          return 'contain';
+        }
+      }
+    }
+    
+    return objectFit;
+  })();
   
   // 如果src为空或无效，直接使用fallback图片
   if (!isValidSrc) {
@@ -62,7 +135,7 @@ export function Thumbnail({
         className={getThumbnailContainerStyles({
           rounded,
           fill,
-          aspectRatio,
+          aspectRatio: finalAspectRatio,
           className: containerClassName
         })}
         onClick={onClick}
@@ -72,7 +145,7 @@ export function Thumbnail({
           src={fallbackSrc}
           alt={alt || 'Image not available'}
           className={getThumbnailImageStyles({
-            objectFit,
+            objectFit: finalObjectFit,
             isClickable: !!onClick,
             className: `${className} opacity-50`
           })}
@@ -91,19 +164,7 @@ export function Thumbnail({
     );
   }
   
-  // 添加调试信息，在控制台中打印URL转换前后的结果
-  if (src.includes('.r2.dev/')) {
-    console.log('原始R2 URL:', src);
-  }
-  
-  // 强制确保生产环境使用完整URL
-  const isDevEnv = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  let processedSrc = src;
-  
-  // 如果是相对路径且不是开发环境，确保添加CDN域名
-  if (!isDevEnv && processedSrc.startsWith('/')) {
-    processedSrc = `https://img.munichweekly.art${processedSrc}`;
-  }
+  const processedSrc = getProcessedSrc();
   
   // 根据是否使用图像优化来处理图像URL
   const imageSrc = useImageOptimization && processedSrc.startsWith('/uploads/')
@@ -111,15 +172,22 @@ export function Thumbnail({
         width: fill ? undefined : width,
         height: fill ? undefined : height,
         quality,
-        fit: objectFit === 'cover' ? 'cover' 
-           : objectFit === 'contain' ? 'contain'
-           : 'contain'
+        // 优化fit参数：对于preserve模式使用contain，否则使用scale-down作为安全选择
+        fit: preserveAspectRatio ? 'contain' : 
+             (finalObjectFit === 'cover' ? 'scale-down' : 'contain')
       })
     : processedSrc;
   
-  // 打印最终使用的URL
+  // 打印最终使用的参数（调试用）
   if (src.includes('.r2.dev/') || src.startsWith('/uploads/')) {
-    console.log('最终图片URL:', imageSrc);
+    console.log('Thumbnail参数:', {
+      src: src.substring(0, 50) + '...',
+      detectedRatio,
+      finalAspectRatio,
+      finalObjectFit,
+      preserveAspectRatio,
+      imageSrc: imageSrc.substring(0, 80) + '...'
+    });
   }
     
   const isLocalUpload = src.startsWith('/uploads/');
@@ -129,24 +197,35 @@ export function Thumbnail({
     console.error('图片加载失败:', imageSrc);
   };
 
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
   return (
     <div
       className={getThumbnailContainerStyles({
         rounded,
         fill,
-        aspectRatio,
+        aspectRatio: finalAspectRatio,
         className: containerClassName
       })}
       onClick={onClick}
       style={fill ? undefined : { width, height }}
     >
+      {/* 加载指示器 */}
+      {!imageLoaded && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+      )}
+      
       <Image
         src={hasError ? fallbackSrc : imageSrc}
         alt={alt}
         className={getThumbnailImageStyles({
-          objectFit,
+          objectFit: finalObjectFit,
           isClickable: !!onClick,
-          className: `${className} ${hasError ? 'opacity-50' : ''}`
+          className: `${className} ${hasError ? 'opacity-50' : ''} ${!imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`
         })}
         width={fill ? undefined : width}
         height={fill ? undefined : height}
@@ -156,6 +235,7 @@ export function Thumbnail({
         quality={quality}
         unoptimized={isLocalUpload || unoptimized}
         onError={handleError}
+        onLoad={handleImageLoad}
       />
       {hasError && showErrorMessage && (
         <div className="absolute inset-0 flex items-center justify-center text-red-500 text-xs">

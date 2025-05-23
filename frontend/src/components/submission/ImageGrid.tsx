@@ -7,20 +7,25 @@ interface ImageGridProps {
   submissions: Submission[];
   columns?: number;
   gap?: number;
-  aspectRatio?: "square" | "video" | "portrait" | string;
+  aspectRatio?: "square" | "video" | "portrait" | "auto" | "mixed" | string;
   className?: string;
+  preserveAspectRatio?: boolean;
+  layoutMode?: 'uniform' | 'masonry' | 'adaptive';
 }
 
 /**
  * 图片网格组件，用于展示多张图片
  * 自适应不同屏幕尺寸，支持点击查看大图
+ * 现在支持自动检测图片比例和智能布局
  */
 export function ImageGrid({ 
   submissions, 
   columns = 3, 
   gap = 4, 
-  aspectRatio = "square",
-  className 
+  aspectRatio = "auto",
+  className,
+  preserveAspectRatio = true,
+  layoutMode = 'adaptive'
 }: ImageGridProps) {
   const [selectedImage, setSelectedImage] = useState<Submission | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -64,31 +69,80 @@ export function ImageGrid({
     }
   };
 
+  // 根据布局模式确定容器类
+  const getLayoutClass = () => {
+    switch (layoutMode) {
+      case 'uniform':
+        return `grid ${getGridColsClass()} ${getGapClass()}`;
+      case 'masonry':
+        // Masonry布局需要特殊处理，这里先用grid代替
+        return `grid ${getGridColsClass()} ${getGapClass()}`;
+      case 'adaptive':
+      default:
+        // 自适应布局，根据内容调整
+        return `grid ${getGridColsClass()} ${getGapClass()}`;
+    }
+  };
+
+  // 为混合模式计算每个图片的宽高比
+  const getItemAspectRatio = (index: number) => {
+    if (aspectRatio !== 'mixed') return aspectRatio;
+    
+    // 混合模式：创建有趣的布局模式
+    const patterns = ['square', 'portrait', 'landscape', 'widescreen'];
+    return patterns[index % patterns.length];
+  };
+
+  // 确定objectFit模式
+  const getObjectFit = () => {
+    if (preserveAspectRatio) return 'contain';
+    if (aspectRatio === 'auto') return 'contain';
+    return 'cover'; // 只有在固定比例且不保持原图比例时才使用cover
+  };
+
   return (
     <>
-      <div className={`grid ${getGridColsClass()} ${getGapClass()} ${className || ""}`}>
-        {submissions.map((submission) => (
+      <div className={`${getLayoutClass()} ${className || ""}`}>
+        {submissions.map((submission, index) => (
           <div key={submission.id} className="group relative">
             <Thumbnail
               src={submission.imageUrl || '/placeholder.svg'}
               alt={submission.description || 'No description'}
               fill={true}
-              aspectRatio={aspectRatio}
-              objectFit="cover"
+              aspectRatio={aspectRatio === 'mixed' ? getItemAspectRatio(index) : aspectRatio}
+              objectFit={getObjectFit()}
+              autoDetectAspectRatio={aspectRatio === 'auto'}
+              preserveAspectRatio={preserveAspectRatio}
               className="transition-all duration-300 group-hover:brightness-90"
               containerClassName="cursor-pointer"
               onClick={() => handleOpenImage(submission)}
               sizes={`(max-width: 640px) 100vw, (max-width: 768px) 50vw, ${columns > 3 ? '25vw' : '33vw'}`}
               showErrorMessage={true}
               fallbackSrc="/placeholder.svg"
+              quality={85}
             />
             
-            {/* 可选的图片标题或描述悬停效果 */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-end">
-              <div className="p-3 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white text-sm font-medium truncate drop-shadow-md">
+            {/* 图片信息悬停效果 - 改进样式 */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent 
+                            opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end">
+              <div className="p-3 w-full">
+                <p className="text-white text-sm font-medium line-clamp-2 drop-shadow-md">
                   {submission.description.split('\n')[0]}
                 </p>
+                
+                {/* 可选：显示图片尺寸信息（调试用） */}
+                {process.env.NODE_ENV === 'development' && (
+                  <p className="text-white/70 text-xs mt-1">
+                    ID: {submission.id}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 加载状态指示 */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                点击查看
               </div>
             </div>
           </div>

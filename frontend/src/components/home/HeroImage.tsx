@@ -69,7 +69,8 @@ export function HeroImage({ imageUrl, description, imageCaption, className, last
         url = createImageUrl(imageUrl, { 
           quality, 
           dpr: Math.min(dpr, 3), // 提高DPR限制，支持更高分辨率设备
-          format: 'auto' // 自动选择最佳格式
+          format: 'auto', // 自动选择最佳格式
+          fit: 'contain' // 确保hero图片不被裁剪
         });
         
         // 对于上传图片，也添加版本参数

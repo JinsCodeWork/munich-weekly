@@ -235,7 +235,19 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   if (options.width) params.append('width', options.width.toString());
   if (options.height) params.append('height', options.height.toString());
   if (options.quality) params.append('quality', options.quality.toString());
-  if (options.fit) params.append('fit', options.fit);
+  
+  // 优化fit参数处理
+  if (options.fit) {
+    params.append('fit', options.fit);
+  } else {
+    // 如果没有指定fit参数，根据是否同时提供宽高来智能选择
+    if (options.width && options.height) {
+      params.append('fit', 'contain'); // 同时提供宽高时默认使用contain避免裁剪
+    } else {
+      params.append('fit', 'scale-down'); // 只提供一个维度时使用scale-down
+    }
+  }
+  
   if (options.format) params.append('format', options.format);
   if (options.dpr) params.append('dpr', options.dpr.toString());
   
@@ -246,5 +258,16 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   
   // 构建最终URL
   const separator = finalBaseUrl.includes('?') ? '&' : '?';
-  return `${finalBaseUrl}${separator}${params.toString()}`;
+  const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`;
+  
+  // 调试信息
+  if (finalBaseUrl.includes('/uploads/')) {
+    console.log('createImageUrl处理:', {
+      input: url.substring(0, 50) + '...',
+      options,
+      output: finalUrl.substring(0, 100) + '...'
+    });
+  }
+  
+  return finalUrl;
 }
