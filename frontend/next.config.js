@@ -6,9 +6,11 @@ const nextConfig = {
     const apiDestination = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
     
     return [
+      // 所有 /api/* 请求都代理到后端（简单方案）
+      // 前端自己的API使用 /frontend-api/* 前缀来避免冲突
       {
         source: '/api/:path*',
-        destination: `${apiDestination}/:path*` // 使用环境变量或默认值
+        destination: `${apiDestination}/:path*`
       },
       {
         source: '/uploads/:path*',

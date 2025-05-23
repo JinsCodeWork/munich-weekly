@@ -17,7 +17,7 @@ export default function Home() {
     const loadConfig = async () => {
       try {
         // 不再添加随机时间戳，允许浏览器缓存请求
-        const response = await fetch('/api/config');
+        const response = await fetch('/frontend-api/config');
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.config?.heroImage) {

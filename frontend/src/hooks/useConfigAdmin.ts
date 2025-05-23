@@ -48,7 +48,7 @@ export function useConfigAdmin() {
       // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
       
-      const response = await fetch('/api/admin/config', {
+      const response = await fetch('/frontend-api/admin/config', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export function useConfigAdmin() {
       try {
         console.log('Attempting to load public config as fallback');
         // 公共API不需要认证头
-        const publicResponse = await fetch('/api/config');
+        const publicResponse = await fetch('/frontend-api/config');
         
         if (!publicResponse.ok) {
           throw new Error(`Public API error: ${publicResponse.status}`);
@@ -129,7 +129,7 @@ export function useConfigAdmin() {
       // 在表单中也添加token
       formData.append('token', token || '');
       
-      const response = await fetch('/api/admin/upload', {
+      const response = await fetch('/frontend-api/admin/upload', {
         method: 'POST',
         body: formData,
         headers: {
@@ -189,7 +189,7 @@ export function useConfigAdmin() {
       // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
       
-      const response = await fetch('/api/admin/config', {
+      const response = await fetch('/frontend-api/admin/config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
