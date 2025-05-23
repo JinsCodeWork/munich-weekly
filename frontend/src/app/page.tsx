@@ -2,10 +2,12 @@
 
 // app/page.tsx
 import { Container } from '@/components/ui/Container';
+import { Button } from '@/components/ui/Button';
 import { HeroImage } from '@/components/home/HeroImage';
 import { AnimatedFooter } from '@/components/home/AnimatedFooter';
 import { homePageConfig } from '@/lib/config';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   // State management
@@ -135,9 +137,20 @@ export default function Home() {
               <h2 className="font-heading text-3xl font-semibold tracking-tight text-gray-900 mb-4">
                 {introText.title}
               </h2>
-              <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
+              <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto mb-8">
                 {introText.description}
               </p>
+              
+              {/* Vote button */}
+              <Link href="/vote">
+                <Button 
+                  variant="ghost" 
+                  size="lg"
+                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all duration-200"
+                >
+                  Go to Vote
+                </Button>
+              </Link>
             </div>
           </Container>
 

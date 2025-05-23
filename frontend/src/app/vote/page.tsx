@@ -22,6 +22,44 @@ export default function VotePage() {
   const itemsPerPage = 16; // 固定每页显示16个项目
   const [totalPages, setTotalPages] = useState(1);
 
+  // 根据当前页码更新显示的投稿
+  const updateDisplayedSubmissions = (submissions: Submission[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    const paginatedItems = submissions.slice(startIndex, endIndex);
+    setDisplayedSubmissions(paginatedItems);
+  };
+
+  // Function to load submissions for a specific issue
+  const loadSubmissionsForIssue = useCallback(async (issue: Issue) => {
+    try {
+      const fetchedSubmissions = await submissionsApi.getSubmissionsByIssue(issue.id);
+      
+      console.log("VotePage: Fetched submissions for issue", issue.id, ":", JSON.stringify(fetchedSubmissions.map(s => ({ id: s.id, status: s.status })), null, 2));
+
+      const submissionsWithIssueData: Submission[] = (fetchedSubmissions || [])
+        .map(sub => ({
+          ...sub,
+          issue: issue,
+          status: sub.status as SubmissionStatus, 
+        }));
+      
+      // 保存所有投稿
+      setAllSubmissions(submissionsWithIssueData);
+      
+      // 计算总页数
+      const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
+      setTotalPages(totalPagesCount);
+      
+      // 更新当前页的投稿
+      updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
+      setCurrentPage(1); // Reset to first page when switching issues
+    } catch (err) {
+      console.error("Error loading submissions for issue:", err);
+      setError("Failed to load submissions. Please try again later.");
+    }
+  }, [itemsPerPage]);
+
   const loadVotingData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -72,37 +110,7 @@ export default function VotePage() {
       setDisplayedSubmissions([]);
     }
     setIsLoading(false);
-  }, [itemsPerPage]);
-
-  // New function to load submissions for a specific issue
-  const loadSubmissionsForIssue = useCallback(async (issue: Issue) => {
-    try {
-      const fetchedSubmissions = await submissionsApi.getSubmissionsByIssue(issue.id);
-      
-      console.log("VotePage: Fetched submissions for issue", issue.id, ":", JSON.stringify(fetchedSubmissions.map(s => ({ id: s.id, status: s.status })), null, 2));
-
-      const submissionsWithIssueData: Submission[] = (fetchedSubmissions || [])
-        .map(sub => ({
-          ...sub,
-          issue: issue,
-          status: sub.status as SubmissionStatus, 
-        }));
-      
-      // 保存所有投稿
-      setAllSubmissions(submissionsWithIssueData);
-      
-      // 计算总页数
-      const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
-      setTotalPages(totalPagesCount);
-      
-      // 更新当前页的投稿
-      updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
-      setCurrentPage(1); // Reset to first page when switching issues
-    } catch (err) {
-      console.error("Error loading submissions for issue:", err);
-      setError("Failed to load submissions. Please try again later.");
-    }
-  }, [itemsPerPage]);
+  }, [loadSubmissionsForIssue]);
 
   // Handle switching to previous issue view
   const handleViewPreviousIssue = useCallback(async () => {
@@ -124,14 +132,6 @@ export default function VotePage() {
       setDisplayedSubmissions([]);
     }
   }, [activeVotingIssue, loadSubmissionsForIssue]);
-  
-  // 根据当前页码更新显示的投稿
-  const updateDisplayedSubmissions = (submissions: Submission[], page: number, perPage: number) => {
-    const startIndex = (page - 1) * perPage;
-    const endIndex = startIndex + perPage;
-    const paginatedItems = submissions.slice(startIndex, endIndex);
-    setDisplayedSubmissions(paginatedItems);
-  };
   
   // 处理页码变化
   const handlePageChange = (page: number) => {
