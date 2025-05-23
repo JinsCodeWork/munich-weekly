@@ -69,7 +69,7 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   return (
     <>
       <div 
-        className={cn(getSubmissionCardStyles(className), "flex flex-col h-[380px] sm:h-[420px]")}
+        className={cn(getSubmissionCardStyles(className), "flex flex-col h-[280px] sm:h-[320px]")}
         onClick={handleOpenViewer}
       >
         {/* Image area - 固定高度 */}
