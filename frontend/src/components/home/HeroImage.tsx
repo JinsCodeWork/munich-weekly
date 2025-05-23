@@ -18,8 +18,6 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
   const [imgError, setImgError] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   // 监听窗口大小变化
   useEffect(() => {
@@ -45,10 +43,6 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
     try {
       console.log('图片URL:', imageUrl);
       
-      // 重置加载状态
-      setImageLoading(true);
-      setImageLoaded(false);
-      
       // 判断是本地静态图片还是上传图片
       const isLocalStaticImage = imageUrl.startsWith('/images/');
       
@@ -60,36 +54,13 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       } else {
         // 上传图片使用createImageUrl处理，针对移动端优化质量
         const isMobile = windowSize.width > 0 && windowSize.width < 768;
+        const quality = isMobile ? 95 : 90; // 移动端使用更高质量
         const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
         
-        // 移动端使用更激进的高质量设置
-        let quality, width;
-        
-        if (isMobile) {
-          // 移动端：更高质量和更大尺寸
-          quality = 99; // 最高质量
-          width = Math.max(windowSize.width * dpr, 800); // 确保最小800px宽度
-        } else {
-          // 桌面端：平衡质量和性能
-          quality = 92;
-          width = undefined; // 让CDN自动选择合适尺寸
-        }
-        
         url = createImageUrl(imageUrl, { 
-          quality,
-          width,
-          dpr: Math.min(dpr, 3), // 允许更高的DPR
-          format: 'auto', // 自动选择最佳格式
-          fit: 'cover' // 确保正确的裁剪方式
-        });
-        
-        console.log('图片参数详情:', { 
-          isMobile, 
           quality, 
-          width, 
-          dpr: Math.min(dpr, 3), 
-          devicePixelRatio: dpr,
-          windowWidth: windowSize.width 
+          dpr: Math.min(dpr, 2), // 限制最大DPR为2，避免过大的图片
+          format: 'auto' // 自动选择最佳格式
         });
       }
       
@@ -99,21 +70,12 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
     } catch (err) {
       console.error('图片URL处理出错:', err);
       setImgError(true);
-      setImageLoading(false);
     }
   }, [imageUrl, windowSize]);
-
-  // 处理图片加载完成
-  const handleLoad = () => {
-    console.log('图片加载完成');
-    setImageLoading(false);
-    setImageLoaded(true);
-  };
 
   // 处理图片加载错误
   const handleError = () => {
     console.log('图片加载失败，尝试使用默认图片');
-    setImageLoading(false);
     if (!imgError) {
       // 如果是自定义图片路径加载失败，尝试加载默认图片
       setImgSrc('/placeholder.jpg');
@@ -140,26 +102,14 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       )}
       onClick={handleClick}
     >
-      {/* 加载动画 - 在图片加载时显示 */}
-      {imageLoading && (
-        <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center z-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
-          <p className="text-gray-600 font-sans text-lg">Loading featured photography...</p>
-        </div>
-      )}
-      
       {imgSrc ? (
         <Image
           src={imgSrc}
           fill
           priority
           alt="Munich Weekly Featured Photography"
-          className={cn(
-            "object-cover transition-all duration-700 group-hover:scale-105",
-            imageLoaded ? "opacity-100" : "opacity-0"
-          )}
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
           onError={handleError}
-          onLoad={handleLoad}
           unoptimized={imgSrc.startsWith('/images/')} // 本地静态图片不优化
           sizes="100vw" // 添加sizes属性以优化响应式图片
         />
@@ -175,20 +125,18 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
                       md:group-hover:bg-black/50 
                       text-active:bg-black/50"></div>
       
-      {/* 中间主要描述文本 - 只在图片加载完成后显示 */}
-      {imageLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="font-heading text-white text-center text-xl md:text-2xl lg:text-3xl font-bold italic px-6 max-w-3xl tracking-wide
-                       opacity-0 transform translate-y-4 transition-all duration-500
-                       md:group-hover:opacity-100 md:group-hover:translate-y-0
-                       text-active:opacity-100 text-active:translate-y-0">
-            {description}
-          </p>
-        </div>
-      )}
+      {/* 中间主要描述文本 */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <p className="font-heading text-white text-center text-xl md:text-2xl lg:text-3xl font-bold italic px-6 max-w-3xl tracking-wide
+                     opacity-0 transform translate-y-4 transition-all duration-500
+                     md:group-hover:opacity-100 md:group-hover:translate-y-0
+                     text-active:opacity-100 text-active:translate-y-0">
+          {description}
+        </p>
+      </div>
       
-      {/* 底部图片说明 - 只在图片加载完成后显示 */}
-      {imageCaption && imageLoaded && (
+      {/* 底部图片说明 */}
+      {imageCaption && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-6 px-4 md:px-8 
                         opacity-0 transform translate-y-6 transition-all duration-500
                         md:group-hover:opacity-100 md:group-hover:translate-y-0

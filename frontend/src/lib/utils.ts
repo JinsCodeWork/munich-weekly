@@ -229,17 +229,6 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   if (options.format) params.append('format', options.format);
   if (options.dpr) params.append('dpr', options.dpr.toString());
   
-  // 调试信息
-  console.log('图片处理参数:', {
-    originalUrl: url,
-    finalBaseUrl,
-    width: options.width,
-    quality: options.quality,
-    dpr: options.dpr,
-    format: options.format,
-    isDevEnv
-  });
-  
   // 如果没有参数，直接返回URL
   if (Array.from(params).length === 0) {
     return finalBaseUrl;
@@ -247,8 +236,5 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
   
   // 构建最终URL
   const separator = finalBaseUrl.includes('?') ? '&' : '?';
-  const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`;
-  
-  console.log('最终图片URL:', finalUrl);
-  return finalUrl;
+  return `${finalBaseUrl}${separator}${params.toString()}`;
 }
