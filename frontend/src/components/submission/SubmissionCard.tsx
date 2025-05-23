@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 interface SubmissionCardProps {
   submission: Submission;
   className?: string;
-  displayContext?: 'default' | 'voteView';
+  displayContext?: 'default' | 'voteView' | 'previousResults';
   onVoteSuccess?: (submissionId: number, newVoteCount?: number) => void;
   onVoteCancelled?: (submissionId: number, newVoteCount?: number) => void;
 }
@@ -47,7 +47,9 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   const showStatusBadge = 
     displayContext === 'default' || 
     (displayContext === 'voteView' && 
-      (submission.status === SubmissionStatus.SELECTED || submission.isCover)); // In voteView, only show 'selected' or 'cover' badge
+      (submission.status === SubmissionStatus.SELECTED || submission.isCover)) || // In voteView, only show 'selected' or 'cover' badge
+    (displayContext === 'previousResults' && 
+      (submission.status === SubmissionStatus.SELECTED || submission.isCover)); // In previousResults, only show 'selected' or 'cover' badge
 
   // 防止投票按钮点击事件冒泡
   const handleButtonContainerClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -141,8 +143,15 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
                   />
                 </div>
               </div>
+            ) : displayContext === 'previousResults' ? (
+              // Vote count display for previousResults context (read-only, no voting button)
+              <div className={`${getSubmissionCardElementStyles('metaItem')} w-full flex items-center justify-center`}>
+                <span className="text-sm text-gray-700 font-medium">
+                  {submission.voteCount} votes
+                </span>
+              </div>
             ) : (
-              // Default display for vote count when not in voteView - only shown on non-mobile
+              // Default display for vote count when not in voteView or previousResults - only shown on non-mobile
               <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}> 
                 <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>

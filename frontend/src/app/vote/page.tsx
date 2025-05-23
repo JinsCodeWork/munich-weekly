@@ -10,10 +10,12 @@ import { Pagination } from '@/components/ui/Pagination';
 
 export default function VotePage() {
   const [activeVotingIssue, setActiveVotingIssue] = useState<Issue | null>(null);
+  const [previousIssue, setPreviousIssue] = useState<Issue | null>(null);
   const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]); // 所有投稿
   const [displayedSubmissions, setDisplayedSubmissions] = useState<Submission[]>([]); // 当前页显示的投稿
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'current' | 'previous'>('current'); // New state for view mode
   
   // 分页相关状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,40 +31,35 @@ export default function VotePage() {
         setIsLoading(false);
         setAllSubmissions([]);
         setActiveVotingIssue(null);
+        setPreviousIssue(null);
         return;
       }
 
+      // Sort issues by voting end date in descending order to find the most recent ones
+      const sortedIssues = allIssues.sort((a, b) => 
+        new Date(b.votingEnd).getTime() - new Date(a.votingEnd).getTime()
+      );
+
       const now = new Date();
-      const currentVotingIssue = allIssues.find(issue => {
+      const currentVotingIssue = sortedIssues.find(issue => {
         const votingStart = new Date(issue.votingStart);
         const votingEnd = new Date(issue.votingEnd);
         return votingStart <= now && now <= votingEnd;
       });
 
-      if (currentVotingIssue) {
-        setActiveVotingIssue(currentVotingIssue);
-        const fetchedSubmissions = await submissionsApi.getSubmissionsByIssue(currentVotingIssue.id);
-        
-        console.log("VotePage: Fetched submissions for issue", currentVotingIssue.id, ":", JSON.stringify(fetchedSubmissions.map(s => ({ id: s.id, status: s.status })), null, 2));
+      // Find the most recent issue that has completed voting
+      const prevIssue = sortedIssues.find(issue => {
+        const votingEnd = new Date(issue.votingEnd);
+        return votingEnd < now;
+      });
 
-        const submissionsWithIssueData: Submission[] = (fetchedSubmissions || [])
-          .map(sub => ({
-            ...sub,
-            issue: currentVotingIssue,
-            status: sub.status as SubmissionStatus, 
-          }));
-        
-        // 保存所有投稿
-        setAllSubmissions(submissionsWithIssueData);
-        
-        // 计算总页数
-        const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
-        setTotalPages(totalPagesCount);
-        
-        // 更新当前页的投稿
-        updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
+      setActiveVotingIssue(currentVotingIssue || null);
+      setPreviousIssue(prevIssue || null);
+
+      if (currentVotingIssue) {
+        setViewMode('current');
+        await loadSubmissionsForIssue(currentVotingIssue);
       } else {
-        setActiveVotingIssue(null);
         setAllSubmissions([]);
         setDisplayedSubmissions([]);
       }
@@ -70,12 +67,63 @@ export default function VotePage() {
       console.error("Error loading voting data:", err);
       setError("Failed to load voting information. Please try again later.");
       setActiveVotingIssue(null);
+      setPreviousIssue(null);
       setAllSubmissions([]);
       setDisplayedSubmissions([]);
-    } finally {
-      setIsLoading(false);
+    }
+    setIsLoading(false);
+  }, [itemsPerPage]);
+
+  // New function to load submissions for a specific issue
+  const loadSubmissionsForIssue = useCallback(async (issue: Issue) => {
+    try {
+      const fetchedSubmissions = await submissionsApi.getSubmissionsByIssue(issue.id);
+      
+      console.log("VotePage: Fetched submissions for issue", issue.id, ":", JSON.stringify(fetchedSubmissions.map(s => ({ id: s.id, status: s.status })), null, 2));
+
+      const submissionsWithIssueData: Submission[] = (fetchedSubmissions || [])
+        .map(sub => ({
+          ...sub,
+          issue: issue,
+          status: sub.status as SubmissionStatus, 
+        }));
+      
+      // 保存所有投稿
+      setAllSubmissions(submissionsWithIssueData);
+      
+      // 计算总页数
+      const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
+      setTotalPages(totalPagesCount);
+      
+      // 更新当前页的投稿
+      updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
+      setCurrentPage(1); // Reset to first page when switching issues
+    } catch (err) {
+      console.error("Error loading submissions for issue:", err);
+      setError("Failed to load submissions. Please try again later.");
     }
   }, [itemsPerPage]);
+
+  // Handle switching to previous issue view
+  const handleViewPreviousIssue = useCallback(async () => {
+    if (!previousIssue) return;
+    
+    setIsLoading(true);
+    setViewMode('previous');
+    await loadSubmissionsForIssue(previousIssue);
+    setIsLoading(false);
+  }, [previousIssue, loadSubmissionsForIssue]);
+
+  // Handle returning to current view
+  const handleBackToCurrent = useCallback(() => {
+    setViewMode('current');
+    if (activeVotingIssue) {
+      loadSubmissionsForIssue(activeVotingIssue);
+    } else {
+      setAllSubmissions([]);
+      setDisplayedSubmissions([]);
+    }
+  }, [activeVotingIssue, loadSubmissionsForIssue]);
   
   // 根据当前页码更新显示的投稿
   const updateDisplayedSubmissions = (submissions: Submission[], page: number, perPage: number) => {
@@ -158,7 +206,8 @@ export default function VotePage() {
     );
   }
 
-  if (!activeVotingIssue) {
+  // Show no current voting period UI
+  if (!activeVotingIssue && viewMode === 'current') {
     return (
       <Container className="py-10">
         <div className="max-w-3xl mx-auto">
@@ -181,27 +230,85 @@ export default function VotePage() {
               No Current Voting Period
             </h2>
             <p className="mt-2 text-gray-600">
-              There are no issues currently open for voting. Please check back later!
+              There are no issues currently open for voting.
             </p>
+            
+            {/* Show button to view previous results if available */}
+            {previousIssue ? (
+              <div className="mt-6">
+                <Button 
+                  onClick={handleViewPreviousIssue}
+                  variant="primary"
+                  size="md"
+                  className="mx-auto"
+                >
+                  View Previous Voting Results
+                </Button>
+                <p className="mt-2 text-sm text-gray-500">
+                  See the results from &quot;{previousIssue.title}&quot;
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 text-gray-500">
+                No previous voting results are available at this time.
+              </p>
+            )}
           </div>
         </div>
       </Container>
     );
   }
 
+  // Determine which issue to display based on view mode
+  const displayIssue = viewMode === 'current' ? activeVotingIssue : previousIssue;
+  const isViewingPrevious = viewMode === 'previous';
+
+  if (!displayIssue) {
+    return (
+      <Container className="py-10 text-center">
+        <p className="text-gray-500">No issue data available.</p>
+      </Container>
+    );
+  }
+
   return (
     <Container className="py-8">
+      {/* Back button when viewing previous results */}
+      {isViewingPrevious && (
+        <div className="mb-6">
+          <Button 
+            onClick={handleBackToCurrent}
+            variant="secondary"
+            size="sm"
+          >
+            ← Back to Current
+          </Button>
+        </div>
+      )}
+
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">{activeVotingIssue.title}</h1>
-        <p className="mt-2 text-lg text-gray-600">{activeVotingIssue.description}</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {displayIssue.title}
+          {isViewingPrevious && (
+            <span className="ml-2 text-lg font-medium text-gray-500">
+              (Previous Results)
+            </span>
+          )}
+        </h1>
+        <p className="mt-2 text-lg text-gray-600">{displayIssue.description}</p>
         <p className="mt-1 text-sm text-gray-500">
-          Voting period: {new Date(activeVotingIssue.votingStart).toLocaleDateString()} - {new Date(activeVotingIssue.votingEnd).toLocaleDateString()}
+          Voting period: {new Date(displayIssue.votingStart).toLocaleDateString()} - {new Date(displayIssue.votingEnd).toLocaleDateString()}
         </p>
+        {isViewingPrevious && (
+          <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+            Voting Completed
+          </div>
+        )}
       </div>
       
       {allSubmissions.length === 0 ? (
         <div className="text-center text-gray-500 py-10">
-          <p>No submissions currently available for voting in this issue.</p>
+          <p>No submissions available for this issue.</p>
         </div>
       ) : (
         <>
@@ -210,9 +317,9 @@ export default function VotePage() {
               <div key={submission.id} className="relative">
                 <SubmissionCard 
                   submission={submission} 
-                  displayContext="voteView" 
-                  onVoteSuccess={handleVoteSuccess}
-                  onVoteCancelled={handleVoteCancelled}
+                  displayContext={isViewingPrevious ? "previousResults" : "voteView"}
+                  onVoteSuccess={!isViewingPrevious ? handleVoteSuccess : undefined}
+                  onVoteCancelled={!isViewingPrevious ? handleVoteCancelled : undefined}
                 />
               </div>
             ))}
