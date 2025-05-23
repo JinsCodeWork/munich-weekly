@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, copyFile, access } from 'fs/promises';
+import { copyFile, access } from 'fs/promises';
 import path from 'path';
 import { verify } from 'jsonwebtoken';
 
+// JWT载荷类型定义
+interface JWTPayload {
+  role: string;
+  userId?: string;
+  username?: string;
+  exp?: number;
+  iat?: number;
+}
+
 // 验证管理员权限
-async function verifyAdmin(request: NextRequest) {
+async function verifyAdmin(request: NextRequest): Promise<JWTPayload | null> {
   try {
     // 从Authorization头或cookie获取token
     let token = request.headers.get('authorization')?.replace('Bearer ', '');
@@ -23,7 +32,7 @@ async function verifyAdmin(request: NextRequest) {
       return null;
     }
     
-    const decoded = verify(token, process.env.JWT_SECRET || 'default-secret') as any;
+    const decoded = verify(token, process.env.JWT_SECRET || 'default-secret') as JWTPayload;
     return decoded.role === 'admin' ? decoded : null;
   } catch (error) {
     console.error('Token verification failed:', error);
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Failed to sync hero image:', error);
       
-      if (error.code === 'ENOENT') {
+      if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
         return NextResponse.json(
           { 
             success: false, 
