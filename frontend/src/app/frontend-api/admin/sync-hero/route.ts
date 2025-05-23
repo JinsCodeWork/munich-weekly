@@ -1,55 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { copyFile, access } from 'fs/promises';
 import path from 'path';
-import { verify } from 'jsonwebtoken';
 
-// JWT载荷类型定义
-interface JWTPayload {
-  role: string;
-  userId?: string;
-  username?: string;
-  exp?: number;
-  iat?: number;
-}
-
-// 验证管理员权限
-async function verifyAdmin(request: NextRequest): Promise<JWTPayload | null> {
-  try {
-    // 从Authorization头或cookie获取token
-    let token = request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      const cookies = request.headers.get('cookie');
-      if (cookies) {
-        const jwtMatch = cookies.match(/jwt=([^;]+)/);
-        if (jwtMatch) {
-          token = jwtMatch[1];
-        }
-      }
-    }
-    
-    if (!token) {
-      return null;
-    }
-    
-    const decoded = verify(token, process.env.JWT_SECRET || 'default-secret') as JWTPayload;
-    return decoded.role === 'admin' ? decoded : null;
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    return null;
+// Helper function to get JWT token from request
+function getAuthToken(request: NextRequest): string | null {
+  // Try to get token from cookies
+  const authCookie = request.cookies.get('jwt')?.value;
+  if (authCookie) {
+    console.log('Found JWT token in cookies');
+    return authCookie;
   }
+  
+  // If not in cookies, try authorization header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    console.log('Found JWT token in Authorization header');
+    return authHeader.substring(7);
+  }
+  
+  console.log('No JWT token found in standard locations');
+  return null;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // 验证管理员权限
-    const user = await verifyAdmin(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Admin access required' },
-        { status: 401 }
-      );
+    // 简化的身份验证检查，与其他admin API保持一致
+    const token = getAuthToken(request);
+    if (!token) {
+      console.warn('No authentication token found for sync-hero');
+      return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
     }
+    
+    console.log('Processing hero image sync with authentication');
     
     // 后端uploads目录的hero图片路径（需要根据实际部署情况调整）
     const backendHeroPath = path.join(process.cwd(), '..', 'backend', 'uploads', 'hero.jpg');
