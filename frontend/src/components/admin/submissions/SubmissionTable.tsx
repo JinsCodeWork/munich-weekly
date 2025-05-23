@@ -76,11 +76,33 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
 
   // Sort submissions based on current sort configuration
   const sortedSubmissions = useMemo(() => {
+    // Always sort by status first, with Pending at the top by default
+    const defaultSortedSubmissions = [...submissions].sort((a, b) => {
+      const statusPriority = {
+        [SubmissionStatus.PENDING]: 1,
+        [SubmissionStatus.APPROVED]: 2,
+        [SubmissionStatus.SELECTED]: 3,
+        [SubmissionStatus.REJECTED]: 4
+      };
+      const aStatusValue = statusPriority[a.status as SubmissionStatus] || 0;
+      const bStatusValue = statusPriority[b.status as SubmissionStatus] || 0;
+      
+      // If status priority is different, sort by status (Pending first)
+      if (aStatusValue !== bStatusValue) {
+        return aStatusValue - bStatusValue;
+      }
+      
+      // If same status, maintain original order (or sort by submission time)
+      return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+    });
+
+    // If no manual sort is applied, return default sorted submissions
     if (!sortConfig.key || !sortConfig.direction) {
-      return submissions;
+      return defaultSortedSubmissions;
     }
 
-    return [...submissions].sort((a, b) => {
+    // Apply manual sorting while maintaining the base order for same values
+    return [...defaultSortedSubmissions].sort((a, b) => {
       let aValue: string | number;
       let bValue: string | number;
 

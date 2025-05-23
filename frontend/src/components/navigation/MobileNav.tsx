@@ -205,6 +205,24 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     </svg>
                     Settings
                   </Link>
+                  
+                  {/* Admin-only option for Manage Submission */}
+                  {user && user.role === 'admin' && (
+                    <>
+                      <div className="w-full border-t border-gray-200 my-2"></div>
+                      <Link
+                        href="/account/manage-submissions"
+                        className={`font-heading ${getMobileNavStyles('navItem')} relative nav-link-hover flex items-center justify-center text-purple-600`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <svg className="w-4 h-4 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Manage Submission
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             )}
