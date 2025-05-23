@@ -64,9 +64,20 @@ function extractImageParams(requestUrl) {
 function detectBestImageFormat(request) {
 	const accept = request.headers.get('accept') || '';
 	
-	// 优先使用AVIF，然后是WebP，以获得更好的质量和压缩率
+	// 根据用户代理判断是否为移动设备
+	const userAgent = request.headers.get('user-agent') || '';
+	const isMobile = /Mobile|Android|iPhone|iPad/.test(userAgent);
+	
+	// 对于移动设备，优先使用WebP而不是AVIF
+	// AVIF对大图片有严格限制，可能导致回退到质量更低的JPEG
+	if (isMobile && /image\/webp/.test(accept)) {
+		return 'webp';
+	}
+	
+	// 桌面设备可以尝试AVIF，但WebP仍然是更安全的选择
 	if (/image\/avif/.test(accept)) {
-		return 'avif';
+		// 只对小图片使用AVIF，大图片用WebP
+		return 'webp'; // 暂时改为WebP以确保质量一致性
 	} else if (/image\/webp/.test(accept)) {
 		return 'webp';
 	}
@@ -100,14 +111,34 @@ function setDefaultImageParams(params, detectedFormat) {
 		defaultParams.fit = defaultParams.fit || 'scale-down';
 	}
 	
-	// 设置默认的质量参数（如果未指定）
-	if (!defaultParams.quality && ['jpeg', 'webp', 'avif'].includes(defaultParams.format)) {
-		defaultParams.quality = 95; // 提高默认质量值，确保移动端和网页端都有最佳画质
+	// 强化质量参数处理 - 确保移动端和高质量请求得到最佳处理
+	if (['jpeg', 'webp', 'avif'].includes(defaultParams.format) || defaultParams.format === 'auto') {
+		if (!defaultParams.quality) {
+			// 默认使用非常高的质量
+			defaultParams.quality = 95;
+		} else {
+			// 确保传入的质量参数被正确处理，特别是高质量请求
+			const qualityNum = parseInt(defaultParams.quality, 10);
+			if (qualityNum >= 95) {
+				// 对于高质量请求，确保不被降级
+				defaultParams.quality = Math.min(qualityNum, 100);
+			} else {
+				defaultParams.quality = qualityNum;
+			}
+		}
 	}
 	
 	// 确保不启用额外的压缩，保持最佳画质
 	if (!defaultParams.compression) {
 		// 不设置compression参数，使用默认的无损处理
+	}
+	
+	// 针对高DPR设备优化
+	if (defaultParams.dpr && parseInt(defaultParams.dpr, 10) > 1) {
+		// 对于高DPR设备，确保质量不被自动降级
+		if (!params.quality || parseInt(params.quality, 10) < 90) {
+			defaultParams.quality = 95; // 强制提高高DPR设备的质量
+		}
 	}
 	
 	return defaultParams;
@@ -288,6 +319,25 @@ export default {
 			// 健康检查端点
 			if (new URL(request.url).pathname === '/health') {
 				return handleHealthCheck();
+			}
+			
+			// 调试图片参数端点
+			if (new URL(request.url).pathname === '/debug-params') {
+				const url = new URL(request.url);
+				const imageParams = extractImageParams(url);
+				const detectedFormat = detectBestImageFormat(request);
+				const processedParams = setDefaultImageParams(imageParams, detectedFormat);
+				
+				return new Response(JSON.stringify({
+					originalParams: imageParams,
+					detectedFormat: detectedFormat,
+					processedParams: processedParams,
+					userAgent: request.headers.get('user-agent'),
+					accept: request.headers.get('accept'),
+					url: request.url
+				}, null, 2), {
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			
 			// 调试端点，测试R2访问权限
