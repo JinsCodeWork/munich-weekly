@@ -9,7 +9,6 @@ interface ImageGridProps {
   gap?: number;
   aspectRatio?: "square" | "video" | "portrait" | "auto" | "mixed" | string;
   className?: string;
-  preserveAspectRatio?: boolean;
   layoutMode?: 'uniform' | 'masonry' | 'adaptive';
 }
 
@@ -24,7 +23,6 @@ export function ImageGrid({
   gap = 4, 
   aspectRatio = "auto",
   className,
-  preserveAspectRatio = true,
   layoutMode = 'adaptive'
 }: ImageGridProps) {
   const [selectedImage, setSelectedImage] = useState<Submission | null>(null);
@@ -93,13 +91,6 @@ export function ImageGrid({
     return patterns[index % patterns.length];
   };
 
-  // 确定objectFit模式
-  const getObjectFit = () => {
-    if (preserveAspectRatio) return 'contain';
-    if (aspectRatio === 'auto') return 'contain';
-    return 'cover'; // 只有在固定比例且不保持原图比例时才使用cover
-  };
-
   return (
     <>
       <div className={`${getLayoutClass()} ${className || ""}`}>
@@ -110,9 +101,9 @@ export function ImageGrid({
               alt={submission.description || 'No description'}
               fill={true}
               aspectRatio={aspectRatio === 'mixed' ? getItemAspectRatio(index) : aspectRatio}
-              objectFit={getObjectFit()}
-              autoDetectAspectRatio={aspectRatio === 'auto'}
-              preserveAspectRatio={preserveAspectRatio}
+              objectFit="cover"
+              autoDetectAspectRatio={false}
+              preserveAspectRatio={false}
               className="transition-all duration-300 group-hover:brightness-90"
               containerClassName="cursor-pointer"
               onClick={() => handleOpenImage(submission)}
