@@ -23,6 +23,10 @@
   > Submit a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
 
   > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
+- **DELETE** `/api/votes`
+  > Cancel/delete a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
+
+  > **Params**: `Long submissionId, String visitorId`
 - **GET** `/api/votes/check`
   > Check if current user has voted for a submission.
 

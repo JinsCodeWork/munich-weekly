@@ -6,9 +6,10 @@ This guide provides information on how to use the Munich Weekly photography plat
 
 1. [Account Management](#account-management)
 2. [Photo Submissions](#photo-submissions)
-3. [Managing Your Content](#managing-your-content)
-4. [Privacy Controls](#privacy-controls)
-5. [Troubleshooting](#troubleshooting)
+3. [Voting](#voting)
+4. [Managing Your Content](#managing-your-content)
+5. [Privacy Controls](#privacy-controls)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -78,6 +79,43 @@ For security reasons:
   - JPG or PNG format
   - Maximum 20MB file size
   - Recommended minimum resolution: 1920x1080 pixels
+
+---
+
+## Voting
+
+### Participating in Voting
+
+The voting system allows all users to participate in the selection process for the weekly publication:
+
+1. Navigate to the "Vote" page from the main navigation
+2. During active voting periods, you can view all submissions for the current issue
+3. Cast your vote by clicking the "Vote" button on submissions you like
+4. You can vote for multiple submissions in the same issue
+5. You can cancel your vote by clicking the vote button again
+
+### Anonymous Voting
+
+- No account registration is required to vote
+- Your votes are tracked using browser cookies
+- Each person can vote once per submission
+- Voting is anonymous and privacy-focused
+
+### Viewing Previous Results
+
+When no current voting period is active:
+
+1. The voting page will display a notice about no current voting
+2. If available, you can click "View Previous Voting Results" to see results from the most recent completed voting period
+3. Previous results show vote counts but do not allow new voting
+4. Use the "Back to Current" button to return to the main voting view
+
+### Voting Guidelines
+
+- Vote for submissions you genuinely find compelling
+- Consider the artistic merit, technical quality, and creativity of submissions
+- Voting periods are clearly indicated with start and end dates
+- Results contribute to the selection process for the weekly publication
 
 ---
 

@@ -8,7 +8,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 
 - 📷 Submit photos for weekly issues
 - 🧾 Submissions go through review and approval
-- 🗳️ Authenticated users can vote (named voting)
+- 🗳️ Anonymous public voting with historical results viewing
 - ⚙️ Admin tools for managing users, reviewing entries, exporting data
 - 🔐 JWT-based authentication with role-based access control and password recovery
 - 🖼️ Advanced image optimization and on-demand processing

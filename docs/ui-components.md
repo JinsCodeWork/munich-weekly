@@ -193,7 +193,11 @@ Displays individual submission details, including image, description, author, st
             *   Conditionally renders the status badge (e.g., only for 'selected' or 'cover').
             *   Hides submission date and issue ID.
             *   Integrates the `VoteButton` component, passing the `onVoteSuccess` callback to enable voting functionality and UI updates.
-            *   Displays vote counts.
+            *   Displays vote counts with interactive voting functionality.
+        *   `previousResults`: A read-only view for displaying historical voting results.
+            *   Shows vote counts in a centered, read-only format without voting buttons.
+            *   Conditionally renders status badges (only for 'selected' or 'cover' items).
+            *   Maintains visual consistency with voting view while clearly indicating non-interactive state.
 
 ### Voting Components
 
