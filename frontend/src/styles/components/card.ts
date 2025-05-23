@@ -12,10 +12,10 @@ import { cardVariants } from '../variants';
  */
 export const submissionCardStyles = {
   container: 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-  imageContainer: 'relative overflow-hidden h-32 sm:h-52',
+  imageContainer: 'relative overflow-hidden h-48 sm:h-60',
   contentContainer: 'p-4 sm:p-4 p-2',
   title: 'text-lg font-semibold text-gray-900 mb-1 truncate',
-  description: 'text-sm text-gray-500 line-clamp-2',
+  description: 'text-sm text-gray-500 mb-3 line-clamp-2',
   metaContainer: 'flex items-center justify-between text-xs text-gray-500',
   metaItem: 'flex items-center',
   metaIcon: 'mr-1',

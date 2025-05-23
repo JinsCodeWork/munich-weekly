@@ -164,48 +164,7 @@ export function Thumbnail({
       const containerAspectRatio = getContainerAspectRatio(finalAspectRatio as string);
       const imageAspectRatio = getImageAspectRatio(detectedRatio);
       
-      // 针对SubmissionCard的矩形容器优化策略
-      // 判断是否为SubmissionCard的矩形容器（aspectRatio为auto且fill为true）
-      const isCardContainer = aspectRatio === 'auto' && fill;
-      
-      if (isCardContainer) {
-        // 对于卡片中的矩形容器，使用基于范围的精细化策略
-        if (detectedRatio) {
-          const imageAspectRatio = getImageAspectRatio(detectedRatio);
-          
-          if (imageAspectRatio) {
-            // 定义比例范围
-            const isLandscape = imageAspectRatio > 1.1; // 横向图片范围
-            const isPortrait = imageAspectRatio < 0.9;  // 竖向图片范围
-            const isSquareish = imageAspectRatio >= 0.9 && imageAspectRatio <= 1.1; // 接近正方形范围
-            
-            if (isLandscape) {
-              // 所有横向图片（包括非标准比例）绝对不裁切
-              return 'contain';
-            } else if (isPortrait || isSquareish) {
-              // 竖向图片和接近正方形的图片可以裁切
-              return 'cover';
-            }
-          }
-          
-          // 如果无法获取宽高比，根据检测到的类型fallback
-          switch (detectedRatio) {
-            case 'widescreen':
-            case 'ultrawide': 
-            case 'cinema':
-            case 'landscape':
-            case 'classic':
-              return 'contain'; // 横向图片不裁切
-            default:
-              return 'cover';   // 其他情况可裁切
-          }
-        }
-        
-        // 如果没有detectedRatio，默认使用cover
-        return 'cover';
-      }
-      
-      // 原有的逻辑，用于其他非卡片容器
+      // 新的优化策略：优先显示图片全貌，减少裁切
       switch (detectedRatio) {
         case 'widescreen': // 16:9 横图
         case 'ultrawide': // 21:9 超宽图
@@ -289,57 +248,6 @@ export function Thumbnail({
     // 如果用户明确指定了objectPosition，优先使用用户指定的
     if (objectPosition) return objectPosition;
     
-    // 判断是否为SubmissionCard的矩形容器
-    const isCardContainer = aspectRatio === 'auto' && fill;
-    
-    if (isCardContainer) {
-      // 对于卡片容器，使用基于范围的精细化定位策略
-      if (detectedRatio) {
-        const imageAspectRatio = getImageAspectRatio(detectedRatio);
-        
-        if (imageAspectRatio) {
-          // 定义比例范围
-          const isLandscape = imageAspectRatio > 1.1;     // 横向图片范围
-          const isPortrait = imageAspectRatio < 0.9;      // 竖向图片范围
-          const isSquareish = imageAspectRatio >= 0.9 && imageAspectRatio <= 1.1; // 接近正方形范围
-          const isSixteenNine = imageAspectRatio >= 1.7 && imageAspectRatio <= 1.85; // 16:9范围
-          
-          if (isLandscape) {
-            // 横向图片的定位策略
-            if (isSixteenNine) {
-              // 16:9范围的图片在所有设备上都居中
-              return 'center';
-            } else {
-              // 其他横向图片：移动端居中，桌面端向上对齐
-              return isMobile ? 'center' : 'top';
-            }
-          } else if (isPortrait || isSquareish) {
-            // 竖向图片和正方形图片在所有设备上都居中
-            return 'center';
-          }
-        }
-        
-        // 如果无法获取宽高比，根据检测到的类型fallback
-        switch (detectedRatio) {
-          case 'widescreen':
-            // 检测为16:9的图片居中
-            return 'center';
-          case 'ultrawide':
-          case 'cinema': 
-          case 'landscape':
-          case 'classic':
-            // 其他横向图片：移动端居中，桌面端向上
-            return isMobile ? 'center' : 'top';
-          default:
-            // 其他情况居中
-            return 'center';
-        }
-      }
-      
-      return 'center';
-    }
-    
-    // 原有的逻辑，用于其他非卡片容器
     // 根据图片类型和objectFit来智能选择定位
     if (detectedRatio && autoDetectAspectRatio) {
       // 对于使用contain的横向图片，根据屏幕尺寸和图片比例决定定位
@@ -463,11 +371,9 @@ export function Thumbnail({
     const imageAspectRatio = detectedRatio ? getImageAspectRatio(detectedRatio) : null;
     const sixteenNineRatio = 16/9;
     const isCloseToSixteenNine = imageAspectRatio ? Math.abs(imageAspectRatio - sixteenNineRatio) <= 0.08 : false;
-    const isCardContainer = aspectRatio === 'auto' && fill;
     
     console.log('Thumbnail参数:', {
       src: src.substring(0, 50) + '...',
-      isCardContainer,
       detectedRatio,
       imageAspectRatio: imageAspectRatio ? imageAspectRatio.toFixed(3) : null,
       isCloseToSixteenNine,
