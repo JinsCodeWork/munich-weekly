@@ -93,7 +93,7 @@ export default function HomeSettingsPage() {
     } else {
       setMessage({ type: '', content: '' });
     }
-  }, [error, success]);
+  }, [error, success, loadConfig]);
   
   // Sync token from auth context to localStorage if needed
   useEffect(() => {

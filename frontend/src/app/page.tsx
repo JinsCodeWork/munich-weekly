@@ -5,13 +5,13 @@ import { Container } from '@/components/ui/Container';
 import { HeroImage } from '@/components/home/HeroImage';
 import { AnimatedFooter } from '@/components/home/AnimatedFooter';
 import { homePageConfig } from '@/lib/config';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export default function Home() {
   // State management
   const [config, setConfig] = useState(homePageConfig);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastConfigUpdate, setLastConfigUpdate] = useState<string | null>(null);
+  const lastConfigUpdateRef = useRef<string | null>(null);
 
   // 创建可重复调用的配置加载函数
   const loadConfig = useCallback(async (forceRefresh = false) => {
@@ -38,26 +38,30 @@ export default function Home() {
         console.log('Loaded config data:', data);
         
         if (data.success && data.config?.heroImage) {
-          const newConfig = {
-            ...config,
-            heroImage: {
-              ...config.heroImage,
-              ...data.config.heroImage
-            }
-          };
-          
-          // 检查配置是否真正发生了变化
-          const hasConfigChanged = 
-            data.config.lastUpdated !== lastConfigUpdate ||
-            JSON.stringify(newConfig.heroImage) !== JSON.stringify(config.heroImage);
+          // 使用函数式更新避免依赖当前state
+          setConfig(prevConfig => {
+            const newConfig = {
+              ...prevConfig,
+              heroImage: {
+                ...prevConfig.heroImage,
+                ...data.config.heroImage
+              }
+            };
             
-          if (hasConfigChanged) {
-            console.log('Config has changed, updating state');
-            setConfig(newConfig);
-            setLastConfigUpdate(data.config.lastUpdated || new Date().toISOString());
-          } else {
-            console.log('Config unchanged, keeping current state');
-          }
+            // 检查配置是否真正发生了变化
+            const hasConfigChanged = 
+              data.config.lastUpdated !== lastConfigUpdateRef.current ||
+              JSON.stringify(newConfig.heroImage) !== JSON.stringify(prevConfig.heroImage);
+              
+            if (hasConfigChanged) {
+              console.log('Config has changed, updating state');
+              lastConfigUpdateRef.current = data.config.lastUpdated || new Date().toISOString();
+              return newConfig;
+            } else {
+              console.log('Config unchanged, keeping current state');
+              return prevConfig;
+            }
+          });
         }
       } else {
         console.error('Config API returned error:', response.status, response.statusText);
@@ -67,12 +71,12 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [config, lastConfigUpdate]);
+  }, []); // 移除所有依赖，使用函数式更新避免依赖state
 
   // 初始加载配置
   useEffect(() => {
     loadConfig();
-  }, []);
+  }, [loadConfig]);
 
   // 添加定期轮询配置更新（每30秒检查一次）
   useEffect(() => {
@@ -123,7 +127,7 @@ export default function Home() {
             description={heroImage.description} 
             imageCaption={heroImage.imageCaption}
             // 传递配置更新时间，用于强制刷新图片缓存
-            lastUpdated={lastConfigUpdate}
+            lastUpdated={lastConfigUpdateRef.current}
           />
           
           <Container className="py-16">

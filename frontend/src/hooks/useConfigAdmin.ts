@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAuthHeader } from '@/api/http';
 import { homePageConfig } from '@/lib/config';
 
@@ -35,8 +35,8 @@ export function useConfigAdmin() {
   const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-    // Load configuration
-  const loadConfig = async () => {
+  // Load configuration
+  const loadConfig = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -105,7 +105,7 @@ export function useConfigAdmin() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // 空依赖数组，loadConfig不依赖任何state
 
   // Upload image using the admin upload API
   const uploadImage = async (file: File): Promise<string> => {
@@ -281,7 +281,7 @@ export function useConfigAdmin() {
   // Initial configuration loading
   useEffect(() => {
     loadConfig();
-  }, []);
+  }, [loadConfig]);
 
   // 监听配置更新事件，当其他地方更新配置时自动刷新
   useEffect(() => {
@@ -326,7 +326,7 @@ export function useConfigAdmin() {
       window.removeEventListener('configUpdated', handleConfigUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []); // 移除loadConfig依赖，避免重复绑定事件
+  }, [loadConfig]); // 添加loadConfig依赖
 
   return {
     config,
