@@ -237,6 +237,29 @@ export function useConfigAdmin() {
         setConfig(configData);
         setSuccess(data.message || 'Settings updated successfully');
         console.log('Config successfully updated');
+        
+        // 触发事件通知其他组件配置已更新
+        try {
+          // 触发自定义事件（同一标签页内）
+          const event = new CustomEvent('configUpdated', { 
+            detail: { config: configData, timestamp: Date.now() } 
+          });
+          window.dispatchEvent(event);
+          console.log('Dispatched configUpdated event');
+          
+          // 更新 localStorage 触发其他标签页更新
+          localStorage.setItem('hero_image_updated', Date.now().toString());
+          console.log('Updated localStorage to trigger cross-tab updates');
+          
+          // 立即清除，避免影响其他逻辑
+          setTimeout(() => {
+            localStorage.removeItem('hero_image_updated');
+          }, 1000);
+          
+        } catch (eventError) {
+          console.warn('Failed to trigger update events:', eventError);
+          // 不影响主要功能，只是警告
+        }
       } else {
         throw new Error(data.error || 'Configuration update returned invalid data');
       }

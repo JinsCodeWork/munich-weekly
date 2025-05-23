@@ -7,13 +7,14 @@ interface HeroImageProps {
   description: string;
   imageCaption?: string;
   className?: string;
+  lastUpdated?: string | null; // 添加配置更新时间，用于破解图片缓存
 }
 
 /**
  * Large hero image component, displays description and bottom caption on hover
  * Supports click to show/hide text on mobile
  */
-export function HeroImage({ imageUrl, description, imageCaption, className }: HeroImageProps) {
+export function HeroImage({ imageUrl, description, imageCaption, className, lastUpdated }: HeroImageProps) {
   const [imgSrc, setImgSrc] = useState('');
   const [imgError, setImgError] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(false);
@@ -38,10 +39,10 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
     }
   }, []);
 
-  // 当imageUrl或窗口大小改变时更新图片源
+  // 当imageUrl、窗口大小或配置更新时间改变时更新图片源
   useEffect(() => {
     try {
-      console.log('图片URL:', imageUrl);
+      console.log('图片URL:', imageUrl, '配置更新时间:', lastUpdated);
       
       // 判断是本地静态图片还是上传图片
       const isLocalStaticImage = imageUrl.startsWith('/images/');
@@ -49,8 +50,16 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       // 处理图片URL，使用正确的缓存策略
       let url;
       if (isLocalStaticImage) {
-        // 本地静态图片不添加时间戳，允许浏览器缓存
-        url = imageUrl;
+        // 本地静态图片：如果有配置更新时间，添加时间戳参数破解缓存
+        if (lastUpdated) {
+          const timestamp = new Date(lastUpdated).getTime();
+          url = `${imageUrl}?v=${timestamp}`;
+          console.log('为本地静态图片添加版本参数:', url);
+        } else {
+          // 没有更新时间时，添加当前时间戳作为fallback
+          url = `${imageUrl}?v=${Date.now()}`;
+          console.log('添加当前时间戳作为版本参数:', url);
+        }
       } else {
         // 上传图片使用createImageUrl处理，针对移动端优化质量
         const isMobile = windowSize.width > 0 && windowSize.width < 768;
@@ -62,6 +71,12 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
           dpr: Math.min(dpr, 3), // 提高DPR限制，支持更高分辨率设备
           format: 'auto' // 自动选择最佳格式
         });
+        
+        // 对于上传图片，也添加版本参数
+        if (lastUpdated) {
+          const timestamp = new Date(lastUpdated).getTime();
+          url += (url.includes('?') ? '&' : '?') + `v=${timestamp}`;
+        }
       }
       
       console.log('处理后的图片URL:', url);
@@ -71,7 +86,7 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       console.error('图片URL处理出错:', err);
       setImgError(true);
     }
-  }, [imageUrl, windowSize]);
+  }, [imageUrl, windowSize, lastUpdated]); // 添加 lastUpdated 到依赖数组
 
   // 处理图片加载错误
   const handleError = () => {

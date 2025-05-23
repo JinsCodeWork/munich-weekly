@@ -10,6 +10,12 @@ export async function GET(request: NextRequest) {
     console.log('Config API cookies:', [...request.cookies.getAll()].map(c => c.name));
     console.log('Config API headers:', [...request.headers.entries()].map(([key, value]) => 
       `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
+    
+    // 检查是否强制刷新
+    const url = new URL(request.url);
+    const forceRefresh = url.searchParams.get('_force') === '1';
+    console.log('Force refresh requested:', forceRefresh);
+    
     // 尝试从文件读取配置
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
     let config;
@@ -31,10 +37,13 @@ export async function GET(request: NextRequest) {
     // 生成基于内容和修改时间的ETag
     const etag = `"${Buffer.from(lastModified + JSON.stringify(config)).toString('base64').slice(0, 16)}"`;
     
-    // 检查客户端缓存
-    const clientETag = request.headers.get('if-none-match');
-    if (clientETag === etag) {
-      return new NextResponse(null, { status: 304 }); // 未修改，返回304
+    // 强制刷新时跳过缓存检查
+    if (!forceRefresh) {
+      // 检查客户端缓存
+      const clientETag = request.headers.get('if-none-match');
+      if (clientETag === etag) {
+        return new NextResponse(null, { status: 304 }); // 未修改，返回304
+      }
     }
     
     // 创建响应对象并添加缓存控制响应头
@@ -43,9 +52,18 @@ export async function GET(request: NextRequest) {
       config
     });
     
-    // 设置缓存头和ETag，配置更新后会自动失效缓存
-    response.headers.set('Cache-Control', 'public, max-age=3600'); // 1小时缓存
-    response.headers.set('ETag', etag);
+    // 强制刷新时设置无缓存头，否则使用正常缓存策略
+    if (forceRefresh) {
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      console.log('Set no-cache headers for force refresh');
+    } else {
+      // 设置缓存头和ETag，配置更新后会自动失效缓存
+      response.headers.set('Cache-Control', 'public, max-age=3600'); // 1小时缓存
+      response.headers.set('ETag', etag);
+    }
+    
     response.headers.set('Last-Modified', lastModified);
     
     return response;
