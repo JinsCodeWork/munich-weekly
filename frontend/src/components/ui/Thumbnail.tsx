@@ -59,6 +59,23 @@ export function Thumbnail({
   const [hasError, setHasError] = useState(false);
   const [detectedRatio, setDetectedRatio] = useState<keyof typeof aspectRatioVariants | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // 响应式屏幕尺寸检测
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // 初始检查
+    checkIsMobile();
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', checkIsMobile);
+    
+    // 清理事件监听器
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
   
   // 检查src是否为空或无效
   const isValidSrc = src && src.trim() !== '';
@@ -228,32 +245,49 @@ export function Thumbnail({
     
     // 根据图片类型和objectFit来智能选择定位
     if (detectedRatio && autoDetectAspectRatio) {
-      // 对于使用contain的横向图片，使用top定位避免上方留空下方裁切
+      // 对于使用contain的横向图片，根据屏幕尺寸和图片比例决定定位
       if (finalObjectFit === 'contain') {
         switch (detectedRatio) {
           case 'widescreen': // 16:9 横图
+            // 16:9图片在电脑端居中显示，移动端也居中显示
+            return 'center';
+            
           case 'ultrawide': // 21:9 超宽图
           case 'cinema': // 电影比例
+            // 超宽图片始终居中显示
+            return 'center';
+            
           case 'landscape': // 4:3 横图
           case 'classic': // 5:4 横图
-            // 横向图片使用top定位，避免上方留空下方裁切的问题
+            // 移动端：所有横向图片都居中显示
+            if (isMobile) {
+              return 'center';
+            }
+            // 电脑端：4:3、5:4等图片使用top定位，避免上方留空下方裁切
             return 'top';
           
           case 'square': // 1:1 正方形
-            // 正方形图片居中显示
+            // 正方形图片始终居中显示
             return 'center';
             
           case 'portrait': // 3:4 竖图
           case 'tallportrait': // 9:16 竖图
-            // 竖图使用居中定位
+            // 竖图始终使用居中定位
             return 'center';
             
           default:
-            // 其他情况根据宽高比判断
+            // 其他情况根据宽高比和屏幕尺寸判断
             const imageAspectRatio = getImageAspectRatio(detectedRatio);
             if (imageAspectRatio && imageAspectRatio > 1.1) {
-              // 横向图片使用top定位
-              return 'top';
+              // 横向图片
+              if (isMobile) {
+                return 'center'; // 移动端横向图片居中
+              }
+              // 电脑端根据具体比例判断
+              if (imageAspectRatio >= 16/9 - 0.1) {
+                return 'center'; // 接近或超过16:9的横图居中
+              }
+              return 'top'; // 其他横向图片向上顶格
             }
             return 'center';
         }
@@ -329,6 +363,7 @@ export function Thumbnail({
       finalAspectRatio,
       finalObjectFit,
       finalObjectPosition,
+      isMobile,
       preserveAspectRatio,
       imageSrc: imageSrc.substring(0, 80) + '...'
     });
