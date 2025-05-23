@@ -210,26 +210,31 @@ export function Thumbnail({
             if (imageAspectRatio > 1.2) {
               return 'contain';
             }
-            // 如果是竖向图片（高度大于宽度），可以适度裁切
+            // 如果是竖向图片（高度大于宽度），始终裁切避免左右填充
             if (imageAspectRatio < 0.8) {
               return 'cover';
             }
             
             const ratioDifference = Math.abs(containerAspectRatio - imageAspectRatio) / Math.max(containerAspectRatio, imageAspectRatio);
             
-            // 如果比例差异很小（小于10%），使用cover填充
-            if (ratioDifference < 0.1) {
+            // 对于接近正方形的图片（0.8 <= 宽高比 <= 1.2）
+            if (imageAspectRatio >= 0.8 && imageAspectRatio <= 1.2) {
+              // 如果比例差异很小，使用cover填充
+              if (ratioDifference < 0.1) {
+                return 'cover';
+              }
+              // 否则根据容器比例决定：如果容器更偏向横向，显示完整图片
+              if (containerAspectRatio > 1) {
+                return 'contain';
+              }
+              // 如果容器偏向竖向，进行裁切
               return 'cover';
             }
-            // 如果比例差异适中（10%-30%），优先显示完整图片
-            else if (ratioDifference < 0.3) {
-              return 'contain';
-            }
-            // 如果比例差异很大（大于30%），显示完整图片
-            else {
-              return 'contain';
-            }
           }
+          
+          // 默认情况：如果无法确定比例，根据检测到的比例类型决定
+          // 这里已经排除了明确的横向和竖向情况，大概率是接近正方形的
+          return 'contain';
           break;
       }
     }
