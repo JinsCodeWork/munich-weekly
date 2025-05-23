@@ -135,31 +135,92 @@ export function Thumbnail({
     return ratioMap[detectedRatio] || null;
   };
   
-  // 确定最终使用的objectFit - 智能选择逻辑
+  // 确定最终使用的objectFit - 重新设计的智能选择逻辑
   const finalObjectFit = (() => {
     // 如果明确禁止保持原图比例，直接使用传入的objectFit
     if (preserveAspectRatio === false) return objectFit;
     
-    // 如果检测到了图片比例，进行智能选择
+    // 如果检测到了图片比例，根据具体比例制定策略
     if (detectedRatio && autoDetectAspectRatio) {
-      // 计算图片比例和容器比例的差异
       const containerAspectRatio = getContainerAspectRatio(finalAspectRatio as string);
       const imageAspectRatio = getImageAspectRatio(detectedRatio);
       
-      if (containerAspectRatio && imageAspectRatio) {
-        const ratioDifference = Math.abs(containerAspectRatio - imageAspectRatio) / Math.max(containerAspectRatio, imageAspectRatio);
-        
-        // 如果比例差异小于30%，使用contain模式显示完整图片
-        // 如果差异大于30%，使用cover模式避免过多空白
-        if (ratioDifference < 0.3) {
-          return 'contain'; // 优先显示完整图片
-        } else {
-          return 'cover'; // 比例差异太大时才裁剪
-        }
+      // 针对特定比例的优化策略
+      switch (detectedRatio) {
+        case 'widescreen': // 16:9 横图
+          // 16:9图片优先显示全图，除非容器也是16:9则可以填充
+          if (finalAspectRatio === 'widescreen' || finalAspectRatio === 'video') {
+            return 'cover'; // 同比例容器，可以填充
+          }
+          return 'contain'; // 不同比例容器，优先显示全图
+          
+        case 'tallportrait': // 9:16 竖图
+          // 9:16图片可以适度裁剪，除非容器也是9:16
+          if (finalAspectRatio === 'tallportrait') {
+            return 'cover'; // 同比例容器，填充
+          }
+          return 'cover'; // 其他容器，可以裁剪以减少空白
+          
+        case 'landscape': // 4:3 横图
+          // 4:3图片在square容器中容易出现上下空白，适度裁剪
+          if (finalAspectRatio === 'square') {
+            return 'cover'; // 在square容器中裁剪以减少空白
+          }
+          if (finalAspectRatio === 'landscape') {
+            return 'cover'; // 同比例容器，填充
+          }
+          return 'contain'; // 其他情况显示全图
+          
+        case 'portrait': // 3:4 竖图
+          // 3:4图片处理逻辑
+          if (finalAspectRatio === 'portrait') {
+            return 'cover'; // 同比例容器，填充
+          }
+          if (finalAspectRatio === 'square') {
+            return 'cover'; // 在square容器中适度裁剪
+          }
+          return 'contain'; // 其他情况显示全图
+          
+        case 'square': // 1:1 正方形
+          // 正方形图片在任何容器中都尽量显示全图
+          if (finalAspectRatio === 'square') {
+            return 'cover'; // 同比例容器，填充
+          }
+          return 'contain'; // 其他容器显示全图
+          
+        case 'ultrawide': // 21:9 超宽图
+        case 'cinema': // 电影比例
+          // 超宽图片优先显示全图
+          return 'contain';
+          
+        default:
+          // 对于其他比例，使用通用智能逻辑
+          if (containerAspectRatio && imageAspectRatio) {
+            const ratioDifference = Math.abs(containerAspectRatio - imageAspectRatio) / Math.max(containerAspectRatio, imageAspectRatio);
+            
+            // 如果比例差异很小（小于15%），使用cover填充
+            if (ratioDifference < 0.15) {
+              return 'cover';
+            }
+            // 如果比例差异适中（15%-40%），根据具体情况判断
+            else if (ratioDifference < 0.4) {
+              // 如果图片比容器宽很多，使用contain避免过度裁剪
+              if (imageAspectRatio > containerAspectRatio * 1.5) {
+                return 'contain';
+              }
+              // 否则使用cover减少空白
+              return 'cover';
+            }
+            // 如果比例差异很大（大于40%），使用contain显示全图
+            else {
+              return 'contain';
+            }
+          }
+          break;
       }
     }
     
-    // 默认情况下，优先尝试显示完整图片
+    // 默认情况：优先显示完整图片
     return 'contain';
   })();
   

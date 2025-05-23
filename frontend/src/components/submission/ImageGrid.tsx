@@ -91,6 +91,44 @@ export function ImageGrid({
     return patterns[index % patterns.length];
   };
 
+  // 智能选择objectFit策略
+  const getObjectFitForItem = (submission: Submission, itemAspectRatio: string) => {
+    // 如果没有图片URL，使用默认值
+    if (!submission.imageUrl || submission.imageUrl.trim() === '') {
+      return 'contain';
+    }
+    
+    // 在网格布局中，我们通常希望减少空白，提供更紧凑的视觉效果
+    // 但是需要根据图片类型做智能调整
+    
+    if (aspectRatio === 'auto') {
+      // 自动模式：让Thumbnail组件自己决定
+      return 'contain'; // 传递给Thumbnail，由其智能选择
+    }
+    
+    // 对于固定容器比例，根据常见图片类型优化
+    switch (itemAspectRatio) {
+      case 'square':
+        // 正方形容器：大多数图片都可以用cover以减少空白
+        return 'cover';
+      case 'widescreen':
+      case 'video':
+        // 16:9容器：适合横向图片，使用contain显示完整内容
+        return 'contain';
+      case 'tallportrait':
+        // 9:16容器：适合竖向图片，可以用cover
+        return 'cover';
+      case 'landscape':
+        // 4:3容器：平衡显示
+        return 'contain';
+      case 'portrait':
+        // 3:4容器：竖向图片容器
+        return 'cover';
+      default:
+        return 'contain';
+    }
+  };
+
   return (
     <>
       <div className={`${getLayoutClass()} ${className || ""}`}>
@@ -101,7 +139,7 @@ export function ImageGrid({
               alt={submission.description || 'No description'}
               fill={true}
               aspectRatio={aspectRatio === 'mixed' ? getItemAspectRatio(index) : aspectRatio}
-              objectFit="contain"
+              objectFit={getObjectFitForItem(submission, getItemAspectRatio(index))}
               autoDetectAspectRatio={true}
               preserveAspectRatio={true}
               className="transition-all duration-300 group-hover:brightness-90"

@@ -79,7 +79,6 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
             alt={submission.description}
             fill={true}
             aspectRatio="square"
-            objectFit="contain"
             autoDetectAspectRatio={true}
             preserveAspectRatio={true}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"

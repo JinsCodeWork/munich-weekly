@@ -39,7 +39,7 @@ export function ImageUploader({
     }
   }, [file]);
 
-  const validateFile = (selectedFile: File): string | null => {
+  const validateFile = useCallback((selectedFile: File): string | null => {
     if (!allowedTypes.includes(selectedFile.type)) {
       return 'Only JPEG and PNG images are allowed.';
     }
@@ -47,9 +47,9 @@ export function ImageUploader({
       return 'File size exceeds the limit.';
     }
     return null;
-  };
+  }, [allowedTypes, maxFileSize]);
 
-  const processFile = (selectedFile: File) => {
+  const processFile = useCallback((selectedFile: File) => {
     const validationError = validateFile(selectedFile);
     if (validationError) {
       setError(validationError);
@@ -59,7 +59,7 @@ export function ImageUploader({
     
     setError(null);
     onFileSelected(selectedFile);
-  };
+  }, [validateFile, onFileSelected]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -105,7 +105,7 @@ export function ImageUploader({
       const selectedFile = files[0];
       processFile(selectedFile);
     }
-  }, [maxFileSize, allowedTypes, onFileSelected]);
+  }, [processFile]);
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
