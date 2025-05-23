@@ -81,7 +81,7 @@ export function Pagination({
   // 激活按钮样式
   const activeButtonClass = cn(
     baseButtonClass,
-    "bg-blue-500 text-white",
+    "bg-gray-500 text-white",
     activeButtonClassName
   );
 
