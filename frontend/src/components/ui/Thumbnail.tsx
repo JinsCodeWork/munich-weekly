@@ -103,28 +103,64 @@ export function Thumbnail({
     return 'square'; // 后备选项
   })();
   
-  // 确定最终使用的objectFit
+  // 获取容器宽高比的数值
+  const getContainerAspectRatio = (aspectRatio: string): number | null => {
+    const ratioMap: Record<string, number> = {
+      'square': 1,
+      'portrait': 3/4,
+      'landscape': 4/3,
+      'widescreen': 16/9,
+      'video': 16/9,
+      'tallportrait': 9/16,
+      'ultrawide': 21/9,
+      'classic': 5/4,
+      'cinema': 2.35
+    };
+    return ratioMap[aspectRatio] || null;
+  };
+  
+  // 获取图片宽高比的数值
+  const getImageAspectRatio = (detectedRatio: string): number | null => {
+    const ratioMap: Record<string, number> = {
+      'square': 1,
+      'portrait': 3/4,
+      'landscape': 4/3,
+      'widescreen': 16/9,
+      'video': 16/9,
+      'tallportrait': 9/16,
+      'ultrawide': 21/9,
+      'classic': 5/4,
+      'cinema': 2.35
+    };
+    return ratioMap[detectedRatio] || null;
+  };
+  
+  // 确定最终使用的objectFit - 智能选择逻辑
   const finalObjectFit = (() => {
-    if (!preserveAspectRatio) return objectFit;
+    // 如果明确禁止保持原图比例，直接使用传入的objectFit
+    if (preserveAspectRatio === false) return objectFit;
     
-    // 如果需要保持原图比例，根据容器和图片比例关系选择合适的fit模式
-    if (detectedRatio) {
-      // 对于竖图 (9:16, 3:4 等)，如果容器不是竖向的，使用contain避免裁剪
-      if (['tallportrait', 'portrait'].includes(detectedRatio)) {
-        if (!['tallportrait', 'portrait'].includes(finalAspectRatio as string)) {
-          return 'contain';
-        }
-      }
+    // 如果检测到了图片比例，进行智能选择
+    if (detectedRatio && autoDetectAspectRatio) {
+      // 计算图片比例和容器比例的差异
+      const containerAspectRatio = getContainerAspectRatio(finalAspectRatio as string);
+      const imageAspectRatio = getImageAspectRatio(detectedRatio);
       
-      // 对于横图，如果容器不是横向的，使用contain避免裁剪
-      if (['widescreen', 'landscape', 'ultrawide', 'cinema'].includes(detectedRatio)) {
-        if (!['widescreen', 'landscape', 'ultrawide', 'cinema'].includes(finalAspectRatio as string)) {
-          return 'contain';
+      if (containerAspectRatio && imageAspectRatio) {
+        const ratioDifference = Math.abs(containerAspectRatio - imageAspectRatio) / Math.max(containerAspectRatio, imageAspectRatio);
+        
+        // 如果比例差异小于30%，使用contain模式显示完整图片
+        // 如果差异大于30%，使用cover模式避免过多空白
+        if (ratioDifference < 0.3) {
+          return 'contain'; // 优先显示完整图片
+        } else {
+          return 'cover'; // 比例差异太大时才裁剪
         }
       }
     }
     
-    return objectFit;
+    // 默认情况下，优先尝试显示完整图片
+    return 'contain';
   })();
   
   // 如果src为空或无效，直接使用fallback图片

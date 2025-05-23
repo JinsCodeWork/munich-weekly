@@ -101,9 +101,9 @@ export function ImageGrid({
               alt={submission.description || 'No description'}
               fill={true}
               aspectRatio={aspectRatio === 'mixed' ? getItemAspectRatio(index) : aspectRatio}
-              objectFit="cover"
-              autoDetectAspectRatio={false}
-              preserveAspectRatio={false}
+              objectFit="contain"
+              autoDetectAspectRatio={true}
+              preserveAspectRatio={true}
               className="transition-all duration-300 group-hover:brightness-90"
               containerClassName="cursor-pointer"
               onClick={() => handleOpenImage(submission)}
