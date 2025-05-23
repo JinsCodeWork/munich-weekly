@@ -187,6 +187,31 @@ For complete details, see the [Image CDN System](./image-cdn.md) documentation.
 - Theme consistency across components
 - Structure for future dark mode support
 
+### 9. Real-time Update System
+
+The platform features an advanced real-time content synchronization system that ensures immediate updates across all interfaces without manual refresh:
+
+**Key Features:**
+- **Instant Updates**: Changes to homepage content appear immediately across all browser tabs
+- **Cache Management**: Smart cache busting ensures new images load without browser cache issues
+- **Cross-tab Sync**: Updates are synchronized across multiple browser tabs automatically
+- **Admin Interface**: Real-time preview of uploaded content in admin settings
+
+**Implementation Highlights:**
+- **Event-driven Architecture**: Uses custom events for same-tab communication
+- **localStorage Events**: Enables cross-tab communication for updates
+- **Polling Fallback**: 30-second polling mechanism as backup for event failures
+- **Version Parameters**: Image URLs include timestamps for cache busting
+- **Smart State Management**: React hooks with proper dependency management to prevent infinite loops
+
+**Components Involved:**
+- `useConfigAdmin` hook: Manages configuration state with real-time updates
+- Homepage component: Listens for updates and refreshes content automatically
+- HeroImage component: Handles cache busting with version parameters
+- Admin settings page: Provides real-time preview and triggers system-wide updates
+
+This system provides a seamless content management experience where administrators see changes instantly, and all users receive updates without manual intervention.
+
 ## Implemented Components
 
 ### Navigation Components

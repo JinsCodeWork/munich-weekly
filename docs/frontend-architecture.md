@@ -185,9 +185,150 @@ Reusable logic encapsulated in custom React hooks:
 
 - **useAuth**: Authentication state and methods
 - **useSubmissions**: Fetching and managing submission data
+- **useConfigAdmin**: Homepage configuration management with real-time updates
 - **useDebugTools**: Development and debugging utilities
 - **useFileUpload**: File selection, validation, preview, and upload functionality
 - **useIssues**: Fetching and filtering issues data
+
+### Real-time Update System
+
+The frontend implements a sophisticated real-time update system for immediate content synchronization:
+
+#### Architecture Overview
+
+The real-time update system uses multiple layers of communication:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Admin Interface │    │  Homepage        │    │ Other Tabs      │
+│                 │    │                  │    │                 │
+│ Config Update   │◄──►│ Auto Refresh     │◄──►│ Cross-tab Sync  │
+│ Image Upload    │    │ Cache Busting    │    │ Event Listening │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        ▲                       ▲
+         │                        │                       │
+         ▼                        ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                 Event Communication Layer                       │
+│  • Custom Events (same tab)                                    │
+│  • localStorage Events (cross-tab)                             │
+│  • Polling Mechanism (30s fallback)                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Components
+
+1. **useConfigAdmin Hook** (`hooks/useConfigAdmin.ts`):
+   - Manages homepage configuration state
+   - Handles image uploads with real-time sync
+   - Implements event-driven updates
+   - Auto-clears success states to prevent infinite loops
+
+2. **Homepage Component** (`app/page.tsx`):
+   - Listens for configuration updates via multiple channels
+   - Implements smart caching with version parameters
+   - Updates image URLs with timestamps for cache busting
+
+3. **HeroImage Component** (`components/home/HeroImage.tsx`):
+   - Accepts `lastUpdated` prop for cache management
+   - Automatically appends version parameters to image URLs
+   - Handles both static and dynamic image sources
+
+4. **Admin Settings Page** (`app/account/home-settings/page.tsx`):
+   - Provides real-time preview of uploaded images
+   - Shows current image with version parameters
+   - Triggers system-wide updates on save
+
+#### Update Mechanisms
+
+1. **Event-Driven Updates** (Primary):
+   ```typescript
+   // Triggered on successful configuration save
+   const event = new CustomEvent('configUpdated', { 
+     detail: { config: configData, timestamp: Date.now() } 
+   });
+   window.dispatchEvent(event);
+   ```
+
+2. **Cross-Tab Communication**:
+   ```typescript
+   // Uses localStorage for cross-tab updates
+   localStorage.setItem('hero_image_updated', Date.now().toString());
+   ```
+
+3. **Polling Mechanism** (Fallback):
+   ```typescript
+   // 30-second polling as backup
+   setInterval(() => {
+     loadConfig();
+   }, 30000);
+   ```
+
+4. **Cache Busting**:
+   ```typescript
+   // Version parameters force image refresh
+   const imageUrl = `/images/home/hero.jpg?v=${timestamp}`;
+   ```
+
+#### Configuration API
+
+The system uses dedicated API endpoints for configuration management:
+
+- **Public API** (`/frontend-api/config`):
+  - No authentication required
+  - Supports ETag caching
+  - Force refresh with `_force=1` parameter
+
+- **Admin API** (`/frontend-api/admin/config`):
+  - Requires admin authentication
+  - Handles configuration updates
+  - Stores data in `/frontend/public/config/homepage.json`
+
+#### Performance Optimizations
+
+1. **Smart State Management**:
+   - Uses `useCallback` with stable dependencies
+   - Implements `useRef` to avoid unnecessary re-renders
+   - Function-based state updates prevent stale closures
+
+2. **Debouncing**:
+   - Prevents duplicate reload requests
+   - Implements timeout-based debouncing for events
+
+3. **Conditional Updates**:
+   - Only updates when configuration actually changes
+   - Compares `lastUpdated` timestamps
+   - JSON comparison for content changes
+
+4. **Success State Management**:
+   - Auto-clears success states after 2 seconds
+   - Prevents infinite update loops
+   - Clean event listener management
+
+#### Error Handling
+
+The system includes comprehensive error handling:
+
+- **Authentication Errors**: Automatic token refresh attempts
+- **Network Failures**: Graceful degradation with retry mechanisms  
+- **Upload Failures**: Clear error messages with retry options
+- **Sync Failures**: Fallback to polling mechanism
+
+#### Troubleshooting
+
+Common issues and solutions:
+
+1. **Updates Not Appearing**:
+   - Check browser console for errors
+   - Verify admin authentication
+   - Wait for 30-second polling cycle
+
+2. **Infinite Loops**:
+   - Success states auto-clear after 2 seconds
+   - Event listeners properly cleaned up
+   - Debouncing prevents duplicate requests
+
+This real-time update system ensures users see changes immediately without manual page refreshes, providing a seamless content management experience.
 
 ### Development Tools
 

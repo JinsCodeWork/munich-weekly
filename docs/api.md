@@ -94,6 +94,10 @@
   > Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.
 
   > **Params**: `String submissionId, MultipartFile file`
+- **POST** `/api/submissions/admin/upload-hero`
+  > Upload hero image for homepage. Admin only. The image will be saved as /uploads/hero.jpg, replacing any existing file.
+
+  > **Params**: `MultipartFile file`
 - **GET** `/api/submissions/{submissionId}/check-image`
 
   > **Params**: `String submissionId`
@@ -124,4 +128,107 @@
 - **POST** `/api/auth/forgot-password`
 
   > **Params**: `ForgotPasswordRequestDTO dto`
+
+---
+
+## Frontend API Endpoints
+
+The frontend also provides its own API routes for configuration management and real-time updates:
+
+## Configuration Controller
+
+- **GET** `/frontend-api/config`
+  > Get homepage configuration (public endpoint). Supports ETag caching and force refresh.
+  
+  > **Query Params**: 
+  > - `_t`: Timestamp for cache busting
+  > - `_force`: Set to '1' to force refresh and bypass cache
+  
+  > **Response**: 
+  > ```json
+  > {
+  >   "success": true,
+  >   "config": {
+  >     "heroImage": {
+  >       "imageUrl": "/images/home/hero.jpg",
+  >       "description": "Main description text",
+  >       "imageCaption": "Image caption"
+  >     },
+  >     "lastUpdated": "2024-01-01T00:00:00.000Z"
+  >   }
+  > }
+  > ```
+
+- **GET** `/frontend-api/admin/config`
+  > Get homepage configuration (admin endpoint). Requires admin authentication.
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**: Same as public config endpoint
+
+- **POST** `/frontend-api/admin/config`
+  > Update homepage configuration. Admin only. Triggers real-time updates across all connected clients.
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Body**:
+  > ```json
+  > {
+  >   "heroImage": {
+  >     "imageUrl": "/images/home/hero.jpg",
+  >     "description": "Updated description",
+  >     "imageCaption": "Updated caption"
+  >   }
+  > }
+  > ```
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "success": true,
+  >   "message": "Configuration updated successfully",
+  >   "config": { /* updated config */ }
+  > }
+  > ```
+
+## Admin Upload Controller
+
+- **POST** `/frontend-api/admin/upload`
+  > Upload files through frontend proxy to backend. Admin only. Forwards requests to backend API.
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Body**: `FormData` with file and metadata
+
+- **POST** `/frontend-api/admin/sync-hero`
+  > Sync hero image from backend to frontend directory. Admin only. Ensures image availability for static serving.
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Body**:
+  > ```json
+  > {
+  >   "imageUrl": "/uploads/hero.jpg"
+  > }
+  > ```
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "success": true,
+  >   "message": "Hero image synced successfully to frontend",
+  >   "localPath": "/images/home/hero.jpg",
+  >   "sourceType": "backend-file"
+  > }
+  > ```
+
+## Real-time Update Features
+
+The frontend API endpoints support real-time content synchronization:
+
+- **Event-driven Updates**: Configuration changes trigger custom events for immediate UI updates
+- **Cross-tab Communication**: Uses localStorage events to sync updates across browser tabs  
+- **Cache Management**: Automatic cache busting with version parameters on image URLs
+- **Smart Polling**: 30-second fallback polling for missed events
+- **Error Handling**: Graceful degradation with retry mechanisms
 
