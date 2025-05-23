@@ -45,7 +45,7 @@ export function AnimatedFooter() {
           
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-gray-400">© {new Date().getFullYear()} Munich Weekly</span>
+              <span className="text-xs text-gray-400">© 2025 Munich Weekly® — Registered Trademark (DPMA)</span>
             </div>
             <div className="flex space-x-4">
               <a href="/about" className="text-white hover:text-gray-300 transition-colors text-xs">

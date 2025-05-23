@@ -62,6 +62,28 @@ munich-weekly/
 - 🧩 [UI Component Library](./docs/ui-components.md)
 - 🎨 [Style System](./docs/style-system.md) - *Updated with enhanced typography system*
 
+---
+
+## 📄 License & Usage
+
+This project is licensed under **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**.
+
+### 🔒 Permitted Use
+- ✅ View and study the source code
+- ✅ Clone or fork for personal/academic use
+- ✅ Share unmodified copies with attribution
+
+### 🚫 Prohibited Use
+- ❌ **Commercial use** of any kind
+- ❌ **Public deployment** without written permission
+- ❌ **Modification or rebranding** for distribution
+
+### 📌 Trademark Notice
+"Munich Weekly®" and associated branding are registered trademarks. Unauthorized use is prohibited.
+
+**Full license terms**: See [LICENSE](./LICENSE) file  
+**Commercial inquiries**: contact@munichweekly.art
+
 ⸻
 
 🧑‍💼 Project Lead
