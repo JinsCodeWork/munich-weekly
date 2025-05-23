@@ -6,6 +6,7 @@ import { Space_Grotesk, DM_Sans, Playfair_Display } from 'next/font/google'
 import { AuthProvider } from '@/context/AuthContext'
 import MainNav from '@/components/navigation/MainNav'
 import { GlobalAuthModals } from '@/components/auth/GlobalAuthModals'
+import { DragDropProtection } from '@/components/ui/DragDropProtection'
 
 // 配置DM Sans字体（替代Inter）
 const dmSans = DM_Sans({
@@ -51,11 +52,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased bg-gray-50 min-h-screen">
-        <AuthProvider>
-          <MainNav />
-          {children}
-          <GlobalAuthModals />
-        </AuthProvider>
+        <DragDropProtection>
+          <AuthProvider>
+            <MainNav />
+            {children}
+            <GlobalAuthModals />
+          </AuthProvider>
+        </DragDropProtection>
       </body>
     </html>
   )

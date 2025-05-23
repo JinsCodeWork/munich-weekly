@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Button } from './Button';
 import Image from 'next/image';
 
@@ -27,6 +27,7 @@ export function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   React.useEffect(() => {
     if (file) {
@@ -38,26 +39,73 @@ export function ImageUploader({
     }
   }, [file]);
 
+  const validateFile = (selectedFile: File): string | null => {
+    if (!allowedTypes.includes(selectedFile.type)) {
+      return 'Only JPEG and PNG images are allowed.';
+    }
+    if (selectedFile.size > maxFileSize) {
+      return 'File size exceeds the limit.';
+    }
+    return null;
+  };
+
+  const processFile = (selectedFile: File) => {
+    const validationError = validateFile(selectedFile);
+    if (validationError) {
+      setError(validationError);
+      onFileSelected(null);
+      return;
+    }
+    
+    setError(null);
+    onFileSelected(selectedFile);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (!allowedTypes.includes(selectedFile.type)) {
-        setError('Only JPEG and PNG images are allowed.');
-        onFileSelected(null);
-        return;
-      }
-      if (selectedFile.size > maxFileSize) {
-        setError('File size exceeds the limit.');
-        onFileSelected(null);
-        return;
-      }
-      setError(null);
-      onFileSelected(selectedFile);
+      processFile(selectedFile);
     } else {
       setError(null);
       onFileSelected(null);
     }
   };
+
+  // 拖拽事件处理
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 只有当离开整个拖放区域时才设置为false
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 确保拖拽状态保持true
+    setIsDragging(true);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      processFile(selectedFile);
+    }
+  }, [maxFileSize, allowedTypes, onFileSelected]);
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -73,9 +121,15 @@ export function ImageUploader({
     <div className={`space-y-4 ${className || ''}`}>
       {/* File selection area */}
       <div 
-        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors
-          ${preview ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-gray-500 hover:bg-gray-50'}`}
+        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200
+          ${preview ? 'border-gray-300 bg-gray-50' : 
+            isDragging ? 'border-blue-500 bg-blue-50 border-solid' : 
+            'border-gray-300 hover:border-gray-500 hover:bg-gray-50'}`}
         onClick={preview ? undefined : triggerFileInput}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
         {preview ? (
           // Image preview
@@ -122,8 +176,8 @@ export function ImageUploader({
               </svg>
             </div>
             <div className="mt-2">
-              <p className="text-sm text-gray-600">
-                Click to select or drag and drop
+              <p className={`text-sm transition-colors ${isDragging ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                {isDragging ? 'Release to upload' : 'Click to select or drag and drop'}
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 PNG or JPEG up to {maxFileSize / (1024 * 1024)}MB
