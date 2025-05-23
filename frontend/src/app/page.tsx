@@ -18,8 +18,19 @@ export default function Home() {
       try {
         // 不再添加随机时间戳，允许浏览器缓存请求
         const response = await fetch('/frontend-api/config');
+        
+        // 记录响应头信息用于调试
+        console.log('Config API response status:', response.status);
+        console.log('Config API response headers:', {
+          'cache-control': response.headers.get('cache-control'),
+          'etag': response.headers.get('etag'),
+          'last-modified': response.headers.get('last-modified')
+        });
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('Loaded config data:', data);
+          
           if (data.success && data.config?.heroImage) {
             setConfig(prevConfig => ({
               ...prevConfig,
@@ -28,7 +39,10 @@ export default function Home() {
                 ...data.config.heroImage
               }
             }));
+            console.log('Config updated successfully');
           }
+        } else {
+          console.error('Config API returned error:', response.status, response.statusText);
         }
       } catch (error) {
         console.error('Failed to load config:', error);

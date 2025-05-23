@@ -13,14 +13,28 @@ export async function GET(request: NextRequest) {
     // 尝试从文件读取配置
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
     let config;
+    let lastModified = new Date().toISOString(); // 默认当前时间
 
     try {
       const fileContent = await fs.readFile(configPath, 'utf-8');
       config = JSON.parse(fileContent);
+      
+      // 获取文件修改时间
+      const stats = await fs.stat(configPath);
+      lastModified = stats.mtime.toISOString();
     } catch {
       // 如果文件不存在或无法解析，使用默认配置
       config = { heroImage: homePageConfig.heroImage };
       console.log('未找到配置文件，使用默认配置');
+    }
+    
+    // 生成基于内容和修改时间的ETag
+    const etag = `"${Buffer.from(lastModified + JSON.stringify(config)).toString('base64').slice(0, 16)}"`;
+    
+    // 检查客户端缓存
+    const clientETag = request.headers.get('if-none-match');
+    if (clientETag === etag) {
+      return new NextResponse(null, { status: 304 }); // 未修改，返回304
     }
     
     // 创建响应对象并添加缓存控制响应头
@@ -29,8 +43,10 @@ export async function GET(request: NextRequest) {
       config
     });
     
-    // 设置缓存头，允许浏览器缓存响应24小时
-    response.headers.set('Cache-Control', 'public, max-age=86400');
+    // 设置缓存头和ETag，配置更新后会自动失效缓存
+    response.headers.set('Cache-Control', 'public, max-age=3600'); // 1小时缓存
+    response.headers.set('ETag', etag);
+    response.headers.set('Last-Modified', lastModified);
     
     return response;
   } catch (error) {
