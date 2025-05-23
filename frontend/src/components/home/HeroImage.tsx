@@ -54,12 +54,12 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       } else {
         // 上传图片使用createImageUrl处理，针对移动端优化质量
         const isMobile = windowSize.width > 0 && windowSize.width < 768;
-        const quality = isMobile ? 95 : 90; // 移动端使用更高质量
+        const quality = isMobile ? 98 : 95; // 移动端使用更高质量
         const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
         
         url = createImageUrl(imageUrl, { 
           quality, 
-          dpr: Math.min(dpr, 2), // 限制最大DPR为2，避免过大的图片
+          dpr: Math.min(dpr, 3), // 提高DPR限制，支持更高分辨率设备
           format: 'auto' // 自动选择最佳格式
         });
       }

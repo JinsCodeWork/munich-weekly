@@ -64,6 +64,7 @@ function extractImageParams(requestUrl) {
 function detectBestImageFormat(request) {
 	const accept = request.headers.get('accept') || '';
 	
+	// 优先使用AVIF，然后是WebP，以获得更好的质量和压缩率
 	if (/image\/avif/.test(accept)) {
 		return 'avif';
 	} else if (/image\/webp/.test(accept)) {
@@ -101,7 +102,12 @@ function setDefaultImageParams(params, detectedFormat) {
 	
 	// 设置默认的质量参数（如果未指定）
 	if (!defaultParams.quality && ['jpeg', 'webp', 'avif'].includes(defaultParams.format)) {
-		defaultParams.quality = 85; // Cloudflare的默认质量值
+		defaultParams.quality = 95; // 提高默认质量值，确保移动端和网页端都有最佳画质
+	}
+	
+	// 确保不启用额外的压缩，保持最佳画质
+	if (!defaultParams.compression) {
+		// 不设置compression参数，使用默认的无损处理
 	}
 	
 	return defaultParams;
