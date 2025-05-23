@@ -69,11 +69,11 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
   return (
     <>
       <div 
-        className={getSubmissionCardStyles(className)}
+        className={cn(getSubmissionCardStyles(className), "flex flex-col h-[380px] sm:h-[420px]")}
         onClick={handleOpenViewer}
       >
-        {/* Image area */}
-        <div className={getSubmissionCardElementStyles('imageContainer')}>
+        {/* Image area - 固定高度 */}
+        <div className={cn(getSubmissionCardElementStyles('imageContainer'), "flex-shrink-0")}>
           <Thumbnail
             src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
@@ -104,17 +104,33 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
           )}
         </div>
 
-        {/* Content area - 减小移动端的间距 */}
-        <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-1")}>
-          <h3 className={cn(getSubmissionCardElementStyles('title'), "sm:text-lg text-base sm:mb-1 mb-0")}>
+        {/* Content area - 使用flex-1确保填充剩余空间，min-h-0确保可以收缩 */}
+        <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-2 flex-1 flex flex-col min-h-0")}>
+          <h3 className={cn(getSubmissionCardElementStyles('title'), "sm:text-lg text-base sm:mb-1 mb-0 flex-shrink-0")}>
             {submission.description.split('\n')[0]}
           </h3>
           
-          <p className={cn(getSubmissionCardElementStyles('description'), "hidden sm:block")}>
-            {submission.description.split('\n').slice(1).join('\n')}
-          </p>
+          {/* 描述区域 - 限制高度和行数，确保不会撑大卡片 */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <p className={cn(
+              getSubmissionCardElementStyles('description'), 
+              "hidden sm:block overflow-hidden",
+              // 使用CSS样式限制为最多3行
+              "text-ellipsis"
+            )}
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+            >
+              {submission.description.split('\n').slice(1).join('\n')}
+            </p>
+          </div>
           
-          <div className={cn(getSubmissionCardElementStyles('metaContainer'), "sm:mt-3 mt-1")}>
+          {/* Meta容器 - 固定在底部 */}
+          <div className={cn(getSubmissionCardElementStyles('metaContainer'), "sm:mt-3 mt-1 flex-shrink-0")}>
             {displayContext === 'default' && (
               <>
                 {/* 在移动端隐藏日期和Issue信息 */}

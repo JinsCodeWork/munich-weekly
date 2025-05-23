@@ -290,9 +290,9 @@ export function Thumbnail({
               }
               // 电脑端：只有非常接近16:9的图片才居中，其他都向上对齐
               const sixteenNineRatio = 16/9; // ≈ 1.778
-              const tolerance = 0.05; // 更严格的容差
+              const tolerance = 0.08; // 与detectAspectRatio保持一致的适中容差
               if (Math.abs(imageAspectRatio - sixteenNineRatio) <= tolerance) {
-                return 'center'; // 非常接近16:9的图片居中
+                return 'center'; // 接近16:9的图片居中
               }
               return 'top'; // 其他所有横向图片向上对齐
             }
@@ -309,6 +309,10 @@ export function Thumbnail({
     // 默认居中定位
     return 'center';
   })();
+  
+  // 安全检查：确保finalObjectPosition是有效值
+  const validPositions: (keyof typeof objectPositionVariants)[] = ['center', 'top', 'bottom', 'left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  const safeObjectPosition = validPositions.includes(finalObjectPosition as keyof typeof objectPositionVariants) ? finalObjectPosition : 'center';
   
   // 如果src为空或无效，直接使用fallback图片
   if (!isValidSrc) {
@@ -329,7 +333,7 @@ export function Thumbnail({
           alt={alt || 'Image not available'}
           className={getThumbnailImageStyles({
             objectFit: finalObjectFit,
-            objectPosition: finalObjectPosition,
+            objectPosition: safeObjectPosition,
             isClickable: !!onClick,
             className: `${className} opacity-50`
           })}
@@ -365,13 +369,19 @@ export function Thumbnail({
   // 打印最终使用的参数（调试用）
   if (src.includes('.r2.dev/') || src.startsWith('/uploads/')) {
     const imageAspectRatio = detectedRatio ? getImageAspectRatio(detectedRatio) : null;
+    const sixteenNineRatio = 16/9;
+    const isCloseToSixteenNine = imageAspectRatio ? Math.abs(imageAspectRatio - sixteenNineRatio) <= 0.08 : false;
+    
     console.log('Thumbnail参数:', {
       src: src.substring(0, 50) + '...',
       detectedRatio,
       imageAspectRatio: imageAspectRatio ? imageAspectRatio.toFixed(3) : null,
+      isCloseToSixteenNine,
+      sixteenNineRatio: sixteenNineRatio.toFixed(3),
       finalAspectRatio,
       finalObjectFit,
       finalObjectPosition,
+      safeObjectPosition,
       isMobile,
       preserveAspectRatio,
       imageSrc: imageSrc.substring(0, 80) + '...'
@@ -412,7 +422,7 @@ export function Thumbnail({
         alt={alt}
         className={getThumbnailImageStyles({
           objectFit: finalObjectFit,
-          objectPosition: finalObjectPosition,
+          objectPosition: safeObjectPosition,
           isClickable: !!onClick,
           className: `${className} ${hasError ? 'opacity-50' : ''} ${!imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`
         })}

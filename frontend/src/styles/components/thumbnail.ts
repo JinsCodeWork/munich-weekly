@@ -58,12 +58,12 @@ export function detectAspectRatio(width: number, height: number): keyof typeof a
   
   const ratio = width / height;
   
-  // 定义容差范围 - 为16:9使用更严格的容差
-  const strictTolerance = 0.05; // 16:9的严格容差
-  const normalTolerance = 0.1;   // 其他比例的正常容差
+  // 定义容差范围 - 为16:9使用更宽松但仍然精确的容差
+  const moderateTolerance = 0.08; // 16:9的适中容差 (允许更多接近16:9的图片)
+  const normalTolerance = 0.1;    // 其他比例的正常容差
   
   if (Math.abs(ratio - 1) < normalTolerance) return 'square'; // 1:1
-  if (Math.abs(ratio - 16/9) < strictTolerance) return 'widescreen'; // 16:9 (严格)
+  if (Math.abs(ratio - 16/9) < moderateTolerance) return 'widescreen'; // 16:9 (适中)
   if (Math.abs(ratio - 9/16) < normalTolerance) return 'tallportrait'; // 9:16
   if (Math.abs(ratio - 4/3) < normalTolerance) return 'landscape'; // 4:3
   if (Math.abs(ratio - 3/4) < normalTolerance) return 'portrait'; // 3:4
