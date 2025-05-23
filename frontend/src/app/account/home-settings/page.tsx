@@ -99,6 +99,31 @@ export default function HomeSettingsPage() {
     }
   }, [token]);
   
+  // Update form state when config changes
+  useEffect(() => {
+    setMainDescription(config.heroImage.description);
+    setImageCaption(config.heroImage.imageCaption || '');
+  }, [config.heroImage.description, config.heroImage.imageCaption]);
+  
+  // 添加成功消息监听，当保存成功时显示反馈
+  useEffect(() => {
+    if (success) {
+      setMessage({ type: 'success', content: success });
+      // 成功后强制重新加载配置以确保显示最新状态
+      setTimeout(() => {
+        console.log('Success detected, force reloading config to ensure UI sync...');
+        loadConfig();
+      }, 500);
+    }
+  }, [success, loadConfig]);
+
+  // 添加错误消息监听
+  useEffect(() => {
+    if (error) {
+      setMessage({ type: 'error', content: error });
+    }
+  }, [error]);
+  
   // Get debug info
   const updateDebugInfo = () => {
     try {
@@ -206,6 +231,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
       if (imageFile) {
         try {
           newImageUrl = await uploadImage(imageFile);
+          console.log('Image uploaded successfully, new URL:', newImageUrl);
         } catch (err) {
           // uploadImage already sets error state, no need to repeat
           console.error('Image upload failed:', err);
@@ -225,12 +251,20 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
       // Save configuration
       await saveConfig(configData);
       
-      // Clear preview
+      // 保存成功后，立即触发配置更新事件
+      console.log('Configuration saved, triggering immediate UI update...');
+      
+      // 清除预览并强制重新加载配置
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
       setImageFile(null);
+      
+      // 强制重新加载配置以确保UI同步
+      setTimeout(() => {
+        loadConfig();
+      }, 200);
       
     } catch (err) {
       // saveConfig already sets error state, no need to repeat
@@ -351,11 +385,12 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
             ) : (
               <div className="w-full aspect-[16/9] relative mb-4 bg-gray-100 flex items-center justify-center">
                 <Image 
-                  src={createImageUrl(config.heroImage.imageUrl, { width: 800 })}
+                  src={createImageUrl(config.heroImage.imageUrl, { width: 800 }) + `?v=${config.lastUpdated ? new Date(config.lastUpdated).getTime() : Date.now()}`}
                   alt="Current Home Page Image"
                   width={800}
                   height={450}
                   className="max-h-full max-w-full object-contain"
+                  key={config.lastUpdated || 'default'}
                 />
               </div>
             )}

@@ -277,6 +277,35 @@ export function useConfigAdmin() {
     loadConfig();
   }, []);
 
+  // 监听配置更新事件，当其他地方更新配置时自动刷新
+  useEffect(() => {
+    const handleConfigUpdate = () => {
+      console.log('useConfigAdmin: Received config update event, reloading config...');
+      // 延迟一下确保配置已经保存
+      setTimeout(() => {
+        loadConfig();
+      }, 500);
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'hero_image_updated') {
+        console.log('useConfigAdmin: Detected hero image update from localStorage, reloading config...');
+        setTimeout(() => {
+          loadConfig();
+        }, 1000);
+      }
+    };
+
+    // 监听自定义事件和localStorage事件
+    window.addEventListener('configUpdated', handleConfigUpdate);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('configUpdated', handleConfigUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   return {
     config,
     isLoading,
