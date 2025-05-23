@@ -18,6 +18,7 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
   const [imgError, setImgError] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [isLoading, setIsLoading] = useState(true); // 添加加载状态
 
   // 监听窗口大小变化
   useEffect(() => {
@@ -42,6 +43,7 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
   useEffect(() => {
     try {
       console.log('图片URL:', imageUrl);
+      console.log('窗口大小:', windowSize);
       
       // 判断是本地静态图片还是上传图片
       const isLocalStaticImage = imageUrl.startsWith('/images/');
@@ -54,19 +56,27 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       } else {
         // 上传图片使用createImageUrl处理，针对移动端优化质量
         const isMobile = windowSize.width > 0 && windowSize.width < 768;
-        const quality = isMobile ? 95 : 90; // 移动端使用更高质量
         const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+        
+        // 移动端使用更激进的质量设置
+        const quality = isMobile ? 98 : 90; // 进一步提高移动端质量
+        const width = isMobile ? Math.min(windowSize.width * dpr, 1200) : undefined; // 设置合适的宽度
+        
+        console.log('图片优化参数:', { isMobile, quality, dpr, width });
         
         url = createImageUrl(imageUrl, { 
           quality, 
-          dpr: Math.min(dpr, 2), // 限制最大DPR为2，避免过大的图片
-          format: 'auto' // 自动选择最佳格式
+          dpr: Math.min(dpr, 3), // 允许更高的DPR
+          format: 'auto', // 自动选择最佳格式
+          width: width, // 设置适当的宽度
+          fit: 'cover' // 确保图片填充方式正确
         });
       }
       
       console.log('处理后的图片URL:', url);
       setImgSrc(url);
       setImgError(false);
+      setIsLoading(true); // 开始加载新图片
     } catch (err) {
       console.error('图片URL处理出错:', err);
       setImgError(true);
@@ -76,11 +86,18 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
   // 处理图片加载错误
   const handleError = () => {
     console.log('图片加载失败，尝试使用默认图片');
+    setIsLoading(false); // 停止加载状态
     if (!imgError) {
       // 如果是自定义图片路径加载失败，尝试加载默认图片
       setImgSrc('/placeholder.jpg');
       setImgError(true);
     }
+  };
+
+  // 处理图片加载完成
+  const handleLoad = () => {
+    console.log('图片加载完成');
+    setIsLoading(false); // 停止加载状态
   };
 
   // 处理点击事件（主要用于移动设备）
@@ -103,16 +120,42 @@ export function HeroImage({ imageUrl, description, imageCaption, className }: He
       onClick={handleClick}
     >
       {imgSrc ? (
-        <Image
-          src={imgSrc}
-          fill
-          priority
-          alt="Munich Weekly Featured Photography"
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          onError={handleError}
-          unoptimized={imgSrc.startsWith('/images/')} // 本地静态图片不优化
-          sizes="100vw" // 添加sizes属性以优化响应式图片
-        />
+        <>
+          <Image
+            src={imgSrc}
+            fill
+            priority
+            alt="Munich Weekly Featured Photography"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={handleError}
+            onLoad={handleLoad}
+            unoptimized={imgSrc.startsWith('/images/')} // 本地静态图片不优化
+            sizes="100vw" // 添加sizes属性以优化响应式图片
+          />
+          
+          {/* 加载状态覆盖层 */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center z-10 transition-opacity duration-300">
+              {/* 旋转动画 */}
+              <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-6 shadow-sm"></div>
+              
+              {/* 加载文字 */}
+              <div className="text-center animate-pulse">
+                <p className="font-heading text-xl text-gray-800 mb-3 tracking-wide">Loading Featured Photography</p>
+                <p className="font-sans text-sm text-gray-600 italic">Preparing high-quality image for you...</p>
+              </div>
+              
+              {/* 装饰性元素 */}
+              <div className="absolute bottom-8 text-gray-400">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         // 图片加载失败或没有URL时显示默认占位符
         <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
