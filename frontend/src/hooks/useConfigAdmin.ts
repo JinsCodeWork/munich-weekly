@@ -260,6 +260,12 @@ export function useConfigAdmin() {
           console.warn('Failed to trigger update events:', eventError);
           // 不影响主要功能，只是警告
         }
+        
+        // 自动清除success状态，避免无限循环
+        setTimeout(() => {
+          console.log('Auto-clearing success state to prevent infinite loops');
+          setSuccess(null);
+        }, 2000);
       } else {
         throw new Error(data.error || 'Configuration update returned invalid data');
       }
@@ -279,19 +285,31 @@ export function useConfigAdmin() {
 
   // 监听配置更新事件，当其他地方更新配置时自动刷新
   useEffect(() => {
+    let reloadTimeout: NodeJS.Timeout | null = null;
+    
     const handleConfigUpdate = () => {
       console.log('useConfigAdmin: Received config update event, reloading config...');
+      // 防抖处理：如果已有计划中的重载，先取消它
+      if (reloadTimeout) {
+        clearTimeout(reloadTimeout);
+      }
       // 延迟一下确保配置已经保存
-      setTimeout(() => {
+      reloadTimeout = setTimeout(() => {
         loadConfig();
+        reloadTimeout = null;
       }, 500);
     };
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'hero_image_updated') {
         console.log('useConfigAdmin: Detected hero image update from localStorage, reloading config...');
-        setTimeout(() => {
+        // 防抖处理
+        if (reloadTimeout) {
+          clearTimeout(reloadTimeout);
+        }
+        reloadTimeout = setTimeout(() => {
           loadConfig();
+          reloadTimeout = null;
         }, 1000);
       }
     };
@@ -301,10 +319,14 @@ export function useConfigAdmin() {
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      // 清理定时器
+      if (reloadTimeout) {
+        clearTimeout(reloadTimeout);
+      }
       window.removeEventListener('configUpdated', handleConfigUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, []); // 移除loadConfig依赖，避免重复绑定事件
 
   return {
     config,

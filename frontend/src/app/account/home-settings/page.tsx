@@ -85,6 +85,11 @@ export default function HomeSettingsPage() {
       }
     } else if (success) {
       setMessage({ type: 'success', content: success });
+      // 成功后强制重新加载配置以确保显示最新状态（只执行一次）
+      setTimeout(() => {
+        console.log('Success detected, force reloading config to ensure UI sync...');
+        loadConfig();
+      }, 500);
     } else {
       setMessage({ type: '', content: '' });
     }
@@ -104,25 +109,6 @@ export default function HomeSettingsPage() {
     setMainDescription(config.heroImage.description);
     setImageCaption(config.heroImage.imageCaption || '');
   }, [config.heroImage.description, config.heroImage.imageCaption]);
-  
-  // 添加成功消息监听，当保存成功时显示反馈
-  useEffect(() => {
-    if (success) {
-      setMessage({ type: 'success', content: success });
-      // 成功后强制重新加载配置以确保显示最新状态
-      setTimeout(() => {
-        console.log('Success detected, force reloading config to ensure UI sync...');
-        loadConfig();
-      }, 500);
-    }
-  }, [success, loadConfig]);
-
-  // 添加错误消息监听
-  useEffect(() => {
-    if (error) {
-      setMessage({ type: 'error', content: error });
-    }
-  }, [error]);
   
   // Get debug info
   const updateDebugInfo = () => {
@@ -251,20 +237,14 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
       // Save configuration
       await saveConfig(configData);
       
-      // 保存成功后，立即触发配置更新事件
-      console.log('Configuration saved, triggering immediate UI update...');
-      
-      // 清除预览并强制重新加载配置
+      // 清除预览状态
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
       setImageFile(null);
       
-      // 强制重新加载配置以确保UI同步
-      setTimeout(() => {
-        loadConfig();
-      }, 200);
+      // 注意：不需要手动调用loadConfig，useEffect会在success状态变化时自动处理
       
     } catch (err) {
       // saveConfig already sets error state, no need to repeat
