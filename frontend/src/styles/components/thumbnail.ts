@@ -58,21 +58,22 @@ export function detectAspectRatio(width: number, height: number): keyof typeof a
   
   const ratio = width / height;
   
-  // 定义容差范围
-  const tolerance = 0.1;
+  // 定义容差范围 - 为16:9使用更严格的容差
+  const strictTolerance = 0.05; // 16:9的严格容差
+  const normalTolerance = 0.1;   // 其他比例的正常容差
   
-  if (Math.abs(ratio - 1) < tolerance) return 'square'; // 1:1
-  if (Math.abs(ratio - 16/9) < tolerance) return 'widescreen'; // 16:9
-  if (Math.abs(ratio - 9/16) < tolerance) return 'tallportrait'; // 9:16
-  if (Math.abs(ratio - 4/3) < tolerance) return 'landscape'; // 4:3
-  if (Math.abs(ratio - 3/4) < tolerance) return 'portrait'; // 3:4
-  if (Math.abs(ratio - 21/9) < tolerance) return 'ultrawide'; // 21:9
-  if (Math.abs(ratio - 5/4) < tolerance) return 'classic'; // 5:4
-  if (Math.abs(ratio - 2.35) < tolerance) return 'cinema'; // 电影比例
+  if (Math.abs(ratio - 1) < normalTolerance) return 'square'; // 1:1
+  if (Math.abs(ratio - 16/9) < strictTolerance) return 'widescreen'; // 16:9 (严格)
+  if (Math.abs(ratio - 9/16) < normalTolerance) return 'tallportrait'; // 9:16
+  if (Math.abs(ratio - 4/3) < normalTolerance) return 'landscape'; // 4:3
+  if (Math.abs(ratio - 3/4) < normalTolerance) return 'portrait'; // 3:4
+  if (Math.abs(ratio - 21/9) < normalTolerance) return 'ultrawide'; // 21:9
+  if (Math.abs(ratio - 5/4) < normalTolerance) return 'classic'; // 5:4
+  if (Math.abs(ratio - 2.35) < normalTolerance) return 'cinema'; // 电影比例
   
   // 如果不匹配任何预设比例，根据宽高关系选择最接近的
   if (ratio > 2) return 'ultrawide'; // 超宽
-  if (ratio > 1.5) return 'widescreen'; // 横向
+  if (ratio > 1.6) return 'landscape'; // 较宽的横向图片归为landscape而不是widescreen
   if (ratio > 1.1) return 'landscape'; // 稍微横向
   if (ratio > 0.9) return 'square'; // 接近正方形
   if (ratio > 0.6) return 'portrait'; // 稍微竖向

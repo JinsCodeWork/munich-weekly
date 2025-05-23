@@ -288,11 +288,13 @@ export function Thumbnail({
               if (isMobile) {
                 return 'center'; // 移动端横向图片居中
               }
-              // 电脑端根据具体比例判断
-              if (imageAspectRatio >= 16/9 - 0.1) {
-                return 'center'; // 接近或超过16:9的横图居中
+              // 电脑端：只有非常接近16:9的图片才居中，其他都向上对齐
+              const sixteenNineRatio = 16/9; // ≈ 1.778
+              const tolerance = 0.05; // 更严格的容差
+              if (Math.abs(imageAspectRatio - sixteenNineRatio) <= tolerance) {
+                return 'center'; // 非常接近16:9的图片居中
               }
-              return 'top'; // 其他横向图片向上顶格
+              return 'top'; // 其他所有横向图片向上对齐
             }
             return 'center';
         }
@@ -362,9 +364,11 @@ export function Thumbnail({
   
   // 打印最终使用的参数（调试用）
   if (src.includes('.r2.dev/') || src.startsWith('/uploads/')) {
+    const imageAspectRatio = detectedRatio ? getImageAspectRatio(detectedRatio) : null;
     console.log('Thumbnail参数:', {
       src: src.substring(0, 50) + '...',
       detectedRatio,
+      imageAspectRatio: imageAspectRatio ? imageAspectRatio.toFixed(3) : null,
       finalAspectRatio,
       finalObjectFit,
       finalObjectPosition,
