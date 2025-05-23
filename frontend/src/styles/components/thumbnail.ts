@@ -33,6 +33,21 @@ export const objectFitVariants = {
 };
 
 /**
+ * Object position variations for image content
+ */
+export const objectPositionVariants = {
+  center: 'object-center',
+  top: 'object-top',
+  bottom: 'object-bottom',
+  left: 'object-left',
+  right: 'object-right',
+  'top-left': 'object-left-top',
+  'top-right': 'object-right-top',
+  'bottom-left': 'object-left-bottom',
+  'bottom-right': 'object-right-bottom',
+};
+
+/**
  * 根据图片尺寸自动检测最适合的宽高比
  * @param width - 图片宽度
  * @param height - 图片高度
@@ -96,15 +111,18 @@ export function getThumbnailContainerStyles({
  */
 export function getThumbnailImageStyles({
   objectFit = 'cover',
+  objectPosition = 'center',
   isClickable = false,
   className,
 }: {
   objectFit?: keyof typeof objectFitVariants;
+  objectPosition?: keyof typeof objectPositionVariants;
   isClickable?: boolean;
   className?: string;
 } = {}) {
   return cn(
     objectFitVariants[objectFit],
+    objectPositionVariants[objectPosition],
     isClickable && 'cursor-pointer',
     className
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants, detectAspectRatio } from "@/styles/components/thumbnail";
+import { getThumbnailContainerStyles, getThumbnailImageStyles, aspectRatioVariants, objectFitVariants, objectPositionVariants, detectAspectRatio } from "@/styles/components/thumbnail";
 import { createImageUrl } from "@/lib/utils";
 
 export interface ThumbnailProps {
@@ -15,6 +15,7 @@ export interface ThumbnailProps {
   sizes?: string;
   fill?: boolean;
   objectFit?: keyof typeof objectFitVariants;
+  objectPosition?: keyof typeof objectPositionVariants;
   quality?: number;
   rounded?: boolean;
   aspectRatio?: keyof typeof aspectRatioVariants | string | 'auto';
@@ -44,6 +45,7 @@ export function Thumbnail({
   sizes,
   fill = false,
   objectFit = "contain",
+  objectPosition,
   quality = 80,
   rounded = true,
   aspectRatio = "auto",
@@ -219,6 +221,54 @@ export function Thumbnail({
     return 'contain';
   })();
   
+  // 确定最终使用的objectPosition - 智能定位逻辑
+  const finalObjectPosition = (() => {
+    // 如果用户明确指定了objectPosition，优先使用用户指定的
+    if (objectPosition) return objectPosition;
+    
+    // 根据图片类型和objectFit来智能选择定位
+    if (detectedRatio && autoDetectAspectRatio) {
+      // 对于使用contain的横向图片，使用top定位避免上方留空下方裁切
+      if (finalObjectFit === 'contain') {
+        switch (detectedRatio) {
+          case 'widescreen': // 16:9 横图
+          case 'ultrawide': // 21:9 超宽图
+          case 'cinema': // 电影比例
+          case 'landscape': // 4:3 横图
+          case 'classic': // 5:4 横图
+            // 横向图片使用top定位，避免上方留空下方裁切的问题
+            return 'top';
+          
+          case 'square': // 1:1 正方形
+            // 正方形图片居中显示
+            return 'center';
+            
+          case 'portrait': // 3:4 竖图
+          case 'tallportrait': // 9:16 竖图
+            // 竖图使用居中定位
+            return 'center';
+            
+          default:
+            // 其他情况根据宽高比判断
+            const imageAspectRatio = getImageAspectRatio(detectedRatio);
+            if (imageAspectRatio && imageAspectRatio > 1.1) {
+              // 横向图片使用top定位
+              return 'top';
+            }
+            return 'center';
+        }
+      }
+      
+      // 对于cover的图片，一般使用center定位
+      if (finalObjectFit === 'cover') {
+        return 'center';
+      }
+    }
+    
+    // 默认居中定位
+    return 'center';
+  })();
+  
   // 如果src为空或无效，直接使用fallback图片
   if (!isValidSrc) {
     console.warn('Thumbnail: Invalid or empty src provided, using fallback image');
@@ -238,6 +288,7 @@ export function Thumbnail({
           alt={alt || 'Image not available'}
           className={getThumbnailImageStyles({
             objectFit: finalObjectFit,
+            objectPosition: finalObjectPosition,
             isClickable: !!onClick,
             className: `${className} opacity-50`
           })}
@@ -277,6 +328,7 @@ export function Thumbnail({
       detectedRatio,
       finalAspectRatio,
       finalObjectFit,
+      finalObjectPosition,
       preserveAspectRatio,
       imageSrc: imageSrc.substring(0, 80) + '...'
     });
@@ -316,6 +368,7 @@ export function Thumbnail({
         alt={alt}
         className={getThumbnailImageStyles({
           objectFit: finalObjectFit,
+          objectPosition: finalObjectPosition,
           isClickable: !!onClick,
           className: `${className} ${hasError ? 'opacity-50' : ''} ${!imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`
         })}
