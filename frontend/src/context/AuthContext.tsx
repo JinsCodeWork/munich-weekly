@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { usersApi } from "@/api"
 import { useRouter } from "next/navigation"
 
@@ -22,6 +22,11 @@ interface AuthContextType {
   hasRole: (role: string) => boolean
   isAuthenticated: () => boolean
   refreshUserData: () => Promise<User | null>
+  isLoginOpen: boolean
+  isRegisterOpen: boolean
+  openLogin: () => void
+  openRegister: () => void
+  closeAuthModals: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -52,6 +57,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false)
   const router = useRouter()
 
   // Try to recover token and user data from both localStorage and sessionStorage
@@ -223,17 +230,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return !!token && !!user
   }
 
+  // Modal management functions
+  const openLogin = useCallback(() => {
+    setIsRegisterOpen(false)
+    setIsLoginOpen(true)
+  }, [])
+
+  const openRegister = useCallback(() => {
+    setIsLoginOpen(false)
+    setIsRegisterOpen(true)
+  }, [])
+
+  const closeAuthModals = useCallback(() => {
+    setIsLoginOpen(false)
+    setIsRegisterOpen(false)
+  }, [])
+
+  // Close modals when user successfully logs in
+  useEffect(() => {
+    if (user) {
+      closeAuthModals()
+    }
+  }, [user, closeAuthModals])
+
+  const value = {
+    user,
+    token,
+    loading,
+    login,
+    logout,
+    hasRole,
+    isAuthenticated,
+    refreshUserData,
+    isLoginOpen,
+    isRegisterOpen,
+    openLogin,
+    openRegister,
+    closeAuthModals,
+  }
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      token, 
-      loading, 
-      login, 
-      logout, 
-      hasRole, 
-      isAuthenticated,
-      refreshUserData
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

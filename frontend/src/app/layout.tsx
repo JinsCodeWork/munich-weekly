@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { Space_Grotesk, DM_Sans, Playfair_Display } from 'next/font/google'
 import { AuthProvider } from '@/context/AuthContext'
 import MainNav from '@/components/navigation/MainNav'
+import { GlobalAuthModals } from '@/components/auth/GlobalAuthModals'
 
 // 配置DM Sans字体（替代Inter）
 const dmSans = DM_Sans({
@@ -53,6 +54,7 @@ export default function RootLayout({
         <AuthProvider>
           <MainNav />
           {children}
+          <GlobalAuthModals />
         </AuthProvider>
       </body>
     </html>

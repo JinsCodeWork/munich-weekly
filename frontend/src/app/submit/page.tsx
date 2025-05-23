@@ -9,8 +9,6 @@ import { Modal } from '@/components/ui/Modal';
 import { IssueSelector } from '@/components/ui/IssueSelector';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 import { LoadingErrorStates } from '@/components/ui/LoadingErrorStates';
-import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { useIssues } from '@/hooks/useIssues';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { getFormContainerStyles } from '@/styles';
@@ -24,7 +22,7 @@ import { createSubmission } from '@/api/submissions';
  */
 export default function SubmitPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, openLogin } = useAuth();
   const { activeIssues, isLoading, error: issuesError, fetchIssues } = useIssues();
   const { file, handleFileSelect, error: fileError, uploadFileWithFetch } = useFileUpload();
   
@@ -32,8 +30,6 @@ export default function SubmitPage() {
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,54 +40,22 @@ export default function SubmitPage() {
     if (!loading) {
       if (!user) {
         setShowInfoModal(true);
-        setIsLoginOpen(false);
       }
       setInitialAuthCheckDone(true);
     }
   }, [user, loading]);
 
-  // Redirect to home if both modals are closed and user is not authenticated
+  // Redirect to home if info modal is closed and user is not authenticated
   useEffect(() => {
-    if (initialAuthCheckDone && !loading && !user && !showInfoModal && !isLoginOpen && !isRegisterOpen) {
+    if (initialAuthCheckDone && !loading && !user && !showInfoModal) {
       router.push('/');
     }
-  }, [user, loading, showInfoModal, isLoginOpen, isRegisterOpen, router, initialAuthCheckDone]);
+  }, [user, loading, showInfoModal, router, initialAuthCheckDone]);
 
   // Handle login button click - show login modal and hide info modal
   const handleLoginClick = () => {
     setShowInfoModal(false); // Hide the info modal first
-    setIsRegisterOpen(false); // Ensure register modal is closed
-    setIsLoginOpen(true); // Then show login modal
-  };
-  
-  // Handle close login modal
-  const handleCloseLogin = () => {
-    setIsLoginOpen(false);
-    // If user is still not logged in and closed the login modal, redirect to home
-    if (!user) {
-      router.push('/');
-    }
-  };
-
-  // Handle register button click - show register modal and hide login modal
-  const handleRegisterClick = () => {
-    setIsLoginOpen(false); // Hide login modal
-    setIsRegisterOpen(true); // Show register modal
-  };
-
-  // Handle close register modal
-  const handleCloseRegister = () => {
-    setIsRegisterOpen(false);
-    // If user is still not logged in and closed the register modal, redirect to home
-    if (!user) {
-      router.push('/');
-    }
-  };
-
-  // Handle login click from register modal
-  const handleLoginFromRegister = () => {
-    setIsRegisterOpen(false);
-    setIsLoginOpen(true);
+    openLogin(); // Use global login modal
   };
   
   // Handle close info modal
@@ -170,7 +134,7 @@ export default function SubmitPage() {
     );
   }
 
-  // For unauthenticated users, only show the modals
+  // For unauthenticated users, only show the info modal
   if (!user) {
     return (
       <>
@@ -207,12 +171,6 @@ export default function SubmitPage() {
             </button>
           </div>
         </Modal>
-        
-        {/* Login form modal */}
-        <LoginForm isOpen={isLoginOpen} onClose={handleCloseLogin} onRegisterClick={handleRegisterClick} />
-        
-        {/* Register form modal */}
-        <RegisterForm isOpen={isRegisterOpen} onClose={handleCloseRegister} onLoginClick={handleLoginFromRegister} />
         
         {/* Invisible wrapper to keep modals mounted */}
         <div className="fixed inset-0 pointer-events-none" aria-hidden="true"></div>

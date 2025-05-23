@@ -8,8 +8,6 @@ import { Container } from '../ui/Container';
 import { Logo } from '../ui/Logo';
 import MobileNav from './MobileNav';
 import { NAV_LINKS } from '@/lib/constants';
-import { LoginForm } from '../auth/LoginForm';
-import { RegisterForm } from '../auth/RegisterForm';
 import { Thumbnail } from '../ui/Thumbnail';
 import { 
   getNavContainerStyles,
@@ -24,9 +22,7 @@ import {
 export default function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, logout } = useAuth();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const { user, loading, logout, openLogin, openRegister } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -43,34 +39,6 @@ export default function MainNav() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  const handleOpenLogin = () => {
-    setIsRegisterOpen(false); // Ensure register modal is closed
-    setIsLoginOpen(true);
-  };
-
-  const handleCloseLogin = () => {
-    setIsLoginOpen(false);
-  };
-
-  const handleOpenRegister = () => {
-    setIsLoginOpen(false); // Ensure login modal is closed
-    setIsRegisterOpen(true);
-  };
-
-  const handleCloseRegister = () => {
-    setIsRegisterOpen(false);
-  };
-
-  const handleLoginClick = () => {
-    setIsRegisterOpen(false);
-    setIsLoginOpen(true);
-  };
-
-  const handleRegisterClick = () => {
-    setIsLoginOpen(false);
-    setIsRegisterOpen(true);
-  };
 
   // Handle logout
   const handleLogout = () => {
@@ -220,11 +188,11 @@ export default function MainNav() {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <button onClick={handleOpenLogin} className="font-heading text-gray-600 hover:text-black nav-link-hover">
+                  <button onClick={openLogin} className="font-heading text-gray-600 hover:text-black nav-link-hover">
                     Login
                   </button>
                   <button 
-                    onClick={handleOpenRegister} 
+                    onClick={openRegister} 
                     className="font-heading px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
                   >
                     Register
@@ -236,27 +204,13 @@ export default function MainNav() {
             {/* Mobile navigation */}
             <div className="md:hidden">
               <MobileNav 
-                onLoginClick={handleOpenLogin} 
-                onRegisterClick={handleOpenRegister} 
+                onLoginClick={openLogin} 
+                onRegisterClick={openRegister} 
               />
             </div>
           </div>
         </Container>
       </header>
-
-      {/* Login modal */}
-      <LoginForm 
-        isOpen={isLoginOpen} 
-        onClose={handleCloseLogin} 
-        onRegisterClick={handleRegisterClick}
-      />
-
-      {/* Register modal */}
-      <RegisterForm
-        isOpen={isRegisterOpen}
-        onClose={handleCloseRegister}
-        onLoginClick={handleLoginClick}
-      />
     </>
   );
 } 
