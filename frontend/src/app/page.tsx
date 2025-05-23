@@ -16,8 +16,9 @@ export default function Home() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        // 不再添加随机时间戳，允许浏览器缓存请求
-        const response = await fetch('/frontend-api/config');
+        // 添加时间戳参数以强制刷新配置（临时解决缓存问题）
+        const timestamp = Date.now();
+        const response = await fetch(`/frontend-api/config?_t=${timestamp}`);
         
         // 记录响应头信息用于调试
         console.log('Config API response status:', response.status);
