@@ -158,6 +158,9 @@ export function useConfigAdmin() {
             'Content-Type': 'application/json',
             ...getAuthHeader()
           },
+          body: JSON.stringify({
+            imageUrl: data.url
+          }),
           credentials: 'include'
         });
         
