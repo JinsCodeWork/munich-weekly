@@ -160,17 +160,26 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
 ### React Components
 
 **Thumbnail Component**
-Optimized for list views with smaller dimensions and focused cropping:
+Advanced thumbnail component with intelligent aspect ratio handling and responsive positioning:
 ```tsx
 <Thumbnail 
   src={imageUrl}
   width={300}
   height={200}
-  objectFit="cover"
+  objectFit="contain"  // Smart selection based on aspect ratio
+  objectPosition="top" // Responsive positioning (top on desktop, center on mobile)
   quality={80}
   useImageOptimization={true}
+  autoDetectAspectRatio={true}
+  preserveAspectRatio={true}
 />
 ```
+
+**Key Features:**
+- **Intelligent Object Fit**: Automatically selects `contain` for landscape images and `cover` for portraits
+- **Responsive Positioning**: Desktop uses top-alignment for non-16:9 landscapes, mobile centers all images
+- **Precise Aspect Ratio Detection**: 16:9 detection with ±0.08 tolerance, other ratios with ±0.1 tolerance
+- **Type-safe Configuration**: Full TypeScript support with comprehensive prop validation
 
 **ImageViewer Component**
 Designed for full-size viewing with high quality and original aspect ratio:
