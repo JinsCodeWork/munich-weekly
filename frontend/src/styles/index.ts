@@ -25,5 +25,8 @@ export * from './components/form';
 export * from './components/navigation/navBar';
 export * from './components/navigation/header';
 
+// New masonry layout styles
+export * from './components/masonry';
+
 // Re-export cn utility
 export { cn } from '@/lib/utils'; 

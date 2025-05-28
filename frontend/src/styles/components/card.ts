@@ -12,7 +12,8 @@ import { cardVariants } from '../variants';
  */
 export const submissionCardStyles = {
   container: 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-  imageContainer: 'relative overflow-hidden h-48 sm:h-60',
+  imageContainer: 'relative overflow-hidden h-48 sm:h-60', // For grid layout - fixed height
+  imageContainerMasonry: 'relative overflow-hidden', // For masonry layout - adaptive height
   contentContainer: 'p-4 sm:p-4 p-2',
   title: 'text-lg font-semibold text-gray-900 mb-1 truncate',
   description: 'text-sm text-gray-500 mb-3 line-clamp-2',

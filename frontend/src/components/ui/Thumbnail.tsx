@@ -25,6 +25,11 @@ export interface ThumbnailProps {
   useImageOptimization?: boolean;
   autoDetectAspectRatio?: boolean;
   preserveAspectRatio?: boolean;
+  /**
+   * Callback function called when image loads with natural dimensions
+   * Useful for masonry layouts that need aspect ratio information
+   */
+  onImageLoad?: (width: number, height: number, aspectRatio: number) => void;
 }
 
 /**
@@ -32,6 +37,7 @@ export interface ThumbnailProps {
  * Uses Next.js Image component for image optimization
  * Supports different sizes, ratios and style configurations
  * Now includes automatic aspect ratio detection for better display of various image sizes
+ * Enhanced with onImageLoad callback for masonry layout support
  */
 export function Thumbnail({
   src,
@@ -54,7 +60,8 @@ export function Thumbnail({
   showErrorMessage = false,
   useImageOptimization = true,
   autoDetectAspectRatio = true,
-  preserveAspectRatio = true
+  preserveAspectRatio = true,
+  onImageLoad
 }: ThumbnailProps) {
   const [hasError, setHasError] = useState(false);
   const [detectedRatio, setDetectedRatio] = useState<keyof typeof aspectRatioVariants | null>(null);
@@ -104,7 +111,14 @@ export function Thumbnail({
       const detected = detectAspectRatio(img.naturalWidth, img.naturalHeight);
       setDetectedRatio(detected);
       setImageLoaded(true);
-      console.log(`图片尺寸检测: ${img.naturalWidth}x${img.naturalHeight}, 检测到比例: ${detected}`);
+      
+      // Calculate actual aspect ratio and call callback if provided
+      const actualAspectRatio = img.naturalWidth / img.naturalHeight;
+      if (onImageLoad) {
+        onImageLoad(img.naturalWidth, img.naturalHeight, actualAspectRatio);
+      }
+      
+      console.log(`Image dimensions detected: ${img.naturalWidth}x${img.naturalHeight}, ratio: ${detected}, actual ratio: ${actualAspectRatio.toFixed(3)}`);
     };
     img.onerror = () => {
       setImageLoaded(true);
@@ -113,7 +127,7 @@ export function Thumbnail({
     // 使用处理过的图片源进行检测
     const processedSrc = getProcessedSrc();
     img.src = processedSrc;
-  }, [src, autoDetectAspectRatio, isValidSrc, getProcessedSrc]);
+  }, [src, autoDetectAspectRatio, isValidSrc, getProcessedSrc, onImageLoad]);
   
   // 确定最终使用的宽高比
   const finalAspectRatio = (() => {

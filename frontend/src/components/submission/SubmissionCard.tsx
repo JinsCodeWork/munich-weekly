@@ -6,7 +6,9 @@ import { Thumbnail } from "@/components/ui/Thumbnail";
 import { StatusBadge } from "@/components/ui/Badge";
 import { getSubmissionCardStyles, getSubmissionCardElementStyles } from "@/styles/components/card";
 import { mapSubmissionStatusToBadge } from "@/styles/components/badge";
+import { getMasonryItemStyles } from "@/styles/components/masonry";
 import { VoteButton } from '@/components/voting/VoteButton';
+import { useImageAspectRatio } from '@/hooks/useImageAspectRatio';
 import { cn } from "@/lib/utils";
 
 interface SubmissionCardProps {
@@ -15,14 +17,33 @@ interface SubmissionCardProps {
   displayContext?: 'default' | 'voteView' | 'previousResults';
   onVoteSuccess?: (submissionId: number, newVoteCount?: number) => void;
   onVoteCancelled?: (submissionId: number, newVoteCount?: number) => void;
+  /**
+   * Layout mode - determines styling approach
+   * 'masonry' applies masonry-specific styling with wide image detection
+   * 'grid' uses traditional grid layout
+   */
+  layoutMode?: 'masonry' | 'grid';
 }
 
 /**
  * Card component for displaying submission content 
  * Includes thumbnail image, status badge, description and metadata
+ * Enhanced with masonry layout support and intelligent wide image detection
  */
-export function SubmissionCard({ submission, className, displayContext = 'default', onVoteSuccess, onVoteCancelled }: SubmissionCardProps) {
+export function SubmissionCard({ 
+  submission, 
+  className, 
+  displayContext = 'default', 
+  onVoteSuccess, 
+  onVoteCancelled,
+  layoutMode = 'grid'
+}: SubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  
+  // Wide image detection for masonry layout
+  const { imageData, handleImageLoad: onImageLoad } = useImageAspectRatio();
+  const isWide = imageData.isWide;
+  const isLoaded = imageData.isLoaded;
 
   const handleOpenViewer = () => {
     // 只有在有有效图片时才打开查看器
@@ -33,6 +54,26 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
 
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
+  };
+
+  /**
+   * Handle image load for masonry layout optimization
+   * Called when the thumbnail image finishes loading
+   */
+  const handleImageLoad = (width: number, height: number, aspectRatio: number) => {
+    // Pass dimensions to the wide image detection hook
+    onImageLoad(width, height);
+    
+    // Development logging for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('SubmissionCard Image Loaded:', {
+        submissionId: submission.id,
+        dimensions: `${width}x${height}`,
+        aspectRatio: aspectRatio.toFixed(3),
+        isWide: aspectRatio >= 16/9,
+        layoutMode,
+      });
+    }
   };
   
   // Process the image URL to ensure it has the correct server prefix
@@ -66,20 +107,37 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
     e.preventDefault();
   };
 
+  // Determine container styling based on layout mode
+  const containerStyles = layoutMode === 'masonry' 
+    ? getMasonryItemStyles({ 
+        isWideImage: isWide && isLoaded,
+        className
+      })
+    : getSubmissionCardStyles(className);
+
   return (
     <>
       <div 
-        className={getSubmissionCardStyles(className)}
+        className={containerStyles}
         onClick={handleOpenViewer}
       >
         {/* Image area */}
-        <div className={getSubmissionCardElementStyles('imageContainer')}>
+        <div 
+          className={layoutMode === 'masonry' 
+            ? getSubmissionCardElementStyles('imageContainerMasonry') 
+            : getSubmissionCardElementStyles('imageContainer')
+          }
+          style={layoutMode === 'masonry' && isLoaded && imageData?.aspectRatio 
+            ? { aspectRatio: imageData.aspectRatio.toString() }
+            : undefined
+          }
+        >
           <Thumbnail
             src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
             fill={true}
-            aspectRatio="square"
-            autoDetectAspectRatio={true}
+            aspectRatio={layoutMode === 'masonry' ? 'auto' : 'square'}
+            autoDetectAspectRatio={layoutMode === 'masonry'}
             preserveAspectRatio={true}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
             priority={false}
@@ -87,6 +145,7 @@ export function SubmissionCard({ submission, className, displayContext = 'defaul
             showErrorMessage={true}
             fallbackSrc="/placeholder.svg"
             quality={85}
+            onImageLoad={layoutMode === 'masonry' ? handleImageLoad : undefined}
           />
           
           {/* Status badge - conditional rendering */}

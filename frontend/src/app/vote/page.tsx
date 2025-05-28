@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Issue, Submission, SubmissionStatus } from '@/types/submission';
 import { issuesApi, submissionsApi } from '@/api';
 import { SubmissionCard } from '@/components/submission/SubmissionCard';
+import { MasonryGrid } from '@/components/ui/MasonryGrid';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
@@ -312,20 +313,28 @@ export default function VotePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {displayedSubmissions.map(submission => (
-              <div key={submission.id} className="relative">
-                <SubmissionCard 
-                  submission={submission} 
-                  displayContext={isViewingPrevious ? "previousResults" : "voteView"}
-                  onVoteSuccess={!isViewingPrevious ? handleVoteSuccess : undefined}
-                  onVoteCancelled={!isViewingPrevious ? handleVoteCancelled : undefined}
-                />
+          <MasonryGrid
+            gap={6}
+            isLoading={isLoading}
+            emptyState={
+              <div className="text-center text-gray-500 py-10">
+                <p>No submissions available for this issue.</p>
               </div>
+            }
+          >
+            {displayedSubmissions.map(submission => (
+              <SubmissionCard 
+                key={submission.id}
+                submission={submission} 
+                displayContext={isViewingPrevious ? "previousResults" : "voteView"}
+                onVoteSuccess={!isViewingPrevious ? handleVoteSuccess : undefined}
+                onVoteCancelled={!isViewingPrevious ? handleVoteCancelled : undefined}
+                layoutMode="masonry"
+              />
             ))}
-          </div>
+          </MasonryGrid>
           
-          {/* 分页组件 */}
+          {/* Pagination component */}
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
