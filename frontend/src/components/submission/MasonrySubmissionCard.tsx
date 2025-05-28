@@ -254,9 +254,9 @@ export function MasonrySubmissionCard({
             </div>
           )}
 
-          {/* Hover overlay for enhanced visual feedback */}
+          {/* Hover overlay for enhanced visual feedback - 移动端禁用 */}
           {enableHoverEffects && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-200" />
           )}
         </div>
 

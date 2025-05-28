@@ -37,6 +37,23 @@ export interface MasonryConfig {
   desktopColumns: number;
   mobileBreakpoint: number;   // Breakpoint for mobile (default: 768px)
   tabletBreakpoint: number;   // Breakpoint for tablet (default: 1024px)
+  
+  // **WEIGHTED SCORING ALGORITHM PARAMETERS**
+  /**
+   * Weight exponent (α) for wide image placement bias
+   * - α = 1.0: original algorithm (pure y-based)
+   * - α < 1.0: favor wide images more (they get lower scores, placed earlier)
+   * - α > 1.0: favor narrow images more (wide images get higher scores, placed later)
+   * @default 0.9 (slight bias toward wide images)
+   */
+  wideImageBias?: number;
+  
+  /**
+   * Enable weighted scoring algorithm to prevent wide images from sinking to bottom
+   * When false, uses original pure y-based best-fit algorithm
+   * @default true
+   */
+  enableWeightedScoring?: boolean;
 }
 
 /**
@@ -66,6 +83,10 @@ const DEFAULT_CONFIG: MasonryConfig = {
   desktopColumns: CONTAINER_CONFIG.masonry.columns.desktop,
   mobileBreakpoint: 768, // Lower breakpoint for better tablet support
   tabletBreakpoint: 1024, // Upper breakpoint for tablet support
+  
+  // **WEIGHTED SCORING ALGORITHM DEFAULTS**
+  wideImageBias: 0.7, // Slight bias toward wide images to prevent sinking
+  enableWeightedScoring: true, // Enable the improved algorithm by default
 };
 
 /**
@@ -202,8 +223,9 @@ export function useMasonryLayout<T = unknown>(
     }>;
   }, [items, getDimensions, columnCount, currentColumnWidth, currentGap, mergedConfig.wideImageThreshold, screenWidth, mergedConfig.tabletBreakpoint]);
 
-  // **GREEDY BEST-FIT ALGORITHM** with absolute positioning
+  // **GREEDY BEST-FIT ALGORITHM** with absolute positioning and weighted scoring
   // Dynamically selects items to fill gaps optimally and minimize holes
+  // Uses weighted scoring (y/span^α) to give wide images fairer placement opportunity
   const layoutResult = useMemo(() => {
     const heights: number[] = Array(columnCount).fill(0);
     const layoutItems: LayoutItem<T>[] = [];
@@ -216,11 +238,17 @@ export function useMasonryLayout<T = unknown>(
     // Create a pool of remaining items to place
     const pool = [...loadedItems];
 
-    // **GREEDY BEST-FIT MAIN LOOP**
-    // Instead of placing items in order, dynamically choose the item that can be placed at the lowest Y position
+    // **WEIGHTED SCORING PARAMETERS**
+    // Get algorithm parameters from configuration
+    const enableWeighted = mergedConfig.enableWeightedScoring ?? DEFAULT_CONFIG.enableWeightedScoring!;
+    const α = mergedConfig.wideImageBias ?? DEFAULT_CONFIG.wideImageBias!;
+
+    // **GREEDY BEST-FIT MAIN LOOP WITH CONFIGURABLE SCORING**
+    // Choose between weighted scoring and original pure y-based algorithm
     while (pool.length > 0) {
       let bestChoice = { 
         itemIndex: -1, 
+        score: Infinity,
         y: Infinity, 
         columnStart: 0, 
         span: 0 
@@ -235,14 +263,28 @@ export function useMasonryLayout<T = unknown>(
           // Calculate Y position if placing item at startCol
           const y = Math.max(...heights.slice(startCol, startCol + span));
           
-          // Choose the placement that results in the lowest Y position
-          // If Y positions are equal, prefer smaller span (narrower items) to fill gaps better
+          // **CONFIGURABLE SCORING ALGORITHM**
+          let score: number;
+          if (enableWeighted) {
+            // **WEIGHTED SCORING**: Calculate score = y / span^α
+            // This gives wide images (larger span) better chances of being placed earlier
+            score = y / Math.pow(span, α);
+          } else {
+            // **ORIGINAL ALGORITHM**: Pure y-based scoring
+            score = y;
+          }
+          
+          // Choose the placement that results in the best (lowest) score
+          // If scores are equal, prefer smaller Y position (tighter packing)
+          // If Y positions are also equal, prefer smaller span (narrower items) to fill gaps better
           if (
-            y < bestChoice.y ||
-            (y === bestChoice.y && span < bestChoice.span)
+            score < bestChoice.score ||
+            (score === bestChoice.score && y < bestChoice.y) ||
+            (score === bestChoice.score && y === bestChoice.y && span < bestChoice.span)
           ) {
             bestChoice = { 
               itemIndex, 
+              score,
               y, 
               columnStart: startCol, 
               span 
@@ -288,7 +330,7 @@ export function useMasonryLayout<T = unknown>(
       loadedItems: loadedItems.length,
       loadingProgress,
     };
-  }, [preparedItems, columnCount, currentColumnWidth, currentGap]);
+  }, [preparedItems, columnCount, currentColumnWidth, currentGap, mergedConfig.enableWeightedScoring, mergedConfig.wideImageBias]);
 
   // Force re-layout when items change significantly
   const forceLayout = useCallback(() => {
