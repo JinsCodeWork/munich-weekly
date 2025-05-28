@@ -34,24 +34,30 @@ The system implements an enhanced intelligent item placement algorithm that mini
 - **Adaptive Candidate Filtering**: Forces narrow image insertion when needed
 - **Balanced Layout Distribution**: Ensures fair alternation between wide and narrow images
 
-**Wide Image Limiting Mechanism:**
+**Enhanced Wide Image Limiting Mechanism:**
 ```typescript
 let wideStreak = 0;           // Counter for consecutive wide images
+let narrowStreak = 0;         // Counter for consecutive narrow images after wide
 const maxWideStreak = 1;      // Maximum consecutive wide images allowed
+const minNarrowAfterWide = 2; // Minimum narrow images required after wide image
 
-// If too many consecutive wide images and narrow images available,
-// limit candidates to narrow images only
-if (wideStreak >= maxWideStreak && pool.some(item => !item.isWide)) {
+// Enhanced filtering: require at least 2 narrow images after each wide image
+if (wideStreak >= maxWideStreak && narrowStreak < minNarrowAfterWide && pool.some(item => !item.isWide)) {
   candidates = pool.filter(item => !item.isWide);
 }
 ```
 
-**Algorithm Flow:**
-1. **Wide Image Placement**: Increment `wideStreak` counter
-2. **Streak Check**: If `wideStreak >= maxWideStreak` and narrow images available
-3. **Forced Insertion**: Next iteration considers only narrow images
-4. **Narrow Image Placement**: Reset `wideStreak = 0`
-5. **Balanced Alternation**: Continues optimal placement with fair distribution
+**Enhanced Algorithm Flow:**
+1. **Wide Image Placement**: Increment `wideStreak`, reset `narrowStreak = 0`
+2. **Narrow Image Requirement**: Must place at least 2 narrow images before considering wide images again
+3. **Narrow Image Placement**: Increment `narrowStreak` counter
+4. **Streak Reset**: Only reset `wideStreak = 0` when `narrowStreak >= 2`
+5. **Mobile Optimization**: Prevents problematic pattern of wide→narrow→wide that creates right-side gaps
+
+**Mobile Layout Benefits:**
+- **Gap Prevention**: Eliminates right-side whitespace when single narrow image is sandwiched between two wide images
+- **Better Space Utilization**: Ensures narrow images fill gaps more effectively before placing next wide image
+- **Visual Balance**: Creates more natural groupings of narrow images between wide images
 
 ### Wide Image Detection and Handling
 

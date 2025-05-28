@@ -268,103 +268,108 @@ export function useMasonryLayout<T = unknown>(
 
     // **WIDE IMAGE STREAK LIMITING**
     // Prevent wide images from being placed consecutively
+    // Enhanced: Require at least 2 narrow images after each wide image
     let wideStreak = 0;           // Counter for consecutive wide images
+    let narrowStreak = 0;         // Counter for consecutive narrow images after wide
     const maxWideStreak = 1;      // Maximum consecutive wide images allowed
+    const minNarrowAfterWide = 2; // Minimum narrow images required after wide image
 
-    // **GREEDY BEST-FIT MAIN LOOP WITH WIDE IMAGE LIMITING**
+    // **GREEDY BEST-FIT MAIN LOOP WITH ENHANCED WIDE IMAGE LIMITING**
     // Choose between weighted scoring and original pure y-based algorithm
-    // Plus wide image streak limiting to ensure fair distribution
+    // Plus enhanced wide image streak limiting to ensure fair distribution
     while (pool.length > 0) {
-      let bestChoice = { 
-        itemIndex: -1, 
-        score: Infinity,
-        y: Infinity, 
-        columnStart: 0, 
-        span: 0 
-      };
       
-      // **WIDE IMAGE STREAK LIMITING**
-      // If we've placed too many consecutive wide images and narrow images are available,
-      // limit candidates to narrow images only to force insertion of small images
+      // **CANDIDATE FILTERING WITH ENHANCED WIDE IMAGE LIMITING**
+      // If we just placed wide images and haven't placed enough narrow images,
+      // force narrow image selection
       let candidates = pool;
-      if (wideStreak >= maxWideStreak && pool.some(item => !item.isWide)) {
+      
+      if (wideStreak >= maxWideStreak && narrowStreak < minNarrowAfterWide && pool.some(item => !item.isWide)) {
+        // Force narrow images: we need at least 2 narrow images after wide
         candidates = pool.filter(item => !item.isWide);
       }
-      
+
+      // **BEST-FIT ALGORITHM** - Find optimal position for remaining candidates
+      let bestChoice = {
+        item: null as typeof pool[0] | null,
+        poolIndex: -1,
+        columnStart: 0,
+        span: 1,
+        y: Infinity,
+        score: Infinity
+      };
+
       // For each remaining item in the candidates pool, try all possible positions
       candidates.forEach((item) => {
         const span = item.span;
         const poolIndex = pool.indexOf(item); // Get original index in pool
-        
-        // Try all possible starting columns for this item
-        for (let startCol = 0; startCol <= columnCount - span; startCol++) {
-          // Calculate Y position if placing item at startCol
-          const y = Math.max(...heights.slice(startCol, startCol + span));
+
+        // Try placing this item in each possible column position
+        for (let columnStart = 0; columnStart <= columnCount - span; columnStart++) {
+          // Find the maximum height among the columns this item would span
+          const y = Math.max(...heights.slice(columnStart, columnStart + span));
           
-          // **CONFIGURABLE SCORING ALGORITHM**
-          let score: number;
-          if (enableWeighted) {
-            // **WEIGHTED SCORING**: Calculate score = y / span^α
-            // This gives wide images (larger span) better chances of being placed earlier
-            score = y / Math.pow(span, α);
-          } else {
-            // **ORIGINAL ALGORITHM**: Pure y-based scoring
-            score = y;
-          }
+          // Calculate score based on algorithm choice
+          const score = enableWeighted ? y / Math.pow(span, α) : y;
           
-          // Choose the placement that results in the best (lowest) score
-          // If scores are equal, prefer smaller Y position (tighter packing)
-          // If Y positions are also equal, prefer smaller span (narrower items) to fill gaps better
-          if (
-            score < bestChoice.score ||
-            (score === bestChoice.score && y < bestChoice.y) ||
-            (score === bestChoice.score && y === bestChoice.y && span < bestChoice.span)
-          ) {
-            bestChoice = { 
-              itemIndex: poolIndex, // Use original pool index
-              score,
-              y, 
-              columnStart: startCol, 
-              span 
+          // Update best choice if this position is better
+          if (score < bestChoice.score) {
+            bestChoice = {
+              item,
+              poolIndex,
+              columnStart,
+              span,
+              y,
+              score
             };
           }
         }
       });
-      
-      // Remove the chosen item from the pool and place it
-      const chosenItem = pool.splice(bestChoice.itemIndex, 1)[0];
-      
-      // Calculate absolute coordinates
-      const x = bestChoice.columnStart * (currentColumnWidth + currentGap);
-      
-      // Create layout item with absolute positioning
-      const layoutItem: LayoutItem<T> = {
-        id: chosenItem.id,
-        data: chosenItem.data,
-        x,
-        y: bestChoice.y,
-        width: chosenItem.realWidth,
-        height: chosenItem.realHeight,
-        span: bestChoice.span,
-        aspectRatio: chosenItem.aspectRatio,
-        isWide: chosenItem.isWide,
-        isLoaded: chosenItem.isLoaded,
-      };
-      
-      layoutItems.push(layoutItem);
-      
-      // Update heights for all columns affected by this item's span
-      const newHeight = bestChoice.y + chosenItem.realHeight + currentGap;
-      for (let col = bestChoice.columnStart; col < bestChoice.columnStart + bestChoice.span; col++) {
-        heights[col] = newHeight;
-      }
-      
-      // **UPDATE WIDE STREAK COUNTER**
-      // Track consecutive wide image placements
-      if (chosenItem.isWide) {
-        wideStreak += 1;
+
+      // **ITEM PLACEMENT** - Place the best item and update state
+      if (bestChoice.item) {
+        const item = bestChoice.item;
+        
+        // Remove the chosen item from the pool
+        pool.splice(bestChoice.poolIndex, 1);
+        
+        // Calculate the new height after placing this item
+        const newHeight = bestChoice.y + item.realHeight + currentGap;
+        
+        // Update the heights of all affected columns
+        for (let i = bestChoice.columnStart; i < bestChoice.columnStart + bestChoice.span; i++) {
+          heights[i] = newHeight;
+        }
+        
+        // Add the positioned item to the result
+        layoutItems.push({
+          id: item.id,
+          data: item.data,
+          x: bestChoice.columnStart * (currentColumnWidth + currentGap),
+          y: bestChoice.y,
+          width: item.realWidth,
+          height: item.realHeight,
+          span: item.span,
+          aspectRatio: item.aspectRatio,
+          isWide: item.isWide,
+          isLoaded: item.isLoaded,
+        });
+
+        // **UPDATE STREAK COUNTERS WITH ENHANCED LOGIC**
+        if (item.isWide) {
+          wideStreak += 1;
+          narrowStreak = 0; // Reset narrow streak when placing wide image
+        } else {
+          narrowStreak += 1;
+          // Only reset wide streak when we've placed enough narrow images
+          if (narrowStreak >= minNarrowAfterWide) {
+            wideStreak = 0;
+          }
+        }
       } else {
-        wideStreak = 0; // Reset counter when a narrow image is placed
+        // Safety break if no valid placement found
+        console.warn('MasonryLayout: No valid placement found for remaining items');
+        break;
       }
     }
 
