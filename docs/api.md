@@ -34,7 +34,7 @@ Authorization: Bearer <jwt_token>
 **Admin-Only Endpoints:** Require admin role
 - User administration
 - Submission approval/rejection
-- Issue management
+- **Issue management** (create, edit, get details)
 
 For detailed security implementation, see [Authentication & Security](./auth.md).
 
@@ -155,12 +155,41 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
 ## IssueController
 
+- **GET** `/api/issues`
+  > Get all issues in the system (public endpoint - no authentication required)
+
+- **GET** `/api/issues/{id}`
+  > Get a specific issue by ID. Admin only.
+
+  > **Params**: `Long id`
+  
+  > **Response**: Issue object with all details including title, description, and time periods
+
 - **POST** `/api/issues`
   > Create a new issue. Admin only. Accepts title, description, and submission/voting periods
 
   > **Params**: `IssueCreateRequestDTO dto`
-- **GET** `/api/issues`
-  > Get all issues in the system
+  
+  > **Request Body**:
+  > ```json
+  > {
+  >   "title": "Weekly Issue Title",
+  >   "description": "Issue description and guidelines",
+  >   "submissionStart": "2024-01-01T00:00:00",
+  >   "submissionEnd": "2024-01-07T23:59:59",
+  >   "votingStart": "2024-01-08T00:00:00",
+  >   "votingEnd": "2024-01-14T23:59:59"
+  > }
+  > ```
+
+- **PUT** `/api/issues/{id}`
+  > Update an existing issue. Admin only. Allows editing title, description, and all time periods
+
+  > **Params**: `Long id, IssueUpdateRequestDTO dto`
+  
+  > **Request Body**: Same format as create, all fields are editable
+  
+  > **Validation**: Ensures logical time ordering (submission before voting, start before end dates)
 
 ## PasswordResetController
 

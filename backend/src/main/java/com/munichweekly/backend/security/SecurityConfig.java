@@ -38,19 +38,38 @@ public class SecurityConfig {
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll() // Assuming public GET for submissions
-                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll() // 允许检查投票状态
-                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()     // 允许投票
-                        .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()   // 允许取消投票
+                        // Static resources
                         .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/api/submissions").permitAll()
+                        
+                        // Authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
+                        
+                        // Public issue list endpoint FIRST (most specific path)
+                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()                 // GET /api/issues (list all)
+                        
+                        // Issue management endpoints - Admin only (using ** for path variables)
+                        .requestMatchers(HttpMethod.GET, "/api/issues/**").hasAuthority("admin")    // GET /api/issues/{id}
+                        .requestMatchers(HttpMethod.POST, "/api/issues").hasAuthority("admin")     // POST /api/issues
+                        .requestMatchers(HttpMethod.PUT, "/api/issues/**").hasAuthority("admin")   // PUT /api/issues/{id}
+                        .requestMatchers(HttpMethod.DELETE, "/api/issues/**").hasAuthority("admin") // DELETE /api/issues/{id} (future)
+                        
+                        // Voting endpoints - Public
+                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()    // Check vote status
+                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()        // Cast vote
+                        .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()      // Remove vote
+                        
+                        // Submission endpoints - Public read
+                        .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll()   // Public GET for submissions
+                        .requestMatchers("/api/submissions").permitAll()                   // Other submission endpoints
+                        
+                        // User endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users/me").hasAnyAuthority("user", "admin")
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me").hasAnyAuthority("user", "admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/me").hasAnyAuthority("user", "admin")
+                        
+                        //special endpoints for upload heroimage. Don t delete this.
+                        .requestMatchers("/uploads/**").permitAll()
+
                         .anyRequest().authenticated()                // Everything else requires login
                 )
                 .addFilterBefore(

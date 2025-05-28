@@ -54,6 +54,7 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 - **Enhanced Responsive Container System** with professional spacing (20px mobile → 60px ultra-wide)
 - **Multi-Variant Layout Support** (narrow/wide/ultrawide containers for different content types)
 - **Advanced Masonry Layout** with Greedy Best-Fit algorithm and responsive configurations
+- **Issue Management Interface** with full CRUD operations for administrators
 - **Specialized Page Configurations** (Vote page optimized for large images, Account pages for sidebar layouts)
 - **Three-Breakpoint Responsive Design** (mobile/tablet/desktop) optimized for photography presentation
 - **Tailwind CSS** styling with glassmorphism effects and professional spacing
@@ -77,11 +78,11 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 
 ### For Developers
 1. Start with [Project Overview](../README.md)
-2. Set up development environment: [Developer Guide](./dev-guide.md)
-3. Understand security: [Authentication & Security](./auth.md)
-4. Learn the frontend: [Frontend Overview](./frontend-overview.md)
-5. Explore advanced layouts: [Masonry Layout System](./masonry-layout-system.md)
-6. API integration: [API Reference](./api.md)
+3. Set up development environment: [Developer Guide](./dev-guide.md)
+4. Understand security: [Authentication & Security](./auth.md)
+5. Learn the frontend: [Frontend Overview](./frontend-overview.md)
+6. Explore advanced layouts: [Masonry Layout System](./masonry-layout-system.md)
+7. API integration: [API Reference](./api.md)
 
 ### For DevOps/System Administrators
 1. Review security architecture: [Security Summary](./security-summary.md)
@@ -92,9 +93,10 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 
 ### For Project Managers/Stakeholders
 1. Platform overview: [Project Overview](../README.md)
-2. Security status: [Security Summary](./security-summary.md)
-3. Privacy compliance: [Privacy Policy](./privacy.md)
-4. User documentation: [User Guide](./user-guide.md)
+2. Latest updates: [Changelog](./CHANGELOG.md)
+3. Security status: [Security Summary](./security-summary.md)
+4. Privacy compliance: [Privacy Policy](./privacy.md)
+5. User documentation: [User Guide](./user-guide.md)
 
 ### For End Users
 1. How to use the platform: [User Guide](./user-guide.md)
@@ -105,6 +107,8 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 ## 🔄 Documentation Maintenance
 
 ### Last Updated
+- **Issue Management System**: January 2025 (New comprehensive admin interface for CRUD operations)
+- **API Documentation**: January 2025 (Added Issue management endpoints)
 - **Masonry Layout System**: January 2025 (New documentation for advanced JavaScript-based layout system)
 - **Security Documentation**: January 2025 (Complete rewrite based on current implementation)
 - **Other Documentation**: Various dates (see individual documents)
@@ -116,6 +120,7 @@ When updating documentation, ensure:
 3. Examples use current API endpoints and authentication methods
 4. Links in this index page are verified and working
 5. Masonry layout documentation reflects current algorithm implementation
+6. New features are documented in both API reference and frontend overview
 
 ---
 

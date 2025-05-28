@@ -11,7 +11,7 @@ import { formatDate } from '@/lib/utils';
 
 /**
  * Admin Issues Management Page
- * Lists all issues and provides management options
+ * Lists all issues and provides management options including create and edit
  */
 export default function ManageIssuesPage() {
   const router = useRouter();
@@ -138,10 +138,16 @@ export default function ManageIssuesPage() {
                           {formatDate(issue.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <Link
+                          href={`/account/manage-issues/${issue.id}/edit`}
+                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
+                        >
+                          Edit
+                        </Link>
                         <Link
                           href={`/account/manage-submissions?issueId=${issue.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-md transition-colors"
                         >
                           View Submissions
                         </Link>

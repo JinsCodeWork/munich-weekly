@@ -64,7 +64,8 @@ frontend/
 │   │   ├── account/        # User account section
 │   │   │   ├── home-settings/ # Home page settings
 │   │   │   ├── manage-issues/ # Issue management
-│   │   │   │   └── create/    # Create new issue
+│   │   │   │   ├── create/    # Create new issue
+│   │   │   │   └── [id]/edit/ # Edit existing issue
 │   │   │   ├── manage-submissions/ # Submission management
 │   │   │   ├── settings/     # User settings
 │   │   │   ├── submissions/  # User submissions
@@ -78,6 +79,7 @@ frontend/
 │   │   │   │   └── upload/ # Admin upload API
 │   │   │   └── config/     # Config API routes
 │   │   ├── content/        # Content pages
+│   │   ├── debug/          # Development debug tools
 │   │   ├── forgot-password/# Password recovery
 │   │   ├── gallery/        # Gallery page
 │   │   ├── privacy-policy/ # Privacy policy page
@@ -140,10 +142,32 @@ frontend/
 - Work submission system
 - Admin approval workflow
 - Voting mechanism
-- Issue management system
+- **Issue management system** with full CRUD operations
 - Dual-mode image storage (local/cloud)
 
-#### 4.1. Public Voting Page (`/vote`)
+#### 4.1. Issue Management System (Admin Only)
+
+A comprehensive issue management interface allows administrators to create, view, and edit weekly photography issues:
+
+**Key Features:**
+- **Issue Creation** (`/account/manage-issues/create`): Create new issues with title, description, and time periods
+- **Issue Listing** (`/account/manage-issues`): View all issues in a responsive table with quick actions
+- **Issue Editing** (`/account/manage-issues/[id]/edit`): Full editing interface for existing issues
+- **Time Period Management**: Set and modify submission and voting windows with validation
+- **Status Indicators**: Visual feedback for issue states and time periods
+
+**Technical Implementation:**
+- Form validation ensuring logical time ordering (submission → voting, start → end)
+- Real-time error handling and success feedback
+- Responsive design with mobile-optimized layouts
+- Integration with backend Issue API endpoints
+
+**Admin Tools:**
+- Quick edit buttons in issue lists with modern UI styling
+- Direct navigation to submission management for each issue
+- Comprehensive form validation with user-friendly error messages
+
+#### 4.2. Public Voting Page (`/vote`)
 
 To enhance user engagement and broaden participation, a new public voting page has been introduced at the `/vote` route. This page allows anonymous users (i.e., users not logged in) to participate in the voting process for active issues.
 
@@ -245,9 +269,11 @@ This system provides consistent, professional layouts across all devices while m
 ### 9. API Integration System
 
 - Modular API structure
-- Grouped by business function (authentication, users, submissions, issues, votes)
+- Grouped by business function (authentication, users, submissions, **issues**, votes)
 - Unified error handling
-- TypeScript type safety
+- **Enhanced Issue API**: Full CRUD operations with `getAllIssues()`, `getIssueById()`, `createIssue()`, and `updateIssue()`
+- JWT authentication integration with automatic token management
+- Comprehensive error handling with user-friendly messages
 
 ### 10. Style Management System
 
