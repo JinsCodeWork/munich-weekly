@@ -85,7 +85,7 @@ const DEFAULT_CONFIG: MasonryConfig = {
   tabletBreakpoint: 1024, // Upper breakpoint for tablet support
   
   // **WEIGHTED SCORING ALGORITHM DEFAULTS**
-  wideImageBias: 0.7, // Slight bias toward wide images to prevent sinking
+  wideImageBias: 0.8, // Slight bias toward wide images to prevent sinking
   enableWeightedScoring: true, // Enable the improved algorithm by default
 };
 

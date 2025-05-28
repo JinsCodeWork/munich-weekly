@@ -184,7 +184,6 @@ export default function VotePage() {
     return (
       <Container className="py-10" spacing="standard">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Vote on Submissions</h1>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 max-w-2xl mx-auto">
             <h2 className="text-xl font-semibold text-blue-900 mb-4">No Active Voting Period</h2>
             <p className="text-blue-700 mb-4">
@@ -226,15 +225,11 @@ export default function VotePage() {
       <div className="space-y-8">
         {/* Header Section */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {viewMode === 'current' ? 'Vote on Submissions' : 'Previous Voting Results'}
-          </h1>
-          
           {viewMode === 'current' && activeVotingIssue ? (
             <div className="max-w-3xl mx-auto">
-              <p className="text-xl text-gray-600 mb-2">
-                Current Issue: <span className="font-semibold text-gray-900">{activeVotingIssue.title}</span>
-              </p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Issue: {activeVotingIssue.title}
+              </h1>
               <p className="text-lg text-gray-500 mb-4">
                 {activeVotingIssue.description}
               </p>
@@ -270,9 +265,9 @@ export default function VotePage() {
             </div>
           ) : viewMode === 'previous' && previousIssue ? (
             <div className="max-w-3xl mx-auto">
-              <p className="text-xl text-gray-600 mb-2">
-                Previous Issue: <span className="font-semibold text-gray-900">{previousIssue.title}</span>
-              </p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Issue: {previousIssue.title}
+              </h1>
               <p className="text-lg text-gray-500 mb-4">
                 {previousIssue.description}
               </p>

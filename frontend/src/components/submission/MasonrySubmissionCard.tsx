@@ -215,6 +215,12 @@ export function MasonrySubmissionCard({
             autoDetectAspectRatio={true} // Enable aspect ratio detection
             preserveAspectRatio={true} // Preserve image aspect ratio
             objectFit="cover" // Use cover to fill the container properly
+            objectPosition={
+              // Vote界面移动端使用向上对齐，保证锐利的上边缘
+              displayContext === 'voteView' || displayContext === 'previousResults' 
+                ? 'top' // 移动端向上对齐
+                : 'center' // 其他情况居中对齐
+            }
             sizes={isWide 
               ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
               : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
