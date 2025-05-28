@@ -57,14 +57,14 @@ export const CONTAINER_CONFIG = {
   // Vote page masonry configuration - optimized for larger, more prominent display
   voteMasonry: {
     columnWidth: {
-      mobile: 170,        // Proper mobile size for 2-column layout
-      tablet: 220,        // Good tablet size for 2-column layout  
-      desktop: 320,       // Large desktop size for 4-column layout
+      mobile: 160,        // 减少移动端列宽，避免被裁切
+      tablet: 240,        // 增加平板列宽
+      desktop: 340,       // 增加桌面端列宽，更好利用空间
     },
     gap: {
-      mobile: 8,          // Even smaller gap for mobile to maximize content density
-      tablet: 14,         // Medium gap for tablet  
-      desktop: 20,        // Standard gap for desktop
+      mobile: 6,          // 进一步减少移动端间距
+      tablet: 12,         // 减少平板间距
+      desktop: 18,        // 稍微减少桌面端间距
     },
     columns: {
       mobile: 2,          // Mobile: 2 columns (changed from 1)

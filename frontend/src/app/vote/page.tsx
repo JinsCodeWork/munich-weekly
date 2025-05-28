@@ -221,7 +221,7 @@ export default function VotePage() {
   }
 
   return (
-    <Container className="py-8" variant="ultrawide" spacing="generous">
+    <Container className="py-8" variant="wide" spacing="compact">
       <div className="space-y-8">
         {/* Header Section */}
         <div className="text-center">
