@@ -4,63 +4,76 @@ import React, { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
-import { MasonrySubmissionCard } from "@/components/submission/MasonrySubmissionCard"
-import { MasonryGallery } from "@/components/ui/MasonryGallery"
+import { SubmissionCard } from "@/components/submission/SubmissionCard"
 import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { Pagination } from "@/components/ui/Pagination"
 import { Modal } from "@/components/ui/Modal"
 import { cn } from "@/lib/utils"
-import { CONTAINER_CONFIG } from '@/styles/components/container'
 import { Container } from '@/components/ui/Container'
 
 export default function SubmissionsPage() {
   const { user } = useAuth()
-  const [submissions, setSubmissions] = useState<MySubmissionResponse[]>([])
+  const [allSubmissions, setAllSubmissions] = useState<MySubmissionResponse[]>([])
+  const [displayedSubmissions, setDisplayedSubmissions] = useState<MySubmissionResponse[]>([])
   const [issues, setIssues] = useState<Issue[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedIssue, setSelectedIssue] = useState<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const pageSize = 16 // Fixed number of submissions per page
+  const [showAllSubmissions, setShowAllSubmissions] = useState(false)
+  const pageSize = 16
   const [isManageMode, setIsManageMode] = useState(false)
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  // Load submissions data
+  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[]) => {
+    if (showAllSubmissions) {
+      setDisplayedSubmissions(submissions)
+      setTotalPages(1)
+    } else {
+      const startIndex = (currentPage - 1) * pageSize
+      const endIndex = startIndex + pageSize
+      const paginatedItems = submissions.slice(startIndex, endIndex)
+      setDisplayedSubmissions(paginatedItems)
+      setTotalPages(Math.ceil(submissions.length / pageSize))
+    }
+  }, [currentPage, pageSize, showAllSubmissions])
+
   const loadSubmissions = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       
-      console.log("Loading user submissions, page:", currentPage, "filter:", selectedIssue);
+      console.log("Loading user submissions, filter:", selectedIssue, "showAll:", showAllSubmissions);
       
-      // Note: API page index starts from 0, but UI page starts from 1
-      const response = await submissionsApi.getUserSubmissions(
-        selectedIssue, 
-        currentPage - 1, 
-        pageSize
-      )
+      const response = await submissionsApi.getUserSubmissions(selectedIssue)
       
+      let submissions: MySubmissionResponse[] = []
       if (Array.isArray(response)) {
-        // Compatibility handling: if returned as array (API doesn't support pagination yet)
-        setSubmissions(response)
-        setTotalPages(Math.ceil(response.length / pageSize))
+        submissions = response
       } else {
-        // Handle paginated response
-        setSubmissions(response.content)
-        setTotalPages(response.totalPages)
+        submissions = response.content
+        if (response.totalPages > 1) {
+          for (let page = 1; page < response.totalPages; page++) {
+            const additionalResponse = await submissionsApi.getUserSubmissions(selectedIssue, page, pageSize)
+            if (!Array.isArray(additionalResponse)) {
+              submissions = submissions.concat(additionalResponse.content)
+            }
+          }
+        }
       }
       
-      console.log("Successfully loaded user submissions:", response)
+      setAllSubmissions(submissions)
+      updateDisplayedSubmissions(submissions)
       
-      // Check image URLs
-      if ((Array.isArray(response) && response.length > 0) || 
-          (!Array.isArray(response) && response.content.length > 0)) {
-        const firstSubmission = Array.isArray(response) ? response[0] : response.content[0];
+      console.log(`Successfully loaded ${submissions.length} user submissions`)
+      
+      if (submissions.length > 0) {
+        const firstSubmission = submissions[0];
         console.log("First submission details:", {
           id: firstSubmission.id,
           imageUrl: firstSubmission.imageUrl,
@@ -73,14 +86,14 @@ export default function SubmissionsPage() {
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
-      setSubmissions([])
+      setAllSubmissions([])
+      setDisplayedSubmissions([])
       setTotalPages(1)
     } finally {
       setLoading(false)
     }
-  }, [selectedIssue, currentPage, pageSize])
+  }, [selectedIssue, showAllSubmissions, updateDisplayedSubmissions])
 
-  // Load issues data
   const loadIssues = async () => {
     try {
       const issuesData = await issuesApi.getAllIssues()
@@ -91,44 +104,46 @@ export default function SubmissionsPage() {
     }
   }
 
-  // Reload submissions when selected issue changes or page changes
+  useEffect(() => {
+    updateDisplayedSubmissions(allSubmissions)
+  }, [allSubmissions, updateDisplayedSubmissions])
+
   useEffect(() => {
     if (user) {
+      setCurrentPage(1)
       loadSubmissions()
     }
-  }, [loadSubmissions, user])
+  }, [selectedIssue, user, loadSubmissions])
 
-  // Initial load of issues data
   useEffect(() => {
     loadIssues()
   }, [])
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Option to scroll to top of page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Handle issue filter change
   const handleIssueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setSelectedIssue(value === "all" ? undefined : parseInt(value))
-    setCurrentPage(1) // Reset to first page when changing filter
+    setCurrentPage(1)
   }
 
-  // Toggle management mode
+  const toggleShowAllSubmissions = () => {
+    setShowAllSubmissions(!showAllSubmissions)
+    setCurrentPage(1)
+  }
+
   const toggleManageMode = () => {
     setIsManageMode(!isManageMode);
   };
 
-  // Handle delete button click
   const handleDeleteClick = useCallback((submissionId: number) => {
     setSubmissionToDelete(submissionId);
     setShowDeleteDialog(true);
   }, []);
 
-  // Handle confirm delete
   const handleConfirmDelete = async () => {
     if (submissionToDelete === null) return;
     
@@ -136,41 +151,26 @@ export default function SubmissionsPage() {
       setIsDeleting(true);
       await submissionsApi.deleteSubmission(submissionToDelete);
       
-      // Update UI state after successful deletion
-      setSubmissions(prevSubmissions => 
-        prevSubmissions.filter(submission => submission.id !== submissionToDelete)
-      );
+      const updatedSubmissions = allSubmissions.filter(submission => submission.id !== submissionToDelete)
+      setAllSubmissions(updatedSubmissions);
       
       setShowDeleteDialog(false);
       setSubmissionToDelete(null);
     } catch (error) {
       console.error("Error deleting submission:", error);
-      // Can show error message
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Cancel delete operation
   const handleCancelDelete = () => {
     setShowDeleteDialog(false);
     setSubmissionToDelete(null);
   };
 
-  // Handle submission click for detail view
-  const handleSubmissionClick = useCallback((submission: MySubmissionResponse) => {
-    if (!isManageMode) {
-      console.log('Submission clicked for detail view:', submission.id);
-      // Could implement modal detail view or navigation here
-    }
-  }, [isManageMode]);
-
-  // Convert MySubmissionResponse to Submission for MasonryGallery
   const convertToSubmissions = useCallback((mySubmissions: MySubmissionResponse[]) => {
     return mySubmissions.map(submission => {
-      // Find the corresponding issue
       const issue = issues.find(issue => 
-        // Try to extract issue ID from image URL, if not possible use first issue as default
         submission.imageUrl && (
           submission.imageUrl.includes(`issues/${issue.id}/`) || 
           submission.imageUrl.includes(`issue${issue.id}`)
@@ -200,47 +200,32 @@ export default function SubmissionsPage() {
     });
   }, [issues, user?.id]);
 
-  // Render submission with management overlay
-  const renderSubmissionWithManagement = useCallback((submission: MySubmissionResponse, isWide: boolean, aspectRatio: number) => {
-    const convertedSubmission = convertToSubmissions([submission])[0];
-    
+  if (!user) {
     return (
-      <div className="relative">
-        <MasonrySubmissionCard
-          submission={convertedSubmission}
-          isWide={isWide}
-          aspectRatio={aspectRatio}
-          displayContext="default"
-          enableHoverEffects={!isManageMode}
-        />
-        {isManageMode && (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteClick(submission.id);
-            }}
-            className="absolute top-2 left-2 bg-red-500 rounded-full w-8 h-8 flex items-center justify-center text-white hover:bg-red-600 z-10 shadow-md"
-            aria-label="Delete"
-          >
-            <span className="text-xl font-bold leading-none" style={{ marginTop: "-2px" }}>×</span>
-          </button>
-        )}
-      </div>
+      <Container className="py-10 text-center" spacing="standard">
+        <p>Please log in to view your submissions.</p>
+      </Container>
     );
-  }, [convertToSubmissions, isManageMode, handleDeleteClick]);
+  }
 
   return (
-    <Container spacing="minimal" className="py-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b border-gray-200 pb-5 mb-6">
-        <div className="mb-4 md:mb-0">
-          <h1 className="text-2xl font-bold text-gray-900 font-heading">My Submissions</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            View and manage all your submitted photos
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
-          {/* Issue filter */}
+    <Container className="py-8" spacing="standard">
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 font-heading">My Submissions</h1>
+            <p className="text-gray-600">
+              {allSubmissions.length > 0 
+                ? `You have ${allSubmissions.length} submission${allSubmissions.length > 1 ? 's' : ''}`
+                : "You haven't submitted any photos yet"
+              }
+              {showAllSubmissions 
+                ? " (showing all)" 
+                : ` (showing ${displayedSubmissions.length} per page)`
+              }
+            </p>
+          </div>
+          
           <div className="flex items-center self-start md:self-auto">
             <label htmlFor="issue-filter" className="mr-2 text-sm text-gray-500">
               Filter by Issue:
@@ -262,9 +247,8 @@ export default function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Management button */}
-      {submissions && submissions.length > 0 && !loading && (
-        <div className="mb-6">
+      {allSubmissions && allSubmissions.length > 0 && !loading && (
+        <div className="mb-6 flex flex-wrap gap-3">
           <Button 
             variant={isManageMode ? "danger" : "outline"}
             onClick={toggleManageMode}
@@ -286,17 +270,43 @@ export default function SubmissionsPage() {
             )}
             <span className="inline-block">{isManageMode ? 'Exit Management' : 'Manage My Submissions'}</span>
           </Button>
+          
+          {allSubmissions.length > pageSize && (
+            <Button 
+              variant="outline"
+              onClick={toggleShowAllSubmissions}
+              className="whitespace-nowrap px-4 flex items-center"
+            >
+              {showAllSubmissions ? (
+                <>
+                  <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                  </svg>
+                  Show Paged View
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="12" y1="9" x2="12" y2="15"></line>
+                  </svg>
+                  Show All ({allSubmissions.length})
+                </>
+              )}
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Loading state */}
       {loading && (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       )}
 
-      {/* Error state */}
       {error && !loading && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <div className="text-red-500 mb-4">
@@ -321,8 +331,7 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && !error && submissions && submissions.length === 0 && (
+      {!loading && !error && allSubmissions && allSubmissions.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <div className="text-gray-400 mb-4">
             <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -345,47 +354,46 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {/* Enhanced MasonryGallery for submissions with account-optimized layout */}
-      {!loading && !error && submissions && submissions.length > 0 && (
+      {!loading && !error && displayedSubmissions && displayedSubmissions.length > 0 && (
         <>
-          <MasonryGallery
-            items={submissions}
-            getImageUrl={(submission) => submission.imageUrl}
-            renderItem={renderSubmissionWithManagement}
-            onItemClick={handleSubmissionClick}
-            className="w-full overflow-hidden" 
-            config={{
-              columnWidth: CONTAINER_CONFIG.accountMasonry.columnWidth,
-              gap: CONTAINER_CONFIG.accountMasonry.gap,
-              mobileColumns: CONTAINER_CONFIG.accountMasonry.columns.mobile,
-              tabletColumns: CONTAINER_CONFIG.accountMasonry.columns.tablet,
-              desktopColumns: CONTAINER_CONFIG.accountMasonry.columns.desktop,
-            }}
-            loadingComponent={
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading your submissions...</p>
-              </div>
-            }
-            emptyComponent={
-              <div className="text-center text-gray-500 py-10">
-                <p>No submissions found for the selected criteria.</p>
-              </div>
-            }
-            errorComponent={(errors, onRetry) => (
-              <div className="text-center py-8">
-                <div className="text-red-500 mb-4">
-                  <p>Failed to load {errors.length} image(s)</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {displayedSubmissions.map((submission) => {
+              const convertedSubmission = convertToSubmissions([submission])[0];
+              
+              return (
+                <div key={submission.id} className="relative group">
+                  <SubmissionCard
+                    submission={convertedSubmission}
+                    displayContext="default"
+                    layoutMode="grid"
+                    className="h-full"
+                  />
+                  
+                  {isManageMode && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(submission.id);
+                        }}
+                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center"
+                      >
+                        <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3,6 5,6 21,6"></polyline>
+                          <path d="M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <Button onClick={onRetry} variant="secondary" size="sm">
-                  Retry Failed Images
-                </Button>
-              </div>
-            )}
-          />
+              );
+            })}
+          </div>
           
-          {/* Add pagination component */}
-          {totalPages > 1 && (
+          {!showAllSubmissions && totalPages > 1 && (
             <div className="mt-8">
               <Pagination
                 currentPage={currentPage}
@@ -401,7 +409,6 @@ export default function SubmissionsPage() {
         </>
       )}
       
-      {/* Delete confirmation dialog */}
       <Modal
         isOpen={showDeleteDialog}
         onClose={handleCancelDelete}

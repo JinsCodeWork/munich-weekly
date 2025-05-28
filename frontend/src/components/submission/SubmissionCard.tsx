@@ -141,7 +141,9 @@ export function SubmissionCard({
             fill={true}
             aspectRatio={layoutMode === 'masonry' ? 'auto' : 'square'}
             autoDetectAspectRatio={layoutMode === 'masonry'}
-            preserveAspectRatio={true}
+            preserveAspectRatio={layoutMode === 'masonry'}
+            objectFit={layoutMode === 'masonry' ? 'contain' : 'cover'}
+            objectPosition={layoutMode === 'grid' ? 'center' : undefined}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 384px"
             priority={false}
             unoptimized={imageUrl.startsWith('/uploads/')}

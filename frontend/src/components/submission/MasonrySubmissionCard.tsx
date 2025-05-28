@@ -272,8 +272,8 @@ export function MasonrySubmissionCard({
             "font-medium text-gray-900 mb-2",
             // Dynamic text size based on image width
             isWide ? "text-base sm:text-lg" : "text-sm sm:text-base",
-            // Dynamic line clamping: wide images get more lines
-            isWide ? "line-clamp-3" : "line-clamp-2",
+            // 限制所有标题为单行显示，避免布局问题
+            "line-clamp-1",
             // Force width constraints to prevent card expansion
             "w-full min-w-0 max-w-full overflow-hidden",
             // Use word-break for better text flow without forcing harsh breaks

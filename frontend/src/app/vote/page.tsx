@@ -7,34 +7,20 @@ import { MasonrySubmissionCard } from '@/components/submission/MasonrySubmission
 import { MasonryGallery } from '@/components/ui/MasonryGallery';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
-import { Pagination } from '@/components/ui/Pagination';
 import { CONTAINER_CONFIG } from '@/styles/components/container';
 
 export default function VotePage() {
   const [activeVotingIssue, setActiveVotingIssue] = useState<Issue | null>(null);
   const [previousIssue, setPreviousIssue] = useState<Issue | null>(null);
-  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]); // 所有投稿
-  const [displayedSubmissions, setDisplayedSubmissions] = useState<Submission[]>([]); // 当前页显示的投稿
+  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]); // 所有投稿，不再分页
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'current' | 'previous'>('current'); // View mode state
-  
-  // 分页相关状态
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 16; // 固定每页显示16个项目
-  const [totalPages, setTotalPages] = useState(1);
-
-  // 根据当前页码更新显示的投稿
-  const updateDisplayedSubmissions = (submissions: Submission[], page: number, perPage: number) => {
-    const startIndex = (page - 1) * perPage;
-    const endIndex = startIndex + perPage;
-    const paginatedItems = submissions.slice(startIndex, endIndex);
-    setDisplayedSubmissions(paginatedItems);
-  };
 
   // Function to load submissions for a specific issue
   const loadSubmissionsForIssue = useCallback(async (issue: Issue) => {
     try {
+      setIsLoading(true);
       const fetchedSubmissions = await submissionsApi.getSubmissionsByIssue(issue.id);
       
       console.log("VotePage: Fetched submissions for issue", issue.id, ":", JSON.stringify(fetchedSubmissions.map(s => ({ id: s.id, status: s.status })), null, 2));
@@ -46,21 +32,18 @@ export default function VotePage() {
           status: sub.status as SubmissionStatus, 
         }));
       
-      // 保存所有投稿
+      // 直接保存所有投稿，不再进行分页处理
       setAllSubmissions(submissionsWithIssueData);
       
-      // 计算总页数
-      const totalPagesCount = Math.ceil(submissionsWithIssueData.length / itemsPerPage);
-      setTotalPages(totalPagesCount);
-      
-      // 更新当前页的投稿
-      updateDisplayedSubmissions(submissionsWithIssueData, 1, itemsPerPage);
-      setCurrentPage(1); // Reset to first page when switching issues
+      console.log(`Loaded ${submissionsWithIssueData.length} submissions for issue ${issue.id}`);
     } catch (err) {
       console.error("Error loading submissions for issue:", err);
       setError("Failed to load submissions. Please try again later.");
+      setAllSubmissions([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [itemsPerPage]);
+  }, []);
 
   const loadVotingData = useCallback(async () => {
     setIsLoading(true);
@@ -101,7 +84,7 @@ export default function VotePage() {
         await loadSubmissionsForIssue(currentVotingIssue);
       } else {
         setAllSubmissions([]);
-        setDisplayedSubmissions([]);
+        setIsLoading(false);
       }
     } catch (err) {
       console.error("Error loading voting data:", err);
@@ -109,39 +92,28 @@ export default function VotePage() {
       setActiveVotingIssue(null);
       setPreviousIssue(null);
       setAllSubmissions([]);
-      setDisplayedSubmissions([]);
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [loadSubmissionsForIssue]);
 
   // Handle switching to previous issue view
   const handleViewPreviousIssue = useCallback(async () => {
     if (!previousIssue) return;
     
-    setIsLoading(true);
     setViewMode('previous');
     await loadSubmissionsForIssue(previousIssue);
-    setIsLoading(false);
   }, [previousIssue, loadSubmissionsForIssue]);
 
   // Handle returning to current view
-  const handleBackToCurrent = useCallback(() => {
+  const handleBackToCurrent = useCallback(async () => {
     setViewMode('current');
     if (activeVotingIssue) {
-      loadSubmissionsForIssue(activeVotingIssue);
+      await loadSubmissionsForIssue(activeVotingIssue);
     } else {
       setAllSubmissions([]);
-      setDisplayedSubmissions([]);
+      setIsLoading(false);
     }
   }, [activeVotingIssue, loadSubmissionsForIssue]);
-  
-  // 处理页码变化
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateDisplayedSubmissions(allSubmissions, page, itemsPerPage);
-    // 滚动到页面顶部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   useEffect(() => {
     loadVotingData();
@@ -151,40 +123,28 @@ export default function VotePage() {
     console.log(`Vote successful for submission ${submissionId}. Using vote count ${newVoteCount} from server.`);
     
     // 如果后端返回了新的投票计数，使用它；否则使用本地计算（+1）作为后备方案
-    const voteUpdateFn = (sub: Submission) => {
+    setAllSubmissions(prevSubmissions => prevSubmissions.map(sub => {
       if (sub.id === submissionId) {
         // 如果服务器返回了新的投票计数，则使用它，否则递增本地计数
         const updatedVoteCount = newVoteCount !== undefined ? newVoteCount : (sub.voteCount || 0) + 1;
         return { ...sub, voteCount: updatedVoteCount };
       }
       return sub;
-    };
-
-    // 更新所有投稿中的投票计数
-    setAllSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
-    
-    // 同时更新当前页显示的投稿
-    setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
+    }));
   }, []);
   
   const handleVoteCancelled = useCallback((submissionId: number, newVoteCount?: number) => {
     console.log(`Vote cancelled for submission ${submissionId}. Using vote count ${newVoteCount} from server.`);
     
     // 如果后端返回了新的投票计数，使用它；否则使用本地计算（-1）作为后备方案
-    const voteUpdateFn = (sub: Submission) => {
+    setAllSubmissions(prevSubmissions => prevSubmissions.map(sub => {
       if (sub.id === submissionId) {
         // 如果服务器返回了新的投票计数，则使用它，否则减少本地计数
         const updatedVoteCount = newVoteCount !== undefined ? newVoteCount : Math.max(0, (sub.voteCount || 0) - 1);
         return { ...sub, voteCount: updatedVoteCount };
       }
       return sub;
-    };
-
-    // 更新所有投稿中的投票计数
-    setAllSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
-    
-    // 同时更新当前页显示的投稿
-    setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
+    }));
   }, []);
 
   // Handle individual submission click for detail view
@@ -288,6 +248,13 @@ export default function VotePage() {
                 </span>
               </div>
               
+              {/* Submissions count display */}
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  {allSubmissions.length} submissions available for voting
+                </p>
+              </div>
+              
               {/* View Previous Results Button */}
               {previousIssue && (
                 <div className="mt-6">
@@ -315,6 +282,13 @@ export default function VotePage() {
                 </span>
               </div>
               
+              {/* Submissions count display */}
+              <div className="mb-6">
+                <p className="text-sm text-gray-600">
+                  {allSubmissions.length} submissions from this issue
+                </p>
+              </div>
+              
               {/* Back to Current Button */}
               {activeVotingIssue && (
                 <Button 
@@ -334,69 +308,52 @@ export default function VotePage() {
             <p>No submissions available for this issue.</p>
           </div>
         ) : (
-          <>
-            {/* Enhanced MasonryGallery with unified layout optimized for voting display */}
-            <MasonryGallery
-              items={displayedSubmissions}
-              getImageUrl={(submission) => submission.imageUrl}
-              renderItem={(submission, isWide, aspectRatio) => (
-                <MasonrySubmissionCard
-                  submission={submission}
-                  isWide={isWide}
-                  aspectRatio={aspectRatio}
-                  displayContext={viewMode === "previous" ? "previousResults" : "voteView"}
-                  onVoteSuccess={viewMode === "current" ? handleVoteSuccess : undefined}
-                  onVoteCancelled={viewMode === "current" ? handleVoteCancelled : undefined}
-                  enableHoverEffects={true}
-                  showWideIndicator={false}
-                />
-              )}
-              onItemClick={handleSubmissionClick}
-              config={{
-                columnWidth: CONTAINER_CONFIG.voteMasonry.columnWidth,
-                gap: CONTAINER_CONFIG.voteMasonry.gap,
-                mobileColumns: CONTAINER_CONFIG.voteMasonry.columns.mobile,
-                tabletColumns: CONTAINER_CONFIG.voteMasonry.columns.tablet,
-                desktopColumns: CONTAINER_CONFIG.voteMasonry.columns.desktop,
-              }}
-              loadingComponent={
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Loading submissions...</p>
+          /* Enhanced MasonryGallery with unified layout optimized for voting display */
+          <MasonryGallery
+            items={allSubmissions}
+            getImageUrl={(submission) => submission.imageUrl}
+            renderItem={(submission, isWide, aspectRatio) => (
+              <MasonrySubmissionCard
+                submission={submission}
+                isWide={isWide}
+                aspectRatio={aspectRatio}
+                displayContext={viewMode === "previous" ? "previousResults" : "voteView"}
+                onVoteSuccess={viewMode === "current" ? handleVoteSuccess : undefined}
+                onVoteCancelled={viewMode === "current" ? handleVoteCancelled : undefined}
+                enableHoverEffects={true}
+                showWideIndicator={false}
+              />
+            )}
+            onItemClick={handleSubmissionClick}
+            config={{
+              columnWidth: CONTAINER_CONFIG.voteMasonry.columnWidth,
+              gap: CONTAINER_CONFIG.voteMasonry.gap,
+              mobileColumns: CONTAINER_CONFIG.voteMasonry.columns.mobile,
+              tabletColumns: CONTAINER_CONFIG.voteMasonry.columns.tablet,
+              desktopColumns: CONTAINER_CONFIG.voteMasonry.columns.desktop,
+            }}
+            loadingComponent={
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading submissions...</p>
+              </div>
+            }
+            emptyComponent={
+              <div className="text-center text-gray-500 py-10">
+                <p>No submissions available for this issue.</p>
+              </div>
+            }
+            errorComponent={(errors, onRetry) => (
+              <div className="text-center py-8">
+                <div className="text-red-500 mb-4">
+                  <p>Failed to load {errors.length} image(s)</p>
                 </div>
-              }
-              emptyComponent={
-                <div className="text-center text-gray-500 py-10">
-                  <p>No submissions available for this issue.</p>
-                </div>
-              }
-              errorComponent={(errors, onRetry) => (
-                <div className="text-center py-8">
-                  <div className="text-red-500 mb-4">
-                    <p>Failed to load {errors.length} image(s)</p>
-                  </div>
-                  <Button onClick={onRetry} variant="secondary" size="sm">
-                    Retry Failed Images
-                  </Button>
-                </div>
-              )}
-            />
-            
-            {/* Pagination component */}
-            {totalPages > 1 && (
-              <div className="mt-8">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  showFirstLastButtons
-                  showPageSelector
-                  maxVisiblePages={5}
-                  simplifyOnMobile
-                />
+                <Button onClick={onRetry} variant="secondary" size="sm">
+                  Retry Failed Images
+                </Button>
               </div>
             )}
-          </>
+          />
         )}
       </div>
     </Container>

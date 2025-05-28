@@ -32,24 +32,23 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   // 检查imageUrl是否有效
   const hasValidImage = imageUrl && imageUrl.trim() !== '';
   
-  // 防止背景滚动，但保留文本区域滚动
+  // 防止背景滚动的effect - 优化移动端兼容性
   useEffect(() => {
     if (isOpen) {
       // 记录当前滚动位置
       const scrollY = window.scrollY;
       
-      // 设置body样式防止滚动
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+      // 更温和的防止滚动方式，减少对移动端渲染的影响
       document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+      // 移除position fixed的设置，避免移动端渲染问题
+      document.body.style.touchAction = 'none'; // 防止移动端触摸滚动
       
       return () => {
-        // 恢复body滚动
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
+        // 恢复body样式
         document.body.style.overflow = '';
+        document.body.style.height = '';
+        document.body.style.touchAction = '';
         
         // 恢复滚动位置
         window.scrollTo(0, scrollY);
