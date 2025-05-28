@@ -12,6 +12,7 @@ This document serves as the entry point to the frontend development documentatio
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
+- [**Masonry Layout System**](./masonry-layout-system.md) - Advanced JavaScript-based layout system with dynamic positioning
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
 
 ### Security & Authentication
@@ -178,20 +179,77 @@ This system is implemented through:
 
 For complete details, see the [Image CDN System](./image-cdn.md) documentation.
 
-### 6. Navigation System
+### 6. Advanced Masonry Layout System
+
+Munich Weekly implements a sophisticated JavaScript-based masonry layout system for displaying photo submissions in a Pinterest-style grid. This system provides optimal space utilization and visual appeal through intelligent positioning algorithms.
+
+**Key Features:**
+- **Dynamic Column Height Calculation** - Real-time tracking of each column's height for optimal placement
+- **Wide Image Spanning** - Images with aspect ratio ≥16:9 automatically span 2 columns
+- **Greedy Best-Fit Algorithm** - Intelligent item placement that minimizes gaps by selecting optimal positions
+- **Responsive Design** - 2 columns on mobile, 4 columns on desktop with smooth transitions
+- **Progressive Loading** - Skeleton screens and progress indicators during image dimension loading
+
+**Technical Implementation:**
+- **JavaScript-based Positioning** - Precise pixel-level control unlike CSS Grid or CSS Columns
+- **Absolute Positioning** - Each item is positioned with calculated x, y coordinates
+- **Batch Image Loading** - Efficient concurrent loading with 24-hour caching
+- **Smart Content Height** - Dynamic calculation including text content and metadata areas
+
+**Algorithm Innovation:**
+The system uses a Greedy Best-Fit algorithm that dynamically selects items from the remaining pool to fill gaps optimally. Instead of placing items sequentially, it chooses the item that can be positioned at the lowest Y coordinate, resulting in tighter, more visually appealing layouts.
+
+**Components:**
+- `MasonryGallery` - Main display component with absolute positioning
+- `useMasonryLayout` - Core layout calculation hook
+- `useImageDimensions` - Batch image dimension loading with caching
+- `MasonrySubmissionCard` - Cards optimized for masonry display with dynamic text sizing
+
+This system is used across multiple pages including the voting interface (`/vote`), user submissions management (`/account/submissions`), and testing environments. For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
+
+### 7. Enhanced Container System & Layout Optimization
+
+Munich Weekly features a modern, flexible container system optimized for photography presentation and responsive design:
+
+**Enhanced Padding Configuration:**
+- **Mobile**: 20px (upgraded from 16px for better content breathing space)
+- **Tablet**: 32px (new breakpoint for improved medium screen experience)
+- **Desktop**: 40px (upgraded from 20px for professional visual hierarchy)
+- **Ultra-wide**: 60px (support for modern ultra-wide displays up to 1800px)
+
+**Container Variants:**
+- `default`: Standard responsive container (1400px max-width)
+- `narrow`: Focused content layout (1000px max-width) for reading experiences
+- `wide`: Photography galleries and submission grids (1600px max-width)
+- `ultrawide`: Modern display support (1800px max-width)
+- `minimal`: Reduced padding for data-dense interfaces
+
+**Responsive Masonry Configurations:**
+- **Vote Page**: Optimized for larger images with responsive column widths (170px mobile → 320px desktop)
+- **Account Pages**: Compact layouts with responsive gaps (8px mobile → 16px desktop)
+- **Gallery Views**: Balanced display with smart column distribution (2-4 columns based on device)
+
+**Account Layout Optimization:**
+- Sidebar navigation with minimal left margin for professional appearance
+- Customized masonry grid preventing image truncation
+- Responsive spacing that adapts to content density needs
+
+This system provides consistent, professional layouts across all devices while maintaining optimal space utilization for photography presentation.
+
+### 8. Navigation System
 
 - Responsive navigation
 - Mobile sidebar menu
 - User-state aware elements
 
-### 7. API Integration System
+### 9. API Integration System
 
 - Modular API structure
 - Grouped by business function (authentication, users, submissions, issues, votes)
 - Unified error handling
 - TypeScript type safety
 
-### 8. Style Management System
+### 10. Style Management System
 
 - Centralized style functions
 - Type-safe style variants
@@ -200,7 +258,7 @@ For complete details, see the [Image CDN System](./image-cdn.md) documentation.
 - Theme consistency across components
 - Structure for future dark mode support
 
-### 9. Real-time Update System
+### 11. Real-time Update System
 
 The platform features an advanced real-time content synchronization system that ensures immediate updates across all interfaces without manual refresh:
 

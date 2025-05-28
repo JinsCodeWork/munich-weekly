@@ -78,6 +78,7 @@ frontend/
 │   │   ├── submission/     # Submission components
 │   │   │   ├── ImageGrid.tsx   # Grid layout for images
 │   │   │   ├── ImageViewer.tsx # Image viewing modal
+│   │   │   ├── MasonrySubmissionCard.tsx # Masonry-optimized submission card
 │   │   │   └── SubmissionCard.tsx # Submission card
 │   │   ├── voting/         # Voting components
 │   │   │   └── VoteButton.tsx  # Interactive voting button
@@ -89,6 +90,7 @@ frontend/
 │   │   │   ├── Link.tsx        # Link component
 │   │   │   ├── LoadingErrorStates.tsx # Loading/error handling
 │   │   │   ├── Logo.tsx        # Logo component
+│   │   │   ├── MasonryGallery.tsx # Advanced masonry layout component
 │   │   │   ├── Modal.tsx       # Modal dialog
 │   │   │   ├── Pagination.tsx  # Pagination component
 │   │   │   ├── SubmissionForm.tsx # Submission form
@@ -101,7 +103,9 @@ frontend/
 │   │   ├── useAuth.ts      # Authentication hook
 │   │   ├── useDebugTools.ts # Development debugging hook
 │   │   ├── useFileUpload.ts # File upload hook
+│   │   ├── useImageDimensions.ts # Batch image dimension loading hook
 │   │   ├── useIssues.ts    # Issues data hook
+│   │   ├── useMasonryLayout.ts # Masonry layout calculation hook
 │   │   └── useSubmissions.ts # Submissions data hook
 │   ├── lib/                # Utility functions and constants
 │   │   ├── constants.ts    # Application constants
@@ -195,14 +199,77 @@ Custom UI components designed for consistency and reusability:
 
 ### Custom Hooks
 
-Reusable logic encapsulated in custom React hooks:
+The application includes a comprehensive set of custom React hooks for managing complex functionality:
 
-- **useAuth**: Authentication state and methods
-- **useSubmissions**: Fetching and managing submission data
-- **useConfigAdmin**: Homepage configuration management with real-time updates
-- **useDebugTools**: Development and debugging utilities
-- **useFileUpload**: File selection, validation, preview, and upload functionality
-- **useIssues**: Fetching and filtering issues data
+- **useAuth**: Authentication state management with login/logout functionality
+- **useFileUpload**: File upload handling with validation and progress tracking
+- **useImageDimensions**: Batch image dimension loading with caching (24-hour persistence)
+- **useMasonryLayout**: Advanced layout calculation for masonry grids with responsive column management
+- **useIssues**: Issues data fetching and state management
+- **useSubmissions**: Submissions data management with pagination support
+- **useDebugTools**: Development tools for debugging and testing (development mode only)
+
+### Responsive Layout Architecture
+
+Munich Weekly implements a sophisticated responsive layout system designed specifically for photography presentation and optimal user experience across all devices.
+
+#### Container System Architecture
+
+**Core Philosophy**: The container system prioritizes visual hierarchy and content breathing space, with enhanced margins that provide professional appearance while maximizing content visibility.
+
+**Technical Implementation:**
+```typescript
+// Enhanced container configuration
+export const CONTAINER_CONFIG = {
+  padding: {
+    mobile: 20,     // Upgraded from 16px for better mobile experience
+    tablet: 32,     // New breakpoint for medium screens
+    desktop: 40,    // Upgraded from 20px for professional desktop layout
+    ultrawide: 60,  // Support for modern ultra-wide displays
+  },
+  maxWidths: {
+    default: 1400, narrow: 1000, wide: 1600, ultrawide: 1800, full: '100%'
+  }
+}
+```
+
+#### Responsive Masonry System
+
+**Multi-Configuration Approach**: Different page contexts use optimized masonry configurations for their specific needs:
+
+- **Vote Pages**: Large image display with responsive column widths (170px → 320px) and variable gaps (8px → 20px)
+- **Account Pages**: Compact grid layout optimized for content density with smaller gaps (8px → 16px)  
+- **Gallery Views**: Balanced presentation with intelligent column distribution (2-4 columns based on device capabilities)
+
+**Algorithm Features**:
+- Greedy Best-Fit positioning algorithm for optimal space utilization
+- Responsive gap and column width calculations
+- Three-breakpoint system (mobile/tablet/desktop) for precise control
+- Dynamic content height calculation including text and metadata areas
+
+#### Account Layout Optimization
+
+**Sidebar Navigation System**: Custom flex-based layout replacing standard containers for optimal space utilization:
+
+```typescript
+// Account layout structure
+<div className="flex min-h-screen">
+  <aside className="pl-3 md:pl-4 lg:pl-6 xl:pl-8 2xl:pl-10">
+    {/* Sidebar with minimal left margin for professional appearance */}
+  </aside>
+  <main className="flex-1 max-w-6xl mx-auto pl-4 pr-4 md:pr-6 lg:pr-8 xl:pr-10 2xl:pr-12">
+    {/* Centered main content with balanced margins */}
+  </main>
+</div>
+```
+
+**Key Benefits**:
+- Sidebar navigation positioned with minimal page margins for modern appearance
+- Main content area centered with maximum width constraints
+- Responsive gap management preventing content truncation
+- Specialized masonry configurations for different page contexts
+
+This architecture ensures consistent, professional layouts while providing flexibility for different content types and user interface requirements.
 
 ### Real-time Update System
 

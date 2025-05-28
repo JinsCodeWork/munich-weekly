@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { getMasonryContainerStyles } from '@/styles/components/masonry';
+import { getMasonryLayoutStyles } from '@/styles/components/masonry';
 import { cn } from '@/lib/utils';
 
 export interface MasonryGridProps {
@@ -94,10 +94,11 @@ export function MasonryGrid({
 
   return (
     <div
-      className={getMasonryContainerStyles({
-        gap,
+      className={getMasonryLayoutStyles({
+        columnCount: columns.desktop,
         className,
       })}
+      style={{ gap: `${gap * 4}px` }}
     >
       {children}
     </div>
@@ -142,7 +143,10 @@ function MasonryLoadingSkeleton({
   ));
   
   return (
-    <div className={getMasonryContainerStyles({ gap })}>
+    <div 
+      className={getMasonryLayoutStyles({ columnCount: columns.desktop })}
+      style={{ gap: `${gap * 4}px` }}
+    >
       {skeletonItems}
     </div>
   );

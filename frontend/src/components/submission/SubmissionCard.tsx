@@ -110,10 +110,13 @@ export function SubmissionCard({
   // Determine container styling based on layout mode
   const containerStyles = layoutMode === 'masonry' 
     ? getMasonryItemStyles({ 
-        isWideImage: isWide && isLoaded,
         className
       })
-    : getSubmissionCardStyles(className);
+    : getSubmissionCardStyles({ 
+        isWide: isWide && isLoaded,
+        layoutContext: 'default',
+        className 
+      });
 
   return (
     <>

@@ -58,7 +58,7 @@ export default function MainNav() {
       <style jsx global>{navLinkHoverStyles}</style>
       
       <header className={getNavContainerStyles()}>
-        <Container as="nav" className="flex items-center justify-between h-[70px]">
+        <Container as="nav" className="flex items-center justify-between h-[70px]" spacing="standard">
           {/* Left area: Logo and navigation links */}
           <div className="flex items-center">
             {/* Logo area */}

@@ -132,7 +132,7 @@ export default function Home() {
             lastUpdated={lastConfigUpdateRef.current}
           />
           
-          <Container className="py-16">
+          <Container className="py-16" spacing="standard">
             <div className="text-center">
               <h2 className="font-heading text-3xl font-semibold tracking-tight text-gray-900 mb-4">
                 {introText.title}

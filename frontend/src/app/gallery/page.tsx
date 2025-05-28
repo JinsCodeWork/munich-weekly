@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/Container';
 
 export default function GalleryPage() {
   return (
-    <Container className="py-8">
+    <Container className="py-8" spacing="standard">
       <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-gray-900">
           Photo Gallery

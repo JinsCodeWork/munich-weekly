@@ -148,6 +148,44 @@ The application employs a systematic approach to styling components:
 - **Modal**: A flexible modal dialog with glassmorphism styling and backdrop blur
 - **AnimatedFooter**: A page footer component displaying contact information and navigation links at the bottom of the page
 
+#### Enhanced Container System
+
+The `Container` component implements Munich Weekly's flexible layout system with multiple variants optimized for different content types:
+
+**Container Variants:**
+```tsx
+<Container variant="default" spacing="standard">     // Standard layout (1400px max)
+<Container variant="narrow" spacing="standard">      // Reading-focused (1000px max)
+<Container variant="wide" spacing="generous">        // Gallery layout (1600px max)
+<Container variant="ultrawide" spacing="generous">   // Ultra-wide displays (1800px max)
+<Container variant="fluid" spacing="minimal">        // Full-width layout
+<Container variant="minimal" spacing="compact">      // Data-dense interfaces
+```
+
+**Responsive Spacing Options:**
+- `compact`: Tight spacing for mobile-optimized content
+- `standard`: Balanced spacing for general content
+- `generous`: Spacious layout for visual content
+- `minimal`: Reduced padding for maximum content area
+
+**Padding Configuration:**
+- **Mobile**: 20px (px-5) - Enhanced from previous 16px
+- **Tablet**: 32px (px-8) - New breakpoint support  
+- **Desktop**: 40px (px-10) - Professional spacing upgrade
+- **Ultra-wide**: 60px (px-15) - Modern display support
+
+**Usage Examples:**
+```tsx
+// Vote page with large image display
+<Container variant="ultrawide" spacing="generous">
+
+// Account sidebar layout with minimal margins
+<Container spacing="minimal">
+
+// Privacy policy with reading-focused layout
+<Container variant="narrow" spacing="standard">
+```
+
 ### Navigation Components
 
 - **MainNav**: Desktop navigation component with consistent styling
@@ -202,6 +240,54 @@ The `Thumbnail` component implements a sophisticated image display system optimi
 - Responsive screen size detection with window resize handling
 - Enhanced debugging capabilities with detailed parameter logging
 - Graceful fallback mechanisms for invalid configurations
+
+### Masonry Layout Components
+
+Munich Weekly implements an advanced masonry layout system specifically designed for optimal photo gallery display:
+
+- **MasonryGallery**: Main display component implementing JavaScript-based masonry layout
+  - Dynamic column height calculation with absolute positioning
+  - Responsive design: 2 columns mobile, 4 columns desktop
+  - Progressive loading with skeleton screens
+  - Error handling and retry mechanisms
+  - Wide image automatic spanning (≥16:9 aspect ratio)
+  - Greedy Best-Fit algorithm for optimal space utilization
+
+- **MasonrySubmissionCard**: Specialized submission card optimized for masonry display
+  - Dynamic text sizing based on image width (wide images get larger fonts)
+  - Intelligent line clamping: 3 lines for wide images, 2 for regular
+  - Responsive content height calculation including text length analysis
+  - Context-aware display modes (default, vote view, previous results)
+  - Hover effects and interactive states
+  - Integrated with voting system and image viewer
+
+**Key Features:**
+- **Wide Image Detection**: Automatic identification and spanning of landscape images
+- **Dynamic Content Height**: Smart calculation including text content and metadata
+- **Batch Image Loading**: Efficient concurrent loading with 24-hour dimension caching
+- **Progressive Enhancement**: Skeleton loading states while images load
+- **Error Recovery**: Graceful handling of failed image loads with retry options
+
+**Usage Example:**
+```tsx
+<MasonryGallery
+  items={submissions}
+  getImageUrl={(submission) => submission.imageUrl}
+  renderItem={(submission, isWide, aspectRatio) => (
+    <MasonrySubmissionCard
+      submission={submission}
+      isWide={isWide}
+      aspectRatio={aspectRatio}
+      displayContext="voteView"
+    />
+  )}
+/>
+```
+
+**Algorithm Innovation:**
+The masonry system uses a Greedy Best-Fit algorithm that dynamically selects items from the remaining pool to fill gaps optimally, resulting in tighter, more visually appealing layouts compared to sequential placement.
+
+For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
 
 ### Content Components
 

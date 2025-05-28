@@ -9,7 +9,7 @@ import { Container } from '@/components/ui/Container';
  */
 export default function PrivacyPolicyPage() {
   return (
-    <Container variant="narrow" className="py-12">
+    <Container variant="narrow" className="py-12" spacing="standard">
       <div className="space-y-8">
         {/* Page Title */}
         <div className="text-center mb-8">

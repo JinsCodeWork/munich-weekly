@@ -1,22 +1,44 @@
 /**
  * Masonry Layout Component Styles
- * Uses CSS Grid with dense packing for optimal masonry layout with true column spanning
+ * JavaScript-based masonry layout with dynamic column height calculation
+ * Enhanced with modern responsive design and improved spacing
  */
 
 import { cn } from '@/lib/utils';
+import { CONTAINER_CONFIG } from './container';
 
 /**
- * Breakpoint configuration for responsive masonry layout
+ * Enhanced breakpoint configuration for responsive masonry layout
+ * Aligned with modern responsive design principles
  */
 export const masonryBreakpoints = {
   mobile: {
-    maxWidth: 'max-width: 639px',
+    maxWidth: 767,
     columns: 2,
   },
+  tablet: {
+    minWidth: 768,
+    maxWidth: 1023,
+    columns: 3,
+  },
   desktop: {
-    minWidth: 'min-width: 1024px', 
+    minWidth: 1024,
+    maxWidth: 1535,
     columns: 4,
   },
+  ultrawide: {
+    minWidth: 1536,
+    columns: 5,
+  },
+} as const;
+
+/**
+ * Enhanced masonry configuration with improved spacing
+ */
+export const masonryConfig = {
+  gap: CONTAINER_CONFIG.masonry.gap, // 24px for better visual separation
+  columnWidth: CONTAINER_CONFIG.masonry.columnWidth, // 300px
+  wideImageThreshold: 1.6, // Slightly lower threshold for better detection
 } as const;
 
 /**
@@ -26,27 +48,25 @@ export const masonryBreakpoints = {
 export const WIDE_IMAGE_THRESHOLD = 16 / 9; // 1.778
 
 /**
- * Get masonry container styles using CSS Grid with auto-placement
+ * Get masonry container styles for JavaScript-based layout
+ * Uses CSS Grid for column structure, JavaScript calculates positioning
  */
-export function getMasonryContainerStyles({
-  gap = 4,
+export function getMasonryLayoutStyles({
+  columnCount = 4,
   className,
 }: {
-  gap?: number;
+  columnCount?: number;
   className?: string;
 } = {}) {
   return cn(
-    // CSS Grid masonry layout
-    'grid',
-    'grid-cols-2 lg:grid-cols-4',
-    'auto-rows-max',
-    'grid-flow-row-dense', // Dense packing for better space utilization
+    // Grid container for columns
+    'grid auto-rows-max',
     
-    // Fix: Prevent items from stretching to row height
-    'items-start', // This prevents grid items from stretching vertically
-    
-    // Gap configuration
-    `gap-${gap} lg:gap-6`,
+    // Dynamic column count classes
+    columnCount === 2 && 'grid-cols-2',
+    columnCount === 3 && 'grid-cols-3',
+    columnCount === 4 && 'grid-cols-4',
+    columnCount === 5 && 'grid-cols-5',
     
     // Performance optimizations
     'will-change-contents',
@@ -56,32 +76,69 @@ export function getMasonryContainerStyles({
 }
 
 /**
- * Get masonry item styles with consistent card appearance
- * Wide images span 2 columns using CSS Grid
+ * Get masonry column styles
+ * Each column is a flex container that stacks items vertically
  */
-export function getMasonryItemStyles({
-  isWideImage = false,
+export function getMasonryColumnStyles({
   className,
 }: {
-  isWideImage?: boolean;
   className?: string;
 } = {}) {
   return cn(
-    // Base card styling - consistent with grid layout
-    'bg-white rounded-lg overflow-hidden cursor-pointer',
-    'border border-gray-200 shadow-sm hover:shadow-md',
-    'transition-shadow',
-    
-    // Wide image spanning - this actually works in CSS Grid!
-    isWideImage && 'col-span-2',
+    // Flex column for vertical stacking
+    'flex flex-col',
     
     className
   );
 }
 
 /**
- * Get wide image specific styles - now just for subtle visual enhancement
- * No longer needs special borders since grid handles the spanning
+ * Get masonry item styles with consistent card appearance
+ * Regular items fit within their column, wide images need special handling
+ */
+export function getMasonryItemStyles({
+  className,
+}: {
+  className?: string;
+} = {}) {
+  return cn(
+    // Base card styling - consistent appearance
+    'bg-white rounded-lg overflow-hidden cursor-pointer',
+    'border border-gray-200 shadow-sm hover:shadow-md',
+    'transition-shadow duration-200',
+    
+    // Block display for proper spacing
+    'block',
+    
+    className
+  );
+}
+
+/**
+ * Get wide image container styles
+ * Wide images span across 2 columns and need special positioning
+ */
+export function getWideImageContainerStyles({
+  className,
+}: {
+  className?: string;
+} = {}) {
+  return cn(
+    // Span 2 columns
+    'col-span-2',
+    
+    // Relative positioning for proper layout
+    'relative',
+    
+    // Ensure proper width calculation
+    'w-full',
+    
+    className
+  );
+}
+
+/**
+ * Get wide image specific styles for enhanced visual appearance
  */
 export function getWideImageStyles({
   className,
@@ -89,8 +146,62 @@ export function getWideImageStyles({
   className?: string;
 } = {}) {
   return cn(
-    // Subtle enhancement for wide images (optional)
-    // Keep it minimal to maintain consistency
+    // Enhanced shadow for wide images
+    'shadow-md hover:shadow-lg',
+    
+    // Subtle border enhancement
+    'border-2 border-gray-100 hover:border-gray-200',
+    
+    // Smooth transitions
+    'transition-all duration-300',
+    
+    className
+  );
+}
+
+/**
+ * Responsive column count utilities
+ */
+export const responsiveColumnClasses = {
+  mobile: {
+    1: 'grid-cols-1',
+    2: 'grid-cols-2',
+    3: 'grid-cols-3',
+  },
+  desktop: {
+    2: 'lg:grid-cols-2',
+    3: 'lg:grid-cols-3', 
+    4: 'lg:grid-cols-4',
+    5: 'lg:grid-cols-5',
+    6: 'lg:grid-cols-6',
+  },
+} as const;
+
+/**
+ * Get responsive masonry container with breakpoint-aware column counts
+ */
+export function getResponsiveMasonryStyles({
+  mobileColumns = 2,
+  desktopColumns = 4,
+  className,
+}: {
+  mobileColumns?: 2 | 3;
+  desktopColumns?: 2 | 3 | 4 | 5 | 6;
+  className?: string;
+} = {}) {
+  return cn(
+    // Base grid container
+    'grid auto-rows-max w-full',
+    
+    // Mobile columns
+    responsiveColumnClasses.mobile[mobileColumns],
+    
+    // Desktop columns
+    responsiveColumnClasses.desktop[desktopColumns],
+    
+    // Performance optimizations
+    'will-change-contents',
+    
     className
   );
 }
@@ -103,24 +214,55 @@ export function isWideImage(aspectRatio: number): boolean {
 }
 
 /**
- * Get responsive column count based on current breakpoint
+ * Get responsive column count based on screen width
  */
-export function getColumnCount(isMobile: boolean): number {
-  return isMobile ? masonryBreakpoints.mobile.columns : masonryBreakpoints.desktop.columns;
+export function getColumnCount(screenWidth: number): number {
+  return screenWidth >= masonryBreakpoints.desktop.minWidth 
+    ? masonryBreakpoints.desktop.columns 
+    : masonryBreakpoints.mobile.columns;
 }
 
 /**
- * Generate masonry layout configuration object
+ * Generate masonry layout configuration object for JavaScript layout
  */
-export function getMasonryConfig(gap: number = 4) {
+export function getMasonryConfig({
+  gap = 16,
+  columnWidth = 280,
+  mobileColumns = 2,
+  desktopColumns = 4,
+  breakpoint = 1024,
+}: {
+  gap?: number;
+  columnWidth?: number;
+  mobileColumns?: number;
+  desktopColumns?: number;
+  breakpoint?: number;
+} = {}) {
   return {
-    container: {
-      gap,
-      breakpoints: masonryBreakpoints,
-    },
-    item: {
-      wideThreshold: WIDE_IMAGE_THRESHOLD,
-      gap,
-    },
+    gap,
+    columnWidth,
+    mobileColumns,
+    desktopColumns,
+    breakpoint,
+    wideImageThreshold: WIDE_IMAGE_THRESHOLD,
   };
+}
+
+/**
+ * Gap utility classes for dynamic spacing
+ */
+export const gapClasses = {
+  4: 'gap-1',    // 4px
+  8: 'gap-2',    // 8px
+  12: 'gap-3',   // 12px
+  16: 'gap-4',   // 16px
+  20: 'gap-5',   // 20px
+  24: 'gap-6',   // 24px
+} as const;
+
+/**
+ * Get gap class from pixel value
+ */
+export function getGapClass(gap: number): string {
+  return gapClasses[gap as keyof typeof gapClasses] || `gap-[${gap}px]`;
 } 

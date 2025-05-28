@@ -22,6 +22,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const [imgLoaded, setImgLoaded] = useState(false);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [ref, bounds] = useMeasure();
   const lastTapRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,6 +31,31 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
 
   // 检查imageUrl是否有效
   const hasValidImage = imageUrl && imageUrl.trim() !== '';
+  
+  // 防止背景滚动，但保留文本区域滚动
+  useEffect(() => {
+    if (isOpen) {
+      // 记录当前滚动位置
+      const scrollY = window.scrollY;
+      
+      // 设置body样式防止滚动
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // 恢复body滚动
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        
+        // 恢复滚动位置
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
   
   // 如果没有有效图片，直接关闭viewer
   useEffect(() => {
@@ -75,6 +101,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     if (isOpen) {
       setScale(1);
       setPosition({ x: 0, y: 0 });
+      setIsTransitioning(false);
     }
   }, [isOpen, highQualityUrl]);
   
@@ -122,15 +149,21 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   };
 
-  // Handle double tap for zoom
+  // Handle double tap for zoom with smooth animation
   const handleDoubleTap = () => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300; // ms
     
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap detected
+      // Double tap detected - enable transition for smooth animation
+      setIsTransitioning(true);
       setScale(scale === 1 ? 2.5 : 1);
       setPosition({ x: 0, y: 0 });
+      
+      // Remove transition after animation completes
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
     }
     
     lastTapRef.current = now;
@@ -234,7 +267,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         </div>
         
         {/* Image Container with gesture support */}
-        <div className="flex justify-center items-center flex-grow w-full overflow-hidden" ref={containerRef}>
+        <div 
+          className="flex justify-center items-center flex-grow w-full overflow-hidden" 
+          ref={containerRef}
+          onClick={handleBackdropClick}
+        >
           <div
             ref={ref}
             className={`relative flex justify-center items-center ${
@@ -252,8 +289,10 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
                 height,
                 transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
                 transformOrigin: 'center center',
-                transition: scale === 1 ? 'transform 0.3s ease-out' : 'none'
+                // 修复：添加平滑动画效果，无论是放大还是缩小
+                transition: isTransitioning || scale === 1 ? 'transform 0.3s ease-out' : 'none'
               }}
+              onClick={(e) => e.stopPropagation()} // 防止点击图片时触发背景点击事件
             >
               <Image
                 src={highQualityUrl}
@@ -280,12 +319,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         
         {/* Description - fixed at the bottom, separate from the image */}
         {description && captionStyle && (
-          <div className="w-full mt-4 flex justify-center flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full mt-4 flex justify-center flex-shrink-0" onClick={handleBackdropClick}>
             <div 
               className={getImageCaptionStyles({
                 variant: captionStyle.variant,
                 maxWidth: captionStyle.maxWidth
               })}
+              onClick={(e) => e.stopPropagation()} // 防止点击文本区域时触发背景点击事件
             >
               <div 
                 className={`text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden w-full px-1 custom-scrollbar ${captionStyle.textAlign === 'center' ? 'text-center' : 'text-left'}`} 

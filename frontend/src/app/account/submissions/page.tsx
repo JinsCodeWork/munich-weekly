@@ -4,13 +4,16 @@ import React, { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
-import { SubmissionCard } from "@/components/submission/SubmissionCard"
+import { MasonrySubmissionCard } from "@/components/submission/MasonrySubmissionCard"
+import { MasonryGallery } from "@/components/ui/MasonryGallery"
 import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { Pagination } from "@/components/ui/Pagination"
 import { Modal } from "@/components/ui/Modal"
 import { cn } from "@/lib/utils"
+import { CONTAINER_CONFIG } from '@/styles/components/container'
+import { Container } from '@/components/ui/Container'
 
 export default function SubmissionsPage() {
   const { user } = useAuth()
@@ -120,10 +123,10 @@ export default function SubmissionsPage() {
   };
 
   // Handle delete button click
-  const handleDeleteClick = (submissionId: number) => {
+  const handleDeleteClick = useCallback((submissionId: number) => {
     setSubmissionToDelete(submissionId);
     setShowDeleteDialog(true);
-  };
+  }, []);
 
   // Handle confirm delete
   const handleConfirmDelete = async () => {
@@ -154,45 +157,61 @@ export default function SubmissionsPage() {
     setSubmissionToDelete(null);
   };
 
-  // Render submission card
-  const renderSubmissionCard = (submission: MySubmissionResponse) => {
-    // Check image URL
-    console.log(`Rendering submission ${submission.id}:`, {
-      imageUrl: submission.imageUrl,
-      processedUrl: getImageUrl(submission.imageUrl)
+  // Handle submission click for detail view
+  const handleSubmissionClick = useCallback((submission: MySubmissionResponse) => {
+    if (!isManageMode) {
+      console.log('Submission clicked for detail view:', submission.id);
+      // Could implement modal detail view or navigation here
+    }
+  }, [isManageMode]);
+
+  // Convert MySubmissionResponse to Submission for MasonryGallery
+  const convertToSubmissions = useCallback((mySubmissions: MySubmissionResponse[]) => {
+    return mySubmissions.map(submission => {
+      // Find the corresponding issue
+      const issue = issues.find(issue => 
+        // Try to extract issue ID from image URL, if not possible use first issue as default
+        submission.imageUrl && (
+          submission.imageUrl.includes(`issues/${issue.id}/`) || 
+          submission.imageUrl.includes(`issue${issue.id}`)
+        )
+      ) || (issues.length > 0 ? issues[0] : {
+        id: 1,
+        title: "Unknown Issue",
+        description: "",
+        submissionStart: "",
+        submissionEnd: "",
+        votingStart: "",
+        votingEnd: "",
+        createdAt: ""
+      });
+
+      return {
+        id: submission.id,
+        imageUrl: submission.imageUrl,
+        description: submission.description,
+        status: submission.status as SubmissionStatus,
+        submittedAt: submission.submittedAt,
+        voteCount: submission.voteCount,
+        isCover: submission.isCover,
+        issue: issue,
+        userId: user?.id || 0
+      };
     });
-    
-    const issue = issues.find(issue => 
-      // Try to extract issue ID from image URL, if not possible use first issue as default
-      submission.imageUrl && (
-        submission.imageUrl.includes(`issues/${issue.id}/`) || 
-        submission.imageUrl.includes(`issue${issue.id}`)
-      )
-    ) || (issues.length > 0 ? issues[0] : {
-      id: 1,
-      title: "Unknown Issue",
-      description: "",
-      submissionStart: "",
-      submissionEnd: "",
-      votingStart: "",
-      votingEnd: "",
-      createdAt: ""
-    });
+  }, [issues, user?.id]);
+
+  // Render submission with management overlay
+  const renderSubmissionWithManagement = useCallback((submission: MySubmissionResponse, isWide: boolean, aspectRatio: number) => {
+    const convertedSubmission = convertToSubmissions([submission])[0];
     
     return (
-      <div key={submission.id} className="relative">
-        <SubmissionCard
-          submission={{
-            id: submission.id,
-            imageUrl: submission.imageUrl,
-            description: submission.description,
-            status: submission.status as SubmissionStatus,
-            submittedAt: submission.submittedAt,
-            voteCount: submission.voteCount,
-            isCover: submission.isCover,
-            issue: issue,
-            userId: user?.id || 0
-          }}
+      <div className="relative">
+        <MasonrySubmissionCard
+          submission={convertedSubmission}
+          isWide={isWide}
+          aspectRatio={aspectRatio}
+          displayContext="default"
+          enableHoverEffects={!isManageMode}
         />
         {isManageMode && (
           <button 
@@ -208,10 +227,10 @@ export default function SubmissionsPage() {
         )}
       </div>
     );
-  };
+  }, [convertToSubmissions, isManageMode, handleDeleteClick]);
 
   return (
-    <div>
+    <Container spacing="minimal" className="py-8">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b border-gray-200 pb-5 mb-6">
         <div className="mb-4 md:mb-0">
           <h1 className="text-2xl font-bold text-gray-900 font-heading">My Submissions</h1>
@@ -326,26 +345,58 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {/* Submissions list */}
+      {/* Enhanced MasonryGallery for submissions with account-optimized layout */}
       {!loading && !error && submissions && submissions.length > 0 && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {submissions.map((submission) => {
-              return renderSubmissionCard(submission);
-            })}
-          </div>
+          <MasonryGallery
+            items={submissions}
+            getImageUrl={(submission) => submission.imageUrl}
+            renderItem={renderSubmissionWithManagement}
+            onItemClick={handleSubmissionClick}
+            className="w-full overflow-hidden" 
+            config={{
+              columnWidth: CONTAINER_CONFIG.accountMasonry.columnWidth,
+              gap: CONTAINER_CONFIG.accountMasonry.gap,
+              mobileColumns: CONTAINER_CONFIG.accountMasonry.columns.mobile,
+              tabletColumns: CONTAINER_CONFIG.accountMasonry.columns.tablet,
+              desktopColumns: CONTAINER_CONFIG.accountMasonry.columns.desktop,
+            }}
+            loadingComponent={
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading your submissions...</p>
+              </div>
+            }
+            emptyComponent={
+              <div className="text-center text-gray-500 py-10">
+                <p>No submissions found for the selected criteria.</p>
+              </div>
+            }
+            errorComponent={(errors, onRetry) => (
+              <div className="text-center py-8">
+                <div className="text-red-500 mb-4">
+                  <p>Failed to load {errors.length} image(s)</p>
+                </div>
+                <Button onClick={onRetry} variant="secondary" size="sm">
+                  Retry Failed Images
+                </Button>
+              </div>
+            )}
+          />
           
           {/* Add pagination component */}
           {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              showFirstLastButtons
-              showPageSelector
-              maxVisiblePages={5}
-              simplifyOnMobile
-            />
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                showFirstLastButtons
+                showPageSelector
+                maxVisiblePages={5}
+                simplifyOnMobile
+              />
+            </div>
           )}
         </>
       )}
@@ -387,6 +438,6 @@ export default function SubmissionsPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </Container>
   )
 } 

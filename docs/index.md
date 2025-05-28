@@ -47,13 +47,18 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 - 🏗️ **[Frontend Architecture](./frontend-architecture.md)** - Detailed technical architecture
 - 🧩 **[UI Component Library](./ui-components.md)** - Component specifications and usage
 - 🎨 **[Style System](./style-system.md)** - Typography and styling framework
+- 🧱 **[Masonry Layout System](./masonry-layout-system.md)** - Advanced JavaScript-based layout system
 
 ### Key Frontend Features
 - **Next.js 15** with App Router and TypeScript
-- **Tailwind CSS** styling with glassmorphism effects
+- **Enhanced Responsive Container System** with professional spacing (20px mobile → 60px ultra-wide)
+- **Multi-Variant Layout Support** (narrow/wide/ultrawide containers for different content types)
+- **Advanced Masonry Layout** with Greedy Best-Fit algorithm and responsive configurations
+- **Specialized Page Configurations** (Vote page optimized for large images, Account pages for sidebar layouts)
+- **Three-Breakpoint Responsive Design** (mobile/tablet/desktop) optimized for photography presentation
+- **Tailwind CSS** styling with glassmorphism effects and professional spacing
 - **JWT Authentication Context** with automatic token management
 - **Anonymous Voting System** with cookie-based visitor tracking
-- **Responsive Design** optimized for all devices
 
 ---
 
@@ -75,7 +80,8 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 2. Set up development environment: [Developer Guide](./dev-guide.md)
 3. Understand security: [Authentication & Security](./auth.md)
 4. Learn the frontend: [Frontend Overview](./frontend-overview.md)
-5. API integration: [API Reference](./api.md)
+5. Explore advanced layouts: [Masonry Layout System](./masonry-layout-system.md)
+6. API integration: [API Reference](./api.md)
 
 ### For DevOps/System Administrators
 1. Review security architecture: [Security Summary](./security-summary.md)
@@ -99,6 +105,7 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 ## 🔄 Documentation Maintenance
 
 ### Last Updated
+- **Masonry Layout System**: January 2025 (New documentation for advanced JavaScript-based layout system)
 - **Security Documentation**: January 2025 (Complete rewrite based on current implementation)
 - **Other Documentation**: Various dates (see individual documents)
 
@@ -108,6 +115,7 @@ When updating documentation, ensure:
 2. The security documentation reflects actual implementation
 3. Examples use current API endpoints and authentication methods
 4. Links in this index page are verified and working
+5. Masonry layout documentation reflects current algorithm implementation
 
 ---
 

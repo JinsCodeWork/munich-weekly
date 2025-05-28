@@ -109,6 +109,118 @@ export const getHeaderContainerStyles = cva(
 );
 ```
 
+#### Container and Layout Styles
+
+The style system includes specialized configuration for the masonry layout system:
+
+```typescript
+// container.ts
+export const CONTAINER_CONFIG = {
+  masonry: {
+    columnWidth: 300,  // Optimized card width
+    gap: 20,          // Consistent spacing
+    columns: {
+      mobile: 2,      // 2 columns on mobile
+      desktop: 4,     // 4 columns on desktop
+    }
+  }
+} as const;
+
+export const containerVariants = {
+  // Optimized for masonry layout with viewport protection
+  wide: 'w-full max-w-[min(1400px,calc(100vw-2rem))] mx-auto px-4 md:px-5 overflow-hidden',
+};
+```
+
+**Masonry Layout Integration:**
+- Mathematical precision: Container width calculated to fit exactly 4×300px columns with 20px gaps
+- Viewport overflow protection prevents content from exceeding screen boundaries
+- Responsive padding system ensures consistent margins across device sizes
+- Centralized configuration enables easy layout adjustments across the entire system
+
+#### Enhanced Container System
+
+Munich Weekly implements an advanced container system with multiple variants and responsive configurations:
+
+**Enhanced Padding Configuration:**
+```typescript
+export const CONTAINER_CONFIG = {
+  // Enhanced responsive padding system
+  padding: {
+    mobile: 20,     // px-5 (upgraded from 16px)
+    tablet: 32,     // px-8 (new breakpoint)
+    desktop: 40,    // px-10 (upgraded from 20px)
+    ultrawide: 60,  // px-15 (ultra-wide display support)
+  },
+  
+  // Multiple container max-widths for different content types
+  maxWidths: {
+    default: 1400,  // Standard content layout
+    narrow: 1000,   // Reading-focused content
+    wide: 1600,     // Gallery and media-rich content
+    ultrawide: 1800, // Modern ultra-wide display support
+    full: '100%',   // Full-width layouts
+  }
+};
+```
+
+**Container Variants:**
+```typescript
+// Enhanced container variants with responsive padding
+export const getContainerStyles = cva(
+  'w-full mx-auto',
+  {
+    variants: {
+      variant: {
+        default: 'max-w-[1400px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+        narrow: 'max-w-[1000px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+        wide: 'max-w-[1600px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+        ultrawide: 'max-w-[1800px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-20',
+        fluid: 'max-w-full px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+        minimal: 'max-w-[1400px] px-2 md:px-3 lg:px-4',
+      },
+      spacing: {
+        compact: 'px-3 md:px-4 lg:px-6 xl:px-8',
+        standard: 'px-5 md:px-8 lg:px-10 xl:px-12',
+        generous: 'px-6 md:px-10 lg:px-12 xl:px-16 2xl:px-20',
+        minimal: 'px-2 md:px-3 lg:px-4',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      spacing: 'standard',
+    },
+  }
+);
+```
+
+**Specialized Masonry Configurations:**
+```typescript
+// Page-specific masonry configurations
+export const CONTAINER_CONFIG = {
+  // Vote page configuration - emphasis on large image display
+  voteMasonry: {
+    columnWidth: { mobile: 170, tablet: 220, desktop: 320 },
+    gap: { mobile: 8, tablet: 14, desktop: 20 },
+    columns: { mobile: 2, tablet: 2, desktop: 4 }
+  },
+  
+  // Account page configuration - optimized for sidebar layout
+  accountMasonry: {
+    columnWidth: { mobile: 160, tablet: 180, desktop: 240 },
+    gap: { mobile: 8, tablet: 12, desktop: 16 },
+    columns: { mobile: 2, tablet: 2, desktop: 4 }
+  }
+};
+```
+
+**Key Benefits:**
+- **Professional Spacing**: Enhanced margins provide modern, spacious feel
+- **Multi-Device Optimization**: Specific configurations for mobile, tablet, and desktop
+- **Content-Type Flexibility**: Different variants for reading, galleries, and data interfaces
+- **Ultra-Wide Support**: Modern display compatibility up to 1800px
+- **Type Safety**: Full TypeScript support for all variants and configurations
+
 ## Usage Examples
 
 ### Basic Component Styling

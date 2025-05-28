@@ -3,11 +3,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Issue, Submission, SubmissionStatus } from '@/types/submission';
 import { issuesApi, submissionsApi } from '@/api';
-import { SubmissionCard } from '@/components/submission/SubmissionCard';
-import { MasonryGrid } from '@/components/ui/MasonryGrid';
+import { MasonrySubmissionCard } from '@/components/submission/MasonrySubmissionCard';
+import { MasonryGallery } from '@/components/ui/MasonryGallery';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
+import { CONTAINER_CONFIG } from '@/styles/components/container';
 
 export default function VotePage() {
   const [activeVotingIssue, setActiveVotingIssue] = useState<Issue | null>(null);
@@ -16,7 +17,7 @@ export default function VotePage() {
   const [displayedSubmissions, setDisplayedSubmissions] = useState<Submission[]>([]); // 当前页显示的投稿
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'current' | 'previous'>('current'); // New state for view mode
+  const [viewMode, setViewMode] = useState<'current' | 'previous'>('current'); // View mode state
   
   // 分页相关状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,9 +187,15 @@ export default function VotePage() {
     setDisplayedSubmissions(prevSubmissions => prevSubmissions.map(voteUpdateFn));
   }, []);
 
+  // Handle individual submission click for detail view
+  const handleSubmissionClick = useCallback((submission: Submission) => {
+    console.log('Submission clicked for detail view:', submission.id);
+    // Could implement modal detail view or navigation here
+  }, []);
+
   if (isLoading) {
     return (
-      <Container className="py-10 text-center">
+      <Container className="py-10 text-center" spacing="standard">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
         <p className="mt-4 text-lg">Loading voting content...</p>
       </Container>
@@ -197,157 +204,201 @@ export default function VotePage() {
 
   if (error) {
     return (
-      <Container className="py-10 text-center">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline"> {error}</span>
+      <Container className="py-10 text-center" spacing="standard">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-600 text-lg font-medium mb-4">Error</p>
+          <p className="text-red-700 mb-4">{error}</p>
+          <Button 
+            onClick={loadVotingData} 
+            variant="outline"
+            className="text-red-600 border-red-300 hover:bg-red-50"
+          >
+            Try Again
+          </Button>
         </div>
-        <Button onClick={loadVotingData} variant="secondary">Try Again</Button>
       </Container>
     );
   }
 
-  // Show no current voting period UI
-  if (!activeVotingIssue && viewMode === 'current') {
+  if (!activeVotingIssue && !previousIssue) {
     return (
-      <Container className="py-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-8 text-center">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="mx-auto h-12 w-12 text-gray-400" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={1.5} 
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-              />
-            </svg>
-            <h2 className="mt-4 text-xl font-semibold text-gray-800">
-              No Current Voting Period
-            </h2>
-            <p className="mt-2 text-gray-600">
-              There are no issues currently open for voting.
+      <Container className="py-10" spacing="standard">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Vote on Submissions</h1>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 max-w-2xl mx-auto">
+            <h2 className="text-xl font-semibold text-blue-900 mb-4">No Active Voting Period</h2>
+            <p className="text-blue-700 mb-4">
+              There are currently no submissions available for voting. Please check back later when a new voting period begins.
             </p>
-            
-            {/* Show button to view previous results if available */}
-            {previousIssue ? (
-              <div className="mt-6">
-                <Button 
-                  onClick={handleViewPreviousIssue}
-                  variant="primary"
-                  size="md"
-                  className="mx-auto"
-                >
-                  View Previous Voting Results
-                </Button>
-                <p className="mt-2 text-sm text-gray-500">
-                  See the results from &quot;{previousIssue.title}&quot;
-                </p>
-              </div>
-            ) : (
-              <p className="mt-4 text-gray-500">
-                No previous voting results are available at this time.
-              </p>
-            )}
+            <p className="text-blue-600 text-sm">
+              Voting periods are announced in advance. Stay tuned for updates!
+            </p>
           </div>
         </div>
       </Container>
     );
   }
 
-  // Determine which issue to display based on view mode
-  const displayIssue = viewMode === 'current' ? activeVotingIssue : previousIssue;
-  const isViewingPrevious = viewMode === 'previous';
-
-  if (!displayIssue) {
+  if (viewMode === 'current' && !activeVotingIssue) {
     return (
-      <Container className="py-10 text-center">
-        <p className="text-gray-500">No issue data available.</p>
+      <Container className="py-10 text-center" spacing="standard">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 max-w-2xl mx-auto">
+          <h2 className="text-xl font-semibold text-yellow-900 mb-4">No Current Voting Period</h2>
+          <p className="text-yellow-700 mb-6">
+            There is no active voting period right now.
+          </p>
+          {previousIssue && (
+            <Button 
+              onClick={handleViewPreviousIssue}
+              variant="outline"
+              className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+            >
+              View Previous Results
+            </Button>
+          )}
+        </div>
       </Container>
     );
   }
 
   return (
-    <Container className="py-8">
-      {/* Back button when viewing previous results */}
-      {isViewingPrevious && (
-        <div className="mb-6">
-          <Button 
-            onClick={handleBackToCurrent}
-            variant="secondary"
-            size="sm"
-          >
-            ← Back to Current
-          </Button>
+    <Container className="py-8" variant="ultrawide" spacing="generous">
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {viewMode === 'current' ? 'Vote on Submissions' : 'Previous Voting Results'}
+          </h1>
+          
+          {viewMode === 'current' && activeVotingIssue ? (
+            <div className="max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 mb-2">
+                Current Issue: <span className="font-semibold text-gray-900">{activeVotingIssue.title}</span>
+              </p>
+              <p className="text-lg text-gray-500 mb-4">
+                {activeVotingIssue.description}
+              </p>
+              <div className="flex justify-center items-center space-x-6 text-sm text-gray-500">
+                <span>
+                  Voting started: {new Date(activeVotingIssue.votingStart).toLocaleDateString()}
+                </span>
+                <span>•</span>
+                <span>
+                  Voting ends: {new Date(activeVotingIssue.votingEnd).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {/* View Previous Results Button */}
+              {previousIssue && (
+                <div className="mt-6">
+                  <Button 
+                    onClick={handleViewPreviousIssue}
+                    variant="outline"
+                    className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                  >
+                    View Previous Results ({previousIssue.title})
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : viewMode === 'previous' && previousIssue ? (
+            <div className="max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 mb-2">
+                Previous Issue: <span className="font-semibold text-gray-900">{previousIssue.title}</span>
+              </p>
+              <p className="text-lg text-gray-500 mb-4">
+                {previousIssue.description}
+              </p>
+              <div className="flex justify-center items-center space-x-6 text-sm text-gray-500 mb-6">
+                <span>
+                  Voting period: {new Date(previousIssue.votingStart).toLocaleDateString()} - {new Date(previousIssue.votingEnd).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {/* Back to Current Button */}
+              {activeVotingIssue && (
+                <Button 
+                  onClick={handleBackToCurrent}
+                  variant="primary"
+                  className="mr-4"
+                >
+                  Back to Current Voting
+                </Button>
+              )}
+            </div>
+          ) : null}
         </div>
-      )}
 
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {displayIssue.title}
-          {isViewingPrevious && (
-            <span className="ml-2 text-lg font-medium text-gray-500">
-              (Previous Results)
-            </span>
-          )}
-        </h1>
-        <p className="mt-2 text-lg text-gray-600">{displayIssue.description}</p>
-        <p className="mt-1 text-sm text-gray-500">
-          Voting period: {new Date(displayIssue.votingStart).toLocaleDateString()} - {new Date(displayIssue.votingEnd).toLocaleDateString()}
-        </p>
-        {isViewingPrevious && (
-          <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-            Voting Completed
+        {allSubmissions.length === 0 ? (
+          <div className="text-center text-gray-500 py-10">
+            <p>No submissions available for this issue.</p>
           </div>
+        ) : (
+          <>
+            {/* Enhanced MasonryGallery with unified layout optimized for voting display */}
+            <MasonryGallery
+              items={displayedSubmissions}
+              getImageUrl={(submission) => submission.imageUrl}
+              renderItem={(submission, isWide, aspectRatio) => (
+                <MasonrySubmissionCard
+                  submission={submission}
+                  isWide={isWide}
+                  aspectRatio={aspectRatio}
+                  displayContext={viewMode === "previous" ? "previousResults" : "voteView"}
+                  onVoteSuccess={viewMode === "current" ? handleVoteSuccess : undefined}
+                  onVoteCancelled={viewMode === "current" ? handleVoteCancelled : undefined}
+                  enableHoverEffects={true}
+                  showWideIndicator={false}
+                />
+              )}
+              onItemClick={handleSubmissionClick}
+              config={{
+                columnWidth: CONTAINER_CONFIG.voteMasonry.columnWidth,
+                gap: CONTAINER_CONFIG.voteMasonry.gap,
+                mobileColumns: CONTAINER_CONFIG.voteMasonry.columns.mobile,
+                tabletColumns: CONTAINER_CONFIG.voteMasonry.columns.tablet,
+                desktopColumns: CONTAINER_CONFIG.voteMasonry.columns.desktop,
+              }}
+              loadingComponent={
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading submissions...</p>
+                </div>
+              }
+              emptyComponent={
+                <div className="text-center text-gray-500 py-10">
+                  <p>No submissions available for this issue.</p>
+                </div>
+              }
+              errorComponent={(errors, onRetry) => (
+                <div className="text-center py-8">
+                  <div className="text-red-500 mb-4">
+                    <p>Failed to load {errors.length} image(s)</p>
+                  </div>
+                  <Button onClick={onRetry} variant="secondary" size="sm">
+                    Retry Failed Images
+                  </Button>
+                </div>
+              )}
+            />
+            
+            {/* Pagination component */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  showFirstLastButtons
+                  showPageSelector
+                  maxVisiblePages={5}
+                  simplifyOnMobile
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
-      
-      {allSubmissions.length === 0 ? (
-        <div className="text-center text-gray-500 py-10">
-          <p>No submissions available for this issue.</p>
-        </div>
-      ) : (
-        <>
-          <MasonryGrid
-            gap={6}
-            isLoading={isLoading}
-            emptyState={
-              <div className="text-center text-gray-500 py-10">
-                <p>No submissions available for this issue.</p>
-              </div>
-            }
-          >
-            {displayedSubmissions.map(submission => (
-              <SubmissionCard 
-                key={submission.id}
-                submission={submission} 
-                displayContext={isViewingPrevious ? "previousResults" : "voteView"}
-                onVoteSuccess={!isViewingPrevious ? handleVoteSuccess : undefined}
-                onVoteCancelled={!isViewingPrevious ? handleVoteCancelled : undefined}
-                layoutMode="masonry"
-              />
-            ))}
-          </MasonryGrid>
-          
-          {/* Pagination component */}
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              showFirstLastButtons
-              showPageSelector
-              maxVisiblePages={5}
-              simplifyOnMobile
-            />
-          )}
-        </>
-      )}
     </Container>
   );
 } 
