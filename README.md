@@ -45,22 +45,33 @@ munich-weekly/
 
 ## 📚 Documentation
 
-### General Documentation
-- 🧭 [Deployment Guide](./docs/deployment.md)
-- 📦 [API Reference](./docs/api.md)
-- 🗃️ [Database Design](./docs/database.md)
-- 💾 [Storage System](./docs/storage.md)
-- 🖼️ [Image CDN System](./docs/image-cdn.md)
-- 👤 [User Guide](./docs/user-guide.md)
-- 🧑‍💻 [Developer Guide](./docs/dev-guide.md)
-- 🔐 [Auth & Security](./docs/auth.md)
-- 🔒 [Privacy and Cookies](./docs/privacy.md)
+**📑 [Complete Documentation Index](./docs/index.md)** - Navigate all documentation from one place
 
-### Frontend Documentation
-- 📱 [Frontend Overview](./docs/frontend-overview.md)
-- 🏗️ [Frontend Architecture](./docs/frontend-architecture.md)
-- 🧩 [UI Component Library](./docs/ui-components.md)
-- 🎨 [Style System](./docs/style-system.md) - *Updated with enhanced typography system*
+### 🚀 Getting Started
+- 🧭 [Deployment Guide](./docs/deployment.md) - Complete deployment instructions for Hetzner Cloud
+- 🧑‍💻 [Developer Guide](./docs/dev-guide.md) - Development setup and best practices
+- 👤 [User Guide](./docs/user-guide.md) - End-user documentation
+
+### 🔐 Security & Privacy
+- 🔐 [Authentication & Security](./docs/auth.md) - Complete security implementation guide
+- 🔒 [Security Summary](./docs/security-summary.md) - Executive overview of security posture
+- 🛡️ [Privacy Policy](./docs/privacy.md) - GDPR-compliant privacy documentation
+
+### 🏗️ Architecture & API
+- 📦 [API Reference](./docs/api.md) - Complete API endpoint documentation
+- 🗃️ [Database Design](./docs/database.md) - Database schema and design decisions
+- 💾 [Storage System](./docs/storage.md) - File storage architecture (Local + Cloudflare R2)
+- 🖼️ [Image CDN System](./docs/image-cdn.md) - Advanced image optimization pipeline
+
+### 📱 Frontend Development
+- 📱 [Frontend Overview](./docs/frontend-overview.md) - Architecture and features overview
+- 🏗️ [Frontend Architecture](./docs/frontend-architecture.md) - Detailed technical architecture
+- 🧩 [UI Component Library](./docs/ui-components.md) - Component specifications and usage
+- 🎨 [Style System](./docs/style-system.md) - Typography and styling framework
+
+### 📈 Operations & Maintenance
+- 💪 [Robustness Improvements](./docs/robustness-improvements.md) - System reliability enhancements
+- 🔧 [Admin Guide](./docs/admin-guide.md) - Platform administration instructions
 
 ---
 

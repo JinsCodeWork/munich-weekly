@@ -1,5 +1,43 @@
 # API Endpoints
 
+This document provides a comprehensive reference for all API endpoints in the Munich Weekly platform.
+
+## 📚 Documentation Navigation
+
+**Security Implementation:** See [Authentication & Security](./auth.md) for complete security details
+
+**Related Documentation:**
+- 🔐 [Security Summary](./security-summary.md) - Security overview and authentication requirements
+- 🏠 [Project Overview](../README.md) - Platform features and architecture
+- 🚀 [Deployment Guide](./deployment.md) - Production API configuration
+- 📱 [Frontend Overview](./frontend-overview.md) - Client-side API integration
+- 🛡️ [Privacy Policy](./privacy.md) - Data handling and GDPR compliance
+
+## 🔐 Authentication Requirements
+
+Most endpoints require authentication via JWT token in the Authorization header:
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Public Endpoints:** No authentication required
+- All `/api/auth/**` endpoints (login, register, password reset)
+- `GET /api/issues` - Public issue listing
+- `GET /api/submissions` - Public approved submissions
+- Voting endpoints (`/api/votes/**`) - Anonymous voting with visitorId cookie
+
+**Authenticated Endpoints:** Require valid JWT token
+- User management (`/api/users/**`)
+- Submission management (POST, PATCH, DELETE)
+- Account operations
+
+**Admin-Only Endpoints:** Require admin role
+- User administration
+- Submission approval/rejection
+- Issue management
+
+For detailed security implementation, see [Authentication & Security](./auth.md).
+
 ## UserController
 
 - **POST** `/api/users/change-password`

@@ -8,12 +8,25 @@ Munich Weekly is a photography submission and voting platform, built with modern
 
 This document serves as the entry point to the frontend development documentation system, which includes the following related documents:
 
+### Frontend-Specific Documentation
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
+
+### Security & Authentication
+- [**Authentication & Security**](./auth.md) - Complete security implementation including frontend auth
+- [**Security Summary**](./security-summary.md) - Executive overview of security posture
+- [**Privacy Policy**](./privacy.md) - GDPR compliance and anonymous voting system
+
+### Infrastructure & API
 - [**Storage System**](./storage.md) - Image storage architecture and implementation details
 - [**Image CDN System**](./image-cdn.md) - Advanced image optimization and delivery architecture
+- [**API Reference**](./api.md) - Complete API endpoint documentation
+- [**Deployment Guide**](./deployment.md) - Production deployment and configuration
+
+### Project Overview
+- [**Main Documentation**](../README.md) - Project overview and quick start guide
 
 ## Technology Stack
 

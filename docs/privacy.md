@@ -1,8 +1,17 @@
 # Privacy Policy
 
-Effective Date: May 2025
+**Effective Date:** May 2025
 
 This website (Munich Weekly) is operated as a non-commercial, student-run platform. We are committed to respecting your privacy and ensuring transparent data practices. Below is a summary of how we handle data.
+
+## 📚 Related Documentation
+
+For technical implementation details and security architecture:
+- 🔐 [Authentication & Security](./auth.md) - Complete security implementation including anonymous voting
+- 🔒 [Security Summary](./security-summary.md) - Executive security overview and compliance status
+- 📦 [API Reference](./api.md) - Data collection endpoints and authentication requirements
+- 💾 [Storage System](./storage.md) - File storage security and data handling
+- 🏠 [Project Overview](../README.md) - Platform features and technology stack
 
 ---
 
@@ -113,6 +122,15 @@ If you have any questions about this privacy policy, you can contact the project
 **Dongkai Jin**
 Email: [dongkai.jin@tum.de](mailto:dongkai.jin@tum.de)
 Location: Munich, Germany
+
+---
+
+## 🔗 Additional Resources
+
+- 🔐 [Technical Security Details](./auth.md) - How we implement privacy-preserving authentication
+- 🚀 [Deployment Security](./deployment.md) - Server-side data protection measures
+- 📱 [Frontend Implementation](./frontend-overview.md) - Client-side privacy protection
+- 🏠 [Back to Project Overview](../README.md)
 
 ---
 
