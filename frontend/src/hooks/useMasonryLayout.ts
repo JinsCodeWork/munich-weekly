@@ -85,7 +85,7 @@ const DEFAULT_CONFIG: MasonryConfig = {
   tabletBreakpoint: 1024, // Upper breakpoint for tablet support
   
   // **WEIGHTED SCORING ALGORITHM DEFAULTS**
-  wideImageBias: 0.85, // Slight bias toward wide images to prevent sinking
+  wideImageBias: 0.9, // Slight bias toward wide images to prevent sinking
   enableWeightedScoring: true, // Enable the improved algorithm by default
 };
 
@@ -105,16 +105,29 @@ export function useMasonryLayout<T = unknown>(
   const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   
   const [screenWidth, setScreenWidth] = useState<number>(0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
-  // Track screen width for responsive column calculation
+  // Track screen width and container width for responsive column calculation
   useEffect(() => {
-    const updateScreenWidth = () => {
-      setScreenWidth(window.innerWidth);
+    const updateDimensions = () => {
+      const newScreenWidth = window.innerWidth;
+      setScreenWidth(newScreenWidth);
+      
+      // Calculate effective container width based on vote container settings
+      // vote container: max-w-[1600px] with px-2 md:px-4 lg:px-6 padding
+      const maxWidth = Math.min(1600, newScreenWidth);
+      let padding = 0;
+      if (newScreenWidth >= 1024) padding = 24; // lg:px-6
+      else if (newScreenWidth >= 768) padding = 16; // md:px-4  
+      else padding = 8; // px-2
+      
+      const effectiveWidth = maxWidth - (padding * 2);
+      setContainerWidth(effectiveWidth);
     };
 
-    updateScreenWidth();
-    window.addEventListener('resize', updateScreenWidth);
-    return () => window.removeEventListener('resize', updateScreenWidth);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   // Calculate current column count based on screen width
@@ -124,18 +137,6 @@ export function useMasonryLayout<T = unknown>(
     if (screenWidth < mergedConfig.tabletBreakpoint) return mergedConfig.tabletColumns;
     return mergedConfig.desktopColumns;
   }, [screenWidth, mergedConfig.mobileBreakpoint, mergedConfig.tabletBreakpoint, mergedConfig.desktopColumns, mergedConfig.mobileColumns, mergedConfig.tabletColumns]);
-
-  // Get current column width based on screen size
-  const currentColumnWidth = useMemo(() => {
-    if (typeof mergedConfig.columnWidth === 'number') {
-      return mergedConfig.columnWidth;
-    }
-    
-    if (screenWidth === 0) return mergedConfig.columnWidth.desktop; // Server-side default
-    if (screenWidth < mergedConfig.mobileBreakpoint) return mergedConfig.columnWidth.mobile;
-    if (screenWidth < mergedConfig.tabletBreakpoint) return mergedConfig.columnWidth.tablet;
-    return mergedConfig.columnWidth.desktop;
-  }, [screenWidth, mergedConfig.columnWidth, mergedConfig.mobileBreakpoint, mergedConfig.tabletBreakpoint]);
 
   // Get current gap based on screen size
   const currentGap = useMemo(() => {
@@ -148,6 +149,28 @@ export function useMasonryLayout<T = unknown>(
     if (screenWidth < mergedConfig.tabletBreakpoint) return mergedConfig.gap.tablet;
     return mergedConfig.gap.desktop;
   }, [screenWidth, mergedConfig.gap, mergedConfig.mobileBreakpoint, mergedConfig.tabletBreakpoint]);
+
+  // Calculate dynamic column width based on container width
+  const currentColumnWidth = useMemo(() => {
+    if (containerWidth === 0) {
+      // Fallback to configured column width if container width not available
+      if (typeof mergedConfig.columnWidth === 'number') {
+        return mergedConfig.columnWidth;
+      }
+      
+      if (screenWidth === 0) return mergedConfig.columnWidth.desktop;
+      if (screenWidth < mergedConfig.mobileBreakpoint) return mergedConfig.columnWidth.mobile;
+      if (screenWidth < mergedConfig.tabletBreakpoint) return mergedConfig.columnWidth.tablet;
+      return mergedConfig.columnWidth.desktop;
+    }
+    
+    // Dynamic calculation: distribute available width across columns and gaps
+    const totalGapWidth = (columnCount - 1) * currentGap;
+    const availableWidth = containerWidth - totalGapWidth;
+    const dynamicColumnWidth = Math.floor(availableWidth / columnCount);
+    
+    return dynamicColumnWidth;
+  }, [containerWidth, columnCount, currentGap, screenWidth, mergedConfig.columnWidth, mergedConfig.mobileBreakpoint, mergedConfig.tabletBreakpoint]);
 
   // Prepare items with calculated dimensions
   const preparedItems = useMemo(() => {

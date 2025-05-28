@@ -5,7 +5,7 @@ interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   as?: React.ElementType;
-  variant?: 'default' | 'narrow' | 'wide' | 'fluid' | 'ultrawide' | 'minimal';
+  variant?: 'default' | 'narrow' | 'wide' | 'fluid' | 'ultrawide' | 'minimal' | 'vote';
   spacing?: keyof typeof responsivePadding;
 }
 

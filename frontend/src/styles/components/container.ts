@@ -57,14 +57,14 @@ export const CONTAINER_CONFIG = {
   // Vote page masonry configuration - optimized for larger, more prominent display
   voteMasonry: {
     columnWidth: {
-      mobile: 160,        // 减少移动端列宽，避免被裁切
-      tablet: 240,        // 增加平板列宽
-      desktop: 340,       // 增加桌面端列宽，更好利用空间
+      mobile: 165,        // 增加移动端列宽，让图片更大
+      tablet: 250,        // 进一步增加平板列宽
+      desktop: 340,       // 进一步增加桌面端列宽，更好利用空间
     },
     gap: {
-      mobile: 6,          // 进一步减少移动端间距
-      tablet: 12,         // 减少平板间距
-      desktop: 18,        // 稍微减少桌面端间距
+      mobile: 4,          // 再次减少移动端间距，让布局更紧凑
+      tablet: 8,          // 进一步减少平板间距
+      desktop: 12,        // 进一步减少桌面端间距
     },
     columns: {
       mobile: 2,          // Mobile: 2 columns (changed from 1)
@@ -103,6 +103,9 @@ export const containerVariants = {
   // Ultra-wide container for modern large displays
   ultrawide: 'w-full max-w-[1800px] mx-auto px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-20',
   
+  // Vote page specific container - perfectly symmetric margins
+  vote: 'w-full max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6',
+  
   // Minimal padding for full-width layouts
   minimal: 'w-full max-w-[1400px] mx-auto px-3 md:px-4 lg:px-6',
 };
@@ -121,7 +124,7 @@ export const responsivePadding = {
   generous: 'px-6 md:px-10 lg:px-12 xl:px-16 2xl:px-20',
   
   // Minimal spacing for edge-to-edge content
-  minimal: 'px-2 md:px-3 lg:px-4',
+  minimal: 'px-1 md:px-2 lg:px-3',
 } as const;
 
 /**
