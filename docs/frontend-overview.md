@@ -225,7 +225,7 @@ Munich Weekly features a modern, flexible container system optimized for photogr
 - `minimal`: Reduced padding for data-dense interfaces
 
 **Responsive Masonry Configurations:**
-- **Vote Page**: Optimized for larger images with responsive column widths (170px mobile → 320px desktop)
+- **Vote Page**: Dynamic column width calculation with adaptive margins (px-2 to lg:px-6)
 - **Account Pages**: Compact layouts with responsive gaps (8px mobile → 16px desktop)
 - **Gallery Views**: Balanced display with smart column distribution (2-4 columns based on device)
 

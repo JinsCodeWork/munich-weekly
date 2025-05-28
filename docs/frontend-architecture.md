@@ -530,3 +530,18 @@ Significant improvements were made to the image rendering and display logic thro
 - Consistent handling of edge cases and non-standard aspect ratios
 
 This enhancement represents a significant improvement in the platform's image presentation capabilities, ensuring optimal display quality while maintaining excellent performance and developer experience.
+
+#### Public Voting Page (`/vote`)
+
+Enhanced public voting interface with optimized user experience:
+
+**Core Features:**
+- **Simplified Interface**: Direct issue title display without redundant prefixes
+- **Dynamic Layout**: Adaptive column width calculation for optimal space utilization
+- **Balanced Distribution**: Wide image limiting algorithm prevents consecutive placement
+- **Symmetric Margins**: Professional spacing with guaranteed left-right balance
+
+**Technical Enhancements:**
+- **Smart Masonry**: `wideStreak` limiting ensures fair wide/narrow image alternation
+- **Container Optimization**: `vote` variant with progressive spacing (px-2 → lg:px-6)
+- **Dynamic Sizing**: Real-time column width calculation based on container dimensions

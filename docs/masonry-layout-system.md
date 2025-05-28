@@ -24,28 +24,34 @@ Unlike CSS-based solutions (CSS Grid or CSS Columns), this system uses JavaScrip
 - **Responsive Design** - 2 columns on mobile, 4 columns on desktop
 - **Gap Management** - Consistent spacing between items
 
-### Greedy Best-Fit Algorithm
+### Greedy Best-Fit Algorithm with Wide Image Limiting
 
-The system implements an intelligent item placement algorithm that minimizes gaps and maximizes visual appeal:
+The system implements an enhanced intelligent item placement algorithm that minimizes gaps, maximizes visual appeal, and ensures balanced distribution of wide and narrow images:
 
-**Traditional Sequential Placement Problem:**
+**Enhanced Algorithm Features:**
+- **Dynamic Item Selection**: Chooses items from remaining pool based on optimal Y position
+- **Wide Image Streak Limiting**: Prevents consecutive wide image placement
+- **Adaptive Candidate Filtering**: Forces narrow image insertion when needed
+- **Balanced Layout Distribution**: Ensures fair alternation between wide and narrow images
+
+**Wide Image Limiting Mechanism:**
+```typescript
+let wideStreak = 0;           // Counter for consecutive wide images
+const maxWideStreak = 1;      // Maximum consecutive wide images allowed
+
+// If too many consecutive wide images and narrow images available,
+// limit candidates to narrow images only
+if (wideStreak >= maxWideStreak && pool.some(item => !item.isWide)) {
+  candidates = pool.filter(item => !item.isWide);
+}
 ```
-Row 1: ┌─────┐ ┌─────┐  
-       │  1  │ │    │  ← Empty space (can fit item 4)  
-       └─────┘ └─────┘  
-Row 2: ┌─────────────┐  
-       │      2      │  ← Wide image spans 2 columns  
-       └─────────────┘  
-Row 3: ┌─────┐ ┌─────┐  
-       │  3  │ │  4  │  
-       └─────┘ └─────┘  
-```
 
-**Greedy Best-Fit Solution:**
-- Dynamically selects items from the remaining pool
-- Chooses the item that can be placed at the lowest Y position
-- Fills gaps optimally before moving to new rows
-- Results in tighter, more visually appealing layouts
+**Algorithm Flow:**
+1. **Wide Image Placement**: Increment `wideStreak` counter
+2. **Streak Check**: If `wideStreak >= maxWideStreak` and narrow images available
+3. **Forced Insertion**: Next iteration considers only narrow images
+4. **Narrow Image Placement**: Reset `wideStreak = 0`
+5. **Balanced Alternation**: Continues optimal placement with fair distribution
 
 ### Wide Image Detection and Handling
 
@@ -155,22 +161,30 @@ export const CONTAINER_CONFIG = {
 
 Munich Weekly implements specialized masonry configurations optimized for different page contexts and user experiences:
 
-#### Vote Page Configuration
+#### Vote Page Configuration - Dynamic Column Width
 ```typescript
 voteMasonry: {
-  columnWidth: {
-    mobile: 170,    // iPhone-friendly 2-column layout
-    tablet: 220,    // iPad-optimized medium size
-    desktop: 320,   // Large desktop display for visual impact
+  // Dynamic width calculation based on container
+  adaptiveColumnWidth: true,    // Enable dynamic calculation
+  margins: {
+    mobile: 8,      // px-2 for comfortable mobile spacing
+    tablet: 16,     // md:px-4 for balanced tablet layout
+    desktop: 24,    // lg:px-6 for professional desktop appearance
   },
   gap: {
-    mobile: 8,      // Compact mobile spacing for content density
-    tablet: 14,     // Balanced tablet spacing
-    desktop: 20,    // Standard desktop spacing
+    mobile: 4,      // Compact mobile spacing for content density
+    tablet: 8,      // Balanced tablet spacing
+    desktop: 12,    // Optimized desktop spacing
   },
   columns: { mobile: 2, tablet: 2, desktop: 4 }
 }
 ```
+
+**Dynamic Width Calculation:**
+- Container width: `max-w-[1600px]` with responsive margins
+- Effective width: `containerWidth - (margin × 2)`
+- Column width: `(effectiveWidth - totalGaps) / columnCount`
+- Result: Perfect space utilization with symmetric margins
 
 #### Account Pages Configuration  
 ```typescript

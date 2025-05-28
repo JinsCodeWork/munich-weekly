@@ -228,7 +228,7 @@ export default function VotePage() {
           {viewMode === 'current' && activeVotingIssue ? (
             <div className="max-w-3xl mx-auto">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Issue: {activeVotingIssue.title}
+                {activeVotingIssue.title}
               </h1>
               <p className="text-lg text-gray-500 mb-4">
                 {activeVotingIssue.description}
@@ -266,7 +266,7 @@ export default function VotePage() {
           ) : viewMode === 'previous' && previousIssue ? (
             <div className="max-w-3xl mx-auto">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Issue: {previousIssue.title}
+                {previousIssue.title}
               </h1>
               <p className="text-lg text-gray-500 mb-4">
                 {previousIssue.description}

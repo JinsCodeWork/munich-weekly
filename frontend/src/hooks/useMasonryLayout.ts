@@ -266,8 +266,14 @@ export function useMasonryLayout<T = unknown>(
     const enableWeighted = mergedConfig.enableWeightedScoring ?? DEFAULT_CONFIG.enableWeightedScoring!;
     const α = mergedConfig.wideImageBias ?? DEFAULT_CONFIG.wideImageBias!;
 
-    // **GREEDY BEST-FIT MAIN LOOP WITH CONFIGURABLE SCORING**
+    // **WIDE IMAGE STREAK LIMITING**
+    // Prevent wide images from being placed consecutively
+    let wideStreak = 0;           // Counter for consecutive wide images
+    const maxWideStreak = 1;      // Maximum consecutive wide images allowed
+
+    // **GREEDY BEST-FIT MAIN LOOP WITH WIDE IMAGE LIMITING**
     // Choose between weighted scoring and original pure y-based algorithm
+    // Plus wide image streak limiting to ensure fair distribution
     while (pool.length > 0) {
       let bestChoice = { 
         itemIndex: -1, 
@@ -277,9 +283,18 @@ export function useMasonryLayout<T = unknown>(
         span: 0 
       };
       
-      // For each remaining item in the pool, try all possible positions
-      pool.forEach((item, itemIndex) => {
+      // **WIDE IMAGE STREAK LIMITING**
+      // If we've placed too many consecutive wide images and narrow images are available,
+      // limit candidates to narrow images only to force insertion of small images
+      let candidates = pool;
+      if (wideStreak >= maxWideStreak && pool.some(item => !item.isWide)) {
+        candidates = pool.filter(item => !item.isWide);
+      }
+      
+      // For each remaining item in the candidates pool, try all possible positions
+      candidates.forEach((item) => {
         const span = item.span;
+        const poolIndex = pool.indexOf(item); // Get original index in pool
         
         // Try all possible starting columns for this item
         for (let startCol = 0; startCol <= columnCount - span; startCol++) {
@@ -306,7 +321,7 @@ export function useMasonryLayout<T = unknown>(
             (score === bestChoice.score && y === bestChoice.y && span < bestChoice.span)
           ) {
             bestChoice = { 
-              itemIndex, 
+              itemIndex: poolIndex, // Use original pool index
               score,
               y, 
               columnStart: startCol, 
@@ -342,6 +357,14 @@ export function useMasonryLayout<T = unknown>(
       const newHeight = bestChoice.y + chosenItem.realHeight + currentGap;
       for (let col = bestChoice.columnStart; col < bestChoice.columnStart + bestChoice.span; col++) {
         heights[col] = newHeight;
+      }
+      
+      // **UPDATE WIDE STREAK COUNTER**
+      // Track consecutive wide image placements
+      if (chosenItem.isWide) {
+        wideStreak += 1;
+      } else {
+        wideStreak = 0; // Reset counter when a narrow image is placed
       }
     }
 

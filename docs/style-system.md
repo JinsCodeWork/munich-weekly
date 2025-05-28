@@ -167,41 +167,31 @@ export const CONTAINER_CONFIG = {
 **Container Variants:**
 ```typescript
 // Enhanced container variants with responsive padding
-export const getContainerStyles = cva(
-  'w-full mx-auto',
-  {
-    variants: {
-      variant: {
-        default: 'max-w-[1400px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
-        narrow: 'max-w-[1000px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
-        wide: 'max-w-[1600px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
-        ultrawide: 'max-w-[1800px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-20',
-        fluid: 'max-w-full px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
-        minimal: 'max-w-[1400px] px-2 md:px-3 lg:px-4',
-      },
-      spacing: {
-        compact: 'px-3 md:px-4 lg:px-6 xl:px-8',
-        standard: 'px-5 md:px-8 lg:px-10 xl:px-12',
-        generous: 'px-6 md:px-10 lg:px-12 xl:px-16 2xl:px-20',
-        minimal: 'px-2 md:px-3 lg:px-4',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      spacing: 'standard',
-    },
-  }
-);
+export const containerVariants = {
+  default: 'max-w-[1400px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+  narrow: 'max-w-[1000px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+  wide: 'max-w-[1600px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+  ultrawide: 'max-w-[1800px] px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-20',
+  vote: 'max-w-[1600px] px-2 md:px-4 lg:px-6',  // Specialized vote container
+  fluid: 'max-w-full px-5 md:px-8 lg:px-10 xl:px-12 2xl:px-16',
+  minimal: 'max-w-[1400px] px-2 md:px-3 lg:px-4',
+};
 ```
+
+**Vote Container Features:**
+- **Symmetric Margins**: Guaranteed left-right balance through `mx-auto`
+- **Dynamic Column Width**: Masonry adapts to actual container width
+- **Progressive Spacing**: `px-2` → `md:px-4` → `lg:px-6` for optimal device experience
 
 **Specialized Masonry Configurations:**
 ```typescript
 // Page-specific masonry configurations
 export const CONTAINER_CONFIG = {
-  // Vote page configuration - emphasis on large image display
+  // Vote page configuration - dynamic width with adaptive margins
   voteMasonry: {
-    columnWidth: { mobile: 170, tablet: 220, desktop: 320 },
-    gap: { mobile: 8, tablet: 14, desktop: 20 },
+    adaptiveColumnWidth: true,  // Enable dynamic calculation
+    margins: { mobile: 8, tablet: 16, desktop: 24 },
+    gap: { mobile: 4, tablet: 8, desktop: 12 },
     columns: { mobile: 2, tablet: 2, desktop: 4 }
   },
   
