@@ -205,10 +205,12 @@ export function MasonrySubmissionCard({
           )}
           style={
             // For the masonry layout, let the container adapt to the image content
-            // Remove fixed aspect ratio constraints that cause display issues
+            // Use actual detected ratio if available, otherwise fallback to passed aspectRatio
             actualAspectRatio 
               ? getAspectRatioStyle(actualAspectRatio)
-              : {} // Don't impose any aspect ratio constraints initially
+              : aspectRatio 
+                ? getAspectRatioStyle(aspectRatio) // Use passed aspectRatio as fallback
+                : {} // Don't impose any aspect ratio constraints if neither available
           }
         >
           <Thumbnail
