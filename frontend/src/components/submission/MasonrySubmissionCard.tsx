@@ -71,7 +71,7 @@ export function MasonrySubmissionCard({
   showWideIndicator = false
 }: MasonrySubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  // Add state to track the actual image aspect ratio for dynamic container sizing
+  // Track actual image aspect ratio for optimal display
   const [actualAspectRatio, setActualAspectRatio] = useState<number | null>(null);
 
   const handleOpenViewer = () => {
@@ -204,13 +204,12 @@ export function MasonrySubmissionCard({
             "w-full"
           )}
           style={
-            // For the masonry layout, let the container adapt to the image content
-            // Use actual detected ratio if available, otherwise fallback to passed aspectRatio
-            actualAspectRatio 
-              ? getAspectRatioStyle(actualAspectRatio)
-              : aspectRatio 
-                ? getAspectRatioStyle(aspectRatio) // Use passed aspectRatio as fallback
-                : {} // Don't impose any aspect ratio constraints if neither available
+            // Smart aspect ratio selection: 
+            // 1. For detected portrait images, use actual ratio for better display
+            // 2. For other cases, use passed aspectRatio to match layout calculations
+            actualAspectRatio && actualAspectRatio < 1 
+              ? getAspectRatioStyle(actualAspectRatio) // Use actual ratio for portrait images
+              : getAspectRatioStyle(aspectRatio) // Use layout-calculated ratio for others
           }
         >
           <Thumbnail
@@ -231,7 +230,7 @@ export function MasonrySubmissionCard({
             fallbackSrc="/placeholder.svg"
             quality={isWide ? 90 : 85}
             className="" // Remove transform animations for better performance
-            onImageLoad={handleImageLoad} // Add callback to track actual image dimensions
+            onImageLoad={handleImageLoad} // Track actual image dimensions
           />
           
           {/* Status badge - conditional rendering */}

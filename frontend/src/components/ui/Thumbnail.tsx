@@ -207,18 +207,19 @@ export function Thumbnail({
           return 'contain'; // 其他容器完整显示
           
         case 'portrait': // 3:4 竖图
-          // 竖图优化：在masonry布局中优先显示图片完整内容
+          // 竖图优化：prioritize showing complete image content
           if (finalAspectRatio === 'auto') {
-            // 在自动比例模式下（通常是masonry布局），优先显示完整图片
+            // 在自动比例模式下，优先显示完整图片
             return 'contain';
           }
           if (finalAspectRatio === 'square') {
-            return 'cover'; // 在正方形容器中裁切，适应卡片布局
+            // 在正方形容器中，使用contain避免截断重要内容
+            return 'contain';
           }
           if (finalAspectRatio === 'portrait') {
-            return 'cover'; // 同比例容器，填充
+            return 'cover'; // 同比例容器，可以填充
           }
-          // 对于其他容器，使用contain避免过度裁切
+          // 对于其他容器，优先使用contain保证内容完整性
           return 'contain';
           
         case 'tallportrait': // 9:16 竖图
