@@ -71,6 +71,8 @@ export function MasonrySubmissionCard({
   showWideIndicator = false
 }: MasonrySubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  // Add state to track the actual image aspect ratio for dynamic container sizing
+  const [actualAspectRatio, setActualAspectRatio] = useState<number | null>(null);
 
   const handleOpenViewer = () => {
     if (hasValidImage) {
@@ -80,6 +82,11 @@ export function MasonrySubmissionCard({
 
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
+  };
+
+  // Handle image load to get accurate aspect ratio
+  const handleImageLoad = (width: number, height: number, imageAspectRatio: number) => {
+    setActualAspectRatio(imageAspectRatio);
   };
 
   // Process the image URL to ensure it has the correct server prefix
@@ -196,7 +203,13 @@ export function MasonrySubmissionCard({
             // Unified image container styles for both wide and regular images
             "w-full"
           )}
-          style={getAspectRatioStyle(aspectRatio)}
+          style={
+            // For the masonry layout, let the container adapt to the image content
+            // Remove fixed aspect ratio constraints that cause display issues
+            actualAspectRatio 
+              ? getAspectRatioStyle(actualAspectRatio)
+              : {} // Don't impose any aspect ratio constraints initially
+          }
         >
           <Thumbnail
             src={displayUrl || '/placeholder.svg'}
@@ -205,10 +218,7 @@ export function MasonrySubmissionCard({
             aspectRatio="auto" // Let Thumbnail handle aspect ratio detection
             autoDetectAspectRatio={true} // Enable aspect ratio detection
             preserveAspectRatio={true} // Preserve image aspect ratio
-            objectFit={aspectRatio >= 1 ? "cover" : "contain"} // 横向图片用cover，竖向图片用contain
-            objectPosition={
-              aspectRatio >= 1 ? "top" : "center" // 横向图片向上对齐，竖向图片居中
-            }
+            // Remove hardcoded objectFit logic, let Thumbnail decide intelligently
             sizes={isWide 
               ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
               : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
@@ -219,6 +229,7 @@ export function MasonrySubmissionCard({
             fallbackSrc="/placeholder.svg"
             quality={isWide ? 90 : 85}
             className="" // Remove transform animations for better performance
+            onImageLoad={handleImageLoad} // Add callback to track actual image dimensions
           />
           
           {/* Status badge - conditional rendering */}

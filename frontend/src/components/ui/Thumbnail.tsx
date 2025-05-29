@@ -102,7 +102,7 @@ export function Thumbnail({
     return processedSrc;
   }, [src, isValidSrc, fallbackSrc]);
   
-  // 图片尺寸检测
+  // 根据图片尺寸检测
   useEffect(() => {
     if (!isValidSrc || !autoDetectAspectRatio) return;
     
@@ -122,6 +122,10 @@ export function Thumbnail({
     };
     img.onerror = () => {
       setImageLoaded(true);
+      // If image load fails, still call callback with fallback values to prevent hanging
+      if (onImageLoad) {
+        onImageLoad(0, 0, 1); // Fallback to square ratio
+      }
     };
     
     // 使用处理过的图片源进行检测
@@ -203,18 +207,22 @@ export function Thumbnail({
           return 'contain'; // 其他容器完整显示
           
         case 'portrait': // 3:4 竖图
-          // 竖图可以适度裁切来适应卡片布局
+          // 竖图优化：在masonry布局中优先显示图片完整内容
+          if (finalAspectRatio === 'auto') {
+            // 在自动比例模式下（通常是masonry布局），优先显示完整图片
+            return 'contain';
+          }
           if (finalAspectRatio === 'square') {
             return 'cover'; // 在正方形容器中裁切，适应卡片布局
           }
           if (finalAspectRatio === 'portrait') {
             return 'cover'; // 同比例容器，填充
           }
-          // 其他情况也可以适度裁切，因为竖图影响显示效果
-          return 'cover';
+          // 对于其他容器，使用contain避免过度裁切
+          return 'contain';
           
         case 'tallportrait': // 9:16 竖图
-          // 很长的竖图更需要裁切来适应卡片布局
+          // 很长的竖图需要裁切来适应卡片布局
           return 'cover';
           
         default:
@@ -224,8 +232,16 @@ export function Thumbnail({
             if (imageAspectRatio > 1.2) {
               return 'contain';
             }
-            // 如果是竖向图片（高度大于宽度），始终裁切避免左右填充
+            // 如果是竖向图片（高度大于宽度），需要更细致的判断
             if (imageAspectRatio < 0.8) {
+              // 非常竖的图片（比如9:16），使用cover裁切
+              if (imageAspectRatio <= 0.6) { // 约等于9:16或更竖
+                return 'cover';
+              }
+              // 中等竖图（0.6-0.8之间，比如3:4附近），在auto模式下使用contain
+              if (finalAspectRatio === 'auto') {
+                return 'contain';
+              }
               return 'cover';
             }
             
