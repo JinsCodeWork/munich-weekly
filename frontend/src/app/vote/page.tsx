@@ -15,18 +15,25 @@ export default function VotePage() {
   const [, setIsLoading] = useState(true); // Keep for potential future use
   const [, setError] = useState<string | null>(null); // Keep for potential future use
   
-  const { issues, activeIssues, isLoading: issueLoading, error: issueError } = useIssues();
+  const { issues, isLoading: issueLoading, error: issueError } = useIssues();
   
-  // Get current issue (first active issue, or latest issue if no active ones)
+  // Get current issue - only issues within voting period should be shown
   const currentIssue = useMemo(() => {
-    if (activeIssues.length > 0) {
-      return activeIssues[0]; // First active issue
+    const now = new Date();
+    
+    // Filter issues that are currently in voting period
+    const votingIssues = issues.filter(issue => {
+      const votingStart = new Date(issue.votingStart);
+      const votingEnd = new Date(issue.votingEnd);
+      return votingStart <= now && now <= votingEnd;
+    });
+    
+    if (votingIssues.length > 0) {
+      return votingIssues[0]; // Return first issue in voting period
     }
-    if (issues.length > 0) {
-      return issues[issues.length - 1]; // Latest issue
-    }
-    return null;
-  }, [activeIssues, issues]);
+    
+    return null; // No issues are currently in voting period
+  }, [issues]);
 
   // Load submissions for current issue
   const loadSubmissionsForIssue = useCallback(async (issueId: number) => {
@@ -119,7 +126,8 @@ export default function VotePage() {
     return (
       <Container className="py-8" variant="vote">
         <div className="text-center">
-          <p>No current issue found</p>
+          <p className="text-lg text-gray-600 mb-4">No active voting period</p>
+          <p className="text-sm text-gray-500">There are currently no issues open for voting. Please check back later.</p>
         </div>
       </Container>
     );
