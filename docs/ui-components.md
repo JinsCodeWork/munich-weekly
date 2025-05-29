@@ -243,15 +243,16 @@ The `Thumbnail` component implements a sophisticated image display system optimi
 
 ### Masonry Layout Components
 
-Munich Weekly implements an advanced masonry layout system specifically designed for optimal photo gallery display:
+Munich Weekly implements a hybrid masonry layout system that combines backend optimization with frontend responsive positioning:
 
-- **MasonryGallery**: Main display component implementing JavaScript-based masonry layout
-  - Dynamic column height calculation with absolute positioning
+- **MasonryGallery**: Main display component implementing hybrid masonry layout
+  - Backend-provided optimal ordering for quality guarantee
+  - Frontend Skyline positioning for responsive coordinate calculation  
+  - Dynamic column height tracking with absolute positioning
   - Responsive design: 2 columns mobile, 4 columns desktop
   - Progressive loading with skeleton screens
   - Error handling and retry mechanisms
   - Wide image automatic spanning (≥16:9 aspect ratio)
-  - Greedy Best-Fit algorithm for optimal space utilization
 
 - **MasonrySubmissionCard**: Specialized submission card optimized for masonry display
   - Dynamic text sizing based on image width (wide images get larger fonts)
@@ -262,6 +263,7 @@ Munich Weekly implements an advanced masonry layout system specifically designed
   - Integrated with voting system and image viewer
 
 **Key Features:**
+- **Hybrid Architecture**: Backend quality + Frontend performance
 - **Wide Image Detection**: Automatic identification and spanning of landscape images
 - **Dynamic Content Height**: Smart calculation including text content and metadata
 - **Batch Image Loading**: Efficient concurrent loading with 24-hour dimension caching
@@ -271,6 +273,7 @@ Munich Weekly implements an advanced masonry layout system specifically designed
 **Usage Example:**
 ```tsx
 <MasonryGallery
+  issueId={issueId}                    // Required for backend ordering
   items={submissions}
   getImageUrl={(submission) => submission.imageUrl}
   renderItem={(submission, isWide, aspectRatio) => (
@@ -284,8 +287,8 @@ Munich Weekly implements an advanced masonry layout system specifically designed
 />
 ```
 
-**Algorithm Innovation:**
-The masonry system uses a Greedy Best-Fit algorithm that dynamically selects items from the remaining pool to fill gaps optimally, resulting in tighter, more visually appealing layouts compared to sequential placement.
+**Hybrid System Benefits:**
+The masonry system combines backend optimization with frontend responsiveness, providing optimal visual layout with guaranteed performance across all devices and screen sizes.
 
 For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
 

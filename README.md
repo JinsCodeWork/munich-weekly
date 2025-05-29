@@ -68,11 +68,6 @@ munich-weekly/
 - 🏗️ [Frontend Architecture](./docs/frontend-architecture.md) - Detailed technical architecture
 - 🧩 [UI Component Library](./docs/ui-components.md) - Component specifications and usage
 - 🎨 [Style System](./docs/style-system.md) - Typography and styling framework
-
-### 📈 Operations & Maintenance
-- 💪 [Robustness Improvements](./docs/robustness-improvements.md) - System reliability enhancements
-- 🔧 [Admin Guide](./docs/admin-guide.md) - Platform administration instructions
-
 ---
 
 ## 📄 License & Usage

@@ -30,6 +30,7 @@ export interface Submission {
   voteCount: number;
   issue: Issue;
   userId: number;
+  userVote?: 'up' | 'down' | null; // 用户的投票状态
 }
 
 // 分页响应类型

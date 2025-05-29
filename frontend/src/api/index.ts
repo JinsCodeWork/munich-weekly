@@ -13,6 +13,14 @@ export * as issuesApi from "./issues";
 export * as submissionsApi from "./submissions";
 export * as votesApi from "./votes";
 
+// Export layout API with specific types for better tree-shaking
+export { layoutApi, LayoutApiError } from "./layout";
+export type { 
+  MasonryOrderApiResponse, 
+  MasonryOrderResult, 
+  OrderCacheInfo
+} from "./layout";
+
 // Export common types
 export type { default as ApiError } from "./types.ts";
 

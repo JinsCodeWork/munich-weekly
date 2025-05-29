@@ -1,91 +1,38 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { cn, getImageUrl } from '@/lib/utils';
+import React, { useState, useMemo, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { useImageDimensions } from '@/hooks/useImageDimensions';
-import { useMasonryLayout, createDimensionsGetter, type MasonryConfig } from '@/hooks/useMasonryLayout';
-import { CONTAINER_CONFIG } from '@/styles/components/container';
-
-/**
- * Props for MasonryGallery component
- */
-export interface MasonryGalleryProps<T = unknown> {
-  items: T[];
-  getImageUrl: (item: T) => string;
-  renderItem: (item: T, isWide: boolean, aspectRatio: number) => React.ReactNode;
-  className?: string;
-  loadingComponent?: React.ReactNode;
-  emptyComponent?: React.ReactNode;
-  errorComponent?: (errors: string[], onRetry: () => void) => React.ReactNode;
-  onItemClick?: (item: T) => void;
-  config?: Partial<MasonryConfig>; // Custom masonry configuration
-}
+import { useSkylineMasonryLayout, type SkylineMasonryConfig } from '@/hooks/useSkylineMasonryLayout';
 
 /**
  * Default loading skeleton component
  */
-function DefaultLoadingSkeleton({ 
-  columns, 
-  gap 
-}: { 
-  columns: number; 
-  gap: number;
-}) {
-  const skeletonItems = Array.from({ length: columns * 3 }, (_, index) => (
-    <div key={`skeleton-${index}`} className="animate-pulse">
-      <div className="bg-gray-200 rounded-lg overflow-hidden">
-        <div 
-          className="w-full bg-gray-300"
-          style={{ 
-            height: `${200 + (index % 4) * 50}px` 
-          }}
-        />
-        <div className="p-4 space-y-2">
-          <div className="h-4 bg-gray-300 rounded w-3/4" />
-          <div className="h-3 bg-gray-300 rounded w-1/2" />
-        </div>
-      </div>
-    </div>
-  ));
-
+function DefaultLoadingSkeleton({ columns, gap }: { columns: number; gap: number }) {
   return (
     <div 
-      className={cn(
-        'grid auto-rows-max',
-        columns === 2 ? 'grid-cols-2' : 
-        columns === 3 ? 'grid-cols-3' : 
-        columns === 4 ? 'grid-cols-4' : 'grid-cols-2 lg:grid-cols-4'
-      )}
-      style={{ gap: `${gap}px` }}
+      className="grid gap-y-4 animate-pulse" 
+      style={{ 
+        gridTemplateColumns: `repeat(${columns}, 1fr)`,
+        gap: `${gap}px`
+      }}
     >
-      {skeletonItems}
+      {Array.from({ length: columns * 3 }).map((_, i) => (
+        <div 
+          key={i} 
+          className="bg-gray-200 rounded-lg"
+          style={{ height: Math.random() * 200 + 150 }}
+        />
+      ))}
     </div>
   );
 }
 
 /**
- * Default empty state component
+ * Default empty component
  */
-function DefaultEmptyState() {
+function DefaultEmptyComponent() {
   return (
-    <div className="text-center py-12">
-      <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
-        <svg
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-2">No items to display</h3>
-      <p className="text-sm text-gray-500">
-        There are currently no items available to show in the gallery.
-      </p>
+    <div className="text-center py-8">
+      <p className="text-gray-500">No items to display</p>
     </div>
   );
 }
@@ -93,13 +40,7 @@ function DefaultEmptyState() {
 /**
  * Default error component
  */
-function DefaultErrorComponent({ 
-  errors, 
-  onRetry 
-}: { 
-  errors: string[]; 
-  onRetry: () => void;
-}) {
+function DefaultErrorComponent({ errors, onRetry }: { errors: string[]; onRetry: () => void }) {
   return (
     <div className="text-center py-8">
       <div className="mx-auto h-8 w-8 text-red-400 mb-4">
@@ -109,92 +50,62 @@ function DefaultErrorComponent({
         </svg>
       </div>
       <h3 className="text-sm font-medium text-gray-900 mb-2">
-        Failed to load some images
+        Layout Error
       </h3>
       <p className="text-sm text-gray-500 mb-4">
-        {errors.length} image(s) failed to load. You can try again.
+        {errors.length > 0 ? errors[0] : 'Unknown error occurred'}
       </p>
       <button
         onClick={onRetry}
         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
-        Retry Failed Images
+        Retry
       </button>
     </div>
   );
 }
 
 /**
- * Loading progress component
+ * Props for MasonryGallery component
  */
-function LoadingProgress({ 
-  progress, 
-  loadedCount, 
-  totalCount 
-}: { 
-  progress: number; 
-  loadedCount: number; 
-  totalCount: number;
-}) {
-  return (
-    <div className="text-center py-8">
-      <div className="mx-auto max-w-xs">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Loading images...</span>
-          <span>{loadedCount}/{totalCount}</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="text-xs text-gray-500 mt-2">
-          {Math.round(progress)}% complete
-        </div>
-      </div>
-    </div>
-  );
+export interface MasonryGalleryProps<T = unknown> {
+  items: T[];
+  getImageUrl: (item: T) => string;
+  getSubmissionId: (item: T) => number; // Required for skyline API
+  renderItem: (item: T, isWide: boolean, aspectRatio: number) => React.ReactNode;
+  className?: string;
+  loadingComponent?: React.ReactNode;
+  emptyComponent?: React.ReactNode;
+  errorComponent?: (errors: string[], onRetry: () => void) => React.ReactNode;
+  onItemClick?: (item: T) => void;
+  config?: Partial<SkylineMasonryConfig>;
+  issueId: number; // Required for skyline API
 }
 
 /**
- * Wide image wrapper component
- */
-// NOTE: This component is currently unused but kept for potential future use
-// function WideImageContainer({ 
-//   children, 
-//   className 
-// }: { 
-//   children: React.ReactNode; 
-//   className?: string;
-// }) {
-//   return (
-//     <div className={cn('col-span-2', className)}>
-//       {children}
-//     </div>
-//   );
-// }
-
-/**
- * MasonryGallery - JavaScript-based masonry layout with wide image spanning
+ * MasonryGallery - Skyline layout component with backend ordering + frontend positioning
  * 
- * This component uses dynamic column height calculation to achieve true masonry layout
- * similar to Pinterest/Instagram. Wide images (aspect ratio >= 16:9) span two columns.
+ * Architecture:
+ * - Backend calculates optimal item ordering for 2-col and 4-col layouts
+ * - Frontend uses Skyline algorithm for precise pixel positioning
+ * - Built-in caching mechanism for performance optimization
  * 
  * @example
  * ```tsx
  * <MasonryGallery
+ *   issueId={issueId}
  *   items={submissions}
  *   getImageUrl={(item) => item.imageUrl}
- *   renderItem={(item, isWide, aspectRatio) => (
- *     <SubmissionCard submission={item} isWide={isWide} />
- *   )}
+ *   getSubmissionId={(item) => item.id}
+ *   renderItem={(item, isWide, aspectRatio) => <Card ... />}
  * />
  * ```
  */
 export function MasonryGallery<T = unknown>({
   items,
   getImageUrl: getItemImageUrl,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getSubmissionId: _getSubmissionId, // Used by skyline hook internally
   renderItem,
   className,
   loadingComponent,
@@ -202,165 +113,107 @@ export function MasonryGallery<T = unknown>({
   errorComponent,
   onItemClick,
   config,
+  issueId,
 }: MasonryGalleryProps<T>) {
   
-  // Use custom config or fall back to default
-  const masonryConfig = useMemo(() => {
-    return config ? {
-      ...CONTAINER_CONFIG.masonry,
-      ...config
-    } : CONTAINER_CONFIG.masonry;
+  // Use different configs based on layout mode
+  const skylineConfig = useMemo(() => {
+    return config || {};
   }, [config]);
+
+  const [currentColumnCount] = useState<number>(4);
+  const [currentGap] = useState<number>(12);
+
+  // Frontend mode: Use image dimensions + skyline layout
+  // **FIX: Use state-based comparison to allow proper updates while preventing infinite loops**
+  const [itemsHash, setItemsHash] = useState<string>('');
+  const itemsRef = useRef<T[]>([]);
   
-  const [currentColumnCount, setCurrentColumnCount] = useState<number>(masonryConfig.columns.desktop);
-  const [currentGap, setCurrentGap] = useState<number>(
-    typeof masonryConfig.gap === 'number' ? masonryConfig.gap : masonryConfig.gap.desktop
-  );
-
-  // Track screen width for responsive column calculation and gap
-  useEffect(() => {
-    const updateResponsiveValues = () => {
-      const width = window.innerWidth;
-      let newColumnCount: number;
-      let newGap: number;
-      
-      if (width < 768) {
-        // Mobile
-        newColumnCount = masonryConfig.columns.mobile;
-        newGap = typeof masonryConfig.gap === 'number' ? masonryConfig.gap : masonryConfig.gap.mobile;
-      } else if (width < 1024) {
-        // Tablet
-        newColumnCount = masonryConfig.columns.tablet;
-        newGap = typeof masonryConfig.gap === 'number' ? masonryConfig.gap : masonryConfig.gap.tablet;
-      } else {
-        // Desktop
-        newColumnCount = masonryConfig.columns.desktop;
-        newGap = typeof masonryConfig.gap === 'number' ? masonryConfig.gap : masonryConfig.gap.desktop;
-      }
-      
-      setCurrentColumnCount(newColumnCount);
-      setCurrentGap(newGap);
-    };
-
-    updateResponsiveValues();
-    window.addEventListener('resize', updateResponsiveValues);
-    return () => window.removeEventListener('resize', updateResponsiveValues);
-  }, [masonryConfig.columns.mobile, masonryConfig.columns.tablet, masonryConfig.columns.desktop, masonryConfig.gap]);
-
-  // Extract image URLs for dimension loading
-  const imageUrls = useMemo(() => {
-    return items.map(item => {
-      const url = getItemImageUrl(item);
-      return getImageUrl(url); // Process URL through utility function
-    });
-  }, [items, getItemImageUrl]);
-
-  // Load image dimensions
-  const {
-    dimensions,
-    loadingProgress,
-    isAllLoaded,
-    errors,
-    totalImages,
-    loadedImages,
-    retryFailedImages,
-  } = useImageDimensions(imageUrls);
-
-  // Create dimensions getter for masonry layout
-  const getDimensions = useMemo(() => {
-    return createDimensionsGetter<T>(
-      (item: T) => {
-        const url = getImageUrl(getItemImageUrl(item));
-        const dimension = dimensions.get(url);
-        if (!dimension) return null;
-        return {
-          width: dimension.width,
-          height: dimension.height,
-        };
-      },
-      (item: T) => {
-        const url = getImageUrl(getItemImageUrl(item));
-        const dimension = dimensions.get(url);
-        return dimension?.isLoaded ?? false;
-      }
-    );
-  }, [dimensions, getItemImageUrl]);
-
-  // Calculate masonry layout using absolute positioning
-  const {
-    layoutItems,
-    containerHeight,
-    isLayoutReady,
-  } = useMasonryLayout(items, {
-    columnWidth: masonryConfig.columnWidth,
-    gap: masonryConfig.gap,
-    mobileColumns: masonryConfig.columns.mobile,
-    tabletColumns: masonryConfig.columns.tablet,
-    desktopColumns: masonryConfig.columns.desktop,
-    wideImageThreshold: 16 / 9, // 1.778
-    mobileBreakpoint: 768,
-    tabletBreakpoint: 1024,
-  }, getDimensions);
-
-  // Show loading state
-  if (!isAllLoaded) {
-    return (
-      <div className={cn('w-full', className)}>
-        {loadingComponent || (
-          <>
-            <LoadingProgress 
-              progress={loadingProgress} 
-              loadedCount={loadedImages} 
-              totalCount={totalImages} 
-            />
-            <DefaultLoadingSkeleton 
-              columns={currentColumnCount} 
-              gap={currentGap} 
-            />
-          </>
-        )}
-      </div>
-    );
+  // Compare items by content, including all data changes (like vote counts)
+  const currentItemsHash = JSON.stringify(items);
+  if (currentItemsHash !== itemsHash) {
+    itemsRef.current = items;
+    setItemsHash(currentItemsHash);
   }
 
-  // Show empty state
+  const frontendDimensionsResult = useImageDimensions(
+    items.map(getItemImageUrl),
+    { batchSize: 8, timeout: 8000 }
+  );
+
+  // **FIX: Use direct access to latest dimensions**
+  const skylineGetDimensions = useMemo(() => {
+    return (item: T) => {
+      const url = getItemImageUrl(item);
+      const dimension = frontendDimensionsResult.dimensions.get(url);
+      return dimension ? { 
+        width: dimension.width, 
+        height: dimension.height,
+        isLoaded: dimension.isLoaded
+      } : null;
+    };
+  }, [getItemImageUrl, frontendDimensionsResult.dimensions]);
+
+  const skylineLayoutResult = useSkylineMasonryLayout(
+    items,
+    issueId,
+    skylineConfig,
+    skylineGetDimensions
+  );
+
+  // Determine current state based on layout mode
+  const { isLayoutReady, hasErrors, handleRetry } = useMemo(() => {
+    return {
+      isLayoutReady: skylineLayoutResult.isLayoutReady,
+      hasErrors: false, // Skyline mode has built-in fallbacks
+      handleRetry: skylineLayoutResult.forceLayout
+    };
+  }, [skylineLayoutResult]);
+
+  // Handle empty state
   if (items.length === 0) {
     return (
       <div className={cn('w-full', className)}>
-        {emptyComponent || <DefaultEmptyState />}
+        {emptyComponent || <DefaultEmptyComponent />}
       </div>
     );
   }
 
   // Show error state if there are errors
-  if (errors.length > 0) {
+  if (hasErrors) {
     return (
       <div className={cn('w-full', className)}>
-        {errorComponent ? errorComponent(errors, retryFailedImages) : <DefaultErrorComponent errors={errors} onRetry={retryFailedImages} />}
+        {errorComponent ? 
+          errorComponent(
+            ['Layout calculation failed'],
+            handleRetry
+          ) : 
+          <DefaultErrorComponent 
+            errors={['Layout calculation failed']} 
+            onRetry={handleRetry} 
+          />
+        }
       </div>
     );
   }
 
-  // Show layout when ready
+  // Show loading state
   if (!isLayoutReady) {
     return (
       <div className={cn('w-full', className)}>
-        <DefaultLoadingSkeleton 
-          columns={currentColumnCount} 
-          gap={currentGap} 
-        />
+        {loadingComponent || <DefaultLoadingSkeleton columns={currentColumnCount} gap={currentGap} />}
       </div>
     );
   }
 
-  // Render absolute positioned masonry layout
+  // Render layout
   return (
-    <div className={cn('w-full overflow-hidden', className)}>
+    <div className={cn('w-full', className)}>
       <div 
         className="relative w-full overflow-hidden"
-        style={{ height: containerHeight }}
+        style={{ height: skylineLayoutResult.containerHeight + 16 }}
       >
-        {layoutItems.map((layoutItem) => {
+        {skylineLayoutResult.layoutItems.map((layoutItem) => {
           const { data: item, x, y, width, height, isWide, aspectRatio } = layoutItem;
           
           return (

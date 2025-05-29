@@ -92,17 +92,6 @@ export function MasonrySubmissionCard({
   const displayUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   const fullImageUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
-  // Debug logging for development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('MasonrySubmissionCard:', {
-      submissionId: submission.id,
-      isWide,
-      aspectRatio: aspectRatio.toFixed(3),
-      displayContext,
-      imageUrl: displayUrl,
-    });
-  }
-
   // Determine badge visibility based on context
   const showStatusBadge = 
     displayContext === 'default' || 
@@ -123,6 +112,8 @@ export function MasonrySubmissionCard({
     'group cursor-pointer bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200 hover:border-gray-300',
     // Critical: Force width constraints to prevent text from widening the card
     'w-full min-w-0 max-w-full',
+    // Add margin bottom for shadow space on desktop/tablet
+    'mb-2 sm:mb-3',
     // Remove scaling animation, only keep shadow and border transitions
     className
   );

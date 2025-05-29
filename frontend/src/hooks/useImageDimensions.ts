@@ -145,6 +145,17 @@ export function useImageDimensions(
   
   const loadingRef = useRef<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // **FIX: Better array comparison without sorting original array**
+  const imageUrlsRef = useRef<string[]>([]);
+  const [urlsHash, setUrlsHash] = useState<string>('');
+  
+  // Compare arrays by content, not reference
+  const currentUrlsHash = JSON.stringify([...imageUrls].sort());
+  if (currentUrlsHash !== urlsHash) {
+    imageUrlsRef.current = imageUrls;
+    setUrlsHash(currentUrlsHash);
+  }
 
   /**
    * Load dimensions for a batch of images with concurrency control
@@ -213,7 +224,8 @@ export function useImageDimensions(
    * Start loading all images
    */
   const loadAllImages = useCallback(async () => {
-    if (loadingRef.current || imageUrls.length === 0) return;
+    const currentUrls = imageUrlsRef.current;
+    if (loadingRef.current || currentUrls.length === 0) return;
     
     loadingRef.current = true;
     abortControllerRef.current = new AbortController();
@@ -226,7 +238,7 @@ export function useImageDimensions(
       setLoadingProgress(0);
       
       // Filter out empty URLs
-      const validUrls = imageUrls.filter(url => url && url.trim() !== '');
+      const validUrls = currentUrls.filter(url => url && url.trim() !== '');
       
       if (validUrls.length === 0) {
         setLoadingProgress(100);
@@ -241,7 +253,7 @@ export function useImageDimensions(
       loadingRef.current = false;
       abortControllerRef.current = null;
     }
-  }, [imageUrls, loadBatch, mergedConfig.cacheDuration]);
+  }, [loadBatch, mergedConfig.cacheDuration]);
 
   /**
    * Retry failed images
@@ -270,7 +282,7 @@ export function useImageDimensions(
     }
   }, [dimensions, loadAllImages]);
 
-  // Start loading when URLs change
+  // **FIX: Use responsive state instead of ref**
   useEffect(() => {
     loadAllImages();
     
@@ -281,10 +293,11 @@ export function useImageDimensions(
       }
       loadingRef.current = false;
     };
-  }, [loadAllImages, retryCount]);
+  }, [loadAllImages, retryCount, urlsHash]); // Use state instead of ref
 
-  // Calculate derived state
-  const totalImages = imageUrls.length;
+  // Calculate derived state using the current URLs
+  const currentUrls = imageUrlsRef.current;
+  const totalImages = currentUrls.length;
   const loadedImages = Array.from(dimensions.values()).filter(dim => dim.isLoaded).length;
   const isAllLoaded = totalImages > 0 && loadedImages === totalImages;
   const currentErrors = Array.from(dimensions.values())

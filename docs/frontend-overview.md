@@ -12,7 +12,7 @@ This document serves as the entry point to the frontend development documentatio
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
-- [**Masonry Layout System**](./masonry-layout-system.md) - Advanced JavaScript-based layout system with dynamic positioning
+- [**Masonry Layout System**](./masonry-layout-system.md) - Hybrid masonry layout combining backend optimization with frontend responsive positioning
 - [**Development Guide**](./dev-guide.md) - Frontend development processes and best practices
 
 ### Security & Authentication

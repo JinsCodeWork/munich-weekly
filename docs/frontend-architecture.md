@@ -105,7 +105,7 @@ frontend/
 │   │   ├── useFileUpload.ts # File upload hook
 │   │   ├── useImageDimensions.ts # Batch image dimension loading hook
 │   │   ├── useIssues.ts    # Issues data hook
-│   │   ├── useMasonryLayout.ts # Masonry layout calculation hook
+│   │   ├── useSkylineMasonryLayout.ts # Frontend positioning hook for hybrid masonry system
 │   │   └── useSubmissions.ts # Submissions data hook
 │   ├── lib/                # Utility functions and constants
 │   │   ├── constants.ts    # Application constants
@@ -204,7 +204,7 @@ The application includes a comprehensive set of custom React hooks for managing 
 - **useAuth**: Authentication state management with login/logout functionality
 - **useFileUpload**: File upload handling with validation and progress tracking
 - **useImageDimensions**: Batch image dimension loading with caching (24-hour persistence)
-- **useMasonryLayout**: Advanced layout calculation for masonry grids with responsive column management
+- **useSkylineMasonryLayout**: Frontend positioning for backend-ordered items with responsive column management
 - **useIssues**: Issues data fetching and state management
 - **useSubmissions**: Submissions data management with pagination support
 - **useDebugTools**: Development tools for debugging and testing (development mode only)
@@ -235,17 +235,17 @@ export const CONTAINER_CONFIG = {
 
 #### Responsive Masonry System
 
-**Multi-Configuration Approach**: Different page contexts use optimized masonry configurations for their specific needs:
+**Hybrid Architecture**: Combines backend optimization with frontend responsive positioning:
 
-- **Vote Pages**: Large image display with responsive column widths (170px → 320px) and variable gaps (8px → 20px)
-- **Account Pages**: Compact grid layout optimized for content density with smaller gaps (8px → 16px)  
-- **Gallery Views**: Balanced presentation with intelligent column distribution (2-4 columns based on device capabilities)
+- **Backend Ordering**: Server calculates optimal item sequences for 2-column and 4-column layouts
+- **Frontend Positioning**: Skyline algorithm handles responsive coordinate calculation and viewport adaptation
+- **Performance Benefits**: Quality guarantee from backend + Speed guarantee from frontend
 
-**Algorithm Features**:
-- Greedy Best-Fit positioning algorithm for optimal space utilization
-- Responsive gap and column width calculations
-- Three-breakpoint system (mobile/tablet/desktop) for precise control
-- Dynamic content height calculation including text and metadata areas
+**Key Features**:
+- Dynamic column width calculations with responsive gaps
+- Automatic wide image detection and spanning (≥16:9 aspect ratio)  
+- Progressive loading with skeleton screens during layout calculation
+- Real-time responsive adaptation without backend re-requests
 
 #### Account Layout Optimization
 
@@ -542,6 +542,6 @@ Enhanced public voting interface with optimized user experience:
 - **Symmetric Margins**: Professional spacing with guaranteed left-right balance
 
 **Technical Enhancements:**
-- **Smart Masonry**: `wideStreak` limiting ensures fair wide/narrow image alternation
+- **Hybrid Layout**: Backend ordering with frontend Skyline positioning for optimal display
 - **Container Optimization**: `vote` variant with progressive spacing (px-2 → lg:px-6)
 - **Dynamic Sizing**: Real-time column width calculation based on container dimensions
