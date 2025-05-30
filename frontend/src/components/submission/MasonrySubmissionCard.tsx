@@ -71,8 +71,6 @@ export function MasonrySubmissionCard({
   showWideIndicator = false
 }: MasonrySubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  // Track actual image aspect ratio for optimal display
-  const [actualAspectRatio, setActualAspectRatio] = useState<number | null>(null);
 
   const handleOpenViewer = () => {
     if (hasValidImage) {
@@ -82,11 +80,6 @@ export function MasonrySubmissionCard({
 
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
-  };
-
-  // Handle image load to get accurate aspect ratio
-  const handleImageLoad = (width: number, height: number, imageAspectRatio: number) => {
-    setActualAspectRatio(imageAspectRatio);
   };
 
   // Process the image URL to ensure it has the correct server prefix
@@ -203,14 +196,7 @@ export function MasonrySubmissionCard({
             // Unified image container styles for both wide and regular images
             "w-full"
           )}
-          style={
-            // Smart aspect ratio selection: 
-            // 1. For detected portrait images, use actual ratio for better display
-            // 2. For other cases, use passed aspectRatio to match layout calculations
-            actualAspectRatio && actualAspectRatio < 1 
-              ? getAspectRatioStyle(actualAspectRatio) // Use actual ratio for portrait images
-              : getAspectRatioStyle(aspectRatio) // Use layout-calculated ratio for others
-          }
+          style={getAspectRatioStyle(aspectRatio)}
         >
           <Thumbnail
             src={displayUrl || '/placeholder.svg'}
@@ -219,7 +205,10 @@ export function MasonrySubmissionCard({
             aspectRatio="auto" // Let Thumbnail handle aspect ratio detection
             autoDetectAspectRatio={true} // Enable aspect ratio detection
             preserveAspectRatio={true} // Preserve image aspect ratio
-            // Remove hardcoded objectFit logic, let Thumbnail decide intelligently
+            objectFit={aspectRatio >= 1 ? "cover" : "contain"} // 横向图片用cover，竖向图片用contain
+            objectPosition={
+              aspectRatio >= 1 ? "top" : "center" // 横向图片向上对齐，竖向图片居中
+            }
             sizes={isWide 
               ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
               : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
@@ -230,7 +219,6 @@ export function MasonrySubmissionCard({
             fallbackSrc="/placeholder.svg"
             quality={isWide ? 90 : 85}
             className="" // Remove transform animations for better performance
-            onImageLoad={handleImageLoad} // Track actual image dimensions
           />
           
           {/* Status badge - conditional rendering */}
