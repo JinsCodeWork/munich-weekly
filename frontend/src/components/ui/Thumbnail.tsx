@@ -214,8 +214,9 @@ export function Thumbnail({
           return 'cover';
           
         case 'tallportrait': // 9:16 竖图
-          // 很长的竖图更需要裁切来适应卡片布局
-          return 'cover';
+          // 超长竖图(如3648x5472)应该优先显示完整内容，避免过度裁切
+          // 使用contain确保图片不会被裁切
+          return 'contain';
           
         default:
           // 对于其他比例，使用通用智能逻辑，偏向于显示完整图片
@@ -398,7 +399,9 @@ export function Thumbnail({
       safeObjectPosition,
       isMobile,
       preserveAspectRatio,
-      imageSrc: imageSrc.substring(0, 80) + '...'
+      imageSrc: imageSrc.substring(0, 80) + '...',
+      // 特别标记3648x5472的处理
+      isTargetDimension: src.includes('3648') || src.includes('5472')
     });
   }
     

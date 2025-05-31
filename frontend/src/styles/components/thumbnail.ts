@@ -61,12 +61,13 @@ export function detectAspectRatio(width: number, height: number): keyof typeof a
   // 定义容差范围 - 为16:9使用更宽松但仍然精确的容差
   const moderateTolerance = 0.08; // 16:9的适中容差 (允许更多接近16:9的图片)
   const normalTolerance = 0.1;    // 其他比例的正常容差
+  const tightTolerance = 0.06;    // 为portrait/tallportrait使用更严格的容差
   
   if (Math.abs(ratio - 1) < normalTolerance) return 'square'; // 1:1
   if (Math.abs(ratio - 16/9) < moderateTolerance) return 'widescreen'; // 16:9 (适中)
   if (Math.abs(ratio - 9/16) < normalTolerance) return 'tallportrait'; // 9:16
   if (Math.abs(ratio - 4/3) < normalTolerance) return 'landscape'; // 4:3
-  if (Math.abs(ratio - 3/4) < normalTolerance) return 'portrait'; // 3:4
+  if (Math.abs(ratio - 3/4) < tightTolerance) return 'portrait'; // 3:4 (使用更严格的容差)
   if (Math.abs(ratio - 21/9) < normalTolerance) return 'ultrawide'; // 21:9
   if (Math.abs(ratio - 5/4) < normalTolerance) return 'classic'; // 5:4
   if (Math.abs(ratio - 2.35) < normalTolerance) return 'cinema'; // 电影比例
@@ -76,8 +77,13 @@ export function detectAspectRatio(width: number, height: number): keyof typeof a
   if (ratio > 1.6) return 'landscape'; // 较宽的横向图片归为landscape而不是widescreen
   if (ratio > 1.1) return 'landscape'; // 稍微横向
   if (ratio > 0.9) return 'square'; // 接近正方形
-  if (ratio > 0.6) return 'portrait'; // 稍微竖向
-  return 'tallportrait'; // 很竖
+  
+  // 优化竖图检测：为portrait和tallportrait提供更精确的边界
+  // 3:4 = 0.75, 9:16 = 0.5625
+  // 3648/5472 ≈ 0.667 应该被分类为tallportrait
+  if (ratio > 0.69) return 'portrait'; // 0.69-0.9 为portrait范围（比3:4稍宽的竖图）
+  
+  return 'tallportrait'; // 0.69以下的所有竖图都归为tallportrait
 }
 
 /**

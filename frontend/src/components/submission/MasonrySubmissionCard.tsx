@@ -205,10 +205,8 @@ export function MasonrySubmissionCard({
             aspectRatio="auto" // Let Thumbnail handle aspect ratio detection
             autoDetectAspectRatio={true} // Enable aspect ratio detection
             preserveAspectRatio={true} // Preserve image aspect ratio
-            objectFit={aspectRatio >= 1 ? "cover" : "contain"} // 横向图片用cover，竖向图片用contain
-            objectPosition={
-              aspectRatio >= 1 ? "top" : "center" // 横向图片向上对齐，竖向图片居中
-            }
+            // 让Thumbnail组件自己决定最佳的objectFit和objectPosition，不强制覆盖
+            // objectPosition={aspectRatio >= 1 ? "top" : "center"} // 横向图片向上对齐，竖向图片居中
             sizes={isWide 
               ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
               : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
