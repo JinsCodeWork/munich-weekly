@@ -92,6 +92,17 @@ export function MasonrySubmissionCard({
   const displayUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   const fullImageUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
+  // 调试信息：特别标记3648x5472的处理
+  if (imageUrl && (imageUrl.includes('3648') || imageUrl.includes('5472'))) {
+    console.log('MasonrySubmissionCard - 3648x5472 图片处理:', {
+      aspectRatio: aspectRatio.toFixed(3),
+      isWide,
+      imageUrl: imageUrl.substring(0, 50) + '...',
+      willUseCover: true,
+      willUseTopPosition: true
+    });
+  }
+  
   // Determine badge visibility based on context
   const showStatusBadge = 
     displayContext === 'default' || 
@@ -205,8 +216,10 @@ export function MasonrySubmissionCard({
             aspectRatio="auto" // Let Thumbnail handle aspect ratio detection
             autoDetectAspectRatio={true} // Enable aspect ratio detection
             preserveAspectRatio={true} // Preserve image aspect ratio
-            // 让Thumbnail组件自己决定最佳的objectFit和objectPosition，不强制覆盖
-            // objectPosition={aspectRatio >= 1 ? "top" : "center"} // 横向图片向上对齐，竖向图片居中
+            // 智能选择objectFit：对于瀑布流布局，优先避免灰色背景
+            objectFit={aspectRatio >= 1 ? "cover" : "cover"} // 统一使用cover避免灰色背景
+            // 竖图使用top定位，优先显示上半部分内容
+            objectPosition={aspectRatio >= 1 ? "top" : "top"}
             sizes={isWide 
               ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
               : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"

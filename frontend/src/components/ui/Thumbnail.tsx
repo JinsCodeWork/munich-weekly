@@ -214,8 +214,16 @@ export function Thumbnail({
           return 'cover';
           
         case 'tallportrait': // 9:16 竖图
-          // 超长竖图(如3648x5472)应该优先显示完整内容，避免过度裁切
-          // 使用contain确保图片不会被裁切
+          // 对于超长竖图(如3648x5472)，如果容器比例和图片比例匹配，使用cover填充
+          // 如果比例不匹配，使用contain显示完整图片
+          if (containerAspectRatio && imageAspectRatio) {
+            const ratioDifference = Math.abs(containerAspectRatio - imageAspectRatio) / Math.max(containerAspectRatio, imageAspectRatio);
+            // 如果比例差异很小（< 5%），使用cover填充以避免灰色背景
+            if (ratioDifference < 0.05) {
+              return 'cover';
+            }
+          }
+          // 比例差异较大时才使用contain
           return 'contain';
           
         default:
