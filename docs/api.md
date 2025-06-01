@@ -85,7 +85,7 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
   > **Params**: `Long id`
 - **PATCH** `/api/submissions/{id}/select`
-  > Select a submission as featured. Admin only.
+  > Select a submission as featured. Admin only. Multiple submissions can be selected for the same issue.
 
   > **Params**: `Long id`
 - **DELETE** `/api/submissions/{id}`

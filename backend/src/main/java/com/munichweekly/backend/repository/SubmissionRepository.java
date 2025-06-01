@@ -4,6 +4,7 @@ import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.model.Issue;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     // 查询某期所有通过审核的投稿（用于投票展示）
     List<Submission> findByIssueAndStatus(Issue issue, String status);
+    
+    // 查询某期所有通过审核和精选的投稿（包含approved和selected状态）
+    @Query("SELECT s FROM Submission s WHERE s.issue = :issue AND (s.status = 'approved' OR s.status = 'selected')")
+    List<Submission> findByIssueAndApprovedOrSelected(Issue issue);
 
     // 查询某期的封面作品
     Optional<Submission> findByIssueAndIsCoverTrue(Issue issue);

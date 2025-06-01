@@ -78,8 +78,8 @@ public class SubmissionService {
         Issue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
 
-        // 2. 查询所有"审核通过"的投稿
-        List<Submission> submissions = submissionRepository.findByIssueAndStatus(issue, "approved");
+        // 2. 查询所有"审核通过"和"精选"的投稿（包含approved和selected状态）
+        List<Submission> submissions = submissionRepository.findByIssueAndApprovedOrSelected(issue);
 
         // 3. 查询投票统计（返回 List<Object[]>: [submissionId, voteCount]）
         List<Object[]> voteCounts = voteRepository.countVotesByIssue(issueId);
@@ -121,23 +121,14 @@ public class SubmissionService {
     /**
      * Select a submission as featured and set its status to "selected"
      * This will also update the reviewed time
+     * Multiple submissions can be selected for the same issue
      */
     @Transactional
     public Submission selectSubmission(Long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
         
-        // First, reset any previously selected submission for this issue
-        Issue issue = submission.getIssue();
-        List<Submission> selectedSubmissions = submissionRepository.findByIssueAndStatus(issue, "selected");
-        for (Submission selected : selectedSubmissions) {
-            if (!selected.getId().equals(submissionId)) {
-                selected.setStatus("approved");
-                submissionRepository.save(selected);
-            }
-        }
-        
-        // Then set this submission as selected
+        // Set this submission as selected
         submission.setStatus("selected");
         submission.setReviewedAt(LocalDateTime.now());
         return submissionRepository.save(submission);
