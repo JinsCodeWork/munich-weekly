@@ -88,6 +88,20 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
   > Select a submission as featured. Admin only. Multiple submissions can be selected for the same issue.
 
   > **Params**: `Long id`
+- **GET** `/api/submissions/download-selected/{issueId}`
+  > Download all selected submissions for an issue as a ZIP file. Admin only. 
+  > 
+  > Downloads original uncompressed images directly from storage (bypassing CDN optimization).
+  > Files are renamed for better organization: `001_UserNickname_SubmissionId.jpg`
+  > Includes a summary text file with submission details.
+
+  > **Params**: `Long issueId`
+  
+  > **Response**: ZIP file download with filename format: `{IssueTitle}_selected_submissions.zip`
+  
+  > **Errors**: 
+  > - `404`: Issue not found
+  > - `204`: No selected submissions found for this issue
 - **DELETE** `/api/submissions/{id}`
   > Delete a submission by ID. User can only delete their own submissions.
 

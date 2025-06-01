@@ -125,4 +125,62 @@ If updates don't appear immediately:
 
 - For a full overview of the home page design, see [Frontend Overview](./frontend-overview.md)
 - For image optimization system, see [Image CDN System](./image-cdn.md)
-- For frontend architecture details, see [Frontend Architecture](./frontend-architecture.md) 
+- For frontend architecture details, see [Frontend Architecture](./frontend-architecture.md)
+
+## Submission Management
+
+### Managing Submissions Status
+
+When reviewing submissions, you have three action options:
+
+- **Approve**: Mark the submission as approved for public viewing
+- **Reject**: Mark the submission as rejected 
+- **Select**: Mark the submission as selected/featured for the issue
+
+#### Multiple Selection Support
+
+As of the latest update, **multiple submissions can be selected for the same issue**. This allows:
+
+- Selecting multiple high-quality submissions as featured content
+- Creating curated collections for each issue
+- More flexible content management for different presentation needs
+
+### Downloading Selected Submissions
+
+For content management and backup purposes, you can download all selected submissions for an issue:
+
+1. Navigate to "Account" → "Manage Submissions"
+2. Select the desired issue from the dropdown
+3. Ensure some submissions are marked as "Selected"
+4. Click the **"Download Selected Submissions"** button
+
+#### Download Features
+
+- **Original Quality**: Downloads original uncompressed images directly from storage (bypassing CDN optimization)
+- **Organized Naming**: Files are automatically renamed with format: `001_UserNickname_SubmissionID.jpg`
+- **Summary Report**: Includes a `_SUMMARY.txt` file with submission details and download statistics
+- **ZIP Format**: All files are packaged in a ZIP file named `{IssueTitle}_selected_submissions.zip`
+
+#### Download Process
+
+The download process:
+1. Validates admin permissions
+2. Retrieves all selected submissions for the issue
+3. Downloads original images from storage (R2/local)
+4. Packages everything into a organized ZIP file
+5. Automatically starts the download in your browser
+
+#### Troubleshooting Downloads
+
+If downloads fail:
+- Ensure you have admin permissions
+- Check that the issue has selected submissions
+- Verify storage connectivity (check server logs)
+- Try refreshing the page and attempting again
+
+### Technical Notes
+
+- The system supports both local storage and Cloudflare R2 storage
+- Original image quality is preserved by bypassing CDN optimization
+- Download functionality requires admin authentication
+- Large downloads may take time depending on the number and size of selected images 

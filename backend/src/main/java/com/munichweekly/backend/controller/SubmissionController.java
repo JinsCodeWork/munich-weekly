@@ -8,10 +8,16 @@ import com.munichweekly.backend.dto.SubmissionResponseDTO;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.SubmissionService;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -130,5 +136,34 @@ public class SubmissionController {
     public ResponseEntity<?> deleteSubmission(@PathVariable Long id) {
         submissionService.deleteSubmission(id);
         return ResponseEntity.ok().body(Map.of("message", "Submission deleted successfully"));
+    }
+
+    /**
+     * Download all selected submissions for an issue as a ZIP file
+     * Admin only functionality
+     */
+    @Description("Download all selected submissions for an issue as ZIP. Admin only.")
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/download-selected/{issueId}")
+    public ResponseEntity<Resource> downloadSelectedSubmissions(@PathVariable Long issueId) {
+        try {
+            Path zipPath = submissionService.downloadSelectedSubmissionsAsZip(issueId);
+            
+            FileSystemResource resource = new FileSystemResource(zipPath);
+            
+            String filename = zipPath.getFileName().toString();
+            
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .body(resource);
+                    
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.noContent().build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

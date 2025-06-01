@@ -20,6 +20,7 @@ export function useSubmissions(useMockData: boolean = false, initialIssueId?: nu
   // State for tracking submission actions
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [viewingSubmission, setViewingSubmission] = useState<AdminSubmissionResponse | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Mock data generator function
   const MOCK_SUBMISSIONS = (): AdminSubmissionResponse[] => {
@@ -130,6 +131,28 @@ export function useSubmissions(useMockData: boolean = false, initialIssueId?: nu
     }
   };
 
+  /**
+   * Handle downloading selected submissions as ZIP
+   */
+  const handleDownloadSelected = async () => {
+    if (!selectedIssue) {
+      alert("Please select an issue first");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      await submissionsApi.downloadSelectedSubmissions(selectedIssue);
+      // Success - the download should have started automatically
+    } catch (err: unknown) {
+      console.error("Failed to download selected submissions:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to download selected submissions. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   // Function to retry loading submissions
   const retryLoadSubmissions = () => {
     if (selectedIssue) {
@@ -151,6 +174,8 @@ export function useSubmissions(useMockData: boolean = false, initialIssueId?: nu
     viewingSubmission,
     setViewingSubmission,
     handleSubmissionAction,
+    handleDownloadSelected,
+    isDownloading,
     retryLoadSubmissions
   };
 } 

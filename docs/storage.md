@@ -441,4 +441,90 @@ To migrate existing images from local storage to R2:
    - Upload to R2 using the same relative path
    - Update the database record with the new URL
 
-Note: A migration utility tool is planned for future releases. 
+Note: A migration utility tool is planned for future releases.
+
+---
+
+## FileDownloadService
+
+The platform includes a specialized `FileDownloadService` for downloading original image files directly from storage, bypassing CDN optimization to ensure uncompressed quality.
+
+### Purpose
+
+The service is used primarily for administrative functions:
+- Downloading selected submissions as ZIP archives
+- Ensuring original image quality (bypassing CDN compression)
+- Organizing files with meaningful names for content management
+
+### Key Features
+
+1. **Storage-Agnostic Design** - Works with both R2 and local storage
+2. **Original Quality** - Bypasses CDN to access uncompressed images
+3. **Intelligent Naming** - Renames files for better organization: `001_UserNickname_SubmissionID.jpg`
+4. **Summary Generation** - Creates detailed reports of download operations
+
+### Implementation
+
+The service automatically detects the storage backend and uses the appropriate method:
+
+```java
+@Service
+public class FileDownloadService {
+    @Autowired
+    private StorageService storageService;
+    
+    @Autowired(required = false)
+    private R2StorageService r2StorageService;
+    
+    // Downloads original images directly from storage
+    private byte[] readOriginalFromStorage(String objectPath) throws IOException {
+        // Try R2 storage first if available
+        if (r2StorageService != null) {
+            byte[] r2Data = r2StorageService.getObjectBytes(constructR2Url(objectPath));
+            if (r2Data != null) {
+                return r2Data;
+            }
+        }
+        
+        // Fallback to local storage
+        return readLocalFile(cleanPath);
+    }
+}
+```
+
+### URL Processing
+
+The service handles various URL formats:
+- **CDN URLs**: `https://img.munichweekly.art/uploads/issues/1/submissions/file.jpg`
+- **R2 URLs**: `https://pub-123.r2.dev/uploads/issues/1/submissions/file.jpg`
+- **Relative paths**: `/uploads/issues/1/submissions/file.jpg`
+
+It automatically extracts the object path and reads from the appropriate storage backend.
+
+### ZIP Archive Creation
+
+When creating ZIP archives, the service:
+
+1. **Validates permissions** - Ensures admin authentication
+2. **Retrieves original files** - Downloads from storage (not CDN)
+3. **Organizes content** - Renames files with sequential numbering
+4. **Generates summary** - Creates detailed report of included files
+5. **Packages everything** - Creates a single ZIP file for download
+
+### Error Handling
+
+The service provides comprehensive error handling:
+- Missing files in storage
+- Network connectivity issues
+- Permission errors
+- Storage service unavailability
+
+Failed downloads are logged and reported in the summary file, ensuring transparency about what was successfully archived.
+
+### Usage
+
+The service is primarily used through the admin interface:
+- Navigate to "Account" → "Manage Submissions"
+- Select an issue with submissions marked as "Selected"
+- Click "Download Selected Submissions"
+- ZIP file downloads automatically with original quality images 

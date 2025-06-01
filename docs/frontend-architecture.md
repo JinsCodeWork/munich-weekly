@@ -206,7 +206,7 @@ The application includes a comprehensive set of custom React hooks for managing 
 - **useImageDimensions**: Batch image dimension loading with caching (24-hour persistence)
 - **useSkylineMasonryLayout**: Frontend positioning for backend-ordered items with responsive column management
 - **useIssues**: Issues data fetching and state management
-- **useSubmissions**: Submissions data management with pagination support
+- **useSubmissions**: Submissions data management with pagination support, multi-selection handling, and admin download functionality
 - **useDebugTools**: Development tools for debugging and testing (development mode only)
 
 ### Responsive Layout Architecture

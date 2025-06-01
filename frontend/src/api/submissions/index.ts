@@ -141,4 +141,55 @@ export const deleteSubmission = async (submissionId: number): Promise<void> => {
     method: "DELETE",
     headers: getAuthHeader()
   });
+};
+
+/**
+ * Download selected submissions for an issue as ZIP file (Admin only)
+ * GET /api/submissions/download-selected/{issueId}
+ */
+export const downloadSelectedSubmissions = async (issueId: number): Promise<void> => {
+  try {
+    const response = await fetch(`/api/submissions/download-selected/${issueId}`, {
+      method: "GET",
+      headers: getAuthHeader()
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Issue not found");
+      } else if (response.status === 204) {
+        throw new Error("No selected submissions found for this issue");
+      } else {
+        throw new Error("Failed to download selected submissions");
+      }
+    }
+
+    // Get filename from response headers
+    const contentDisposition = response.headers.get('content-disposition');
+    let filename = 'selected_submissions.zip';
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    // Download the file
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    
+  } catch (error) {
+    console.error("Download error:", error);
+    throw error;
+  }
 }; 

@@ -10,6 +10,8 @@ import com.munichweekly.backend.security.CurrentUserUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -26,18 +28,21 @@ public class SubmissionService {
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
     private final StorageService storageService;
+    private final FileDownloadService fileDownloadService;
     private static final int MAX_SUBMISSIONS_PER_ISSUE = 4;
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              IssueRepository issueRepository,
                              UserRepository userRepository,
                              VoteRepository voteRepository,
-                             StorageService storageService) {
+                             StorageService storageService,
+                             FileDownloadService fileDownloadService) {
         this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
         this.voteRepository = voteRepository;
         this.storageService = storageService;
+        this.fileDownloadService = fileDownloadService;
     }
 
     public Submission submit(Long userId, SubmissionRequestDTO dto) {
@@ -228,6 +233,28 @@ public class SubmissionService {
         } else {
             logger.warning("No image URL found for submission " + submissionId);
         }
+    }
+
+    /**
+     * Download all selected submissions for an issue as a ZIP file
+     * Admin only functionality
+     */
+    public Path downloadSelectedSubmissionsAsZip(Long issueId) throws IOException {
+        // 1. Find the issue
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+        
+        // 2. Get all selected submissions for this issue
+        List<Submission> selectedSubmissions = submissionRepository.findByIssueAndStatus(issue, "selected");
+        
+        if (selectedSubmissions.isEmpty()) {
+            throw new IllegalStateException("No selected submissions found for this issue");
+        }
+        
+        // 3. Create ZIP file using FileDownloadService
+        logger.info("Creating ZIP for " + selectedSubmissions.size() + " selected submissions from issue: " + issue.getTitle());
+        
+        return fileDownloadService.createZipFromSubmissions(selectedSubmissions, issue.getTitle());
     }
 
     public SubmissionRepository getSubmissionRepository() {
