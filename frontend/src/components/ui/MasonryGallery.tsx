@@ -148,15 +148,46 @@ export function MasonryGallery<T = unknown>({
     setItemsHash(currentItemsHash);
   }
 
+  // **MOBILE DEBUG**: Add comprehensive logging for troubleshooting
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const batchSize = isMobile ? 4 : 6;
+  const timeout = isMobile ? 8000 : 6000;
+  const progressiveThreshold = Math.min(4, Math.ceil(items.length * 0.3));
+
+  console.log(`📱 MasonryGallery: Starting with ${items.length} items`, {
+    isMobile,
+    batchSize,
+    timeout,
+    progressiveThreshold,
+    issueId
+  });
+
   const frontendDimensionsResult = useImageDimensions(
     items.map(getItemImageUrl),
     { 
-      batchSize: typeof window !== 'undefined' && window.innerWidth < 768 ? 4 : 6, // Smaller batch for mobile
-      timeout: typeof window !== 'undefined' && window.innerWidth < 768 ? 8000 : 6000, // Longer timeout for mobile
-      progressiveThreshold: Math.min(4, Math.ceil(items.length * 0.3)), // Show faster on mobile (30% or 4 items)
+      batchSize,
+      timeout,
+      progressiveThreshold,
       enableProgressiveLoading: true,
     }
   );
+
+  // **MOBILE DEBUG**: Log dimensions loading progress
+  useEffect(() => {
+    const { isProgressiveReady, isAllLoaded, progressiveLoadedCount, totalImages, errors } = frontendDimensionsResult;
+    console.log(`📊 Dimensions progress:`, {
+      isProgressiveReady,
+      isAllLoaded,
+      progressiveLoadedCount,
+      totalImages,
+      errorCount: errors.length,
+      isMobile
+    });
+    
+    if (errors.length > 0) {
+      console.warn(`⚠️ Image loading errors:`, errors.slice(0, 3)); // Show first 3 errors
+    }
+  }, [frontendDimensionsResult.isProgressiveReady, frontendDimensionsResult.isAllLoaded, frontendDimensionsResult.progressiveLoadedCount, frontendDimensionsResult.errors.length, isMobile]);
 
   // **FIX: Use direct access to latest dimensions**
   const skylineGetDimensions = useMemo(() => {
@@ -191,6 +222,39 @@ export function MasonryGallery<T = unknown>({
       handleRetry: skylineLayoutResult.forceLayout
     };
   }, [skylineLayoutResult, frontendDimensionsResult]);
+
+  // **MOBILE FALLBACK**: Force display after timeout to prevent infinite loading
+  const [forceDisplay, setForceDisplay] = useState(false);
+  
+  useEffect(() => {
+    if (items.length > 0 && !isProgressiveReady && !isLayoutReady) {
+      const timeoutId = setTimeout(() => {
+        console.log(`⏰ Mobile timeout: Force displaying layout after 10 seconds`);
+        setForceDisplay(true);
+      }, 10000); // 10 second timeout for mobile
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [items.length, isProgressiveReady, isLayoutReady]);
+
+  // Reset force display when we get proper layout
+  useEffect(() => {
+    if (isProgressiveReady || isLayoutReady) {
+      setForceDisplay(false);
+    }
+  }, [isProgressiveReady, isLayoutReady]);
+
+  // **MOBILE DEBUG**: Log layout states
+  useEffect(() => {
+    console.log(`🏗️ Layout states:`, {
+      isLayoutReady,
+      isProgressiveReady,
+      forceDisplay,
+      hasBackendOrdering: skylineLayoutResult.orderingSource !== 'fallback',
+      layoutItemsCount: skylineLayoutResult.layoutItems.length,
+      containerHeight: skylineLayoutResult.containerHeight
+    });
+  }, [isLayoutReady, isProgressiveReady, forceDisplay, skylineLayoutResult]);
 
   // Performance tracking for progressive loading
   useEffect(() => {
@@ -230,8 +294,8 @@ export function MasonryGallery<T = unknown>({
     );
   }
 
-  // Show loading state only if we don't have progressive content ready
-  if (!isProgressiveReady && !isLayoutReady) {
+  // Show loading state only if we don't have progressive content ready AND haven't hit timeout
+  if (!isProgressiveReady && !isLayoutReady && !forceDisplay) {
     return (
       <div className={cn('w-full', className)}>
         {loadingComponent || <DefaultLoadingSkeleton columns={currentColumnCount} gap={currentGap} />}
@@ -239,7 +303,7 @@ export function MasonryGallery<T = unknown>({
     );
   }
 
-  // Render progressive or complete layout
+  // Render progressive or complete layout (or forced display after timeout)
   return (
     <div className={cn('w-full', className)}>
       <div 
@@ -255,7 +319,7 @@ export function MasonryGallery<T = unknown>({
               className={cn(
                 "absolute overflow-hidden transition-opacity duration-300",
                 // Progressive loading effect: show loading state for unloaded images
-                !isLoaded && !isLayoutReady ? "opacity-75" : "opacity-100"
+                !isLoaded && !isLayoutReady && !forceDisplay ? "opacity-75" : "opacity-100"
               )}
               style={{
                 left: x,
@@ -266,18 +330,27 @@ export function MasonryGallery<T = unknown>({
               }}
               onClick={() => onItemClick?.(item)}
             >
-              {renderItem(item, isWide, aspectRatio, isLoaded)}
+              {renderItem(item, isWide, aspectRatio, isLoaded || forceDisplay)}
             </div>
           );
         })}
         
         {/* Progress indicator for progressive loading */}
-        {isProgressiveReady && !isLayoutReady && (
+        {(isProgressiveReady || forceDisplay) && !isLayoutReady && (
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-gray-600 to-gray-800 h-1 opacity-75">
             <div 
               className="h-full bg-white transition-all duration-300"
               style={{ width: `${skylineLayoutResult.loadingProgress}%` }}
             />
+          </div>
+        )}
+        
+        {/* Mobile timeout indicator */}
+        {forceDisplay && !isLayoutReady && (
+          <div className="absolute top-2 left-0 right-0 text-center">
+            <div className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+              Images loading in background...
+            </div>
           </div>
         )}
       </div>
