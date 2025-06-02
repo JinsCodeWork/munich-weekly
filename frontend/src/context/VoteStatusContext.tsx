@@ -128,6 +128,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
    * Batch check vote status for multiple submissions
    * This is the main performance optimization - replaces N individual API calls with 1 batch call
    * Optimized to prevent multiple simultaneous calls and reduce flickering
+   * **MOBILE OPTIMIZATION**: Enhanced for slower mobile networks
    */
   const batchCheckVoteStatus = useCallback(async (submissionIds: number[]) => {
     if (submissionIds.length === 0) return;
@@ -161,11 +162,18 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       // Check if this is the first check (for global loading state)
       isFirstCheck = prev.size === 0;
       
-      // Set loading state for uncached submissions
+      // **MOBILE OPTIMIZATION**: Set loading state only for first batch to reduce re-renders
       const newMap = new Map(prev);
-      uncachedIds.forEach(id => {
-        newMap.set(id, { hasVoted: null, isLoading: true });
-      });
+      if (isFirstCheck) {
+        uncachedIds.forEach(id => {
+          newMap.set(id, { hasVoted: null, isLoading: true });
+        });
+      } else {
+        // For subsequent checks, don't show loading to avoid UI flicker
+        uncachedIds.forEach(id => {
+          newMap.set(id, { hasVoted: null, isLoading: false });
+        });
+      }
       return newMap;
     });
     
@@ -175,7 +183,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       return;
     }
     
-    // Only set global loading if this is the first batch check
+    // Only set global loading for initial load to avoid blocking progressive rendering
     if (isFirstCheck) {
       setIsInitialLoading(true);
     }

@@ -62,15 +62,19 @@ function VotePageContent() {
       const fetchedSubmissions = await getSubmissionsByIssue(issueId);
       setSubmissions(fetchedSubmissions);
       
-      // **PERFORMANCE OPTIMIZATION**: Batch check vote status for all submissions
-      // This replaces N individual API calls with 1 batch call
+      // **MOBILE OPTIMIZATION**: Start vote status check immediately but don't block rendering
+      // This allows progressive image loading to work independently
       if (fetchedSubmissions.length > 0) {
         const submissionIds = fetchedSubmissions.map(sub => sub.id);
-        console.log(`🔍 VotePage: Initiating batch vote status check for ${submissionIds.length} submissions`);
-        // Don't await here to prevent blocking submission display
-        batchCheckVoteStatus(submissionIds).catch(error => {
-          console.error('Batch vote status check failed:', error);
-        });
+        console.log(`🔍 VotePage: Starting non-blocking batch vote status check for ${submissionIds.length} submissions`);
+        
+        // Use setTimeout to ensure submissions render first, then check vote status
+        setTimeout(() => {
+          batchCheckVoteStatus(submissionIds).catch(error => {
+            console.error('Background vote status check failed:', error);
+            // Don't show error to user - vote status is optional for viewing
+          });
+        }, 100); // Small delay to let submissions render first
       }
     } catch (err) {
       console.error('Error loading submissions:', err);
@@ -138,7 +142,10 @@ function VotePageContent() {
 
   // Determine overall loading state - prevent flickering by being more specific
   const isOverallLoading = issueLoading || (isLoadingSubmissions && submissions.length === 0);
-  const shouldShowVoteStatusLoader = isLoadingVoteStatus && submissions.length > 0;
+  
+  // **MOBILE OPTIMIZATION**: Only show vote status loader if images are already loaded
+  // This prevents vote status loading from blocking progressive image display
+  const shouldShowVoteStatusLoader = isLoadingVoteStatus && submissions.length > 0 && !isOverallLoading;
 
   // Show loading state while checking issues or initially loading submissions
   if (isOverallLoading) {

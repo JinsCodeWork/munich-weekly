@@ -151,9 +151,9 @@ export function MasonryGallery<T = unknown>({
   const frontendDimensionsResult = useImageDimensions(
     items.map(getItemImageUrl),
     { 
-      batchSize: 6, // Slightly increased for better balance between speed and mobile performance
-      timeout: 6000, // Reduced timeout for faster mobile experience
-      progressiveThreshold: Math.min(6, Math.ceil(items.length * 0.4)), // 40% or 6 items
+      batchSize: typeof window !== 'undefined' && window.innerWidth < 768 ? 4 : 6, // Smaller batch for mobile
+      timeout: typeof window !== 'undefined' && window.innerWidth < 768 ? 8000 : 6000, // Longer timeout for mobile
+      progressiveThreshold: Math.min(4, Math.ceil(items.length * 0.3)), // Show faster on mobile (30% or 4 items)
       enableProgressiveLoading: true,
     }
   );
