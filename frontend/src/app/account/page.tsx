@@ -2,7 +2,6 @@
 
 import React, { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
-import Link from "next/link"
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -114,24 +113,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="mt-6">
-        <Link
-          href="/account/submissions"
-          className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900"
-        >
-          View My Submissions
-        </Link>
-      </div>
-
-      <div className="mt-6">
-        <Link
-          href="/account/settings"
-          className="text-gray-700 hover:text-gray-900"
-        >
-          Account Settings
-        </Link>
       </div>
     </div>
   )
