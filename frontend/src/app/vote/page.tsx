@@ -8,14 +8,21 @@ import { useIssues } from '@/hooks/useIssues';
 import { getSubmissionsByIssue } from '@/api/submissions';
 import { MasonryGallery } from '@/components/ui/MasonryGallery';
 import { MasonrySubmissionCard } from '@/components/submission/MasonrySubmissionCard';
+import { VoteStatusProvider, useVoteStatus } from '@/context/VoteStatusContext';
 
-export default function VotePage() {
-
+/**
+ * Inner Vote Page Component
+ * 
+ * Separated to use VoteStatusContext hooks inside the provider.
+ * Implements batch vote status checking for optimal performance.
+ */
+function VotePageContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [, setIsLoading] = useState(true); // Keep for potential future use
   const [, setError] = useState<string | null>(null); // Keep for potential future use
   
   const { issues, isLoading: issueLoading, error: issueError } = useIssues();
+  const { batchCheckVoteStatus, isInitialLoading } = useVoteStatus();
   
   // Get current issue - only issues within voting period should be shown
   const currentIssue = useMemo(() => {
@@ -41,8 +48,17 @@ export default function VotePage() {
     setError(null);
     
     try {
+      console.log(`📥 VotePage: Loading submissions for issue ${issueId}`);
       const fetchedSubmissions = await getSubmissionsByIssue(issueId);
       setSubmissions(fetchedSubmissions);
+      
+      // **PERFORMANCE OPTIMIZATION**: Batch check vote status for all submissions
+      // This replaces N individual API calls with 1 batch call
+      if (fetchedSubmissions.length > 0) {
+        const submissionIds = fetchedSubmissions.map(sub => sub.id);
+        console.log(`🔍 VotePage: Initiating batch vote status check for ${submissionIds.length} submissions`);
+        await batchCheckVoteStatus(submissionIds);
+      }
     } catch (err) {
       console.error('Error loading submissions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load submissions');
@@ -50,7 +66,7 @@ export default function VotePage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [batchCheckVoteStatus]);
 
   // Load submissions when current issue is available
   useEffect(() => {
@@ -102,33 +118,42 @@ export default function VotePage() {
     />
   ), [handleVoteSuccess, handleVoteCancelled]);
 
-  // Handle loading states
-  if (issueLoading) {
+  // Show loading state while checking issues or vote status
+  if (issueLoading || isInitialLoading) {
     return (
       <Container className="py-8" variant="vote">
-        <div className="text-center">
-          <p>Loading current issue...</p>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">
+            {issueLoading ? "Loading voting information..." : "Checking vote status..."}
+          </p>
         </div>
       </Container>
     );
   }
 
+  // Show error state
   if (issueError) {
     return (
       <Container className="py-8" variant="vote">
-        <div className="text-center text-red-600">
-          <p>Error loading current issue: {issueError}</p>
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <p className="text-lg font-semibold">Failed to load voting information</p>
+            <p className="text-sm mt-2">{issueError}</p>
+          </div>
         </div>
       </Container>
     );
   }
 
+  // Show no active voting period state
   if (!currentIssue) {
     return (
       <Container className="py-8" variant="vote">
-        <div className="text-center">
-          <p className="text-lg text-gray-600 mb-4">No active voting period</p>
-          <p className="text-sm text-gray-500">There are currently no issues open for voting. Please check back later.</p>
+        <div className="text-center py-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Voting</h1>
+          <p className="text-lg text-gray-600">No active voting period at this time.</p>
+          <p className="text-sm text-gray-500 mt-2">Please check back during a voting period.</p>
         </div>
       </Container>
     );
@@ -184,5 +209,24 @@ export default function VotePage() {
         />
       </div>
     </Container>
+  );
+}
+
+/**
+ * Main Vote Page Component
+ * 
+ * Wrapped with VoteStatusProvider for optimized vote status management.
+ * 
+ * Key performance improvements:
+ * - Eliminates N individual vote status API calls
+ * - Uses batch checking for all submissions at once
+ * - Provides global vote status cache
+ * - Maintains all existing functionality and appearance
+ */
+export default function VotePage() {
+  return (
+    <VoteStatusProvider>
+      <VotePageContent />
+    </VoteStatusProvider>
   );
 } 
