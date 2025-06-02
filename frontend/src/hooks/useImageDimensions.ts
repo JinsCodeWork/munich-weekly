@@ -177,7 +177,19 @@ export function useImageDimensions(
     const batch = urls.slice(startIndex, startIndex + mergedConfig.batchSize);
     if (batch.length === 0) return;
 
-    const batchPromises = batch.map(async (url) => {
+    // **FIX: Mobile-specific optimizations for connection stability**
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const isFirstBatch = startIndex === 0;
+    
+    // Reduce concurrency for mobile, especially for first batch
+    let effectiveBatch = batch;
+    if (isMobile && isFirstBatch) {
+      // For mobile first batch, load only 2 images at once to prevent connection saturation
+      effectiveBatch = batch.slice(0, 2);
+      console.log(`📱 Mobile first batch optimization: loading ${effectiveBatch.length} images instead of ${batch.length}`);
+    }
+
+    const batchPromises = effectiveBatch.map(async (url) => {
       try {
         // Check cache first
         const cached = dimensionCache.get(url);
@@ -228,16 +240,31 @@ export function useImageDimensions(
       return newDimensions;
     });
 
-    // Update progress
-    const loadedCount = Math.min(startIndex + batch.length, urls.length);
+    // Update progress based on actual processed batch size
+    const loadedCount = Math.min(startIndex + effectiveBatch.length, urls.length);
     const progress = urls.length > 0 ? (loadedCount / urls.length) * 100 : 100;
     setLoadingProgress(progress);
 
+    // **FIX: Handle remaining images from reduced first batch**
+    const nextStartIndex = startIndex + effectiveBatch.length;
+    
+    // If we reduced the first batch on mobile, process the remaining images from the first batch
+    if (isMobile && isFirstBatch && effectiveBatch.length < batch.length) {
+      const remainingFirstBatch = batch.slice(effectiveBatch.length);
+      console.log(`📱 Processing remaining ${remainingFirstBatch.length} images from first batch`);
+      
+      // Small delay before processing remaining first batch images
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await loadBatch([...remainingFirstBatch, ...urls.slice(startIndex + batch.length)], 0);
+      return;
+    }
+
     // Load next batch if there are more URLs
-    if (startIndex + batch.length < urls.length) {
-      // Small delay to prevent overwhelming the browser on mobile
-      await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay for mobile
-      await loadBatch(urls, startIndex + batch.length);
+    if (nextStartIndex < urls.length) {
+      // **FIX: Longer delay for mobile to prevent connection saturation**
+      const delay = isMobile ? 300 : 100; // Longer delay for mobile
+      await new Promise(resolve => setTimeout(resolve, delay));
+      await loadBatch(urls, nextStartIndex);
     }
   }, [mergedConfig.batchSize, mergedConfig.timeout, mergedConfig.cacheDuration]);
 
