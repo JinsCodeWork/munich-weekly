@@ -306,9 +306,28 @@ export function useSkylineMasonryLayout<T = unknown>(
     // **SKYLINE ALGORITHM** - O(N·C) one-pass positioning with progressive support
     orderedItems.forEach((item) => {
       const dimensions = getDimensions(item);
-      if (!dimensions) return;
+      
+      // **FIX: Use fallback dimensions for failed images to prevent layout breaking**
+      let imgWidth: number, imgHeight: number, isLoaded: boolean;
+      
+      if (!dimensions) {
+        // Use fallback dimensions for items without loaded dimensions
+        imgWidth = 400;  // Default fallback width
+        imgHeight = 300; // Default fallback height (4:3 aspect ratio)
+        isLoaded = false;
+        console.warn(`⚠️ Using fallback dimensions for item without loaded dimensions`);
+      } else {
+        ({ width: imgWidth, height: imgHeight, isLoaded } = dimensions);
+        
+        // **FIX: Validate dimensions to prevent NaN calculations**
+        if (!imgWidth || !imgHeight || imgWidth <= 0 || imgHeight <= 0) {
+          console.warn(`⚠️ Invalid dimensions (${imgWidth}x${imgHeight}), using fallback`);
+          imgWidth = 400;
+          imgHeight = 300;
+          isLoaded = false;
+        }
+      }
 
-      const { width: imgWidth, height: imgHeight, isLoaded } = dimensions;
       if (isLoaded) {
         loadedCount++;
         progressiveReadyCount++;
@@ -358,7 +377,15 @@ export function useSkylineMasonryLayout<T = unknown>(
       // Total content height with safety margin to prevent overlaps (matching backend)
       const safetyMargin = 12; // Extra padding to ensure no overlaps
       const contentHeight = basePadding + titleHeight + metadataHeight + safetyMargin;
-      const realHeight = Math.round(realWidth / aspectRatio) + contentHeight;
+      let realHeight = Math.round(realWidth / aspectRatio) + contentHeight;
+
+      // **FIX: Validate calculated height to prevent NaN**
+      if (!realHeight || realHeight <= 0 || !isFinite(realHeight)) {
+        console.warn(`⚠️ Invalid calculated height (${realHeight}), using fallback`);
+        // Use a reasonable fallback height based on card width
+        const fallbackHeight = Math.round(realWidth * 0.75) + contentHeight; // 4:3 aspect ratio
+        realHeight = fallbackHeight;
+      }
 
       // **SKYLINE BEST-FIT** - Find the best column position
       let bestCol = 0;
@@ -397,7 +424,16 @@ export function useSkylineMasonryLayout<T = unknown>(
       });
     });
 
-    const containerHeight = Math.max(...heights, 0);
+    // **FIX: Ensure container height is always a valid number**
+    const containerHeight = heights.length > 0 ? Math.max(...heights, 0) : 0;
+    
+    // **FIX: Validate container height before returning**
+    const validContainerHeight = (containerHeight && isFinite(containerHeight)) ? containerHeight : 0;
+    
+    if (validContainerHeight !== containerHeight) {
+      console.warn(`⚠️ Invalid container height (${containerHeight}), using fallback (${validContainerHeight})`);
+    }
+    
     const loadingProgress = totalCount > 0 ? (loadedCount / totalCount) * 100 : 100;
     
     // Progressive layout readiness calculation
@@ -406,7 +442,7 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     return {
       layoutItems,
-      containerHeight,
+      containerHeight: validContainerHeight,
       isLayoutReady: loadedCount === totalCount && totalCount > 0,
       totalItems: totalCount,
       loadedItems: loadedCount,
