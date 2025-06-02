@@ -139,7 +139,7 @@ export default function ManageSubmissionsPage() {
           <button
             onClick={handleDownloadSelected}
             disabled={isDownloading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+            className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
           >
             {isDownloading ? (
               <>

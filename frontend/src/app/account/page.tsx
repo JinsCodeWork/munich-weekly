@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
+import Link from "next/link"
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -56,7 +57,7 @@ export default function ProfilePage() {
                 id="nickname"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                 required
               />
             </div>
@@ -64,14 +65,14 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100"
+                className="text-gray-700 hover:text-gray-900"
               >
                 Cancel
               </button>
@@ -83,7 +84,7 @@ export default function ProfilePage() {
               <h2 className="text-xl font-medium font-heading">Basic Information</h2>
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-blue-500 hover:text-blue-700"
+                className="text-gray-700 hover:text-gray-900"
               >
                 <svg className="w-4 h-4 mr-1 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -113,6 +114,24 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-6">
+        <Link
+          href="/account/submissions"
+          className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900"
+        >
+          View My Submissions
+        </Link>
+      </div>
+
+      <div className="mt-6">
+        <Link
+          href="/account/settings"
+          className="text-gray-700 hover:text-gray-900"
+        >
+          Account Settings
+        </Link>
       </div>
     </div>
   )

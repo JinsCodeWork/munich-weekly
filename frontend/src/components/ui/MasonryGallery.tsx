@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useImageDimensions } from '@/hooks/useImageDimensions';
 import { useSkylineMasonryLayout, type SkylineMasonryConfig } from '@/hooks/useSkylineMasonryLayout';
+import { Button } from '@/components/ui/Button';
 
 /**
  * Default loading skeleton component with progressive loading support
@@ -11,7 +12,7 @@ function DefaultLoadingSkeleton({ columns, gap }: { columns: number; gap: number
     <div className="space-y-4">
       {/* Optimized loading message for mobile users */}
       <div className="text-center py-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-3"></div>
         <p className="text-sm text-gray-600">Preparing gallery layout...</p>
         <p className="text-xs text-gray-500 mt-1">First images will appear shortly</p>
       </div>
@@ -64,12 +65,12 @@ function DefaultErrorComponent({ errors, onRetry }: { errors: string[]; onRetry:
       <p className="text-sm text-gray-500 mb-4">
         {errors.length > 0 ? errors[0] : 'Unknown error occurred'}
       </p>
-      <button
+      <Button 
         onClick={onRetry}
-        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 transition-colors"
       >
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -274,7 +275,7 @@ export function MasonryGallery<T = unknown>({
         
         {/* Progress indicator for progressive loading */}
         {isProgressiveReady && !isLayoutReady && (
-          <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-500 to-purple-500 h-1 opacity-75">
+          <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-gray-600 to-gray-800 h-1 opacity-75">
             <div 
               className="h-full bg-white transition-all duration-300"
               style={{ width: `${skylineLayoutResult.loadingProgress}%` }}

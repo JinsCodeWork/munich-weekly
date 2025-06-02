@@ -438,7 +438,7 @@ export function Thumbnail({
       {/* 加载指示器 */}
       {!imageLoaded && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
         </div>
       )}
       

@@ -176,7 +176,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
             <p className="text-gray-700 mb-6">Your authentication token is missing or has expired. Please log in again to continue.</p>
             <Link 
               href="/login"
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow transition"
+              className="px-6 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-md shadow transition"
             >
               Go to Login
             </Link>
@@ -275,13 +275,13 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
       <Container className="py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-t-4 border-gray-600 border-solid rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading settings...</p>
             
             <div className="mt-4">
               <button 
                 onClick={updateDebugInfo}
-                className="text-xs underline text-blue-600"
+                className="text-xs underline text-gray-700"
               >
                 Show Debug Info
               </button>
@@ -306,7 +306,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
       </div>
       
       {message.content && (
-        <div className={`p-4 mb-6 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+        <div className={`p-4 mb-6 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
           {message.content}
           {message.type === 'error' && (
             <button 
@@ -377,7 +377,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
             
             <label 
               htmlFor="image" 
-              className="cursor-pointer py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+              className="cursor-pointer py-2 px-4 bg-gray-800 hover:bg-gray-900 text-white rounded transition"
             >
               Select New Image
             </label>
@@ -396,7 +396,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
           <textarea
             value={mainDescription}
             onChange={(e) => setMainDescription(e.target.value)}
-            className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-gray-500 focus:border-gray-500"
             rows={4}
             placeholder="Enter the main description text to display in the center of the image"
             inputMode="text"
@@ -413,7 +413,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
           <textarea
             value={imageCaption}
             onChange={(e) => setImageCaption(e.target.value)}
-            className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-gray-500 focus:border-gray-500"
             rows={2}
             placeholder="e.g. Photographer: Max Mustermann | Marienplatz, Munich | June 2023"
             inputMode="text"
@@ -426,7 +426,7 @@ API Method: Using direct fetch + authHeaders (same as user uploads)
         <div className="pt-5 border-t border-gray-200 flex space-x-4">
           <button
             type="submit"
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSaving || isUploading}
           >
             {isSaving ? 'Saving...' : isUploading ? 'Uploading...' : 'Save Settings'}
