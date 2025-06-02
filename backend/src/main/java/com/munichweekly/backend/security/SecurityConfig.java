@@ -56,9 +56,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
                         
                         // Voting endpoints - Public - FOURTH
-                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()    // Check vote status
-                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()        // Cast vote
-                        .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()      // Remove vote
+                        .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()         // Check single vote status
+                        .requestMatchers(HttpMethod.GET, "/api/votes/check-batch").permitAll()   // Check batch vote status (performance optimization)
+                        .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()             // Cast vote
+                        .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()           // Remove vote
                         
                         // Public issue list endpoint (most specific path)
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()                 // GET /api/issues (list all)
