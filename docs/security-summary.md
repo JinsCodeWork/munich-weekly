@@ -18,7 +18,6 @@ For comprehensive information about the Munich Weekly platform, please refer to:
 
 **Development:**
 - 📱 [Frontend Overview](./frontend-overview.md) - Client-side security implementation
-- 🧑‍💻 [Developer Guide](./dev-guide.md) - Secure development practices
 
 ---
 

@@ -36,13 +36,24 @@ Backend: Optimal Ordering → Frontend: Progressive Loading → Responsive Posit
 
 **Mobile Performance Optimization:**
 - **Progressive threshold**: 6 images or 40% of total items
-- **Batch loading**: 4 images concurrent (optimized for mobile)
+- **Mobile connection optimization**: First batch limited to 2 images to prevent saturation
+- **Batch loading**: 4 images concurrent (optimized for mobile networks)
+- **Intelligent delays**: 300ms mobile, 100ms desktop between batches
 - **Timeout reduction**: 6s (reduced from 10s)
 - **Visual feedback**: Loading overlays and progress indicators
 
 **Performance Impact:**
 - **Before**: 8-10+ seconds first content (mobile)
 - **After**: 2-4 seconds first content (mobile) - **60-75% improvement**
+- **Connection stability**: Prevents mobile browser connection saturation
+
+### Vote Status Optimization ✨ **NEW**
+
+**Batch Vote Checking:**
+- **API optimization**: Reduced N individual requests to 1 batch request
+- **VoteStatusContext**: Centralized vote state management
+- **Performance improvement**: 95%+ reduction in vote status API calls
+- **Mobile friendly**: Reduces network congestion during page load
 
 ### Backend Ordering Service
 
@@ -66,12 +77,27 @@ Backend: Optimal Ordering → Frontend: Progressive Loading → Responsive Posit
 ### Progressive Loading Configuration
 
 ```typescript
-// Enhanced useImageDimensions configuration
+// Enhanced useImageDimensions configuration with mobile optimization
 const DEFAULT_CONFIG: ImageDimensionConfig = {
   timeout: 6000, // Reduced from 10s to 6s
   batchSize: 4, // Reduced from 6 to 4 for mobile
   progressiveThreshold: 6, // Start displaying after 6 images
   enableProgressiveLoading: true,
+};
+
+// Mobile connection optimization
+const loadBatch = async (urls: string[], startIndex: number = 0) => {
+  const isMobile = window.innerWidth < 768;
+  const isFirstBatch = startIndex === 0;
+  
+  // Reduce concurrency for mobile first batch to prevent connection saturation
+  let effectiveBatch = batch;
+  if (isMobile && isFirstBatch) {
+    effectiveBatch = batch.slice(0, 2); // Only 2 images initially
+  }
+  
+  // Progressive delays prevent connection overwhelm
+  const delay = isMobile ? 300 : 100;
 };
 ```
 

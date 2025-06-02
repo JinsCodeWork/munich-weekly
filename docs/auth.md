@@ -389,7 +389,6 @@ This document reflects the current implementation as of the latest codebase anal
 - 📊 [Security Summary](./security-summary.md) - Executive overview and improvement roadmap
 - 🗃️ [Database Design](./database.md) - Security constraints and data model
 - 💾 [Storage System](./storage.md) - File upload security and access control
-- 🧑‍💻 [Developer Guide](./dev-guide.md) - Secure development practices
 - 🔧 [Admin Guide](./admin-guide.md) - Administrative security features
 
 ### Security Resources

@@ -177,13 +177,7 @@ export function MasonryGallery<T = unknown>({
   // **FIX: Only log on actual changes to prevent spam**
   const configRef = useRef({ isMobile, batchSize, timeout, progressiveThreshold, issueId });
   if (configRef.current.issueId !== issueId || configRef.current.isMobile !== isMobile) {
-    console.log(`📱 MasonryGallery: Starting with ${items.length} items`, {
-      isMobile,
-      batchSize,
-      timeout,
-      progressiveThreshold,
-      issueId
-    });
+    // Configuration updated - removed debug logging for cleaner console
     configRef.current = { isMobile, batchSize, timeout, progressiveThreshold, issueId };
   }
 
@@ -201,30 +195,16 @@ export function MasonryGallery<T = unknown>({
   const lastProgressRef = useRef({ progressiveLoadedCount: 0, errorCount: 0, isProgressiveReady: false });
   
   useEffect(() => {
-    const { isProgressiveReady, isAllLoaded, progressiveLoadedCount, totalImages, errors } = frontendDimensionsResult;
+    const { isProgressiveReady, progressiveLoadedCount, errors } = frontendDimensionsResult;
     const current = { progressiveLoadedCount, errorCount: errors.length, isProgressiveReady };
     const last = lastProgressRef.current;
     
-    // Only log if there's meaningful progress
-    if (current.progressiveLoadedCount !== last.progressiveLoadedCount || 
-        current.errorCount !== last.errorCount || 
-        current.isProgressiveReady !== last.isProgressiveReady) {
-      
-      console.log(`📊 Dimensions progress:`, {
-        isProgressiveReady,
-        isAllLoaded,
-        progressiveLoadedCount,
-        totalImages,
-        errorCount: errors.length,
-        isMobile
-      });
-      
-      if (errors.length > last.errorCount) {
-        console.warn(`⚠️ New image loading errors:`, errors.slice(last.errorCount, errors.length));
-      }
-      
-      lastProgressRef.current = current;
+    // Only log errors for debugging - removed other logs for cleaner console
+    if (errors.length > last.errorCount) {
+      console.warn(`⚠️ Image loading errors:`, errors.slice(last.errorCount, errors.length));
     }
+    
+    lastProgressRef.current = current;
   }, [frontendDimensionsResult.isProgressiveReady, frontendDimensionsResult.isAllLoaded, frontendDimensionsResult.progressiveLoadedCount, frontendDimensionsResult.errors.length, isMobile]);
 
   // **FIX: Use direct access to latest dimensions**
@@ -267,7 +247,7 @@ export function MasonryGallery<T = unknown>({
   useEffect(() => {
     if (items.length > 0 && !isProgressiveReady && !isLayoutReady) {
       const timeoutId = setTimeout(() => {
-        console.log(`⏰ Mobile timeout: Force displaying layout after 10 seconds`);
+        // Force display timeout - removed debug logging
         setForceDisplay(true);
       }, 10000); // 10 second timeout for mobile
       
@@ -292,36 +272,14 @@ export function MasonryGallery<T = unknown>({
       forceDisplay,
       layoutItemsCount: skylineLayoutResult.layoutItems.length
     };
-    const last = lastLayoutRef.current;
     
-    // Only log if layout state changed
-    if (current.isLayoutReady !== last.isLayoutReady ||
-        current.isProgressiveReady !== last.isProgressiveReady ||
-        current.forceDisplay !== last.forceDisplay ||
-        current.layoutItemsCount !== last.layoutItemsCount) {
-      
-      console.log(`🏗️ Layout states:`, {
-        isLayoutReady,
-        isProgressiveReady,
-        forceDisplay,
-        hasBackendOrdering: skylineLayoutResult.orderingSource !== 'fallback',
-        layoutItemsCount: skylineLayoutResult.layoutItems.length,
-        containerHeight: skylineLayoutResult.containerHeight
-      });
-      
-      lastLayoutRef.current = current;
-    }
+    // Layout state tracking - removed debug logging for cleaner console
+    lastLayoutRef.current = current;
   }, [isLayoutReady, isProgressiveReady, forceDisplay, skylineLayoutResult]);
 
   // Performance tracking for progressive loading
   useEffect(() => {
-    if (frontendDimensionsResult.isProgressiveReady && skylineLayoutResult.isProgressiveReady) {
-      // console.log(`🚀 Progressive Layout Ready: ${progressiveTime.toFixed(2)}ms - ${frontendDimensionsResult.progressiveLoadedCount}/${frontendDimensionsResult.totalImages} images loaded`);
-    }
-    
-    if (isLayoutReady) {
-      // console.log(`✅ Complete Layout Ready: ${completeTime.toFixed(2)}ms - All ${frontendDimensionsResult.totalImages} images loaded`);
-    }
+    // Performance tracking - removed debug logging for cleaner console  
   }, [frontendDimensionsResult.isProgressiveReady, skylineLayoutResult.isProgressiveReady, isLayoutReady, frontendDimensionsResult.progressiveLoadedCount, frontendDimensionsResult.totalImages]);
 
   // Handle empty state
@@ -353,7 +311,7 @@ export function MasonryGallery<T = unknown>({
 
   // Show loading state only if we don't have progressive content ready AND haven't hit timeout
   if (!isProgressiveReady && !isLayoutReady && !forceDisplay) {
-    console.log(`🔄 Showing loading state: progressiveReady=${isProgressiveReady}, layoutReady=${isLayoutReady}, forceDisplay=${forceDisplay}`);
+    // Loading state - removed debug logging for cleaner console
     return (
       <div className={cn('w-full', className)}>
         {loadingComponent || <DefaultLoadingSkeleton columns={currentColumnCount} gap={currentGap} />}
@@ -362,14 +320,7 @@ export function MasonryGallery<T = unknown>({
   }
 
   // **CRITICAL DEBUG**: Log rendering decision
-  console.log(`🎨 Rendering gallery:`, {
-    isProgressiveReady,
-    isLayoutReady,
-    forceDisplay,
-    layoutItemsLength: skylineLayoutResult.layoutItems.length,
-    containerHeight: skylineLayoutResult.containerHeight,
-    shouldRender: isProgressiveReady || isLayoutReady || forceDisplay
-  });
+  // Rendering gallery - removed debug logging for cleaner console
 
   // Render progressive or complete layout (or forced display after timeout)
   return (

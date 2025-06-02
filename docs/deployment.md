@@ -13,7 +13,6 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 - 🏠 [Project Overview](../README.md) - Platform overview and tech stack
 - 📦 [API Reference](./api.md) - Endpoint configuration and authentication
 - 💾 [Storage System](./storage.md) - File storage setup (Local vs Cloudflare R2)
-- 🧑‍💻 [Developer Guide](./dev-guide.md) - Development environment setup
 
 ---
 

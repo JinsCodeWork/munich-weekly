@@ -5,7 +5,6 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 ## 🚀 Quick Start
 
 - 🏠 **[Project Overview](../README.md)** - Start here for platform overview and features
-- 🧑‍💻 **[Developer Guide](./dev-guide.md)** - Development environment setup
 - 🚀 **[Deployment Guide](./deployment.md)** - Production deployment instructions
 
 ---
@@ -67,7 +66,6 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 
 ### End User Documentation
 - 👤 **[User Guide](./user-guide.md)** - Platform usage instructions for end users
-- 🧑‍💻 **[Developer Guide](./dev-guide.md)** - Development environment and best practices
 
 ### Administrative Documentation
 - 🔧 **[Admin Guide](./admin-guide.md)** - Platform administration and management
@@ -78,11 +76,10 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 
 ### For Developers
 1. Start with [Project Overview](../README.md)
-3. Set up development environment: [Developer Guide](./dev-guide.md)
-4. Understand security: [Authentication & Security](./auth.md)
-5. Learn the frontend: [Frontend Overview](./frontend-overview.md)
-6. Explore advanced layouts: [Masonry Layout System](./masonry-layout-system.md)
-7. API integration: [API Reference](./api.md)
+2. Understand security: [Authentication & Security](./auth.md)
+3. Learn the frontend: [Frontend Overview](./frontend-overview.md)
+4. Explore advanced layouts: [Masonry Layout System](./masonry-layout-system.md)
+5. API integration: [API Reference](./api.md)
 
 ### For DevOps/System Administrators
 1. Review security architecture: [Security Summary](./security-summary.md)
@@ -107,8 +104,9 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 ## 🔄 Documentation Maintenance
 
 ### Last Updated
-- **Issue Management System**: January 2025 (New comprehensive admin interface for CRUD operations)
-- **API Documentation**: January 2025 (Added Issue management endpoints)
+- **Performance Optimizations**: 02.06.2025 (Mobile connection optimization, batch vote checking, progressive loading)
+- **Issue Management System**: 28.05.2025 (New comprehensive admin interface for CRUD operations)
+- **API Documentation**: January 2025 (Added Issue management endpoints and batch vote checking)
 - **Masonry Layout System**: January 2025 (New documentation for advanced JavaScript-based layout system)
 - **Security Documentation**: January 2025 (Complete rewrite based on current implementation)
 - **Other Documentation**: Various dates (see individual documents)
@@ -126,7 +124,6 @@ When updating documentation, ensure:
 
 ## 🆘 Need Help?
 
-- **Technical Questions**: Refer to [Developer Guide](./dev-guide.md)
 - **Security Concerns**: See [Security Summary](./security-summary.md)
 - **Privacy Questions**: Check [Privacy Policy](./privacy.md)
 - **Contact**: dongkai.jin@tum.de

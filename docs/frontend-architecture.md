@@ -174,10 +174,12 @@ Components for managing submission content:
 
 ### Voting System
 
-A comprehensive anonymous voting system for public engagement:
+A comprehensive anonymous voting system with performance optimization:
 
 - **VotePage**: Public voting interface with current and historical result viewing
 - **VoteButton**: Interactive voting component with real-time feedback
+- **VoteStatusContext**: Centralized vote state management with batch optimization ✨ **NEW**
+- **Batch Vote Checking**: Reduces N individual API requests to 1 batch request (95%+ API call reduction)
 - **Anonymous Voting**: Cookie-based visitor identification for anonymous participation
 - **Previous Results Access**: Graceful fallback to historical voting results when no current voting period is active
 - **State Management**: Smart view switching between current voting and previous results
@@ -203,7 +205,7 @@ The application includes a comprehensive set of custom React hooks for managing 
 
 - **useAuth**: Authentication state management with login/logout functionality
 - **useFileUpload**: File upload handling with validation and progress tracking
-- **useImageDimensions**: Batch image dimension loading with **progressive loading support** (6 image threshold, 24-hour caching)
+- **useImageDimensions**: Batch image dimension loading with **progressive loading support** (6 image threshold, 24-hour caching) and **mobile connection optimization** (first batch limited to 2 images)
 - **useSkylineMasonryLayout**: Frontend positioning for backend-ordered items with **progressive display** and responsive column management
 - **useIssues**: Issues data fetching and state management
 - **useSubmissions**: Submissions data management with pagination support, multi-selection handling, and admin download functionality
@@ -211,22 +213,37 @@ The application includes a comprehensive set of custom React hooks for managing 
 
 #### Progressive Loading Architecture ✨ **NEW**
 
-**Mobile Performance Optimization**: The custom hooks now include progressive loading capabilities for significantly improved mobile experience.
+**Mobile Performance Optimization**: The custom hooks now include progressive loading capabilities with mobile connection optimization for significantly improved mobile experience.
 
 **Key Enhancements:**
 ```typescript
-// Progressive loading configuration
+// Progressive loading configuration with mobile optimization
 const DEFAULT_CONFIG: ImageDimensionConfig = {
   timeout: 6000, // Reduced from 10s for mobile
   batchSize: 4, // Optimized for mobile networks
   progressiveThreshold: 6, // Display after 6 images
   enableProgressiveLoading: true,
 };
+
+// Mobile connection optimization prevents saturation
+const loadBatch = async (urls: string[], startIndex: number = 0) => {
+  const isMobile = window.innerWidth < 768;
+  const isFirstBatch = startIndex === 0;
+  
+  // Reduce first batch to 2 images on mobile to prevent connection limit issues
+  if (isMobile && isFirstBatch) {
+    effectiveBatch = batch.slice(0, 2);
+  }
+  
+  // Staggered loading with mobile-specific delays
+  const delay = isMobile ? 300 : 100;
+};
 ```
 
 **Performance Impact:**
 - **Before**: 8-10+ seconds first content display on mobile
 - **After**: 2-4 seconds first content display - **60-75% improvement**
+- **Connection stability**: Prevents mobile browser concurrent connection saturation
 
 ### Responsive Layout Architecture
 

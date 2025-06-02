@@ -315,13 +315,13 @@ export function useSkylineMasonryLayout<T = unknown>(
         imgWidth = 400;  // Default fallback width
         imgHeight = 300; // Default fallback height (4:3 aspect ratio)
         isLoaded = false;
-        console.warn(`⚠️ Using fallback dimensions for item without loaded dimensions`);
+        // Using fallback dimensions - removed debug logging for cleaner console
       } else {
         ({ width: imgWidth, height: imgHeight, isLoaded } = dimensions);
         
         // **FIX: Validate dimensions to prevent NaN calculations**
         if (!imgWidth || !imgHeight || imgWidth <= 0 || imgHeight <= 0) {
-          console.warn(`⚠️ Invalid dimensions (${imgWidth}x${imgHeight}), using fallback`);
+          // Invalid dimensions, using fallback - removed debug logging for cleaner console
           imgWidth = 400;
           imgHeight = 300;
           isLoaded = false;
@@ -381,7 +381,7 @@ export function useSkylineMasonryLayout<T = unknown>(
 
       // **FIX: Validate calculated height to prevent NaN**
       if (!realHeight || realHeight <= 0 || !isFinite(realHeight)) {
-        console.warn(`⚠️ Invalid calculated height (${realHeight}), using fallback`);
+        // Invalid calculated height, using fallback - removed debug logging for cleaner console
         // Use a reasonable fallback height based on card width
         const fallbackHeight = Math.round(realWidth * 0.75) + contentHeight; // 4:3 aspect ratio
         realHeight = fallbackHeight;
@@ -429,10 +429,6 @@ export function useSkylineMasonryLayout<T = unknown>(
     
     // **FIX: Validate container height before returning**
     const validContainerHeight = (containerHeight && isFinite(containerHeight)) ? containerHeight : 0;
-    
-    if (validContainerHeight !== containerHeight) {
-      console.warn(`⚠️ Invalid container height (${containerHeight}), using fallback (${validContainerHeight})`);
-    }
     
     const loadingProgress = totalCount > 0 ? (loadedCount / totalCount) * 100 : 100;
     

@@ -186,7 +186,6 @@ export function useImageDimensions(
     if (isMobile && isFirstBatch) {
       // For mobile first batch, load only 2 images at once to prevent connection saturation
       effectiveBatch = batch.slice(0, 2);
-      console.log(`📱 Mobile first batch optimization: loading ${effectiveBatch.length} images instead of ${batch.length}`);
     }
 
     const batchPromises = effectiveBatch.map(async (url) => {
@@ -251,7 +250,6 @@ export function useImageDimensions(
     // If we reduced the first batch on mobile, process the remaining images from the first batch
     if (isMobile && isFirstBatch && effectiveBatch.length < batch.length) {
       const remainingFirstBatch = batch.slice(effectiveBatch.length);
-      console.log(`📱 Processing remaining ${remainingFirstBatch.length} images from first batch`);
       
       // Small delay before processing remaining first batch images
       await new Promise(resolve => setTimeout(resolve, 200));

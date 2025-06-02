@@ -69,6 +69,17 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
   > Check if current user has voted for a submission.
 
   > **Params**: `Long submissionId, String visitorId`
+- **GET** `/api/votes/check-batch`
+  > Batch check vote status for multiple submissions. Optimizes performance by reducing API calls from N to 1.
+
+  > **Params**: `List<Long> submissionIds, String visitorId`
+  
+  > **Response**: 
+  > ```json
+  > {
+  >   "votedSubmissionIds": [123, 456, 789]
+  > }
+  > ```
 
 ## SubmissionController
 
