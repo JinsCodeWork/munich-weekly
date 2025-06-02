@@ -148,8 +148,27 @@ export function MasonryGallery<T = unknown>({
     setItemsHash(currentItemsHash);
   }
 
-  // **MOBILE DEBUG**: Add comprehensive logging for troubleshooting
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // **FIX: Stabilize mobile detection to prevent batch loading issues**
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isMobileDetectionReady, setIsMobileDetectionReady] = useState<boolean>(false);
+  
+  // Update mobile detection with window resize listener
+  useEffect(() => {
+    const updateMobileStatus = () => {
+      const mobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      setIsMobile(mobile);
+      setIsMobileDetectionReady(true); // Mark detection as complete
+    };
+    
+    // Set initial value
+    updateMobileStatus();
+    
+    // Listen for resize events
+    window.addEventListener('resize', updateMobileStatus);
+    return () => window.removeEventListener('resize', updateMobileStatus);
+  }, []);
+
+  // **MOBILE DEBUG**: Add comprehensive logging for troubleshooting  
   const batchSize = isMobile ? 4 : 6;
   const timeout = isMobile ? 8000 : 6000;
   const progressiveThreshold = Math.min(4, Math.ceil(items.length * 0.3));
@@ -162,13 +181,15 @@ export function MasonryGallery<T = unknown>({
       batchSize,
       timeout,
       progressiveThreshold,
-      issueId
+      issueId,
+      isMobileDetectionReady
     });
     configRef.current = { isMobile, batchSize, timeout, progressiveThreshold, issueId };
   }
 
   const frontendDimensionsResult = useImageDimensions(
-    items.map(getItemImageUrl),
+    // **FIX: Only start loading images after mobile detection is complete**
+    isMobileDetectionReady ? items.map(getItemImageUrl) : [],
     { 
       batchSize,
       timeout,
