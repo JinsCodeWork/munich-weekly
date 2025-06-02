@@ -42,6 +42,7 @@ interface VoteStatusProviderProps {
  * - Caches vote status to prevent duplicate checks
  * - Automatically invalidates cache when user authentication changes
  * - Provides loading states for better UX
+ * - Prevents flickering by optimizing state updates
  */
 export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
   const { user } = useAuth();
@@ -54,16 +55,23 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Track which submissions are currently being checked individually
-  const individualChecksRef = useRef<Set<number>>(new Set());
+  // Track which submissions are currently being checked to prevent duplicate calls
+  const batchCheckInProgressRef = useRef<boolean>(false);
+  const lastUserIdRef = useRef<number | null>(null);
   
-  // Cache invalidation when user authentication changes
+  // Cache invalidation when user authentication changes (optimized to prevent unnecessary clears)
   useEffect(() => {
-    // Clear all cached status when user changes (login/logout)
-    setVoteStatusMap(new Map());
-    setHasError(false);
-    setErrorMessage(null);
-  }, [user?.id]); // Only trigger when user ID changes, not on every user object change
+    const currentUserId = user?.id ?? null;
+    
+    // Only clear cache if user actually changed (not just user object reference)
+    if (lastUserIdRef.current !== currentUserId) {
+      console.log(`🔄 VoteStatusContext: User changed from ${lastUserIdRef.current} to ${currentUserId}, clearing cache`);
+      setVoteStatusMap(new Map());
+      setHasError(false);
+      setErrorMessage(null);
+      lastUserIdRef.current = currentUserId;
+    }
+  }, [user?.id]);
   
   /**
    * Get the cached vote status for a submission
@@ -103,7 +111,6 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       newMap.delete(submissionId);
       return newMap;
     });
-    individualChecksRef.current.delete(submissionId);
   }, []);
   
   /**
@@ -114,30 +121,39 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
     setVoteStatusMap(new Map());
     setHasError(false);
     setErrorMessage(null);
-    individualChecksRef.current.clear();
+    batchCheckInProgressRef.current = false;
   }, []);
   
   /**
    * Batch check vote status for multiple submissions
    * This is the main performance optimization - replaces N individual API calls with 1 batch call
+   * Optimized to prevent multiple simultaneous calls and reduce flickering
    */
   const batchCheckVoteStatus = useCallback(async (submissionIds: number[]) => {
     if (submissionIds.length === 0) return;
     
-    // Filter out submissions that are already cached or currently being checked
+    // Prevent multiple simultaneous batch checks
+    if (batchCheckInProgressRef.current) {
+      console.log(`⏳ VoteStatusContext: Batch check already in progress, skipping duplicate call`);
+      return;
+    }
+    
+    // Filter out submissions that are already cached
     const uncachedIds = submissionIds.filter(id => {
       const cached = voteStatusMap.get(id);
       return !cached || cached.hasVoted === null;
     });
     
     if (uncachedIds.length === 0) {
-      // All submissions already have cached status
+      console.log(`✅ VoteStatusContext: All ${submissionIds.length} submissions already cached`);
       return;
     }
     
     console.log(`🔍 VoteStatusContext: Batch checking vote status for ${uncachedIds.length}/${submissionIds.length} submissions`);
     
-    // Set loading state for uncached submissions
+    batchCheckInProgressRef.current = true;
+    
+    // Set loading state for uncached submissions in a single update
     setVoteStatusMap(prev => {
       const newMap = new Map(prev);
       uncachedIds.forEach(id => {
@@ -146,7 +162,12 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       return newMap;
     });
     
-    setIsInitialLoading(true);
+    // Only set global loading if this is the first batch check
+    const isFirstCheck = voteStatusMap.size === 0;
+    if (isFirstCheck) {
+      setIsInitialLoading(true);
+    }
+    
     setHasError(false);
     setErrorMessage(null);
     
@@ -157,7 +178,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       
       console.log(`✅ VoteStatusContext: Batch check completed in ${duration.toFixed(2)}ms for ${response.totalChecked} submissions`);
       
-      // Update cache with results
+      // Update cache with results in a single state update to prevent flickering
       setVoteStatusMap(prev => {
         const newMap = new Map(prev);
         
@@ -182,7 +203,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       setHasError(true);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to check vote status');
       
-      // Set all uncached submissions to not loading with null status
+      // Set all uncached submissions to not loading with fallback status in single update
       setVoteStatusMap(prev => {
         const newMap = new Map(prev);
         uncachedIds.forEach(id => {
@@ -192,7 +213,10 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       });
       
     } finally {
-      setIsInitialLoading(false);
+      if (isFirstCheck) {
+        setIsInitialLoading(false);
+      }
+      batchCheckInProgressRef.current = false;
     }
   }, [voteStatusMap]);
   

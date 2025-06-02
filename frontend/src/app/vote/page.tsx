@@ -18,11 +18,11 @@ import { VoteStatusProvider, useVoteStatus } from '@/context/VoteStatusContext';
  */
 function VotePageContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [, setIsLoading] = useState(true); // Keep for potential future use
-  const [, setError] = useState<string | null>(null); // Keep for potential future use
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(true);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   
   const { issues, isLoading: issueLoading, error: issueError } = useIssues();
-  const { batchCheckVoteStatus, isInitialLoading } = useVoteStatus();
+  const { batchCheckVoteStatus, isInitialLoading: isLoadingVoteStatus } = useVoteStatus();
   
   // Get current issue - only issues within voting period should be shown
   const currentIssue = useMemo(() => {
@@ -44,8 +44,8 @@ function VotePageContent() {
 
   // Load submissions for current issue
   const loadSubmissionsForIssue = useCallback(async (issueId: number) => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoadingSubmissions(true);
+    setSubmissionError(null);
     
     try {
       console.log(`📥 VotePage: Loading submissions for issue ${issueId}`);
@@ -57,14 +57,17 @@ function VotePageContent() {
       if (fetchedSubmissions.length > 0) {
         const submissionIds = fetchedSubmissions.map(sub => sub.id);
         console.log(`🔍 VotePage: Initiating batch vote status check for ${submissionIds.length} submissions`);
-        await batchCheckVoteStatus(submissionIds);
+        // Don't await here to prevent blocking submission display
+        batchCheckVoteStatus(submissionIds).catch(error => {
+          console.error('Batch vote status check failed:', error);
+        });
       }
     } catch (err) {
       console.error('Error loading submissions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load submissions');
+      setSubmissionError(err instanceof Error ? err.message : 'Failed to load submissions');
       setSubmissions([]);
     } finally {
-      setIsLoading(false);
+      setIsLoadingSubmissions(false);
     }
   }, [batchCheckVoteStatus]);
 
@@ -72,8 +75,11 @@ function VotePageContent() {
   useEffect(() => {
     if (currentIssue?.id) {
       loadSubmissionsForIssue(currentIssue.id);
+    } else if (!issueLoading && !currentIssue) {
+      // No current issue and not loading
+      setIsLoadingSubmissions(false);
     }
-  }, [currentIssue?.id, loadSubmissionsForIssue]);
+  }, [currentIssue?.id, issueLoading, loadSubmissionsForIssue]);
 
   // Stable callback functions with useCallback
   const handleVoteSuccess = useCallback((submissionId: number, newVoteCount?: number) => {
@@ -118,21 +124,25 @@ function VotePageContent() {
     />
   ), [handleVoteSuccess, handleVoteCancelled]);
 
-  // Show loading state while checking issues or vote status
-  if (issueLoading || isInitialLoading) {
+  // Determine overall loading state - prevent flickering by being more specific
+  const isOverallLoading = issueLoading || (isLoadingSubmissions && submissions.length === 0);
+  const shouldShowVoteStatusLoader = isLoadingVoteStatus && submissions.length > 0;
+
+  // Show loading state while checking issues or initially loading submissions
+  if (isOverallLoading) {
     return (
       <Container className="py-8" variant="vote">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto"></div>
           <p className="mt-4 text-lg text-gray-600">
-            {issueLoading ? "Loading voting information..." : "Checking vote status..."}
+            {issueLoading ? "Loading voting information..." : "Loading submissions..."}
           </p>
         </div>
       </Container>
     );
   }
 
-  // Show error state
+  // Show error state for issues
   if (issueError) {
     return (
       <Container className="py-8" variant="vote">
@@ -140,6 +150,20 @@ function VotePageContent() {
           <div className="text-red-500 mb-4">
             <p className="text-lg font-semibold">Failed to load voting information</p>
             <p className="text-sm mt-2">{issueError}</p>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  // Show error state for submissions
+  if (submissionError) {
+    return (
+      <Container className="py-8" variant="vote">
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <p className="text-lg font-semibold">Failed to load submissions</p>
+            <p className="text-sm mt-2">{submissionError}</p>
           </div>
         </div>
       </Container>
@@ -172,6 +196,14 @@ function VotePageContent() {
           <div className="text-sm text-gray-500">
             <p>Voting Period: {new Date(currentIssue.votingStart).toLocaleDateString()} - {new Date(currentIssue.votingEnd).toLocaleDateString()}</p>
           </div>
+          
+          {/* Show subtle vote status loading indicator */}
+          {shouldShowVoteStatusLoader && (
+            <div className="mt-2 text-sm text-gray-500 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+              Checking vote status...
+            </div>
+          )}
         </div>
 
         {/* MasonryGallery with Skyline layout */}
