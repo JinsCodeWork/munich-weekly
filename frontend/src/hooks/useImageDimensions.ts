@@ -22,6 +22,9 @@ export interface ImageDimensionsResult {
   totalImages: number;
   loadedImages: number;
   retryFailedImages: () => void;
+  // Progressive loading support
+  isProgressiveReady: boolean; // True when progressive threshold is reached
+  progressiveLoadedCount: number; // Number of images loaded for progressive display
 }
 
 /**
@@ -32,16 +35,21 @@ export interface ImageDimensionConfig {
   retryAttempts: number; // Number of retry attempts for failed images
   batchSize: number; // Number of images to load concurrently
   cacheDuration: number; // Cache duration in milliseconds
+  // Progressive loading configuration
+  progressiveThreshold?: number; // Number of images to load before enabling progressive display
+  enableProgressiveLoading?: boolean; // Enable progressive loading feature
 }
 
 /**
- * Default configuration
+ * Default configuration optimized for mobile performance
  */
 const DEFAULT_CONFIG: ImageDimensionConfig = {
-  timeout: 10000, // 10 seconds
+  timeout: 6000, // Reduced from 10s to 6s for faster mobile experience
   retryAttempts: 2,
-  batchSize: 6, // Load 6 images at a time
+  batchSize: 4, // Reduced from 6 to 4 for mobile optimization
   cacheDuration: 24 * 60 * 60 * 1000, // 24 hours
+  progressiveThreshold: 6, // Start progressive display after 6 images
+  enableProgressiveLoading: true,
 };
 
 /**
@@ -127,12 +135,12 @@ function loadImageDimensions(
 }
 
 /**
- * Custom hook for batch loading image dimensions with progress tracking
- * Supports caching, retry logic, and concurrent loading control
+ * Custom hook for batch loading image dimensions with progressive loading support
+ * Supports caching, retry logic, concurrent loading control, and progressive display
  * 
  * @param imageUrls - Array of image URLs to load dimensions for
- * @param config - Configuration options
- * @returns ImageDimensionsResult with dimensions map and loading state
+ * @param config - Configuration options including progressive loading
+ * @returns ImageDimensionsResult with dimensions map, loading state, and progressive indicators
  */
 export function useImageDimensions(
   imageUrls: string[],
@@ -146,6 +154,9 @@ export function useImageDimensions(
   const loadingRef = useRef<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   
+  // Progressive loading state
+  const [progressiveLoadedCount, setProgressiveLoadedCount] = useState(0);
+  
   // **FIX: Better array comparison without sorting original array**
   const imageUrlsRef = useRef<string[]>([]);
   const [urlsHash, setUrlsHash] = useState<string>('');
@@ -155,10 +166,12 @@ export function useImageDimensions(
   if (currentUrlsHash !== urlsHash) {
     imageUrlsRef.current = imageUrls;
     setUrlsHash(currentUrlsHash);
+    // Reset progressive counter when URLs change
+    setProgressiveLoadedCount(0);
   }
 
   /**
-   * Load dimensions for a batch of images with concurrency control
+   * Load dimensions for a batch of images with concurrency control and progressive updates
    */
   const loadBatch = useCallback(async (urls: string[], startIndex: number = 0) => {
     const batch = urls.slice(startIndex, startIndex + mergedConfig.batchSize);
@@ -188,10 +201,13 @@ export function useImageDimensions(
     
     setDimensions(prev => {
       const newDimensions = new Map(prev);
+      let newlyLoadedCount = 0;
       
       results.forEach((result) => {
         if (result.status === 'fulfilled' && result.value.dimension) {
+          const wasNew = !newDimensions.has(result.value.url);
           newDimensions.set(result.value.url, result.value.dimension);
+          if (wasNew) newlyLoadedCount++;
         } else if (result.status === 'fulfilled' && result.value.error) {
           // Set error state for failed images
           newDimensions.set(result.value.url, {
@@ -204,6 +220,11 @@ export function useImageDimensions(
         }
       });
       
+      // Update progressive counter
+      if (newlyLoadedCount > 0) {
+        setProgressiveLoadedCount(prev => prev + newlyLoadedCount);
+      }
+      
       return newDimensions;
     });
 
@@ -214,14 +235,14 @@ export function useImageDimensions(
 
     // Load next batch if there are more URLs
     if (startIndex + batch.length < urls.length) {
-      // Small delay to prevent overwhelming the browser
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Small delay to prevent overwhelming the browser on mobile
+      await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay for mobile
       await loadBatch(urls, startIndex + batch.length);
     }
   }, [mergedConfig.batchSize, mergedConfig.timeout, mergedConfig.cacheDuration]);
 
   /**
-   * Start loading all images
+   * Start loading all images with progressive support
    */
   const loadAllImages = useCallback(async () => {
     const currentUrls = imageUrlsRef.current;
@@ -236,6 +257,7 @@ export function useImageDimensions(
       
       // Reset state
       setLoadingProgress(0);
+      setProgressiveLoadedCount(0);
       
       // Filter out empty URLs
       const validUrls = currentUrls.filter(url => url && url.trim() !== '');
@@ -276,6 +298,9 @@ export function useImageDimensions(
       // Clear from cache as well
       failedUrls.forEach(url => dimensionCache.delete(url));
       
+      // Reset progressive counter
+      setProgressiveLoadedCount(0);
+      
       // Restart loading
       loadingRef.current = false;
       loadAllImages();
@@ -305,6 +330,12 @@ export function useImageDimensions(
     .map(dim => dim.error!)
     .filter((error, index, array) => array.indexOf(error) === index); // Remove duplicates
 
+  // Progressive loading calculations
+  const progressiveThreshold = mergedConfig.progressiveThreshold || DEFAULT_CONFIG.progressiveThreshold!;
+  const enableProgressive = mergedConfig.enableProgressiveLoading ?? DEFAULT_CONFIG.enableProgressiveLoading ?? true;
+  const isProgressiveReady = enableProgressive && 
+    progressiveLoadedCount >= Math.min(progressiveThreshold, totalImages);
+
   return {
     dimensions,
     loadingProgress,
@@ -313,6 +344,9 @@ export function useImageDimensions(
     totalImages,
     loadedImages,
     retryFailedImages,
+    // Progressive loading results
+    isProgressiveReady,
+    progressiveLoadedCount,
   };
 }
 

@@ -89,8 +89,8 @@ export default function VotePage() {
   const getImageUrl = useCallback((submission: Submission) => submission.imageUrl, []);
   const getSubmissionId = useCallback((submission: Submission) => submission.id, []);
 
-  // **FIX: Stable render function that only changes when callback dependencies change**
-  const renderSubmissionCard = useCallback((submission: Submission, isWide: boolean, aspectRatio: number) => (
+  // **Enhanced render function with progressive loading support**
+  const renderSubmissionCard = useCallback((submission: Submission, isWide: boolean, aspectRatio: number, isLoaded: boolean) => (
     <MasonrySubmissionCard
       submission={submission}
       isWide={isWide}
@@ -98,6 +98,7 @@ export default function VotePage() {
       displayContext="voteView"
       onVoteSuccess={handleVoteSuccess}
       onVoteCancelled={handleVoteCancelled}
+      isImageLoaded={isLoaded}
     />
   ), [handleVoteSuccess, handleVoteCancelled]);
 

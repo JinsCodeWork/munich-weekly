@@ -48,6 +48,9 @@ export interface SkylineMasonryLayoutResult<T = unknown> {
   avgAspectRatio: number;
   wideImageCount: number;
   orderingSource: '2col' | '4col' | 'fallback';
+  // Progressive loading support
+  isProgressiveReady: boolean; // True when progressive layout can be shown
+  progressiveItems: number; // Number of items ready for progressive display
 }
 
 /**
@@ -291,21 +294,29 @@ export function useSkylineMasonryLayout<T = unknown>(
     return columnCount <= 2 ? '2col' : '4col';
   }, [orderingState.data, columnCount]);
 
-  // **FIX: Stabilize layout calculation with better dependency handling**
+  // **FIX: Stabilize layout calculation with progressive loading support**
   const layoutResult = useMemo(() => {
     const heights: number[] = Array(columnCount).fill(0);
     const layoutItems: SkylineLayoutItem<T>[] = [];
     
     let loadedCount = 0;
+    let progressiveReadyCount = 0;
     const totalCount = orderedItems.length;
 
-    // **SKYLINE ALGORITHM** - O(N·C) one-pass positioning
+    // **SKYLINE ALGORITHM** - O(N·C) one-pass positioning with progressive support
     orderedItems.forEach((item) => {
       const dimensions = getDimensions(item);
       if (!dimensions) return;
 
       const { width: imgWidth, height: imgHeight, isLoaded } = dimensions;
-      if (isLoaded) loadedCount++;
+      if (isLoaded) {
+        loadedCount++;
+        progressiveReadyCount++;
+      } else {
+        // For unloaded images, we still include them in layout calculation with fallback dimensions
+        // This ensures consistent positioning as images load progressively
+        progressiveReadyCount++;
+      }
 
       // Determine if image is wide and calculate span
       const aspectRatio = imgWidth / imgHeight;
@@ -388,6 +399,10 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     const containerHeight = Math.max(...heights, 0);
     const loadingProgress = totalCount > 0 ? (loadedCount / totalCount) * 100 : 100;
+    
+    // Progressive layout readiness calculation
+    const progressiveThreshold = Math.min(6, Math.ceil(totalCount * 0.4)); // 40% or 6 items, whichever is smaller
+    const isProgressiveLayoutReady = progressiveReadyCount >= progressiveThreshold && progressiveReadyCount > 0;
 
     return {
       layoutItems,
@@ -396,6 +411,9 @@ export function useSkylineMasonryLayout<T = unknown>(
       totalItems: totalCount,
       loadedItems: loadedCount,
       loadingProgress,
+      // Progressive loading metrics
+      isProgressiveReady: isProgressiveLayoutReady,
+      progressiveItems: progressiveReadyCount,
     };
   }, [orderedItems, columnCount, currentColumnWidth, currentGap, mergedConfig.wideImageThreshold, mergedConfig.tabletBreakpoint, getDimensions, screenWidth]);
 

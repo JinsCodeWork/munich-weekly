@@ -31,6 +31,11 @@ interface MasonrySubmissionCardProps {
    * @default false
    */
   showWideIndicator?: boolean;
+  /**
+   * Indicates if the image dimensions have been loaded (for progressive loading)
+   * @default true
+   */
+  isImageLoaded?: boolean;
 }
 
 /**
@@ -68,7 +73,8 @@ export function MasonrySubmissionCard({
   onVoteCancelled,
   className,
   enableHoverEffects = true,
-  showWideIndicator = false
+  showWideIndicator = false,
+  isImageLoaded = true
 }: MasonrySubmissionCardProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
@@ -205,10 +211,21 @@ export function MasonrySubmissionCard({
           className={cn(
             "relative overflow-hidden bg-gray-100",
             // Unified image container styles for both wide and regular images
-            "w-full"
+            "w-full",
+            // Progressive loading effects
+            !isImageLoaded && "animate-pulse"
           )}
           style={getAspectRatioStyle(aspectRatio)}
         >
+          {/* Progressive loading overlay */}
+          {!isImageLoaded && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 z-5">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+              </div>
+            </div>
+          )}
+          
           <Thumbnail
             src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
@@ -229,7 +246,10 @@ export function MasonrySubmissionCard({
             showErrorMessage={true}
             fallbackSrc="/placeholder.svg"
             quality={isWide ? 90 : 85}
-            className="" // Remove transform animations for better performance
+            className={cn(
+              "transition-opacity duration-500",
+              !isImageLoaded && "opacity-60"
+            )}
           />
           
           {/* Status badge - conditional rendering */}
