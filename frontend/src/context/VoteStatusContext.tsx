@@ -138,23 +138,30 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       return;
     }
     
-    // Filter out submissions that are already cached
-    const uncachedIds = submissionIds.filter(id => {
-      const cached = voteStatusMap.get(id);
-      return !cached || cached.hasVoted === null;
-    });
-    
-    if (uncachedIds.length === 0) {
-      console.log(`✅ VoteStatusContext: All ${submissionIds.length} submissions already cached`);
-      return;
-    }
-    
-    console.log(`🔍 VoteStatusContext: Batch checking vote status for ${uncachedIds.length}/${submissionIds.length} submissions`);
+    console.log(`🔍 VoteStatusContext: Batch checking vote status for ${submissionIds.length} submissions`);
     
     batchCheckInProgressRef.current = true;
     
-    // Set loading state for uncached submissions in a single update
+    // Filter out submissions that are already cached and set loading state
+    let uncachedIds: number[] = [];
+    let isFirstCheck = false;
+    
     setVoteStatusMap(prev => {
+      // Filter uncached submissions based on current state
+      uncachedIds = submissionIds.filter(id => {
+        const cached = prev.get(id);
+        return !cached || cached.hasVoted === null;
+      });
+      
+      if (uncachedIds.length === 0) {
+        console.log(`✅ VoteStatusContext: All ${submissionIds.length} submissions already cached`);
+        return prev; // No changes needed
+      }
+      
+      // Check if this is the first check (for global loading state)
+      isFirstCheck = prev.size === 0;
+      
+      // Set loading state for uncached submissions
       const newMap = new Map(prev);
       uncachedIds.forEach(id => {
         newMap.set(id, { hasVoted: null, isLoading: true });
@@ -162,8 +169,13 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       return newMap;
     });
     
+    // Exit early if all submissions are cached
+    if (uncachedIds.length === 0) {
+      batchCheckInProgressRef.current = false;
+      return;
+    }
+    
     // Only set global loading if this is the first batch check
-    const isFirstCheck = voteStatusMap.size === 0;
     if (isFirstCheck) {
       setIsInitialLoading(true);
     }
@@ -218,7 +230,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       }
       batchCheckInProgressRef.current = false;
     }
-  }, [voteStatusMap]);
+  }, []);
   
   const contextValue: VoteStatusContextType = {
     getVoteStatus,

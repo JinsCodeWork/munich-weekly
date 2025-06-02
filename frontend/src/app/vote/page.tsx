@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Submission } from '@/types/submission';
@@ -24,6 +24,9 @@ function VotePageContent() {
   const { issues, isLoading: issueLoading, error: issueError } = useIssues();
   const { batchCheckVoteStatus, isInitialLoading: isLoadingVoteStatus } = useVoteStatus();
   
+  // Use ref to track current issue ID to prevent unnecessary re-renders
+  const currentIssueIdRef = useRef<number | null>(null);
+  
   // Get current issue - only issues within voting period should be shown
   const currentIssue = useMemo(() => {
     const now = new Date();
@@ -42,8 +45,15 @@ function VotePageContent() {
     return null; // No issues are currently in voting period
   }, [issues]);
 
-  // Load submissions for current issue
+  // Load submissions for current issue - removed from useEffect dependencies
   const loadSubmissionsForIssue = useCallback(async (issueId: number) => {
+    // Prevent duplicate calls for the same issue
+    if (currentIssueIdRef.current === issueId) {
+      console.log(`⚠️ VotePage: Skipping duplicate load for issue ${issueId}`);
+      return;
+    }
+    
+    currentIssueIdRef.current = issueId;
     setIsLoadingSubmissions(true);
     setSubmissionError(null);
     
@@ -71,15 +81,17 @@ function VotePageContent() {
     }
   }, [batchCheckVoteStatus]);
 
-  // Load submissions when current issue is available
+  // Load submissions when current issue is available - simplified dependencies
   useEffect(() => {
-    if (currentIssue?.id) {
+    if (currentIssue?.id && currentIssue.id !== currentIssueIdRef.current) {
       loadSubmissionsForIssue(currentIssue.id);
     } else if (!issueLoading && !currentIssue) {
       // No current issue and not loading
+      currentIssueIdRef.current = null;
       setIsLoadingSubmissions(false);
     }
-  }, [currentIssue?.id, issueLoading, loadSubmissionsForIssue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIssue?.id, issueLoading]); // Intentionally exclude currentIssue and loadSubmissionsForIssue to prevent infinite loops
 
   // Stable callback functions with useCallback
   const handleVoteSuccess = useCallback((submissionId: number, newVoteCount?: number) => {
