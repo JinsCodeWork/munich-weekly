@@ -118,7 +118,8 @@ export function Thumbnail({
         onImageLoad(img.naturalWidth, img.naturalHeight, actualAspectRatio);
       }
       
-      console.log(`Image dimensions detected: ${img.naturalWidth}x${img.naturalHeight}, ratio: ${detected}, actual ratio: ${actualAspectRatio.toFixed(3)}`);
+      // Debug log (can be removed in production)
+      // console.log(`Image dimensions detected: ${img.naturalWidth}x${img.naturalHeight}, ratio: ${detected}, actual ratio: ${actualAspectRatio.toFixed(3)}`);
     };
     img.onerror = () => {
       setImageLoaded(true);

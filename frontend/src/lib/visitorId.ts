@@ -20,9 +20,6 @@ export const getOrGenerateVisitorId = (): string => {
       path: '/', // Make it available site-wide
       sameSite: 'Lax' // Recommended for most cases
     });
-    console.log('Generated new visitorId:', visitorId);
-  } else {
-    console.log('Found existing visitorId:', visitorId);
   }
   return visitorId;
 }; 

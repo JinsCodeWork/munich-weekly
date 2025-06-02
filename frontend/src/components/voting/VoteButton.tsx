@@ -56,7 +56,6 @@ export function VoteButton({
     if (!user) {
       const id = getOrGenerateVisitorId();
       setVisitorId(id);
-      console.log("VoteButton: Set visitorId:", id);
     }
   }, [user]);
 
@@ -79,7 +78,6 @@ export function VoteButton({
       if (!user && !visitorId) {
         const newVisitorId = getOrGenerateVisitorId();
         setVisitorId(newVisitorId);
-        console.log(`VoteButton: Generated new visitorId before vote: ${newVisitorId}`);
       }
       
       const response = await votesApi.submitVote(submissionId);
@@ -123,7 +121,6 @@ export function VoteButton({
       if (!user && !visitorId) {
         const newVisitorId = getOrGenerateVisitorId();
         setVisitorId(newVisitorId);
-        console.log(`VoteButton: Generated new visitorId before cancel vote: ${newVisitorId}`);
       }
       
       console.log(`Attempting to cancel vote for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}`);

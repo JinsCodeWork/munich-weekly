@@ -195,13 +195,11 @@ export function MasonryGallery<T = unknown>({
   // Performance tracking for progressive loading
   useEffect(() => {
     if (frontendDimensionsResult.isProgressiveReady && skylineLayoutResult.isProgressiveReady) {
-      const progressiveTime = performance.now();
-      console.log(`🚀 Progressive Layout Ready: ${progressiveTime.toFixed(2)}ms - ${frontendDimensionsResult.progressiveLoadedCount}/${frontendDimensionsResult.totalImages} images loaded`);
+      // console.log(`🚀 Progressive Layout Ready: ${progressiveTime.toFixed(2)}ms - ${frontendDimensionsResult.progressiveLoadedCount}/${frontendDimensionsResult.totalImages} images loaded`);
     }
     
     if (isLayoutReady) {
-      const completeTime = performance.now();
-      console.log(`✅ Complete Layout Ready: ${completeTime.toFixed(2)}ms - All ${frontendDimensionsResult.totalImages} images loaded`);
+      // console.log(`✅ Complete Layout Ready: ${completeTime.toFixed(2)}ms - All ${frontendDimensionsResult.totalImages} images loaded`);
     }
   }, [frontendDimensionsResult.isProgressiveReady, skylineLayoutResult.isProgressiveReady, isLayoutReady, frontendDimensionsResult.progressiveLoadedCount, frontendDimensionsResult.totalImages]);
 
