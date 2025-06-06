@@ -264,6 +264,7 @@ export function useSubmissionDimensions(
       loadingRef.current = false;
       abortControllerRef.current = null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mergedConfig.cacheDuration, mergedConfig.preferStoredDimensions]);
 
   /**

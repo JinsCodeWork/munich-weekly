@@ -139,8 +139,16 @@ export function SubmissionCard({
             src={displayUrl || '/placeholder.svg'}
             alt={submission.description}
             fill={true}
+            
+            // 🎯 性能优化：在瀑布流模式下优先使用存储的图片尺寸数据
+            precomputedDimensions={layoutMode === 'masonry' && submission.imageWidth && submission.imageHeight ? {
+              width: submission.imageWidth,
+              height: submission.imageHeight,
+              aspectRatio: submission.aspectRatio || (submission.imageWidth / submission.imageHeight)
+            } : undefined}
+            
             aspectRatio={layoutMode === 'masonry' ? 'auto' : 'square'}
-            autoDetectAspectRatio={layoutMode === 'masonry'}
+            autoDetectAspectRatio={layoutMode === 'masonry' && (!submission.imageWidth || !submission.imageHeight)}
             preserveAspectRatio={layoutMode === 'masonry'}
             objectFit={layoutMode === 'masonry' ? 'contain' : 'cover'}
             objectPosition={layoutMode === 'grid' ? 'center' : undefined}

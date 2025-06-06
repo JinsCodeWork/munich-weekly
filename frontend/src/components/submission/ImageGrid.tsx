@@ -138,9 +138,17 @@ export function ImageGrid({
               src={submission.imageUrl || '/placeholder.svg'}
               alt={submission.description || 'No description'}
               fill={true}
+              
+              // 🎯 性能优化：优先使用存储的图片尺寸数据
+              precomputedDimensions={submission.imageWidth && submission.imageHeight ? {
+                width: submission.imageWidth,
+                height: submission.imageHeight,
+                aspectRatio: submission.aspectRatio || (submission.imageWidth / submission.imageHeight)
+              } : undefined}
+              
               aspectRatio={aspectRatio === 'mixed' ? getItemAspectRatio(index) : aspectRatio}
               objectFit={getObjectFitForItem(submission, getItemAspectRatio(index))}
-              autoDetectAspectRatio={true}
+              autoDetectAspectRatio={!submission.imageWidth || !submission.imageHeight}
               preserveAspectRatio={true}
               className="transition-all duration-300 group-hover:brightness-90"
               containerClassName="cursor-pointer"

@@ -39,23 +39,6 @@ export default function DataMigrationPage() {
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
 
-  // Auto-refresh status during migration
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    
-    if (migrationStatus?.inProgress) {
-      intervalId = setInterval(() => {
-        fetchMigrationStatus();
-      }, 2000); // Refresh every 2 seconds during migration
-    }
-    
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [migrationStatus?.inProgress]);
-
   const fetchMigrationStatus = useCallback(async () => {
     if (!token) return;
     
@@ -74,6 +57,24 @@ export default function DataMigrationPage() {
       console.error('Error fetching migration status:', err);
     }
   }, [token]);
+
+  // Auto-refresh status during migration
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (migrationStatus?.inProgress) {
+      intervalId = setInterval(() => {
+        fetchMigrationStatus();
+      }, 2000); // Refresh every 2 seconds during migration
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [migrationStatus?.inProgress, fetchMigrationStatus]);
+  // fetchMigrationStatus 现在在上面定义，可以正常添加到依赖
 
   const analyzeSubmissions = useCallback(async () => {
     if (!token) return;
@@ -161,7 +162,9 @@ export default function DataMigrationPage() {
       fetchMigrationStatus();
       analyzeSubmissions();
     }
-  }, [isAdmin, fetchMigrationStatus, analyzeSubmissions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+  // fetchMigrationStatus 和 analyzeSubmissions 已使用 useCallback 包装
 
   // Loading state
   if (loading) {

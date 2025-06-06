@@ -296,6 +296,7 @@ export function MasonryGallery<T = unknown>({
     }
     
     lastOptimizationRef.current = current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frontendDimensionsResult.storedDimensionsCount, frontendDimensionsResult.dynamicFetchCount, frontendDimensionsResult.totalImages, isSubmissions]);
 
   // **FIX: Use direct access to latest dimensions**
@@ -381,7 +382,7 @@ export function MasonryGallery<T = unknown>({
     
     // Layout state tracking - removed debug logging for cleaner console
     lastLayoutRef.current = current;
-  }, [isLayoutReady, isProgressiveReady, forceDisplay, skylineLayoutResult]);
+  }, [isLayoutReady, isProgressiveReady, forceDisplay, skylineLayoutResult.layoutItems.length]);
 
   // Performance tracking for progressive loading
   useEffect(() => {

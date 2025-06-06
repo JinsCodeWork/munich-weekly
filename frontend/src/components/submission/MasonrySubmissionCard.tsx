@@ -98,14 +98,22 @@ export function MasonrySubmissionCard({
   const displayUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   const fullImageUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
-  // 调试信息：特别标记3648x5472的处理
-  if (imageUrl && (imageUrl.includes('3648') || imageUrl.includes('5472'))) {
+  // 调试信息：特别标记3648x5472的处理 - 减少输出频率
+  if (process.env.NODE_ENV === 'development' && 
+      imageUrl && 
+      (imageUrl.includes('3648') || imageUrl.includes('5472')) &&
+      submission.imageWidth && submission.imageHeight) {
     console.log('MasonrySubmissionCard - 3648x5472 图片处理:', {
       aspectRatio: aspectRatio.toFixed(3),
       isWide,
       imageUrl: imageUrl.substring(0, 50) + '...',
       willUseCover: true,
-      willUseTopPosition: true
+      willUseTopPosition: true,
+      // 🎯 新增：显示是否使用了预计算数据
+      hasPrecomputedData: !!(submission.imageWidth && submission.imageHeight),
+      storedWidth: submission.imageWidth,
+      storedHeight: submission.imageHeight,
+      storedAspectRatio: submission.aspectRatio
     });
   }
   
@@ -226,31 +234,49 @@ export function MasonrySubmissionCard({
             </div>
           )}
           
-          <Thumbnail
-            src={displayUrl || '/placeholder.svg'}
-            alt={submission.description}
-            fill={true}
-            aspectRatio="auto" // Let Thumbnail handle aspect ratio detection
-            autoDetectAspectRatio={true} // Enable aspect ratio detection
-            preserveAspectRatio={true} // Preserve image aspect ratio
-            // 智能选择objectFit：对于瀑布流布局，优先避免灰色背景
-            objectFit={aspectRatio >= 1 ? "cover" : "cover"} // 统一使用cover避免灰色背景
-            // 竖图使用top定位，优先显示上半部分内容
-            objectPosition={aspectRatio >= 1 ? "top" : "top"}
-            sizes={isWide 
-              ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
-              : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
-            }
-            priority={false}
-            unoptimized={imageUrl.startsWith('/uploads/')}
-            showErrorMessage={true}
-            fallbackSrc="/placeholder.svg"
-            quality={isWide ? 90 : 85}
-            className={cn(
-              "transition-opacity duration-500",
-              !isImageLoaded && "opacity-60"
-            )}
-          />
+          {/* 🎯 条件渲染：只在有有效图片时渲染 Thumbnail */}
+          {hasValidImage ? (
+            <Thumbnail
+              src={displayUrl}
+              alt={submission.description}
+              fill={true}
+              
+              // 🎯 性能优化：优先使用存储的图片尺寸数据
+              precomputedDimensions={submission.imageWidth && submission.imageHeight ? {
+                width: submission.imageWidth,
+                height: submission.imageHeight,
+                aspectRatio: submission.aspectRatio || (submission.imageWidth / submission.imageHeight)
+              } : undefined}
+              
+              // 🎯 向后兼容：只在没有存储数据时才使用自动检测
+              aspectRatio="auto"
+              autoDetectAspectRatio={!submission.imageWidth || !submission.imageHeight}
+              preserveAspectRatio={true}
+              
+              // 智能选择objectFit：对于瀑布流布局，优先避免灰色背景
+              objectFit={aspectRatio >= 1 ? "cover" : "cover"} // 统一使用cover避免灰色背景
+              // 竖图使用top定位，优先显示上半部分内容
+              objectPosition={aspectRatio >= 1 ? "top" : "top"}
+              sizes={isWide 
+                ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
+                : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
+              }
+              priority={false}
+              unoptimized={imageUrl.startsWith('/uploads/')}
+              showErrorMessage={true}
+              fallbackSrc="/placeholder.svg"
+              quality={isWide ? 90 : 85}
+              className={cn(
+                "transition-opacity duration-500",
+                !isImageLoaded && "opacity-60"
+              )}
+            />
+          ) : (
+            // 🎯 无效图片时显示占位符，避免 Thumbnail 组件的无效计算
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">No Image</span>
+            </div>
+          )}
           
           {/* Status badge - conditional rendering */}
           {showStatusBadge && (

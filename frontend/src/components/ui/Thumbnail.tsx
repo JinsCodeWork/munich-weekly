@@ -30,6 +30,21 @@ export interface ThumbnailProps {
    * Useful for masonry layouts that need aspect ratio information
    */
   onImageLoad?: (width: number, height: number, aspectRatio: number) => void;
+  /**
+   * 预计算的图片尺寸信息 - 优先级最高
+   * 当提供此信息时，将跳过所有自动检测逻辑，直接使用存储的比例数据
+   * @since v2.0 - Performance optimization for masonry layouts
+   */
+  precomputedDimensions?: {
+    width: number;
+    height: number;
+    aspectRatio: number;
+  };
+  /**
+   * 是否优先使用预计算数据
+   * @default true
+   */
+  preferPrecomputedData?: boolean;
 }
 
 /**
@@ -61,7 +76,9 @@ export function Thumbnail({
   useImageOptimization = true,
   autoDetectAspectRatio = true,
   preserveAspectRatio = true,
-  onImageLoad
+  onImageLoad,
+  precomputedDimensions,
+  preferPrecomputedData = true
 }: ThumbnailProps) {
   const [hasError, setHasError] = useState(false);
   const [detectedRatio, setDetectedRatio] = useState<keyof typeof aspectRatioVariants | null>(null);
@@ -104,6 +121,38 @@ export function Thumbnail({
   
   // 图片尺寸检测
   useEffect(() => {
+    // 🎯 性能优化：如果有预计算数据，直接使用，跳过检测
+    if (precomputedDimensions && preferPrecomputedData) {
+      const detectedType = detectAspectRatio(
+        precomputedDimensions.width, 
+        precomputedDimensions.height
+      );
+      setDetectedRatio(detectedType);
+      setImageLoaded(true);
+      
+      // 触发回调，使用存储的精确数据
+      if (onImageLoad) {
+        onImageLoad(
+          precomputedDimensions.width, 
+          precomputedDimensions.height, 
+          precomputedDimensions.aspectRatio
+        );
+      }
+      
+      // 调试日志：显示使用了预计算数据 - 减少日志频率
+      if (process.env.NODE_ENV === 'development' && !detectedRatio) {
+        console.log('Thumbnail: Using precomputed dimensions', {
+          src: src.substring(0, 30) + '...',
+          width: precomputedDimensions.width,
+          height: precomputedDimensions.height,
+          aspectRatio: precomputedDimensions.aspectRatio.toFixed(3),
+          detectedType
+        });
+      }
+      return;
+    }
+    
+    // 原有逻辑：对于没有预计算数据的情况，使用自动检测
     if (!isValidSrc || !autoDetectAspectRatio) return;
     
     const img = new window.Image();
@@ -119,7 +168,9 @@ export function Thumbnail({
       }
       
       // Debug log (can be removed in production)
-      // console.log(`Image dimensions detected: ${img.naturalWidth}x${img.naturalHeight}, ratio: ${detected}, actual ratio: ${actualAspectRatio.toFixed(3)}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Thumbnail: Dynamic detection completed ${img.naturalWidth}x${img.naturalHeight}, ratio: ${detected}`);
+      }
     };
     img.onerror = () => {
       setImageLoaded(true);
@@ -128,12 +179,39 @@ export function Thumbnail({
     // 使用处理过的图片源进行检测
     const processedSrc = getProcessedSrc();
     img.src = processedSrc;
-  }, [src, autoDetectAspectRatio, isValidSrc, getProcessedSrc, onImageLoad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // 🎯 优化依赖数组：只在关键数据变化时重新执行
+    precomputedDimensions?.width, 
+    precomputedDimensions?.height, 
+    precomputedDimensions?.aspectRatio,
+    preferPrecomputedData, 
+    src, 
+    autoDetectAspectRatio, 
+    isValidSrc
+    // 故意省略 detectedRatio, getProcessedSrc, onImageLoad 避免无限循环
+    // getProcessedSrc 是稳定的 useCallback，onImageLoad 通常来自父组件且可能频繁变化
+    // detectedRatio 是本组件的状态，加入会导致循环
+  ]);
   
   // 确定最终使用的宽高比
   const finalAspectRatio = (() => {
+    // 🎯 优先级1: 使用预计算的宽高比数据 (性能优化)
+    if (precomputedDimensions && preferPrecomputedData) {
+      const detectedType = detectAspectRatio(
+        precomputedDimensions.width, 
+        precomputedDimensions.height
+      );
+      // 如果指定了固定的 aspectRatio，使用指定的；否则使用检测到的类型
+      return aspectRatio !== 'auto' ? aspectRatio : detectedType;
+    }
+    
+    // 🎯 优先级2: 使用传入的固定 aspectRatio
     if (aspectRatio !== 'auto') return aspectRatio;
+    
+    // 🎯 优先级3: 使用自动检测的结果 (fallback for legacy data)
     if (detectedRatio && autoDetectAspectRatio) return detectedRatio;
+    
     return 'square'; // 后备选项
   })();
   
@@ -390,27 +468,23 @@ export function Thumbnail({
       })
     : processedSrc;
   
-  // 打印最终使用的参数（调试用）
-  if (src.includes('.r2.dev/') || src.startsWith('/uploads/')) {
+  // 打印最终使用的参数（调试用） - 减少日志输出
+  if (process.env.NODE_ENV === 'development' && 
+      (src.includes('.r2.dev/') || src.startsWith('/uploads/')) &&
+      precomputedDimensions) { // 只在使用预计算数据时输出一次
     const imageAspectRatio = detectedRatio ? getImageAspectRatio(detectedRatio) : null;
     const sixteenNineRatio = 16/9;
     const isCloseToSixteenNine = imageAspectRatio ? Math.abs(imageAspectRatio - sixteenNineRatio) <= 0.08 : false;
     
-    console.log('Thumbnail参数:', {
+    console.log('Thumbnail参数 (预计算):', {
       src: src.substring(0, 50) + '...',
       detectedRatio,
       imageAspectRatio: imageAspectRatio ? imageAspectRatio.toFixed(3) : null,
       isCloseToSixteenNine,
-      sixteenNineRatio: sixteenNineRatio.toFixed(3),
       finalAspectRatio,
       finalObjectFit,
       finalObjectPosition,
-      safeObjectPosition,
-      isMobile,
-      preserveAspectRatio,
-      imageSrc: imageSrc.substring(0, 80) + '...',
-      // 特别标记3648x5472的处理
-      isTargetDimension: src.includes('3648') || src.includes('5472')
+      usingPrecomputed: !!precomputedDimensions
     });
   }
     
