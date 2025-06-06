@@ -20,6 +20,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
 
+// 🔧 新增：专业的EXIF元数据读取库
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifIFD0Directory;
+
 /**
  * Enhanced service for fetching and caching image dimensions.
  * Provides optimized dimension retrieval with submission entity integration
@@ -309,6 +314,7 @@ public class ImageDimensionService {
     /**
      * Get image dimensions by reading only the image header data (efficient)
      * This downloads just enough bytes to determine dimensions
+     * 🔧 修复：使用专业的metadata-extractor库正确处理EXIF旋转信息
      */
     private ImageDimensions getImageDimensionsFromPartialDownload(String imageUrl) {
         HttpURLConnection connection = null;
@@ -345,9 +351,63 @@ public class ImageDimensionService {
             ImageReader reader = readers.next();
             try {
                 reader.setInput(imageInputStream);
+                
+                // 获取原始存储尺寸
                 int width = reader.getWidth(0);
                 int height = reader.getHeight(0);
-                return new ImageDimensions(width, height);
+                
+                logger.info("原始图片尺寸: {}x{} (URL: {})", width, height, imageUrl);
+                
+                // 🎯 使用专业的metadata-extractor库读取EXIF信息
+                boolean needsRotation = false;
+                try {
+                    // 重新打开连接读取完整的EXIF数据
+                    inputStream.close();
+                    connection.disconnect();
+                    
+                    connection = createConnection(imageUrl);
+                    connection.setRequestMethod("GET");
+                    connection.setRequestProperty("Range", "bytes=0-131071"); // 增加到128KB确保完整EXIF
+                    
+                    inputStream = connection.getInputStream();
+                    
+                    // 使用metadata-extractor读取EXIF数据
+                    Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
+                    ExifIFD0Directory exifDirectory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+                    
+                    if (exifDirectory != null && exifDirectory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                        int orientation = exifDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                        logger.info("EXIF Orientation读取成功: {} (URL: {})", orientation, imageUrl);
+                        
+                        // EXIF Orientation值：
+                        // 1 = 正常，不旋转
+                        // 3 = 180度旋转
+                        // 6 = 90度顺时针旋转 (需要交换宽高)
+                        // 8 = 90度逆时针旋转 (需要交换宽高) - 对应 "Rotate 270 CW"
+                        
+                        if (orientation == 6 || orientation == 8) {
+                            needsRotation = true;
+                            logger.info("EXIF Orientation = {}, 需要交换宽高", orientation);
+                        } else {
+                            logger.info("EXIF Orientation = {}, 无需交换宽高", orientation);
+                        }
+                    } else {
+                        logger.info("未找到EXIF Orientation信息，保持原始尺寸 (URL: {})", imageUrl);
+                    }
+                } catch (Exception e) {
+                    logger.warn("读取EXIF元数据时发生异常: {} (URL: {})", e.getMessage(), imageUrl);
+                }
+                
+                // 🔧 如果检测到需要旋转（90度或270度），交换宽高
+                if (needsRotation) {
+                    logger.info("应用EXIF旋转，交换宽高: {}x{} -> {}x{} (URL: {})", 
+                            width, height, height, width, imageUrl);
+                    return new ImageDimensions(height, width); // 交换宽高
+                } else {
+                    logger.info("无需EXIF旋转，使用原始尺寸: {}x{} (URL: {})", width, height, imageUrl);
+                    return new ImageDimensions(width, height);
+                }
+                
             } finally {
                 reader.dispose();
             }
