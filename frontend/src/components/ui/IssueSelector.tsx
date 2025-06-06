@@ -26,10 +26,13 @@ export function IssueSelector({
   showDetails = true
 }: IssueSelectorProps) {
   
+  // Sort issues by ID in descending order (newest first)
+  const sortedIssues = [...issues].sort((a, b) => b.id - a.id);
+  
   // Handle selection change
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const issueId = parseInt(e.target.value);
-    const selected = issues.find(issue => issue.id === issueId) || null;
+    const selected = sortedIssues.find(issue => issue.id === issueId) || null;
     onSelectIssue(selected);
   };
   
@@ -46,7 +49,7 @@ export function IssueSelector({
           onChange={handleSelectChange}
         >
           <option value="">{placeholder}</option>
-          {issues.map(issue => (
+          {sortedIssues.map(issue => (
             <option key={issue.id} value={issue.id}>
               {issue.title}
             </option>
@@ -64,14 +67,14 @@ export function IssueSelector({
             <div className="flex items-center mb-1">
               <i className="fa-regular fa-calendar-alt mr-2"></i>
               <span>
-                Submission period: {formatDate(selectedIssue.submissionStart)} - {formatDate(selectedIssue.submissionEnd)}
+                Submission period: {formatDate(selectedIssue.submissionStart)} - {formatDate(selectedIssue.submissionEnd)} (CET)
               </span>
             </div>
             
             <div className="flex items-center">
               <i className="fa-regular fa-clock mr-2"></i>
               <span>
-                Voting period: {formatDate(selectedIssue.votingStart)} - {formatDate(selectedIssue.votingEnd)}
+                Voting period: {formatDate(selectedIssue.votingStart)} - {formatDate(selectedIssue.votingEnd)} (CET)
               </span>
             </div>
           </div>

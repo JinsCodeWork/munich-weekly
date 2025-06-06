@@ -36,7 +36,9 @@ export default function ManageIssuesPage() {
       
       try {
         const data = await getAllIssues();
-        setIssues(data);
+        // Sort issues by ID in descending order (newest first)
+        const sortedIssues = (data || []).sort((a, b) => b.id - a.id);
+        setIssues(sortedIssues);
       } catch (err) {
         console.error('Failed to fetch issues:', err);
         setError('Failed to load issues. Please try again.');

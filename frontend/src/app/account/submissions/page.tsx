@@ -97,7 +97,9 @@ export default function SubmissionsPage() {
   const loadIssues = async () => {
     try {
       const issuesData = await issuesApi.getAllIssues()
-      setIssues(issuesData || [])
+      // Sort issues by ID in descending order (newest first)
+      const sortedIssues = (issuesData || []).sort((a, b) => b.id - a.id)
+      setIssues(sortedIssues)
     } catch (err) {
       console.error("Failed to load issues:", err)
       setIssues([])

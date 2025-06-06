@@ -39,7 +39,9 @@ export default function UsersManagementPage() {
 
       try {
         const data = await usersApi.getAllUsers();
-        setUsers(data);
+        // Sort users by ID in descending order (highest ID first)
+        const sortedUsers = (data || []).sort((a, b) => b.id - a.id);
+        setUsers(sortedUsers);
       } catch (err: unknown) {
         console.error("Failed to load users:", err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to load users. Please try again.';

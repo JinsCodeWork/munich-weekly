@@ -32,9 +32,11 @@ export function useSubmissions(useMockData: boolean = false, initialIssueId?: nu
     const loadIssues = async () => {
       try {
         const issuesData = await issuesApi.getAllIssues();
-        setIssues(issuesData || []);
-        if (!selectedIssue && issuesData && issuesData.length > 0) {
-          setSelectedIssue(issuesData[0].id);
+        // Sort issues by ID in descending order (newest first)
+        const sortedIssues = (issuesData || []).sort((a, b) => b.id - a.id);
+        setIssues(sortedIssues);
+        if (!selectedIssue && sortedIssues && sortedIssues.length > 0) {
+          setSelectedIssue(sortedIssues[0].id);
         }
       } catch (err) {
         console.error("Failed to load issues:", err);

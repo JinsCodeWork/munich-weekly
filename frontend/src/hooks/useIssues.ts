@@ -21,11 +21,13 @@ export function useIssues() {
       setError(null);
       
       const fetchedIssues = await getAllIssues();
-      setIssues(fetchedIssues || []);
+      // Sort issues by ID in descending order (newest first)
+      const sortedIssues = (fetchedIssues || []).sort((a, b) => b.id - a.id);
+      setIssues(sortedIssues);
       
       // Filter for active issues (within submission period)
       const now = new Date();
-      const active = fetchedIssues.filter(issue => {
+      const active = sortedIssues.filter(issue => {
         const submissionStart = new Date(issue.submissionStart);
         const submissionEnd = new Date(issue.submissionEnd);
         return submissionStart <= now && now <= submissionEnd;

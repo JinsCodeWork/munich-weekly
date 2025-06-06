@@ -213,7 +213,7 @@ function VotePageContent() {
             {currentIssue.description}
           </p>
           <div className="text-sm text-gray-500">
-            <p>Voting Period: {new Date(currentIssue.votingStart).toLocaleDateString()} - {new Date(currentIssue.votingEnd).toLocaleDateString()}</p>
+            <p>Voting Period: {new Date(currentIssue.votingStart).toLocaleDateString()} - {new Date(currentIssue.votingEnd).toLocaleDateString()} (CET)</p>
           </div>
           
           {/* Show subtle vote status loading indicator */}

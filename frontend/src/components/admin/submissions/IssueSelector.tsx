@@ -17,8 +17,11 @@ export function IssueSelector({ issues, selectedIssue, onIssueChange }: IssueSel
     onIssueChange(Number(e.target.value));
   };
   
+  // Sort issues by ID in descending order (newest first)
+  const sortedIssues = [...issues].sort((a, b) => b.id - a.id);
+  
   // Find the currently selected issue
-  const currentIssue = issues.find(i => i.id === selectedIssue);
+  const currentIssue = sortedIssues.find(i => i.id === selectedIssue);
 
   return (
     <div>
@@ -33,7 +36,7 @@ export function IssueSelector({ issues, selectedIssue, onIssueChange }: IssueSel
           value={selectedIssue || ""}
           onChange={handleIssueChange}
         >
-          {issues.map(issue => (
+          {sortedIssues.map(issue => (
             <option key={issue.id} value={issue.id}>
               Issue {issue.id} - {issue.title}
             </option>
@@ -53,11 +56,11 @@ export function IssueSelector({ issues, selectedIssue, onIssueChange }: IssueSel
           <div className="flex flex-wrap gap-4 text-xs text-gray-500">
             <div>
               <span className="font-medium">Submission Period:</span>{" "}
-              {formatDate(currentIssue.submissionStart)} - {formatDate(currentIssue.submissionEnd)}
+              {formatDate(currentIssue.submissionStart)} - {formatDate(currentIssue.submissionEnd)} (CET)
             </div>
             <div>
               <span className="font-medium">Voting Period:</span>{" "}
-              {formatDate(currentIssue.votingStart)} - {formatDate(currentIssue.votingEnd)}
+              {formatDate(currentIssue.votingStart)} - {formatDate(currentIssue.votingEnd)} (CET)
             </div>
           </div>
         </div>
