@@ -95,7 +95,7 @@ export function useSkylineMasonryLayout<T = unknown>(
   items: T[],
   issueId: number | null,
   config: Partial<SkylineMasonryConfig> = {},
-  getDimensions: (item: T) => { width: number; height: number; isLoaded: boolean } | null
+  getDimensions: (item: T) => { width: number; height: number; aspectRatio?: number; isLoaded: boolean } | null
 ): SkylineMasonryLayoutResult<T> {
   
   const mergedConfig = useMemo(() => {
@@ -307,24 +307,28 @@ export function useSkylineMasonryLayout<T = unknown>(
     orderedItems.forEach((item) => {
       const dimensions = getDimensions(item);
       
-      // **FIX: Use fallback dimensions for failed images to prevent layout breaking**
-      let imgWidth: number, imgHeight: number, isLoaded: boolean;
+      // **CORE: Use stored aspect ratio directly - no calculation needed**
+      let imgWidth: number, imgHeight: number, isLoaded: boolean, aspectRatio: number;
       
       if (!dimensions) {
-        // Use fallback dimensions for items without loaded dimensions
-        imgWidth = 400;  // Default fallback width
-        imgHeight = 300; // Default fallback height (4:3 aspect ratio)
+        // This should not happen for submissions with stored dimensions
+        console.warn('No dimensions available for item - this indicates a data issue');
+        imgWidth = 400;  
+        imgHeight = 300; 
+        aspectRatio = 1.33; // Use reasonable fallback
         isLoaded = false;
-        // Using fallback dimensions - removed debug logging for cleaner console
       } else {
         ({ width: imgWidth, height: imgHeight, isLoaded } = dimensions);
         
-        // **FIX: Validate dimensions to prevent NaN calculations**
+        // **CRITICAL: Always use stored aspect ratio - never calculate**
+        aspectRatio = dimensions.aspectRatio || 1.33;
+        
+        // Validate dimensions are positive
         if (!imgWidth || !imgHeight || imgWidth <= 0 || imgHeight <= 0) {
-          // Invalid dimensions, using fallback - removed debug logging for cleaner console
+          console.warn('Invalid stored dimensions - using fallback');
           imgWidth = 400;
           imgHeight = 300;
-          isLoaded = false;
+          // Keep using stored aspect ratio even with fallback dimensions
         }
       }
 
@@ -332,13 +336,10 @@ export function useSkylineMasonryLayout<T = unknown>(
         loadedCount++;
         progressiveReadyCount++;
       } else {
-        // For unloaded images, we still include them in layout calculation with fallback dimensions
-        // This ensures consistent positioning as images load progressively
         progressiveReadyCount++;
       }
 
-      // Determine if image is wide and calculate span
-      const aspectRatio = imgWidth / imgHeight;
+      // Determine if image is wide and calculate span using stored aspect ratio
       const isWide = aspectRatio >= mergedConfig.wideImageThreshold;
       const span = isWide ? Math.min(2, columnCount) : 1;
 

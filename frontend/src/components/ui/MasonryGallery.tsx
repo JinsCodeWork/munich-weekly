@@ -320,6 +320,7 @@ export function MasonryGallery<T = unknown>({
       return dimension ? { 
         width: dimension.width, 
         height: dimension.height,
+        aspectRatio: dimension.aspectRatio,
         isLoaded: dimension.isLoaded
       } : null;
     };
