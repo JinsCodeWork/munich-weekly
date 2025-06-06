@@ -29,6 +29,7 @@ public class SubmissionService {
     private final VoteRepository voteRepository;
     private final StorageService storageService;
     private final FileDownloadService fileDownloadService;
+    private final ImageDimensionService imageDimensionService;
     private static final int MAX_SUBMISSIONS_PER_ISSUE = 4;
 
     public SubmissionService(SubmissionRepository submissionRepository,
@@ -36,46 +37,96 @@ public class SubmissionService {
                              UserRepository userRepository,
                              VoteRepository voteRepository,
                              StorageService storageService,
-                             FileDownloadService fileDownloadService) {
+                             FileDownloadService fileDownloadService,
+                             ImageDimensionService imageDimensionService) {
         this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
         this.voteRepository = voteRepository;
         this.storageService = storageService;
         this.fileDownloadService = fileDownloadService;
+        this.imageDimensionService = imageDimensionService;
     }
 
+    /**
+     * Submit a new submission with enhanced tracking for later dimension optimization.
+     * Note: Image URL and dimensions are captured during the upload process,
+     * not during initial submission creation.
+     */
     public Submission submit(Long userId, SubmissionRequestDTO dto) {
-        // 1️⃣ 找用户
-        User user = userRepository.findById(userId).orElseThrow(() ->
-                new IllegalArgumentException("User not found"));
+        // Find user and issue
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Issue issue = issueRepository.findById(dto.getIssueId())
+                .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
 
-        // 2️⃣ 找对应期数
-        Issue issue = issueRepository.findById(dto.getIssueId()).orElseThrow(() ->
-                new IllegalArgumentException("Issue not found"));
-
-        // 3️⃣ 检查投稿时间是否开放
+        // Check submission timing
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(issue.getSubmissionStart()) || now.isAfter(issue.getSubmissionEnd())) {
             throw new IllegalStateException("Not in valid date range");
         }
 
-        // 4️⃣ 检查该用户是否已投了4张图
-        long count = submissionRepository.countByUserAndIssue(user, issue);
-        if (count >= MAX_SUBMISSIONS_PER_ISSUE) {
-            throw new IllegalStateException("Maximum " + MAX_SUBMISSIONS_PER_ISSUE + " submissions per issue");
+        // Check if user has reached the submission limit for this issue
+        List<Submission> existingSubmissions = submissionRepository.findByUserIdAndIssue(userId, issue);
+        if (existingSubmissions.size() >= MAX_SUBMISSIONS_PER_ISSUE) {
+            throw new IllegalArgumentException(
+                    "You can only submit a maximum of " + MAX_SUBMISSIONS_PER_ISSUE + " images per issue."
+            );
         }
-        
-        // 5️⃣ 验证描述长度，不能超过200个字符
+
+        // Validate description length
         if (dto.getDescription() != null && dto.getDescription().length() > 200) {
             throw new IllegalArgumentException("Description must be 200 characters or less");
         }
 
-        // 6️⃣ 创建投稿对象，状态为 pending
+        // Create submission entity (imageUrl will be set during upload)
         Submission submission = new Submission(user, issue, null, dto.getDescription());
         submission.setStatus("pending");
 
+        logger.info("Created new submission for user " + userId + " in issue " + dto.getIssueId() + 
+                   " (dimensions will be captured during upload)");
+
         return submissionRepository.save(submission);
+    }
+    
+    /**
+     * Update submission with image URL and capture dimensions for layout optimization.
+     * This method should be called after successful image upload to store both
+     * the image URL and its dimensions for improved masonry layout performance.
+     * 
+     * @param submissionId The submission ID to update
+     * @param imageUrl The uploaded image URL
+     */
+    public void updateSubmissionWithImageUrl(Long submissionId, String imageUrl) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+        
+        // Set the image URL
+        submission.setImageUrl(imageUrl);
+        
+        // **ENHANCEMENT: Capture image dimensions for layout optimization**
+        try {
+            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                ImageDimensions dimensions = imageDimensionService.fetchImageDimensionsForUpload(imageUrl);
+                
+                if (dimensions != null) {
+                    // Store dimensions in the submission entity for future layout optimization
+                    submission.setImageDimensions(dimensions.getWidth(), dimensions.getHeight());
+                    
+                    logger.info("Successfully captured image dimensions for submission " + submissionId + ": " +
+                               dimensions.getWidth() + "x" + dimensions.getHeight() + 
+                               " (aspect ratio: " + String.format("%.3f", dimensions.getAspectRatio()) + ")");
+                } else {
+                    logger.warning("Could not determine image dimensions for submission " + submissionId + 
+                                 " with URL: " + imageUrl);
+                }
+            }
+        } catch (Exception e) {
+            // Log but don't fail submission - dimension data is optional for backward compatibility
+            logger.warning("Failed to capture image dimensions for submission " + submissionId + ": " + e.getMessage());
+        }
+        
+        submissionRepository.save(submission);
     }
 
     public List<SubmissionResponseDTO> listApprovedByIssue(Long issueId) {
@@ -255,6 +306,74 @@ public class SubmissionService {
         logger.info("Creating ZIP for " + selectedSubmissions.size() + " selected submissions from issue: " + issue.getTitle());
         
         return fileDownloadService.createZipFromSubmissions(selectedSubmissions, issue.getTitle());
+    }
+
+    /**
+     * Get approved submission entities for masonry layout optimization.
+     * Returns submission entities instead of DTOs to provide access to stored dimension data
+     * and reduce the need for external API calls during layout calculation.
+     * 
+     * This method is optimized for the hybrid masonry layout approach where:
+     * - Stored dimensions in entities eliminate external dimension fetching
+     * - Backend provides optimal ordering with submission entity data
+     * - Frontend handles responsive positioning
+     * 
+     * @param issueId The issue ID to get approved submissions for
+     * @return List of approved Submission entities with dimension data when available
+     */
+    public List<Submission> getApprovedSubmissionEntities(Long issueId) {
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+        
+        // Get all approved and selected submissions (includes both statuses for voting display)
+        List<Submission> submissions = submissionRepository.findByIssueAndApprovedOrSelected(issue);
+        
+        logger.info("Retrieved " + submissions.size() + " approved submission entities for issue " + issueId + " (with dimension optimization)");
+        
+        // Log dimension data availability for performance monitoring
+        long withDimensions = submissions.stream()
+                .mapToLong(s -> s.hasDimensionData() ? 1 : 0)
+                .sum();
+        
+        if (withDimensions > 0) {
+            double percentage = (withDimensions * 100.0 / submissions.size());
+            logger.info("Dimension optimization: " + withDimensions + "/" + submissions.size() + 
+                       " submissions have stored dimensions (" + String.format("%.1f", percentage) + "%)");
+        }
+        
+        return submissions;
+    }
+
+    /**
+     * Get all submission entities for migration purposes.
+     * **ADMIN USE ONLY** - For data migration and analysis.
+     * 
+     * @return List of all submission entities
+     */
+    public List<Submission> getAllSubmissionEntities() {
+        logger.info("Retrieving all submission entities for migration analysis");
+        return submissionRepository.findAll();
+    }
+    
+    /**
+     * Update an existing submission entity.
+     * Used primarily for data migration to add dimension information.
+     * 
+     * @param submission The submission entity to update
+     * @return The updated submission
+     */
+    @Transactional
+    public Submission updateSubmission(Submission submission) {
+        if (submission == null || submission.getId() == null) {
+            throw new IllegalArgumentException("Submission and submission ID cannot be null");
+        }
+        
+        // Verify submission exists
+        if (!submissionRepository.existsById(submission.getId())) {
+            throw new IllegalArgumentException("Submission not found with ID: " + submission.getId());
+        }
+        
+        return submissionRepository.save(submission);
     }
 
     public SubmissionRepository getSubmissionRepository() {

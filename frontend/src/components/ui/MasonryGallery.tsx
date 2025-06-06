@@ -1,8 +1,22 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useImageDimensions } from '@/hooks/useImageDimensions';
+import { useImageDimensions, useSubmissionDimensions } from '@/hooks/useImageDimensions';
 import { useSkylineMasonryLayout, type SkylineMasonryConfig } from '@/hooks/useSkylineMasonryLayout';
 import { Button } from '@/components/ui/Button';
+import { Submission } from '@/types/submission';
+import { useAuth } from '@/context/AuthContext';
+
+/**
+ * Generic type guard to check if items are Submission objects
+ */
+function isSubmissionArray<T>(items: T[]): items is T[] & Submission[] {
+  return items.length > 0 && 
+         items.every(item => 
+           typeof (item as unknown as Submission)?.imageUrl === 'string' && 
+           typeof (item as unknown as Submission)?.description === 'string' &&
+           typeof (item as unknown as Submission)?.id === 'number'
+         );
+}
 
 /**
  * Default loading skeleton component with progressive loading support
@@ -41,8 +55,8 @@ function DefaultLoadingSkeleton({ columns, gap }: { columns: number; gap: number
  */
 function DefaultEmptyComponent() {
   return (
-    <div className="text-center py-8">
-      <p className="text-gray-500">No items to display</p>
+    <div className="text-center text-gray-500 py-12">
+      <p>No items to display</p>
     </div>
   );
 }
@@ -81,7 +95,7 @@ function DefaultErrorComponent({ errors, onRetry }: { errors: string[]; onRetry:
 export interface MasonryGalleryProps<T = unknown> {
   items: T[];
   getImageUrl: (item: T) => string;
-  getSubmissionId: (item: T) => number; // Required for skyline API
+  getSubmissionId: (item: T) => string | number;
   renderItem: (item: T, isWide: boolean, aspectRatio: number, isLoaded: boolean) => React.ReactNode;
   className?: string;
   loadingComponent?: React.ReactNode;
@@ -89,15 +103,18 @@ export interface MasonryGalleryProps<T = unknown> {
   errorComponent?: (errors: string[], onRetry: () => void) => React.ReactNode;
   onItemClick?: (item: T) => void;
   config?: Partial<SkylineMasonryConfig>;
-  issueId: number; // Required for skyline API
+  issueId?: number | null;
 }
 
 /**
  * MasonryGallery - Skyline layout component with backend ordering + frontend positioning
+ * **ENHANCED: Now automatically detects and optimizes for Submission objects with stored dimensions**
  * 
  * Architecture:
  * - Backend calculates optimal item ordering for 2-col and 4-col layouts
  * - Frontend uses Skyline algorithm for precise pixel positioning
+ * - **NEW: Automatically uses stored dimensions when available (Submission objects)**
+ * - **NEW: Falls back to dynamic fetching for legacy data or other object types**
  * - Built-in caching mechanism for performance optimization
  * 
  * @example
@@ -128,6 +145,10 @@ export function MasonryGallery<T = unknown>({
   issueId,
 }: MasonryGalleryProps<T>) {
   
+  // **NEW: Get user authentication context for admin features**
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  
   // Use different configs based on layout mode
   const skylineConfig = useMemo(() => {
     return config || {};
@@ -136,7 +157,6 @@ export function MasonryGallery<T = unknown>({
   const [currentColumnCount] = useState<number>(4);
   const [currentGap] = useState<number>(12);
 
-  // Frontend mode: Use image dimensions + skyline layout
   // **FIX: Use state-based comparison to allow proper updates while preventing infinite loops**
   const [itemsHash, setItemsHash] = useState<string>('');
   const itemsRef = useRef<T[]>([]);
@@ -181,8 +201,58 @@ export function MasonryGallery<T = unknown>({
     configRef.current = { isMobile, batchSize, timeout, progressiveThreshold, issueId };
   }
 
-  const frontendDimensionsResult = useImageDimensions(
-    items.map(getItemImageUrl),
+  // **NEW: Smart dimension loading - Use optimized hook for Submission objects**
+  const isSubmissions = isSubmissionArray(items);
+  
+  // **DEBUG: Log submission detection and data structure**
+  useEffect(() => {
+    console.log(`🔍 MasonryGallery DEBUG - Data Analysis:`, {
+      totalItems: items.length,
+      isSubmissions,
+      issueId,
+      firstItemSample: items.length > 0 ? {
+        type: typeof items[0],
+        hasImageUrl: !!(items[0] as unknown as Submission)?.imageUrl,
+        hasDescription: !!(items[0] as unknown as Submission)?.description, 
+        hasId: !!(items[0] as unknown as Submission)?.id,
+        hasImageWidth: !!(items[0] as unknown as Submission)?.imageWidth,
+        hasImageHeight: !!(items[0] as unknown as Submission)?.imageHeight,
+        hasAspectRatio: !!(items[0] as unknown as Submission)?.aspectRatio,
+        actualData: items[0]
+      } : null
+    });
+    
+    // Check all items for dimension data availability
+    if (items.length > 0) {
+      const withDimensions = items.filter(item => 
+        (item as unknown as Submission)?.imageWidth && 
+        (item as unknown as Submission)?.imageHeight && 
+        (item as unknown as Submission)?.aspectRatio
+      ).length;
+      
+      console.log(`📊 Dimension Data Analysis:`, {
+        itemsWithStoredDimensions: withDimensions,
+        totalItems: items.length,
+        percentageOptimized: items.length > 0 ? (withDimensions / items.length * 100).toFixed(1) + '%' : '0%'
+      });
+    }
+  }, [items, isSubmissions, issueId]);
+  
+  // **OPTIMIZATION: Use submission-aware hook when possible**
+  const optimizedDimensionsResult = useSubmissionDimensions(
+    isSubmissions ? (items as Submission[]) : [],
+    { 
+      batchSize,
+      timeout,
+      progressiveThreshold,
+      enableProgressiveLoading: true,
+      preferStoredDimensions: true,
+    }
+  );
+
+  // **FALLBACK: Use legacy hook for non-submission objects**
+  const legacyDimensionsResult = useImageDimensions(
+    !isSubmissions ? items.map(getItemImageUrl) : [],
     { 
       batchSize,
       timeout,
@@ -191,21 +261,42 @@ export function MasonryGallery<T = unknown>({
     }
   );
 
-  // **MOBILE DEBUG**: Log dimensions loading progress
-  const lastProgressRef = useRef({ progressiveLoadedCount: 0, errorCount: 0, isProgressiveReady: false });
+  // **SMART SELECTION: Choose the appropriate result based on data type**
+  const frontendDimensionsResult = isSubmissions ? optimizedDimensionsResult : legacyDimensionsResult;
+
+  // **PERFORMANCE LOGGING: Track optimization effectiveness**
+  const lastOptimizationRef = useRef({ 
+    storedCount: 0, 
+    dynamicCount: 0, 
+    optimizationPercentage: 0,
+    isSubmissions: false 
+  });
   
   useEffect(() => {
-    const { isProgressiveReady, progressiveLoadedCount, errors } = frontendDimensionsResult;
-    const current = { progressiveLoadedCount, errorCount: errors.length, isProgressiveReady };
-    const last = lastProgressRef.current;
+    const { storedDimensionsCount, dynamicFetchCount, totalImages } = frontendDimensionsResult;
+    const optimizationPercentage = totalImages > 0 ? (storedDimensionsCount / totalImages) * 100 : 0;
+    const current = { 
+      storedCount: storedDimensionsCount, 
+      dynamicCount: dynamicFetchCount, 
+      optimizationPercentage,
+      isSubmissions 
+    };
     
-    // Only log errors for debugging - removed other logs for cleaner console
-    if (errors.length > last.errorCount) {
-      console.warn(`⚠️ Image loading errors:`, errors.slice(last.errorCount, errors.length));
+    // Only log when optimization metrics change significantly
+    if (Math.abs(current.optimizationPercentage - lastOptimizationRef.current.optimizationPercentage) > 5 ||
+        current.isSubmissions !== lastOptimizationRef.current.isSubmissions) {
+      
+      console.log(`🎯 MasonryGallery Performance:`, {
+        mode: isSubmissions ? 'OPTIMIZED (Submissions)' : 'LEGACY (Generic)',
+        stored: storedDimensionsCount,
+        dynamic: dynamicFetchCount,
+        total: totalImages,
+        optimization: `${optimizationPercentage.toFixed(1)}%`
+      });
     }
     
-    lastProgressRef.current = current;
-  }, [frontendDimensionsResult.isProgressiveReady, frontendDimensionsResult.isAllLoaded, frontendDimensionsResult.progressiveLoadedCount, frontendDimensionsResult.errors.length, isMobile]);
+    lastOptimizationRef.current = current;
+  }, [frontendDimensionsResult.storedDimensionsCount, frontendDimensionsResult.dynamicFetchCount, frontendDimensionsResult.totalImages, isSubmissions]);
 
   // **FIX: Use direct access to latest dimensions**
   const skylineGetDimensions = useMemo(() => {
@@ -222,7 +313,7 @@ export function MasonryGallery<T = unknown>({
 
   const skylineLayoutResult = useSkylineMasonryLayout(
     items,
-    issueId,
+    issueId ?? null,
     skylineConfig,
     skylineGetDimensions
   );
@@ -325,6 +416,14 @@ export function MasonryGallery<T = unknown>({
   // Render progressive or complete layout (or forced display after timeout)
   return (
     <div className={cn('w-full', className)}>
+      {/* **NEW: Performance indicator for admin users only** */}
+      {isAdmin && isSubmissions && (
+        <div className="mb-2 text-xs text-gray-500 bg-gray-50 rounded p-2">
+          📊 Optimized: {frontendDimensionsResult.storedDimensionsCount} stored, {frontendDimensionsResult.dynamicFetchCount} dynamic 
+          ({frontendDimensionsResult.totalImages > 0 ? ((frontendDimensionsResult.storedDimensionsCount / frontendDimensionsResult.totalImages) * 100).toFixed(1) : 0}% optimized)
+        </div>
+      )}
+      
       <div 
         className="relative w-full overflow-hidden"
         style={{ height: skylineLayoutResult.containerHeight + 16 }}

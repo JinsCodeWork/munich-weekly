@@ -4,6 +4,7 @@ import com.munichweekly.backend.dto.FileUploadResponseDTO;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.service.StorageService;
+import com.munichweekly.backend.service.SubmissionService;
 import com.munichweekly.backend.service.R2StorageService;
 import com.munichweekly.backend.service.LocalStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
 import com.munichweekly.backend.devtools.annotation.Description;
 
 /**
- * REST controller for handling file uploads
+ * Enhanced REST controller for handling file uploads with image dimension optimization
  */
 @RestController
 @RequestMapping("/api/submissions")
@@ -37,32 +38,37 @@ public class FileUploadController {
     private static final Logger logger = Logger.getLogger(FileUploadController.class.getName());
     private final StorageService storageService;
     private final SubmissionRepository submissionRepository;
-    private final R2StorageService r2StorageService;  // 直接注入R2服务用于调试
+    private final SubmissionService submissionService; // **NEW: For dimension optimization**
+    private final R2StorageService r2StorageService;  // Direct R2 service for debugging
     private final LocalStorageService localStorageService;
 
     @Autowired
     public FileUploadController(StorageService storageService, 
                                SubmissionRepository submissionRepository,
+                               SubmissionService submissionService,
                                R2StorageService r2StorageService,
                                LocalStorageService localStorageService) {
         this.storageService = storageService;
         this.submissionRepository = submissionRepository;
+        this.submissionService = submissionService;
         this.r2StorageService = r2StorageService;
         this.localStorageService = localStorageService;
     }
 
     /**
-     * Upload an image file and associate it with a specific submission.
+     * Upload an image file and associate it with a specific submission with dimension optimization.
+     * Enhanced version that captures image dimensions during upload for improved masonry layout performance.
+     * 
      * The submissionId is used to look up the submission, and the image will be stored in the appropriate path (local or cloud).
-     * The imageUrl field of the submission will be updated after successful upload.
+     * After successful upload, both the imageUrl and image dimensions are captured and stored for layout optimization.
      */
-    @Description("Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.")
+    @Description("Upload an image file for a specific submission with dimension optimization. The image will be stored and its dimensions captured for improved layout performance.")
     @PostMapping("/{submissionId}/upload")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public ResponseEntity<FileUploadResponseDTO> uploadImageToSubmission(
             @PathVariable("submissionId") String submissionId,
             @RequestParam("file") MultipartFile file) {
-        logger.info("Starting image upload for submission ID: " + submissionId);
+        logger.info("Starting enhanced image upload for submission ID: " + submissionId);
         logger.info("File details - Name: " + file.getOriginalFilename() + 
                    ", Size: " + file.getSize() + " bytes, Content Type: " + file.getContentType());
         
@@ -84,9 +90,11 @@ public class FileUploadController {
             logger.info("Storing file with issueId: " + issueId + ", userId: " + userId + 
                        ", submissionId: " + submissionId);
             
-            // Store the file using the storage service
-            String imageUrl = storageService.storeFile(file, issueId, userId, submissionId);
-            logger.info("File successfully stored. URL: " + imageUrl);
+            // **ENHANCEMENT: Use new storeFileWithDimensions method for optimal performance**
+            StorageService.StorageResult storageResult = storageService.storeFileWithDimensions(file, issueId, userId, submissionId);
+            String imageUrl = storageResult.getUrl();
+            
+            logger.info("File successfully stored with dimensions. URL: " + imageUrl);
             
             // Check if the URL is valid and accessible
             if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -108,12 +116,24 @@ public class FileUploadController {
                         .body(new FileUploadResponseDTO(false, "Storage service returned invalid URL"));
             }
             
-            // Update database with the image URL
-            logger.info("Updating submission with image URL: " + imageUrl);
+            // **OPTIMIZED: Update submission with URL and dimensions in one operation**
             submission.setImageUrl(imageUrl);
+            
+            // If dimensions were extracted during upload, store them directly
+            if (storageResult.hasDimensions()) {
+                submission.setImageDimensions(
+                    storageResult.getDimensions().getWidth(), 
+                    storageResult.getDimensions().getHeight()
+                );
+                logger.info("Stored dimensions from upload: " + storageResult.getDimensions());
+            } else {
+                logger.info("No dimensions available from upload, submission will use dynamic fetching when needed");
+            }
+            
+            // Save the updated submission
             submissionRepository.save(submission);
             
-            logger.info("File upload process completed successfully");
+            logger.info("Enhanced file upload process completed successfully with optimal dimension handling");
             return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
             
         } catch (NumberFormatException e) {

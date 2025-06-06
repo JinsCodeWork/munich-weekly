@@ -74,6 +74,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/issues/**").hasAuthority("admin")   // PUT /api/issues/{id}
                         .requestMatchers(HttpMethod.DELETE, "/api/issues/**").hasAuthority("admin") // DELETE /api/issues/{id} (future)
                         
+                        // **NEW: Data migration endpoints - Admin only**
+                        .requestMatchers("/api/admin/migration/**").hasAuthority("admin")          // All migration operations
+                        
                         // User endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users/me").hasAnyAuthority("user", "admin")
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me").hasAnyAuthority("user", "admin")

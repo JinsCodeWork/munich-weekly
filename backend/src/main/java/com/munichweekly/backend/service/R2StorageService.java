@@ -1,5 +1,6 @@
 package com.munichweekly.backend.service;
 
+import com.munichweekly.backend.model.ImageDimensions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -29,17 +30,23 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 
 import jakarta.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation of StorageService that stores files in Cloudflare R2.
+ * Enhanced implementation of StorageService that stores files in Cloudflare R2
+ * with optimized image dimension extraction during upload.
  * Used for production environment.
  */
 @Service
@@ -208,7 +215,14 @@ public class R2StorageService implements StorageService {
      */
     @Override
     public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException {
-        logger.info("Starting file upload process:");
+        // Use the enhanced method but only return the URL for backward compatibility
+        StorageResult result = storeFileWithDimensions(file, issueId, userId, submissionId);
+        return result.getUrl();
+    }
+    
+    @Override
+    public StorageResult storeFileWithDimensions(MultipartFile file, String issueId, String userId, String submissionId) throws IOException {
+        logger.info("Starting enhanced R2 file upload with dimension extraction:");
         logger.info("File name: " + (file != null ? file.getOriginalFilename() : "null"));
         logger.info("File size: " + (file != null ? file.getSize() + " bytes" : "null"));
         logger.info("Content type: " + (file != null ? file.getContentType() : "null"));
@@ -222,6 +236,141 @@ public class R2StorageService implements StorageService {
             throw new IOException("R2 storage service is not properly initialized");
         }
         
+        // Validate file and parameters
+        validateFileAndParameters(file, issueId, userId, submissionId);
+        
+        // Get file extension
+        String originalFilename = file.getOriginalFilename();
+        String extension = getFileExtension(originalFilename);
+        
+        // **OPTIMIZATION: Extract dimensions from stream before uploading**
+        ImageDimensions dimensions = null;
+        byte[] fileBytes = null;
+        
+        try {
+            fileBytes = file.getBytes(); // Read file content once
+            dimensions = extractDimensionsFromBytes(fileBytes, file.getContentType());
+            
+            if (dimensions != null) {
+                logger.info("Successfully extracted dimensions during upload: " + dimensions);
+            } else {
+                logger.warning("Could not extract dimensions during upload for file: " + originalFilename);
+            }
+        } catch (Exception e) {
+            logger.warning("Failed to extract dimensions during upload: " + e.getMessage());
+            // Continue with file storage even if dimension extraction fails
+        }
+        
+        try {
+            // Generate unique file path with timestamp and provided IDs
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+            // File key structure: uploads/issues/{issueId}/submissions/{userId}_{submissionId}_{timestamp}.{ext}
+            String fileKey = String.format("uploads/issues/%s/submissions/%s_%s_%s.%s",
+                issueId, userId, submissionId, timestamp, extension);
+            
+            // Upload file to R2
+            logger.info("Attempting to upload to bucket: " + bucketName + " with key: " + fileKey);
+            
+            // Verify bucket exists
+            verifyBucketExists();
+            
+            // Create upload request
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileKey)
+                .contentType(file.getContentType())
+                .build();
+            
+            // Upload file using pre-read bytes
+            logger.info("Sending upload request to R2...");
+            long startTime = System.currentTimeMillis();
+            
+            PutObjectResponse putObjectResponse = s3Client.putObject(
+                putObjectRequest, 
+                RequestBody.fromBytes(fileBytes)
+            );
+            
+            long endTime = System.currentTimeMillis();
+            logger.info("Enhanced upload operation completed in " + (endTime - startTime) + "ms");
+            
+            if (putObjectResponse != null) {
+                logger.info("File upload response received. ETag: " + putObjectResponse.eTag());
+            } else {
+                logger.warning("Upload succeeded but response was null");
+            }
+            
+            // Verify upload
+            verifyUpload(fileKey, fileBytes.length);
+            
+            // Construct public URL
+            String fileUrl = publicBaseUrl + "/" + fileKey;
+            logger.info("File uploaded to R2 with dimensions. Public URL: " + fileUrl);
+            
+            return new StorageResult(fileUrl, dimensions);
+            
+        } catch (S3Exception e) {
+            logger.log(Level.SEVERE, "Failed to upload file to R2: " + e.getMessage(), e);
+            e.printStackTrace();
+            throw new IOException("Failed to upload file to R2: " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error during enhanced file upload: " + e.getMessage(), e);
+            e.printStackTrace();
+            throw new IOException("Unexpected error during enhanced file upload: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Extract image dimensions from byte array without additional I/O
+     */
+    private ImageDimensions extractDimensionsFromBytes(byte[] imageBytes, String contentType) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            return null;
+        }
+        
+        ImageInputStream imageInputStream = null;
+        try {
+            imageInputStream = ImageIO.createImageInputStream(new ByteArrayInputStream(imageBytes));
+            if (imageInputStream == null) {
+                logger.fine("Could not create ImageInputStream from byte array");
+                return null;
+            }
+            
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInputStream);
+            if (!readers.hasNext()) {
+                logger.fine("No ImageReader found for content type: " + contentType);
+                return null;
+            }
+            
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInputStream);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                
+                return new ImageDimensions(width, height);
+                
+            } finally {
+                reader.dispose();
+            }
+            
+        } catch (IOException e) {
+            logger.log(Level.FINE, "Error reading image dimensions from bytes: " + e.getMessage(), e);
+            return null;
+        } finally {
+            if (imageInputStream != null) {
+                try {
+                    imageInputStream.close();
+                } catch (IOException e) {
+                    logger.log(Level.FINE, "Error closing ImageInputStream", e);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Validate file and upload parameters
+     */
+    private void validateFileAndParameters(MultipartFile file, String issueId, String userId, String submissionId) {
         // Check if file is empty
         if (file.isEmpty()) {
             logger.warning("Cannot upload empty file");
@@ -241,20 +390,6 @@ public class R2StorageService implements StorageService {
             throw new IllegalArgumentException("File type not supported. Only JPEG and PNG are allowed");
         }
 
-        // Get file extension
-        String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-            if (!ALLOWED_EXTENSIONS.contains(extension)) {
-                logger.warning("File extension not allowed: " + extension);
-                throw new IllegalArgumentException("File extension not allowed. Only jpg, jpeg, and png are allowed");
-            }
-        } else {
-            logger.warning("Invalid file name: " + originalFilename);
-            throw new IllegalArgumentException("Invalid file name");
-        }
-
         // Validate mandatory path parameters
         if (issueId == null || issueId.trim().isEmpty()) {
             logger.warning("issueId cannot be null or empty");
@@ -268,104 +403,61 @@ public class R2StorageService implements StorageService {
             logger.warning("submissionId cannot be null or empty");
             throw new IllegalArgumentException("submissionId cannot be null or empty");
         }
-        
-        try {
-            // Generate unique file path with timestamp and provided IDs
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-            // File key structure: uploads/issues/{issueId}/submissions/{userId}_{submissionId}_{timestamp}.{ext}
-            String fileKey = String.format("uploads/issues/%s/submissions/%s_%s_%s.%s",
-                issueId, userId, submissionId, timestamp, extension);
-            
-            // Upload file to R2
-            logger.info("Attempting to upload to bucket: " + bucketName + " with key: " + fileKey);
-            
-            // Check if bucket exists before upload
-            try {
-                HeadBucketRequest checkRequest = HeadBucketRequest.builder()
-                    .bucket(bucketName)
-                    .build();
-                
-                s3Client.headBucket(checkRequest);
-                logger.info("Confirmed bucket exists before upload: " + bucketName);
-            } catch (NoSuchBucketException e) {
-                logger.severe("Bucket does not exist before upload attempt: " + bucketName);
-                throw new IOException("Upload bucket does not exist: " + bucketName);
-            } catch (Exception e) {
-                logger.severe("Error checking bucket before upload: " + e.getMessage());
-                e.printStackTrace();
+    }
+    
+    /**
+     * Extract file extension from filename
+     */
+    private String getFileExtension(String originalFilename) {
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            if (!ALLOWED_EXTENSIONS.contains(extension)) {
+                logger.warning("File extension not allowed: " + extension);
+                throw new IllegalArgumentException("File extension not allowed. Only jpg, jpeg, and png are allowed");
             }
-            
-            // Create upload request
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+        } else {
+            logger.warning("Invalid file name: " + originalFilename);
+            throw new IllegalArgumentException("Invalid file name");
+        }
+        return extension;
+    }
+    
+    /**
+     * Verify that the bucket exists before upload
+     */
+    private void verifyBucketExists() throws IOException {
+        try {
+            HeadBucketRequest checkRequest = HeadBucketRequest.builder()
                 .bucket(bucketName)
-                .key(fileKey)
-                .contentType(contentType)
                 .build();
             
-            // Upload file
-            logger.info("Sending upload request to R2...");
-            try {
-                // Record upload start time
-                long startTime = System.currentTimeMillis();
-                
-                // Execute upload
-                PutObjectResponse putObjectResponse = s3Client.putObject(
-                    putObjectRequest, 
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
-                );
-                
-                // Record upload end time and duration
-                long endTime = System.currentTimeMillis();
-                logger.info("Upload operation completed in " + (endTime - startTime) + "ms");
-                
-                if (putObjectResponse != null) {
-                    logger.info("File upload response received. ETag: " + putObjectResponse.eTag());
-                } else {
-                    logger.warning("Upload succeeded but response was null");
-                }
-                
-            } catch (S3Exception s3e) {
-                logger.severe("S3 exception during upload: " + s3e.getMessage());
-                if (s3e.awsErrorDetails() != null) {
-                    logger.severe("AWS Error Code: " + s3e.awsErrorDetails().errorCode() + 
-                                 ", Message: " + s3e.awsErrorDetails().errorMessage());
-                }
-                s3e.printStackTrace();
-                throw s3e;
-            } catch (Exception e) {
-                logger.severe("Unexpected exception during upload: " + e.getMessage());
-                e.printStackTrace();
-                throw new IOException("Upload operation failed: " + e.getMessage(), e);
-            }
-            
-            // Verify upload
-            try {
-                HeadObjectRequest verifyRequest = HeadObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileKey)
-                    .build();
-                
-                HeadObjectResponse verifyResponse = s3Client.headObject(verifyRequest);
-                logger.info("File upload verified. Size: " + verifyResponse.contentLength() + " bytes");
-            } catch (Exception e) {
-                logger.warning("Could not verify file upload: " + e.getMessage());
-                // Continue anyway, as the file might still be propagating in R2
-            }
-            
-            // Construct public URL
-            String fileUrl = publicBaseUrl + "/" + fileKey;
-            logger.info("File uploaded to R2. Public URL: " + fileUrl);
-            
-            return fileUrl;
-            
-        } catch (S3Exception e) {
-            logger.log(Level.SEVERE, "Failed to upload file to R2: " + e.getMessage(), e);
-            e.printStackTrace();
-            throw new IOException("Failed to upload file to R2: " + e.getMessage(), e);
+            s3Client.headBucket(checkRequest);
+            logger.fine("Confirmed bucket exists before upload: " + bucketName);
+        } catch (NoSuchBucketException e) {
+            logger.severe("Bucket does not exist before upload attempt: " + bucketName);
+            throw new IOException("Upload bucket does not exist: " + bucketName);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error during file upload: " + e.getMessage(), e);
+            logger.severe("Error checking bucket before upload: " + e.getMessage());
             e.printStackTrace();
-            throw new IOException("Unexpected error during file upload: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Verify that the upload was successful
+     */
+    private void verifyUpload(String fileKey, long expectedSize) {
+        try {
+            HeadObjectRequest verifyRequest = HeadObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileKey)
+                .build();
+            
+            HeadObjectResponse verifyResponse = s3Client.headObject(verifyRequest);
+            logger.info("File upload verified. Size: " + verifyResponse.contentLength() + " bytes (expected: " + expectedSize + ")");
+        } catch (Exception e) {
+            logger.warning("Could not verify file upload: " + e.getMessage());
+            // Continue anyway, as the file might still be propagating in R2
         }
     }
     

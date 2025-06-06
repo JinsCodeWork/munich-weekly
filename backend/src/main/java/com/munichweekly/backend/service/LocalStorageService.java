@@ -1,21 +1,31 @@
 package com.munichweekly.backend.service;
 
+import com.munichweekly.backend.model.ImageDimensions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation of StorageService that stores files in the local file system.
+ * Enhanced implementation of StorageService that stores files in the local file system
+ * with optimized image dimension extraction during upload.
  * Used for development and testing purposes.
  */
 @Service
@@ -28,7 +38,7 @@ public class LocalStorageService implements StorageService {
     
     private final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
     private final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList("image/jpeg", "image/png");
-    private final long MAX_FILE_SIZE = 30 * 1024 * 1024; // 20MB
+    private final long MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
     
     private Path rootLocation;
     
@@ -38,89 +48,157 @@ public class LocalStorageService implements StorageService {
     @PostConstruct
     public void init() {
         try {
-            rootLocation = Paths.get(uploadsDirectory).toAbsolutePath().normalize();
-            logger.info("Storage location set to: " + rootLocation);
-            
-            if (!Files.exists(rootLocation)) {
-                logger.info("Creating directory: " + rootLocation);
-                Files.createDirectories(rootLocation);
-                logger.info("Created upload directory successfully");
+            rootLocation = Paths.get(uploadsDirectory);
+            Files.createDirectories(rootLocation);
+            logger.info("Local storage initialized at: " + rootLocation.toAbsolutePath());
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Could not initialize local storage", e);
+            throw new RuntimeException("Could not initialize storage", e);
+        }
+    }
+    
+    @Override
+    public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException, IllegalArgumentException {
+        // Use the enhanced method but only return the URL for backward compatibility
+        StorageResult result = storeFileWithDimensions(file, issueId, userId, submissionId);
+        return result.getUrl();
+    }
+    
+    @Override
+    public StorageResult storeFileWithDimensions(MultipartFile file, String issueId, String userId, String submissionId) throws IOException, IllegalArgumentException {
+        logger.info("Starting enhanced local file storage with dimension extraction");
+        
+        validateFile(file);
+        
+        // Create directory structure: uploads/issues/{issueId}/submissions/
+        Path issueDir = rootLocation.resolve("issues").resolve(issueId).resolve("submissions");
+        Files.createDirectories(issueDir);
+        
+        // Get file extension
+        String originalFilename = file.getOriginalFilename();
+        String extension = getFileExtension(originalFilename);
+        
+        // Create filename: {submissionId}.{extension}
+        String filename = submissionId + "." + extension;
+        Path destinationFile = issueDir.resolve(filename);
+        
+        // **OPTIMIZATION: Extract dimensions from stream before storing**
+        ImageDimensions dimensions = null;
+        byte[] fileBytes = file.getBytes(); // Read file content once
+        
+        try {
+            dimensions = extractDimensionsFromBytes(fileBytes, file.getContentType());
+            if (dimensions != null) {
+                logger.info("Successfully extracted dimensions during upload: " + dimensions);
             } else {
-                logger.info("Upload directory already exists");
+                logger.warning("Could not extract dimensions during upload for file: " + originalFilename);
+            }
+        } catch (Exception e) {
+            logger.warning("Failed to extract dimensions during upload: " + e.getMessage());
+            // Continue with file storage even if dimension extraction fails
+        }
+        
+        // Store the file
+        try {
+            Files.write(destinationFile, fileBytes);
+            logger.info("File stored successfully at: " + destinationFile);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to store file", e);
+            throw new IOException("Failed to store file: " + filename, e);
+        }
+        
+        // Return relative URL for frontend access
+        String relativePath = "/uploads/issues/" + issueId + "/submissions/" + filename;
+        return new StorageResult(relativePath, dimensions);
+    }
+    
+    /**
+     * Extract image dimensions from byte array without additional I/O
+     */
+    private ImageDimensions extractDimensionsFromBytes(byte[] imageBytes, String contentType) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            return null;
+        }
+        
+        ImageInputStream imageInputStream = null;
+        try {
+            imageInputStream = ImageIO.createImageInputStream(new ByteArrayInputStream(imageBytes));
+            if (imageInputStream == null) {
+                logger.fine("Could not create ImageInputStream from byte array");
+                return null;
             }
             
-            // Verify write permissions
-            if (!Files.isWritable(rootLocation)) {
-                throw new RuntimeException("Upload directory is not writable: " + rootLocation);
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInputStream);
+            if (!readers.hasNext()) {
+                logger.fine("No ImageReader found for content type: " + contentType);
+                return null;
+            }
+            
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInputStream);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                
+                return new ImageDimensions(width, height);
+                
+            } finally {
+                reader.dispose();
             }
             
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to create upload directory: " + e.getMessage(), e);
-            throw new RuntimeException("Could not initialize storage location: " + e.getMessage(), e);
+            logger.log(Level.FINE, "Error reading image dimensions from bytes: " + e.getMessage(), e);
+            return null;
+        } finally {
+            if (imageInputStream != null) {
+                try {
+                    imageInputStream.close();
+                } catch (IOException e) {
+                    logger.log(Level.FINE, "Error closing ImageInputStream", e);
+                }
+            }
         }
     }
     
     /**
-     * Store a file in the local file system (新签名)
-     * 
-     * @param file The MultipartFile to store
-     * @param issueId The ID of the issue
-     * @param userId The ID of the user
-     * @param submissionId The ID of the submission
-     * @return URL path where the file can be accessed
+     * Validate uploaded file
      */
-    @Override
-    public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException {
-        // Check if file is empty
+    private void validateFile(MultipartFile file) throws IllegalArgumentException {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot store empty file");
         }
-
-        // Check file size
+        
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds the limit of 30MB");
+            throw new IllegalArgumentException(
+                "File size exceeds maximum allowed size of " + (MAX_FILE_SIZE / (1024 * 1024)) + "MB"
+            );
         }
-
-        // Check file type
+        
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException("File type not supported. Only JPEG and PNG are allowed");
+            throw new IllegalArgumentException("File type not allowed. Only JPEG and PNG images are supported.");
         }
-
-        // Get file extension
+        
         String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-            if (!ALLOWED_EXTENSIONS.contains(extension)) {
-                throw new IllegalArgumentException("File extension not allowed. Only jpg, jpeg, and png are allowed");
-            }
-        } else {
-            throw new IllegalArgumentException("Invalid file name");
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IllegalArgumentException("Filename cannot be empty");
         }
-
-        // Validate mandatory path parameters
-        if (issueId == null || issueId.trim().isEmpty()) {
-            throw new IllegalArgumentException("issueId cannot be null or empty");
+        
+        String extension = getFileExtension(originalFilename);
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("File extension not allowed: " + extension);
         }
-        if (userId == null || userId.trim().isEmpty()) {
-            throw new IllegalArgumentException("userId cannot be null or empty");
+    }
+    
+    /**
+     * Extract file extension from filename
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            throw new IllegalArgumentException("File must have a valid extension");
         }
-        if (submissionId == null || submissionId.trim().isEmpty()) {
-            throw new IllegalArgumentException("submissionId cannot be null or empty");
-        }
-
-        // Generate unique file path with timestamp and provided IDs
-        String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        String fileName = String.format("%s_%s_%s.%s", userId, submissionId, timestamp, extension);
-        Path issueDir = rootLocation.resolve("issues").resolve(issueId).resolve("submissions");
-        java.nio.file.Files.createDirectories(issueDir);
-        Path destinationFile = issueDir.resolve(fileName);
-        logger.info("Saving file to: " + destinationFile);
-        java.nio.file.Files.copy(file.getInputStream(), destinationFile);
-        logger.info("Stored file: " + fileName + " (" + file.getSize() + " bytes)");
-        // 返回统一风格的URL路径
-        return "/uploads/issues/" + issueId + "/submissions/" + fileName;
+        
+        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
     
     /**

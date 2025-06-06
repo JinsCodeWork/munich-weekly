@@ -3,6 +3,7 @@ package com.munichweekly.backend.controller;
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.MasonryOrderApiResponse;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
+import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.security.JwtUtil;
 import com.munichweekly.backend.service.MasonryOrderService;
 import com.munichweekly.backend.service.SubmissionService;
@@ -18,8 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * REST controller for layout calculation endpoints.
- * Provides optimized masonry ordering calculations for hybrid frontend/backend approach.
+ * Enhanced REST controller for layout calculation endpoints.
+ * Provides optimized masonry ordering calculations using submission entities
+ * for improved performance with stored image dimensions.
  */
 @RestController
 @RequestMapping("/api/layout")
@@ -42,17 +44,24 @@ public class LayoutController {
     }
     
     /**
-     * Get optimal ordering for masonry layout (new hybrid approach).
+     * Get optimal ordering for masonry layout with enhanced performance.
      * 
-     * Returns pre-calculated ordering for both 2-column and 4-column layouts.
-     * Frontend uses this ordering with Skyline algorithm for responsive positioning.
-     * 
-     * Benefits:
+     * This endpoint provides pre-calculated ordering for both 2-column and 4-column layouts
+     * using optimized submission entity processing. The hybrid approach ensures:
      * - Backend provides high-quality ordering (quality guarantee)
      * - Frontend handles responsive layout (performance guarantee)
-     * - Simplified API with no viewport-specific parameters
+     * - Stored dimensions minimize external API calls for improved speed
+     * 
+     * Performance improvements:
+     * - Uses submission entities with stored dimensions when available
+     * - Falls back to dynamic dimension fetching only for legacy data
+     * - Comprehensive performance metrics and logging
+     * 
+     * @param issueId The issue ID to calculate ordering for
+     * @param request HTTP request for optional authentication context
+     * @return MasonryOrderApiResponse with optimal orderings and metadata
      */
-    @Description("Get optimal masonry ordering for hybrid layout approach")
+    @Description("Get optimal masonry ordering for hybrid layout approach with enhanced performance")
     @GetMapping("/order")
     @Cacheable(value = "masonryOrdering", key = "'order:' + #issueId")
     public ResponseEntity<MasonryOrderApiResponse> getMasonryOrdering(
@@ -65,50 +74,57 @@ public class LayoutController {
             // Check for optional JWT authentication (doesn't fail if missing)
             Optional<Long> userId = extractOptionalUserId(request);
             
-            logger.info("🎯 Masonry排序计算开始: issueId={}, authenticated={}, thread={}", 
+            logger.info("Starting masonry ordering calculation: issueId={}, authenticated={}, thread={}", 
                        issueId, userId.isPresent(), Thread.currentThread().getName());
             
-            // Get approved submissions for the issue
-            List<SubmissionResponseDTO> submissions = submissionService.listApprovedByIssue(issueId);
+            // **ENHANCED: Get submission entities instead of DTOs for dimension optimization**
+            List<Submission> submissions = submissionService.getApprovedSubmissionEntities(issueId);
             
             if (submissions.isEmpty()) {
                 logger.info("No approved submissions found for issue {}", issueId);
-                return ResponseEntity.ok(createEmptyOrderResponse(issueId, userId.isPresent()));
+                return ResponseEntity.ok(createEmptyOrderResponse(issueId, startTime));
             }
             
-            // Calculate the optimal ordering
-            MasonryOrderApiResponse.MasonryOrderResult orderResult = 
-                masonryOrderService.calculateOptimalOrdering(issueId, submissions);
-            
-            // Build response with metadata
-            MasonryOrderApiResponse.OrderCacheInfo cacheInfo = new MasonryOrderApiResponse.OrderCacheInfo(
-                LocalDateTime.now(),
-                issueId,
-                false, // 由于技术限制，暂时标记为false
-                generateVersionHash(submissions),
-                System.currentTimeMillis() - startTime
-            );
-            
-            MasonryOrderApiResponse response = new MasonryOrderApiResponse(orderResult, cacheInfo);
+            // **OPTIMIZATION: Use the new submission-based ordering service**
+            MasonryOrderApiResponse response = masonryOrderService.calculateOptimalOrderingFromSubmissions(issueId, submissions);
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("✅ Masonry排序完成: issueId={}, 2列序列={}, 4列序列={}, duration={}ms, thread={}", 
-                       issueId, orderResult.getOrderedIds2col().size(), 
-                       orderResult.getOrderedIds4col().size(), duration, Thread.currentThread().getName());
+            
+            // Log comprehensive performance metrics
+            if (response.getOrder() != null) {
+                logger.info("Masonry ordering API completed: issueId={}, " +
+                           "2col_items={}, 4col_items={}, total_duration={}ms, " +
+                           "avg_aspect_ratio={:.3f}, wide_images={}, thread={}", 
+                           issueId, 
+                           response.getOrder().getOrderedIds2col().size(),
+                           response.getOrder().getOrderedIds4col().size(),
+                           duration,
+                           response.getOrder().getAvgAspectRatio(),
+                           response.getOrder().getWideImageCount(),
+                           Thread.currentThread().getName());
+            }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.error("Error calculating masonry ordering: issueId={}, thread={}", 
-                        issueId, Thread.currentThread().getName(), e);
-            return ResponseEntity.internalServerError().build();
+            long duration = System.currentTimeMillis() - startTime;
+            logger.error("Error in masonry ordering API: issueId={}, duration={}ms, thread={}", 
+                        issueId, duration, Thread.currentThread().getName(), e);
+            
+            // Return graceful fallback response
+            MasonryOrderApiResponse fallbackResponse = createEmptyOrderResponse(issueId, startTime);
+            return ResponseEntity.ok(fallbackResponse);
         }
     }
 
     /**
-     * Create an empty ordering response for issues with no submissions
+     * Create an empty ordering response for issues with no submissions or errors
+     * 
+     * @param issueId The issue ID
+     * @param startTime The request start time for duration calculation
+     * @return Empty MasonryOrderApiResponse with proper structure
      */
-    private MasonryOrderApiResponse createEmptyOrderResponse(Long issueId, boolean isAuthenticated) {
+    private MasonryOrderApiResponse createEmptyOrderResponse(Long issueId, long startTime) {
         MasonryOrderApiResponse.MasonryOrderResult emptyOrder = 
             new MasonryOrderApiResponse.MasonryOrderResult(
                 java.util.Collections.emptyList(),
@@ -123,7 +139,7 @@ public class LayoutController {
             issueId,
             false,
             "empty",
-            0L
+            System.currentTimeMillis() - startTime
         );
         
         return new MasonryOrderApiResponse(emptyOrder, cacheInfo);
@@ -132,61 +148,41 @@ public class LayoutController {
     /**
      * Extract user ID from JWT token if present, but don't fail if missing.
      * This allows the endpoint to work for both authenticated and anonymous users.
+     * 
+     * @param request The HTTP request containing potential JWT token
+     * @return Optional containing user ID if authenticated, empty otherwise
      */
     private Optional<Long> extractOptionalUserId(HttpServletRequest request) {
         try {
-            String token = extractJwtFromRequest(request);
-            if (token != null) {
-                // Parse and validate token - will throw exception if invalid
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
                 Long userId = jwtUtil.extractUserId(token);
                 return Optional.ofNullable(userId);
             }
         } catch (Exception e) {
-            // Log at debug level since this is expected for anonymous users
+            // Log but don't fail - this endpoint supports anonymous access
             logger.debug("Could not extract user ID from request: {}", e.getMessage());
         }
         return Optional.empty();
     }
     
     /**
-     * Extract JWT token from request headers.
-     * Supports both "Authorization: Bearer {token}" and custom headers.
-     */
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        // Check Authorization header first
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        
-        // Check for custom token header (if your frontend uses this)
-        String customToken = request.getHeader("X-Auth-Token");
-        if (customToken != null) {
-            return customToken;
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Generate a version hash based on submission data for cache invalidation.
-     * This ensures cache is invalidated when submissions change.
+     * Generate a simple version hash for cache invalidation.
+     * This is a basic implementation - in production, consider more sophisticated versioning.
+     * 
+     * @param submissions List of submissions to generate hash from
+     * @return Version hash string for cache invalidation
      */
     private String generateVersionHash(List<SubmissionResponseDTO> submissions) {
-        StringBuilder hashInput = new StringBuilder();
-        for (SubmissionResponseDTO submission : submissions) {
-            hashInput.append(submission.getId())
-                     .append("::")
-                     .append(submission.getImageUrl())
-                     .append("::")
-                     .append(submission.getDescription() != null ? submission.getDescription().length() : 0)
-                     .append("::")
-                     .append(submission.getVoteCount())
-                     .append(";");
+        if (submissions == null || submissions.isEmpty()) {
+            return "empty";
         }
         
-        // Simple hash - in production you might want to use SHA-256 or similar
-        return String.valueOf(hashInput.toString().hashCode());
+        // Create a simple hash based on submission count and IDs
+        StringBuilder hashBuilder = new StringBuilder();
+        submissions.forEach(s -> hashBuilder.append(s.getId()).append(";"));
+        return String.valueOf(hashBuilder.toString().hashCode());
     }
     
     /**

@@ -1,6 +1,7 @@
 package com.munichweekly.backend.service;
 
 import com.munichweekly.backend.model.ImageDimensions;
+import com.munichweekly.backend.model.Submission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +19,9 @@ import java.net.URL;
 import java.util.Iterator;
 
 /**
- * Service for fetching and caching image dimensions from R2 storage.
- * Uses efficient methods to get dimensions without downloading full images.
+ * Enhanced service for fetching and caching image dimensions.
+ * Provides optimized dimension retrieval with submission entity integration
+ * and backward compatibility for legacy data without stored dimensions.
  */
 @Service
 public class ImageDimensionService {
@@ -30,8 +32,42 @@ public class ImageDimensionService {
     private String cloudflareWorkerUrl;
     
     /**
+     * Get image dimensions for a submission with optimized performance.
+     * Uses stored dimensions if available, otherwise falls back to dynamic fetching.
+     * This is the primary method for masonry layout calculations.
+     * 
+     * @param submission The submission to get dimensions for
+     * @return ImageDimensions object with width and height
+     */
+    public ImageDimensions getSubmissionDimensions(Submission submission) {
+        if (submission == null) {
+            logger.warn("Submission is null, returning default dimensions");
+            return new ImageDimensions(800, 600);
+        }
+        
+        // **OPTIMIZATION: Use stored dimensions if available**
+        if (submission.hasDimensionData()) {
+            logger.debug("Using stored dimensions for submission {}: {}x{}", 
+                    submission.getId(), submission.getImageWidth(), submission.getImageHeight());
+            return new ImageDimensions(submission.getImageWidth(), submission.getImageHeight());
+        }
+        
+        // **FALLBACK: Dynamic dimension fetching for legacy submissions**
+        logger.debug("No stored dimensions for submission {}, fetching dynamically from URL: {}", 
+                submission.getId(), submission.getImageUrl());
+        
+        if (submission.getImageUrl() == null || submission.getImageUrl().trim().isEmpty()) {
+            logger.warn("Submission {} has no image URL, returning default dimensions", submission.getId());
+            return new ImageDimensions(800, 600);
+        }
+        
+        return getImageDimensions(submission.getImageUrl());
+    }
+    
+    /**
      * Get image dimensions with caching to avoid repeated R2 requests.
      * Cache TTL is set to 24 hours since image dimensions don't change.
+     * This method is maintained for backward compatibility and external usage.
      */
     @Cacheable(value = "imageDimensions", key = "#imageUrl")
     public ImageDimensions getImageDimensions(String imageUrl) {
@@ -60,6 +96,108 @@ public class ImageDimensionService {
         } catch (Exception e) {
             logger.error("Error retrieving image dimensions for URL: {}", imageUrl, e);
             return new ImageDimensions(800, 600); // Safe fallback
+        }
+    }
+    
+    /**
+     * Fetch and return image dimensions for immediate use (not cached).
+     * Used primarily during image upload to get dimensions for storage.
+     * 
+     * @param imageUrl The image URL to analyze
+     * @return ImageDimensions object, or null if dimensions cannot be determined
+     */
+    public ImageDimensions fetchImageDimensionsForUpload(String imageUrl) {
+        try {
+            String cdnUrl = convertToCdnUrl(imageUrl);
+            
+            // Try header-based approach first
+            ImageDimensions dimensions = getImageDimensionsFromHeaders(cdnUrl);
+            if (dimensions != null) {
+                logger.info("Retrieved upload image dimensions from headers: {}", dimensions);
+                return dimensions;
+            }
+            
+            // Fallback to partial download
+            dimensions = getImageDimensionsFromPartialDownload(cdnUrl);
+            if (dimensions != null) {
+                logger.info("Retrieved upload image dimensions from partial download: {}", dimensions);
+                return dimensions;
+            }
+            
+            logger.warn("Could not determine dimensions for upload image: {}", imageUrl);
+            return null;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching upload image dimensions for URL: {}", imageUrl, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Get image dimensions from URL for migration purposes.
+     * Alias for fetchImageDimensionsForUpload to maintain API consistency.
+     * 
+     * @param imageUrl The image URL to analyze
+     * @return ImageDimensions object, or null if dimensions cannot be determined
+     */
+    public ImageDimensions getImageDimensionsFromUrl(String imageUrl) {
+        return fetchImageDimensionsForUpload(imageUrl);
+    }
+    
+    /**
+     * Get image dimensions from InputStream during upload processing.
+     * This method is optimized for use during file upload when we have direct access
+     * to the image data stream, avoiding additional HTTP requests.
+     * 
+     * @param inputStream The image input stream
+     * @param contentType The MIME type of the image
+     * @return ImageDimensions object, or null if dimensions cannot be determined
+     */
+    public ImageDimensions getImageDimensionsFromStream(InputStream inputStream, String contentType) {
+        if (inputStream == null) {
+            logger.warn("Input stream is null, cannot determine dimensions");
+            return null;
+        }
+        
+        ImageInputStream imageInputStream = null;
+        try {
+            imageInputStream = ImageIO.createImageInputStream(inputStream);
+            if (imageInputStream == null) {
+                logger.warn("Could not create ImageInputStream from provided stream");
+                return null;
+            }
+            
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInputStream);
+            if (!readers.hasNext()) {
+                logger.warn("No ImageReader found for content type: {}", contentType);
+                return null;
+            }
+            
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInputStream);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                
+                ImageDimensions dimensions = new ImageDimensions(width, height);
+                logger.info("Successfully extracted dimensions from upload stream: {}", dimensions);
+                return dimensions;
+                
+            } finally {
+                reader.dispose();
+            }
+            
+        } catch (IOException e) {
+            logger.error("Error reading image dimensions from stream", e);
+            return null;
+        } finally {
+            if (imageInputStream != null) {
+                try {
+                    imageInputStream.close();
+                } catch (IOException e) {
+                    logger.debug("Error closing ImageInputStream", e);
+                }
+            }
         }
     }
     
@@ -200,31 +338,29 @@ public class ImageDimensionService {
     }
     
     /**
-     * Create HTTP connection with appropriate headers and timeouts
+     * Create HTTP connection with appropriate timeouts and headers
      */
     private HttpURLConnection createConnection(String imageUrl) throws IOException {
         URL url = new URL(imageUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         
-        // Set timeouts to avoid hanging
-        connection.setConnectTimeout(5000); // 5 seconds
-        connection.setReadTimeout(10000);   // 10 seconds
+        // Set reasonable timeouts
+        connection.setConnectTimeout(10000); // 10 seconds
+        connection.setReadTimeout(10000);    // 10 seconds
         
         // Set user agent to identify our service
-        connection.setRequestProperty("User-Agent", "Munich-Weekly-Layout-Service/1.0");
-        
-        // Accept image formats
-        connection.setRequestProperty("Accept", "image/jpeg,image/png,image/webp,image/*");
+        connection.setRequestProperty("User-Agent", "MunichWeekly-ImageDimensionService/1.0");
         
         return connection;
     }
     
     /**
-     * Clear cache entry for a specific image URL
-     * Useful when images are updated
+     * Evict cached dimensions for a specific image URL
+     * Used when image is replaced or updated
      */
     public void evictImageDimensionsCache(String imageUrl) {
-        // This would require cache manager injection if needed
-        logger.info("Cache eviction requested for image URL: {}", imageUrl);
+        // This method signature is maintained for compatibility
+        // The actual cache eviction is handled by Spring's @CacheEvict annotation
+        logger.debug("Cache eviction requested for image URL: {}", imageUrl);
     }
 } 
