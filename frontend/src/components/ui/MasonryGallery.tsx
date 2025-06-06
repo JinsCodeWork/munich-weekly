@@ -303,13 +303,27 @@ export function MasonryGallery<T = unknown>({
     return (item: T) => {
       const url = getItemImageUrl(item);
       const dimension = frontendDimensionsResult.dimensions.get(url);
+      
+      // **DEBUG: Detailed dimension tracking for issue resolution**
+      if (dimension && (url.includes('1190') || url.includes('1785'))) {
+        console.log(`🔍 Dimension Debug for ${url.substring(0, 50)}...`, {
+          storedWidth: dimension.width,
+          storedHeight: dimension.height,
+          storedAspectRatio: dimension.aspectRatio,
+          calculatedAspectRatio: dimension.width / dimension.height,
+          fromStored: dimension.fromStored,
+          isLoaded: dimension.isLoaded,
+          submissionData: isSubmissions ? (item as unknown as Submission) : 'Not submission'
+        });
+      }
+      
       return dimension ? { 
         width: dimension.width, 
         height: dimension.height,
         isLoaded: dimension.isLoaded
       } : null;
     };
-  }, [getItemImageUrl, frontendDimensionsResult.dimensions]);
+  }, [getItemImageUrl, frontendDimensionsResult.dimensions, isSubmissions]);
 
   const skylineLayoutResult = useSkylineMasonryLayout(
     items,
