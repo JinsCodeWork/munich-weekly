@@ -23,6 +23,17 @@ interface AnalysisResult {
   currentOptimizationPercentage: number;
 }
 
+// 🔧 新增：重新迁移状态接口
+interface RemigrationStatus {
+  inProgress: boolean;
+  status: 'idle' | 'running' | 'completed' | 'error' | 'stopped' | 'stopping';
+  totalCount: number;
+  processedCount: number;
+  successCount: number;
+  errorCount: number;
+  progressPercentage: number;
+}
+
 /**
  * Admin-only page for safe production data migration
  * Allows batch processing of existing submissions to add image dimensions
@@ -35,6 +46,11 @@ export default function DataMigrationPage() {
   const [batchSize, setBatchSize] = useState(5);
   const [delayMs, setDelayMs] = useState(2000);
   const [error, setError] = useState<string | null>(null);
+  
+  // 🔧 新增：重新迁移相关状态
+  const [remigrationStatus, setRemigrationStatus] = useState<RemigrationStatus | null>(null);
+  const [remigrationBatchSize, setRemigrationBatchSize] = useState(3);
+  const [remigrationDelayMs, setRemigrationDelayMs] = useState(3000);
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
@@ -58,13 +74,34 @@ export default function DataMigrationPage() {
     }
   }, [token]);
 
+  // 🔧 新增：获取重新迁移状态
+  const fetchRemigrationStatus = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch('/api/admin/migration/remigration/status', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const status = await response.json();
+        setRemigrationStatus(status);
+      }
+    } catch (err) {
+      console.error('Error fetching remigration status:', err);
+    }
+  }, [token]);
+
   // Auto-refresh status during migration
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
-    if (migrationStatus?.inProgress) {
+    if (migrationStatus?.inProgress || remigrationStatus?.inProgress) {
       intervalId = setInterval(() => {
         fetchMigrationStatus();
+        fetchRemigrationStatus();
       }, 2000); // Refresh every 2 seconds during migration
     }
     
@@ -73,8 +110,7 @@ export default function DataMigrationPage() {
         clearInterval(intervalId);
       }
     };
-  }, [migrationStatus?.inProgress, fetchMigrationStatus]);
-  // fetchMigrationStatus 现在在上面定义，可以正常添加到依赖
+  }, [migrationStatus?.inProgress, remigrationStatus?.inProgress, fetchMigrationStatus, fetchRemigrationStatus]);
 
   const analyzeSubmissions = useCallback(async () => {
     if (!token) return;
@@ -156,15 +192,69 @@ export default function DataMigrationPage() {
     }
   }, [fetchMigrationStatus, token]);
 
+  // 🔧 新增：启动重新迁移
+  const startRemigration = useCallback(async () => {
+    if (!token) return;
+    
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/admin/migration/remigration/start', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `batchSize=${remigrationBatchSize}&delayMs=${remigrationDelayMs}`,
+      });
+      
+      if (response.ok) {
+        fetchRemigrationStatus();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to start remigration');
+      }
+    } catch (err) {
+      setError('Network error while starting remigration');
+      console.error('Error starting remigration:', err);
+    }
+  }, [remigrationBatchSize, remigrationDelayMs, fetchRemigrationStatus, token]);
+
+  // 🔧 新增：停止重新迁移
+  const stopRemigration = useCallback(async () => {
+    if (!token) return;
+    
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/admin/migration/remigration/stop', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        fetchRemigrationStatus();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to stop remigration');
+      }
+    } catch (err) {
+      setError('Network error while stopping remigration');
+      console.error('Error stopping remigration:', err);
+    }
+  }, [fetchRemigrationStatus, token]);
+
   // Initialize data on component mount
   useEffect(() => {
     if (isAdmin) {
       fetchMigrationStatus();
+      fetchRemigrationStatus();
       analyzeSubmissions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
-  // fetchMigrationStatus 和 analyzeSubmissions 已使用 useCallback 包装
 
   // Loading state
   if (loading) {
@@ -263,10 +353,167 @@ export default function DataMigrationPage() {
           )}
         </div>
 
+        {/* 🔧 新增：重新迁移图片尺寸部分 */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <div className="flex-shrink-0">
+              <svg className="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h2 className="text-xl font-semibold text-orange-900">重新生成图片尺寸</h2>
+              <p className="text-sm text-orange-700 mt-1">
+                如果发现图片尺寸数据不正确（例如竖图显示为横图比例），可以使用此功能重新获取所有图片的正确尺寸信息
+              </p>
+            </div>
+          </div>
+
+          {/* 重新迁移配置 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                批次大小 (1-10)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={remigrationBatchSize}
+                onChange={(e) => setRemigrationBatchSize(parseInt(e.target.value) || 3)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                disabled={remigrationStatus?.inProgress}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                重新迁移使用较小批次以确保稳定性
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                批次间隔 (2000-30000ms)
+              </label>
+              <input
+                type="number"
+                min="2000"
+                max="30000"
+                step="500"
+                value={remigrationDelayMs}
+                onChange={(e) => setRemigrationDelayMs(parseInt(e.target.value) || 3000)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                disabled={remigrationStatus?.inProgress}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                较长间隔避免对CDN造成过大压力
+              </p>
+            </div>
+          </div>
+
+          {/* 重新迁移状态 */}
+          {remigrationStatus && (
+            <div className="bg-white rounded-lg border border-orange-200 p-4 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">重新迁移状态</h3>
+              
+              {/* Status Badge */}
+              <div className="flex items-center space-x-3 mb-4">
+                <span className="text-sm font-medium text-gray-700">状态:</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  remigrationStatus.status === 'running' ? 'bg-orange-100 text-orange-800' :
+                  remigrationStatus.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  remigrationStatus.status === 'error' ? 'bg-red-100 text-red-800' :
+                  remigrationStatus.status === 'stopped' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {remigrationStatus.status === 'running' ? '运行中' :
+                   remigrationStatus.status === 'completed' ? '已完成' :
+                   remigrationStatus.status === 'error' ? '错误' :
+                   remigrationStatus.status === 'stopped' ? '已停止' :
+                   remigrationStatus.status === 'stopping' ? '停止中' :
+                   '空闲'}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              {remigrationStatus.totalCount > 0 && (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>进度: {remigrationStatus.processedCount} / {remigrationStatus.totalCount}</span>
+                    <span>{remigrationStatus.progressPercentage.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-orange-600 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${remigrationStatus.progressPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Statistics */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-orange-600">{remigrationStatus.processedCount}</p>
+                  <p className="text-sm text-gray-600">已处理</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{remigrationStatus.successCount}</p>
+                  <p className="text-sm text-gray-600">成功</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">{remigrationStatus.errorCount}</p>
+                  <p className="text-sm text-gray-600">失败</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 重新迁移操作按钮 */}
+          <div className="flex space-x-4">
+            {remigrationStatus?.inProgress ? (
+              <Button
+                onClick={stopRemigration}
+                variant="danger"
+                className="flex items-center"
+              >
+                停止重新迁移
+              </Button>
+            ) : (
+              <Button
+                onClick={startRemigration}
+                className="flex items-center bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={migrationStatus?.inProgress}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                开始重新生成图片尺寸
+              </Button>
+            )}
+          </div>
+
+          {/* 警告信息 */}
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">注意事项</h3>
+                <p className="mt-1 text-sm text-yellow-700">
+                  此操作将重新获取所有投稿的图片尺寸信息，包括已有尺寸数据的投稿。
+                  建议在发现图片显示异常（如竖图显示为横图）时使用。过程较慢，请耐心等待。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Migration Configuration */}
         {analysisResult && analysisResult.migrationRequired && (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">迁移配置</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">首次迁移配置</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -280,7 +527,7 @@ export default function DataMigrationPage() {
                   value={batchSize}
                   onChange={(e) => setBatchSize(parseInt(e.target.value) || 5)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={migrationStatus?.inProgress}
+                  disabled={migrationStatus?.inProgress || remigrationStatus?.inProgress}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   每批处理的投稿数量，较小的值更安全
@@ -299,7 +546,7 @@ export default function DataMigrationPage() {
                   value={delayMs}
                   onChange={(e) => setDelayMs(parseInt(e.target.value) || 2000)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={migrationStatus?.inProgress}
+                  disabled={migrationStatus?.inProgress || remigrationStatus?.inProgress}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   批次之间的延迟时间，避免服务器过载
@@ -312,7 +559,7 @@ export default function DataMigrationPage() {
         {/* Migration Status */}
         {migrationStatus && (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">迁移状态</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">首次迁移状态</h2>
             
             <div className="space-y-4">
               {/* Status Badge */}
@@ -385,8 +632,9 @@ export default function DataMigrationPage() {
                 <Button
                   onClick={startMigration}
                   className="flex items-center bg-blue-600 hover:bg-blue-700"
+                  disabled={remigrationStatus?.inProgress}
                 >
-                  开始迁移
+                  开始首次迁移
                 </Button>
               )
             ) : (
@@ -401,7 +649,7 @@ export default function DataMigrationPage() {
             <Button
               onClick={analyzeSubmissions}
               variant="secondary"
-              disabled={isAnalyzing || migrationStatus?.inProgress}
+              disabled={isAnalyzing || migrationStatus?.inProgress || remigrationStatus?.inProgress}
             >
               刷新分析
             </Button>

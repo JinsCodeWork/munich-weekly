@@ -12,8 +12,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -135,13 +137,118 @@ public class ImageDimensionService {
     
     /**
      * Get image dimensions from URL for migration purposes.
-     * Alias for fetchImageDimensionsForUpload to maintain API consistency.
+     * 🔧 修复：使用Cloudflare Image Transform的format=json获取原始尺寸
      * 
      * @param imageUrl The image URL to analyze
      * @return ImageDimensions object, or null if dimensions cannot be determined
      */
     public ImageDimensions getImageDimensionsFromUrl(String imageUrl) {
-        return fetchImageDimensionsForUpload(imageUrl);
+        logger.info("开始迁移获取图片尺寸: {}", imageUrl);
+        
+        try {
+            // 🎯 使用Cloudflare Image Transform的format=json功能获取原始图片信息
+            String cdnUrl = convertToCdnUrl(imageUrl);
+            String jsonUrl = cdnUrl + (cdnUrl.contains("?") ? "&" : "?") + "format=json";
+            
+            logger.info("使用format=json获取图片信息: {}", jsonUrl);
+            
+            // 请求JSON格式的图片信息
+            ImageDimensions dimensions = getImageDimensionsFromJson(jsonUrl);
+            if (dimensions != null) {
+                logger.info("通过format=json获取尺寸成功: {} -> {}x{}", imageUrl, dimensions.getWidth(), dimensions.getHeight());
+                return dimensions;
+            }
+            
+            // 方法2: 回退到标准方法
+            logger.warn("format=json失败，回退到标准方法: {}", cdnUrl);
+            
+            // Try header-based approach first
+            dimensions = getImageDimensionsFromHeaders(cdnUrl);
+            if (dimensions != null) {
+                logger.info("通过Headers获取尺寸: {}x{}", dimensions.getWidth(), dimensions.getHeight());
+                return dimensions;
+            }
+            
+            // Fallback to partial download
+            dimensions = getImageDimensionsFromPartialDownload(cdnUrl);
+            if (dimensions != null) {
+                logger.info("通过部分下载获取尺寸: {}x{}", dimensions.getWidth(), dimensions.getHeight());
+                return dimensions;
+            }
+            
+            logger.warn("无法获取图片尺寸: {}", imageUrl);
+            return null;
+            
+        } catch (Exception e) {
+            logger.error("获取图片尺寸时发生错误: {}", imageUrl, e);
+            return null;
+        }
+    }
+    
+    /**
+     * 🔧 新增：通过Cloudflare Image Transform的format=json获取图片尺寸
+     * 这个方法返回原始图片的尺寸信息，不受EXIF旋转影响
+     */
+    private ImageDimensions getImageDimensionsFromJson(String jsonUrl) {
+        try {
+            HttpURLConnection connection = createConnection(jsonUrl);
+            connection.setRequestMethod("GET");
+            
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                // 读取JSON响应
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    
+                    // 解析JSON响应获取原始尺寸
+                    String json = response.toString();
+                    logger.debug("JSON响应: {}", json);
+                    
+                    // 简单的JSON解析 - 提取original字段中的width和height
+                    int originalStart = json.indexOf("\"original\":");
+                    if (originalStart != -1) {
+                        int originalEnd = json.indexOf("}", originalStart);
+                        String originalSection = json.substring(originalStart, originalEnd);
+                        
+                        // 提取width
+                        int widthIndex = originalSection.indexOf("\"width\":");
+                        if (widthIndex != -1) {
+                            int widthValueStart = originalSection.indexOf(":", widthIndex) + 1;
+                            int widthValueEnd = originalSection.indexOf(",", widthValueStart);
+                            if (widthValueEnd == -1) widthValueEnd = originalSection.length();
+                            String widthStr = originalSection.substring(widthValueStart, widthValueEnd).trim();
+                            
+                            // 提取height
+                            int heightIndex = originalSection.indexOf("\"height\":");
+                            if (heightIndex != -1) {
+                                int heightValueStart = originalSection.indexOf(":", heightIndex) + 1;
+                                int heightValueEnd = originalSection.indexOf(",", heightValueStart);
+                                if (heightValueEnd == -1) heightValueEnd = originalSection.length();
+                                String heightStr = originalSection.substring(heightValueStart, heightValueEnd).trim();
+                                
+                                try {
+                                    int width = Integer.parseInt(widthStr);
+                                    int height = Integer.parseInt(heightStr);
+                                    return new ImageDimensions(width, height);
+                                } catch (NumberFormatException e) {
+                                    logger.warn("无法解析JSON中的尺寸数据: width={}, height={}", widthStr, heightStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            connection.disconnect();
+        } catch (IOException e) {
+            logger.debug("获取JSON格式图片信息失败: {}", jsonUrl, e);
+        }
+        
+        return null;
     }
     
     /**

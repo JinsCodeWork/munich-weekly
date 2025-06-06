@@ -163,24 +163,6 @@ export function MasonrySubmissionCard({
     }
   }
   
-  // 🔧 临时修复：检测并纠正错误的宽高比数据
-  let correctedAspectRatio = aspectRatio;
-  if (submission.imageWidth && submission.imageHeight) {
-    const calculatedRatio = submission.imageWidth / submission.imageHeight;
-    const ratioDifference = Math.abs(aspectRatio - calculatedRatio);
-    
-    // 如果传入的宽高比与实际计算的差异很大，使用计算的正确值
-    if (ratioDifference > 0.1) {
-      correctedAspectRatio = calculatedRatio;
-      console.warn('🔧 宽高比自动修复:', {
-        submissionId: submission.id,
-        原始传入: aspectRatio.toFixed(3),
-        修正后: correctedAspectRatio.toFixed(3),
-        实际尺寸: `${submission.imageWidth}x${submission.imageHeight}`
-      });
-    }
-  }
-  
   // Determine badge visibility based on context
   const showStatusBadge = 
     displayContext === 'default' || 
@@ -287,7 +269,7 @@ export function MasonrySubmissionCard({
             // Progressive loading effects
             !isImageLoaded && "animate-pulse"
           )}
-          style={getAspectRatioStyle(correctedAspectRatio)}
+          style={getAspectRatioStyle(aspectRatio)}
         >
           {/* Progressive loading overlay */}
           {!isImageLoaded && (
@@ -316,21 +298,21 @@ export function MasonrySubmissionCard({
               // 这样 Thumbnail 内部就不会进行宽高比检测，避免与外层容器冲突
               aspectRatio={(() => {
                 // 根据传入的数值 aspectRatio 确定对应的比例类型
-                if (correctedAspectRatio >= 2.1) return 'ultrawide';      // 21:9
-                if (correctedAspectRatio >= 1.9) return 'cinema';         // 2.35:1
-                if (correctedAspectRatio >= 1.6) return 'widescreen';     // 16:9
-                if (correctedAspectRatio >= 1.2) return 'landscape';      // 4:3
-                if (correctedAspectRatio >= 0.9) return 'square';         // 1:1
-                if (correctedAspectRatio >= 0.7) return 'portrait';       // 3:4
+                if (aspectRatio >= 2.1) return 'ultrawide';      // 21:9
+                if (aspectRatio >= 1.9) return 'cinema';         // 2.35:1
+                if (aspectRatio >= 1.6) return 'widescreen';     // 16:9
+                if (aspectRatio >= 1.2) return 'landscape';      // 4:3
+                if (aspectRatio >= 0.9) return 'square';         // 1:1
+                if (aspectRatio >= 0.7) return 'portrait';       // 3:4
                 return 'tallportrait';                           // 9:16
               })()}
               autoDetectAspectRatio={false} // 禁用自动检测，使用上面明确指定的比例
               preserveAspectRatio={true}
               
               // 智能选择objectFit：对于瀑布流布局，优先避免灰色背景
-              objectFit={correctedAspectRatio >= 1 ? "cover" : "cover"} // 统一使用cover避免灰色背景
+              objectFit={aspectRatio >= 1 ? "cover" : "cover"} // 统一使用cover避免灰色背景
               // 竖图使用top定位，优先显示上半部分内容
-              objectPosition={correctedAspectRatio >= 1 ? "top" : "top"}
+              objectPosition={aspectRatio >= 1 ? "top" : "top"}
               sizes={isWide 
                 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
                 : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
