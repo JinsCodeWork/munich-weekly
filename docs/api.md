@@ -118,17 +118,28 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
   > **Params**: `Long id`
 - **GET** `/api/submissions`
-  > Get all approved submissions under a given issue, including vote counts.
+  > Get approved submissions for a specific issue (public endpoint)
 
-  > **Params**: `Long issueId`
-- **GET** `/api/submissions/mine`
-  > Get the current user's own submissions, optionally filtered by issue.
-
-  > **Params**: `Long issueId`
-- **GET** `/api/submissions/all`
-  > Get all submissions for an issue, regardless of status. Admin only.
-
-  > **Params**: `Long issueId`
+  > **Query Params**: `issueId` (required)
+  
+  > **Response**: ✨ **ENHANCED** with stored image dimensions
+  > ```json
+  > [
+  >   {
+  >     "id": 10,
+  >     "imageUrl": "https://img.munichweekly.art/uploads/issues/1/submissions/1_10_20250606-182805.jpg",
+  >     "description": "Photo description",
+  >     "nickname": "User123",
+  >     "submittedAt": "2024-01-01T12:00:00",
+  >     "voteCount": 42,
+  >     "imageWidth": 3648,     // ✨ NEW: Stored image width
+  >     "imageHeight": 5472,    // ✨ NEW: Stored image height
+  >     "aspectRatio": 0.666667 // ✨ NEW: Precomputed aspect ratio
+  >   }
+  > ]
+  > ```
+  
+  > **Performance**: Eliminates need for client-side dimension calculation
 
 ## AuthController
 
@@ -215,6 +226,111 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
   > **Request Body**: Same format as create, all fields are editable
   
   > **Validation**: Ensures logical time ordering (submission before voting, start before end dates)
+
+## SubmissionController ✨ **ENHANCED**
+
+- **GET** `/api/submissions`
+  > Get approved submissions for a specific issue (public endpoint)
+
+  > **Query Params**: `issueId` (required)
+  
+  > **Response**: ✨ **ENHANCED** with stored image dimensions
+  > ```json
+  > [
+  >   {
+  >     "id": 10,
+  >     "imageUrl": "https://img.munichweekly.art/uploads/issues/1/submissions/1_10_20250606-182805.jpg",
+  >     "description": "Photo description",
+  >     "nickname": "User123",
+  >     "submittedAt": "2024-01-01T12:00:00",
+  >     "voteCount": 42,
+  >     "imageWidth": 3648,     // ✨ NEW: Stored image width
+  >     "imageHeight": 5472,    // ✨ NEW: Stored image height
+  >     "aspectRatio": 0.666667 // ✨ NEW: Precomputed aspect ratio
+  >   }
+  > ]
+  > ```
+  
+  > **Performance**: Eliminates need for client-side dimension calculation
+
+## AdminMigrationController ✨ **NEW**
+
+**Admin-only endpoints for managing image dimension data migration**
+
+- **GET** `/api/admin/migration/analyze`
+  > Analyze submissions requiring dimension migration. Returns statistics without executing migration.
+
+  > **Authorization**: Admin JWT token required
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "totalSubmissions": 150,
+  >   "submissionsWithDimensions": 120,
+  >   "submissionsNeedingMigration": 30,
+  >   "optimizationPercentage": 80.0,
+  >   "estimatedDuration": "5-10 minutes"
+  > }
+  > ```
+
+- **POST** `/api/admin/migration/start`
+  > Begin dimension migration for submissions without stored dimensions
+
+  > **Authorization**: Admin JWT token required
+  
+  > **Request Body**:
+  > ```json
+  > {
+  >   "batchSize": 10,        // 1-20 submissions per batch
+  >   "delaySeconds": 5       // 1-30 seconds delay between batches
+  > }
+  > ```
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "message": "Migration started successfully",
+  >   "migrationId": "mig_20240101_120000",
+  >   "estimatedCompletion": "2024-01-01T12:10:00"
+  > }
+  > ```
+
+- **POST** `/api/admin/migration/stop`
+  > Stop active migration process safely
+
+  > **Authorization**: Admin JWT token required
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "message": "Migration stopped successfully",
+  >   "processed": 25,
+  >   "remaining": 5,
+  >   "finalStatus": "STOPPED_BY_ADMIN"
+  > }
+  > ```
+
+- **GET** `/api/admin/migration/status`
+  > Get real-time migration status and progress
+
+  > **Authorization**: Admin JWT token required
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "isActive": true,
+  >   "progress": {
+  >     "totalItems": 30,
+  >     "processedItems": 15,
+  >     "successCount": 14,
+  >     "failureCount": 1,
+  >     "percentageComplete": 50.0
+  >   },
+  >   "currentBatch": 3,
+  >   "estimatedTimeRemaining": "00:05:30",
+  >   "lastProcessedAt": "2024-01-01T12:05:30"
+  > }
+  > ```
 
 ## PasswordResetController
 

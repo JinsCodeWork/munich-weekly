@@ -219,9 +219,82 @@ This approach significantly reduces bandwidth usage while maintaining excellent 
 The frontend uses a consistent API for image uploads and display, regardless of the backend storage implementation.
 
 ### Upload Process
-1. Create a submission record via API
-2. Receive an upload URL in the response
-3. Upload the image directly to that URL
+
+### Image Upload with Dimension Optimization
+
+The upload process now includes **automatic image dimension extraction** for performance optimization:
+
+```typescript
+// Enhanced upload flow with dimension extraction
+POST /api/submissions/{submissionId}/upload
+```
+
+**Upload Process Steps:**
+1. **File validation** - Format, size, and content verification
+2. **Dimension extraction** ✨ **NEW** - Width, height, and aspect ratio computed from upload stream
+3. **Storage operation** - File saved to local/R2 storage
+4. **Database update** - Submission record updated with URL and dimensions
+5. **Response** - Returns success with stored dimension data
+
+**Performance Benefits:**
+- **Single computation** - Dimensions calculated once during upload
+- **Database storage** - Width, height, aspect ratio persisted permanently  
+- **API optimization** - Dimension data included in submission responses
+- **Frontend efficiency** - Eliminates client-side calculation overhead
+
+### StorageService Enhancement ✨ **NEW**
+
+```typescript
+// New method with dimension extraction
+public StorageResult storeFileWithDimensions(MultipartFile file) {
+    // Extract dimensions from file stream before storage
+    ImageDimensions dimensions = extractImageDimensions(file.getBytes());
+    
+    // Store file using existing logic
+    String url = storeFile(file);
+    
+    // Return both URL and dimensions
+    return new StorageResult(url, dimensions);
+}
+
+// Response container
+public class StorageResult {
+    private final String url;
+    private final ImageDimensions dimensions;
+    
+    // Constructor and getters...
+}
+```
+
+### Dimension Extraction Implementation
+
+**Local Storage (Development):**
+```java
+// Direct extraction from byte array
+BufferedImage image = ImageIO.read(new ByteArrayInputStream(fileBytes));
+int width = image.getWidth();
+int height = image.getHeight();
+double aspectRatio = (double) width / height;
+```
+
+**R2 Storage (Production):**
+```java
+// Extract before upload to avoid re-downloading
+byte[] fileBytes = file.getBytes();
+ImageDimensions dimensions = extractImageDimensions(fileBytes);
+
+// Upload to R2 using the same byte array
+PutObjectRequest request = PutObjectRequest.builder()
+    .bucket(bucketName)
+    .key(fileName)
+    .build();
+s3Client.putObject(request, RequestBody.fromBytes(fileBytes));
+```
+
+**Key Advantages:**
+- **Single file read** - Dimensions extracted from upload stream
+- **No redundant downloads** - Avoids re-fetching uploaded files
+- **Immediate availability** - Dimensions available as soon as upload completes
 
 ### Image Display Process
 1. Receive image URL from the backend (either local path or R2 URL)
