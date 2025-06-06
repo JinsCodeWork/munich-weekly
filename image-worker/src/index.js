@@ -234,6 +234,94 @@ async function handleImageRequest(request, env) {
 	// 从请求中提取图片参数
 	const imageParams = extractImageParams(url);
 	
+	// 🔧 修复：特殊处理format=json请求
+	if (imageParams.format === 'json') {
+		try {
+			// 获取原始图片
+			const originalImage = await getImageFromR2(objectKey, env);
+			
+			if (originalImage.status === 404) {
+				return new Response(JSON.stringify({
+					error: "Image not found"
+				}), {
+					status: 404,
+					headers: { 'Content-Type': 'application/json' }
+				});
+			}
+			
+			// 使用Cloudflare Image Transform获取图片元数据
+			const imageData = await originalImage.arrayBuffer();
+			
+			// 创建图片处理请求（不包含format=json，而是直接获取尺寸）
+			const metadataResponse = new Response(imageData, {
+				headers: originalImage.headers,
+				cf: {
+					image: {
+						format: 'json'
+					}
+				}
+			});
+			
+			// 获取实际的元数据响应
+			const processedResponse = await fetch(request.url.replace('?format=json', ''), {
+				method: 'POST',
+				body: imageData,
+				headers: {
+					'Content-Type': originalImage.headers.get('content-type') || 'image/jpeg'
+				},
+				cf: {
+					image: {
+						format: 'json'
+					}
+				}
+			});
+			
+			// 如果Cloudflare返回JSON，转发它
+			if (processedResponse.ok) {
+				const responseType = processedResponse.headers.get('content-type');
+				if (responseType && responseType.includes('application/json')) {
+					return processedResponse;
+				}
+			}
+			
+			// 如果上面的方法不行，我们手动构造JSON响应
+			// 基于文件大小和类型返回基本信息
+			const contentType = originalImage.headers.get('content-type') || 'image/jpeg';
+			const contentLength = originalImage.headers.get('content-length') || imageData.byteLength;
+			
+			// 构造基本的图片信息JSON
+			const imageInfo = {
+				input: {
+					format: contentType,
+					size: parseInt(contentLength, 10)
+				},
+				output: {
+					format: contentType,
+					size: parseInt(contentLength, 10),
+					width: null, // 我们无法在Worker中直接解析图片尺寸
+					height: null
+				}
+			};
+			
+			return new Response(JSON.stringify(imageInfo), {
+				headers: { 
+					'Content-Type': 'application/json',
+					'Cache-Control': 'public, max-age=86400'
+				}
+			});
+			
+		} catch (error) {
+			console.error('Error handling format=json request:', error);
+			return new Response(JSON.stringify({
+				error: "Failed to get image metadata",
+				details: error.message
+			}), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+	}
+	
 	// 检测客户端支持的最佳图像格式
 	const detectedFormat = detectBestImageFormat(request);
 	
