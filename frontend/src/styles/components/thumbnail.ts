@@ -73,9 +73,10 @@ export function detectAspectRatio(width: number, height: number): keyof typeof a
   if (Math.abs(ratio - 2.35) < normalTolerance) return 'cinema'; // 电影比例
   
   // 如果不匹配任何预设比例，根据宽高关系选择最接近的
-  if (ratio > 2) return 'ultrawide'; // 超宽
-  if (ratio > 1.6) return 'landscape'; // 较宽的横向图片归为landscape而不是widescreen
-  if (ratio > 1.1) return 'landscape'; // 稍微横向
+  if (ratio > 2.1) return 'ultrawide'; // 21:9及以上的超宽图片
+  if (ratio > 1.9) return 'cinema';    // 1.9-2.1之间的电影比例图片
+  if (ratio > 1.6) return 'widescreen'; // 1.6-1.9之间的宽屏图片（包括16:9）
+  if (ratio > 1.1) return 'landscape'; // 1.1-1.6之间的横向图片
   if (ratio > 0.9) return 'square'; // 接近正方形
   
   // 优化竖图检测：为portrait和tallportrait提供更精确的边界
