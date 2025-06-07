@@ -118,20 +118,35 @@ export function MasonrySubmissionCard({
     });
   }
   
-  // 🚨 调试：对于竖图，添加详细的宽高比分析
-  if (process.env.NODE_ENV === 'development' && aspectRatio < 1) {
-    console.log('🔍 竖图宽高比分析:', {
-      传入的aspectRatio: aspectRatio.toFixed(3),
-      submission数据: {
-        imageWidth: submission.imageWidth,
-        imageHeight: submission.imageHeight,
-        storedAspectRatio: submission.aspectRatio,
-        计算的宽高比: submission.imageWidth && submission.imageHeight ? (submission.imageWidth / submission.imageHeight).toFixed(3) : '无法计算'
-      },
-      isWide,
-      imageUrl: imageUrl.substring(0, 50) + '...',
-      预期应该是竖图: aspectRatio < 1 ? '是' : '否'
-    });
+  // 🚨 调试：对于所有图片，添加详细的处理策略调试信息
+  if (process.env.NODE_ENV === 'development') {
+    const objectFitStrategy = aspectRatio < 1 ? 'contain (竖图完整显示)' : 'cover (横图填满容器)';
+    const imageType = aspectRatio < 1 ? '竖图' : (aspectRatio >= 1.9 ? '超宽图' : '横图');
+    
+    if (aspectRatio >= 1.9 || aspectRatio < 1) { // 只输出超宽图和竖图的调试信息
+      console.log(`🖼️ ${imageType}处理调试:`, {
+        传入的aspectRatio: aspectRatio.toFixed(3),
+        图片类型: imageType,
+        图片分类: (() => {
+          if (aspectRatio > 2.1) return 'ultrawide (21:9+)';
+          if (aspectRatio > 1.9) return 'cinema (1.9-2.1)';
+          if (aspectRatio > 1.6) return 'widescreen (16:9)';
+          if (aspectRatio >= 1) return 'landscape (横图)';
+          if (aspectRatio > 0.69) return 'portrait (3:4竖图)';
+          return 'tallportrait (9:16竖图)';
+        })(),
+        容器宽高比: aspectRatio.toString(),
+        Thumbnail参数: {
+          objectFit: objectFitStrategy,
+          objectPosition: aspectRatio > 1.6 ? 'center' : 'top',
+          preserveAspectRatio: false,
+          autoDetectAspectRatio: false
+        },
+        submissionId: submission.id,
+        imageUrl: imageUrl?.substring(0, 50) + '...',
+        预期效果: aspectRatio < 1 ? '竖图完整显示，无裁切' : '横图填满容器，无灰色填充'
+      });
+    }
   }
   
   // 🚨 调试：对于宽高比有问题的图片，添加更详细的分析
@@ -161,29 +176,6 @@ export function MasonrySubmissionCard({
         可能的问题: ratioDifference > 0.5 ? '宽高可能被颠倒了' : '数据轻微不一致'
       });
     }
-  }
-  
-  // 🚨 调试：对于超宽图片，添加专门的调试信息
-  if (process.env.NODE_ENV === 'development' && aspectRatio >= 1.9) {
-    console.log('🖼️ 超宽图片处理调试:', {
-      传入的aspectRatio: aspectRatio.toFixed(3),
-      图片分类: (() => {
-        if (aspectRatio > 2.1) return 'ultrawide (21:9+)';
-        if (aspectRatio > 1.9) return 'cinema (1.9-2.1)';
-        if (aspectRatio > 1.6) return 'widescreen (16:9)';
-        return 'landscape';
-      })(),
-      容器宽高比: aspectRatio.toString(),
-      Thumbnail参数: {
-        objectFit: 'cover (强制)',
-        objectPosition: aspectRatio > 1.6 ? 'center' : 'top',
-        preserveAspectRatio: false,
-        autoDetectAspectRatio: false
-      },
-      submissionId: submission.id,
-      imageUrl: imageUrl?.substring(0, 50) + '...',
-      预期效果: '完全填满容器，无灰色填充'
-    });
   }
   
   // Determine badge visibility based on context
@@ -332,7 +324,16 @@ export function MasonrySubmissionCard({
               })()}
               autoDetectAspectRatio={false} // 禁用自动检测，使用上面明确指定的比例
               preserveAspectRatio={false} // 🔧 关键修复：禁用Thumbnail的智能objectFit逻辑
-              objectFit="cover" // 统一使用cover，确保图片完全填满容器
+              // 🔧 修复：根据图片类型智能选择objectFit
+              objectFit={(() => {
+                if (aspectRatio < 1) {
+                  // 竖图：使用contain完整显示，避免裁切
+                  return 'contain';
+                } else {
+                  // 横图和超宽图：使用cover填满容器，避免灰色填充
+                  return 'cover';
+                }
+              })()} 
               // 🔧 修复超宽图片定位：超宽图片使用center定位更好地居中显示
               objectPosition={(() => {
                 if (aspectRatio > 1.6) return 'center'; // 宽屏和超宽图片居中显示
