@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,9 +20,6 @@ import java.util.zip.ZipOutputStream;
 public class FileDownloadService {
 
     private static final Logger logger = Logger.getLogger(FileDownloadService.class.getName());
-    
-    @Autowired
-    private StorageService storageService;
     
     @Autowired(required = false)
     private R2StorageService r2StorageService;
@@ -268,8 +267,8 @@ public class FileDownloadService {
         } else {
             // Try to extract path from generic URL
             try {
-                URL urlObj = new URL(url);
-                String path = urlObj.getPath();
+                URI uri = URI.create(url);
+                String path = uri.getPath();
                 if (path.startsWith("/")) {
                     path = path.substring(1);
                 }
@@ -312,27 +311,12 @@ public class FileDownloadService {
         zipOut.closeEntry();
     }
 
-    /**
-     * Download image data from URL
-     */
-    private byte[] downloadImageFromUrl(String imageUrl) throws IOException {
-        // Handle relative URLs by prepending base URL if needed
-        if (imageUrl.startsWith("/")) {
-            // This is a relative URL, we need to construct the full URL
-            // For now, we'll assume it's a local file path that needs to be read from storage
-            return readLocalFile(imageUrl);
-        } else if (imageUrl.startsWith("http")) {
-            // This is a full URL, download from internet
-            return downloadFromUrl(imageUrl);
-        } else {
-            // Treat as local file path
-            return readLocalFile(imageUrl);
-        }
-    }
+
 
     /**
      * Read local file from storage
      */
+    @SuppressWarnings("unused")
     private byte[] readLocalFile(String filePath) throws IOException {
         // Remove leading slash if present
         String cleanPath = filePath.startsWith("/") ? filePath.substring(1) : filePath;
@@ -359,16 +343,21 @@ public class FileDownloadService {
      */
     private byte[] downloadFromUrl(String urlString) throws IOException {
         logger.warning("Downloading from URL as fallback (may not be original quality): " + urlString);
-        URL url = new URL(urlString);
-        try (InputStream in = url.openStream();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
+        try {
+            URI uri = URI.create(urlString);
+            URL url = uri.toURL();
+            try (InputStream in = url.openStream();
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                return out.toByteArray();
             }
-            return out.toByteArray();
+        } catch (MalformedURLException e) {
+            throw new IOException("Invalid URL format: " + urlString, e);
         }
     }
 

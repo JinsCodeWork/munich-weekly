@@ -9,14 +9,11 @@ import jakarta.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -59,6 +56,12 @@ public class LocalStorageService implements StorageService {
     
     @Override
     public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException, IllegalArgumentException {
+        // Check if file is null first
+        if (file == null) {
+            logger.severe("File parameter is null. Cannot upload file.");
+            throw new IllegalArgumentException("File cannot be null");
+        }
+        
         // Use the enhanced method but only return the URL for backward compatibility
         StorageResult result = storeFileWithDimensions(file, issueId, userId, submissionId);
         return result.getUrl();
@@ -67,6 +70,12 @@ public class LocalStorageService implements StorageService {
     @Override
     public StorageResult storeFileWithDimensions(MultipartFile file, String issueId, String userId, String submissionId) throws IOException, IllegalArgumentException {
         logger.info("Starting enhanced local file storage with dimension extraction");
+        
+        // Check if file is null first
+        if (file == null) {
+            logger.severe("File parameter is null. Cannot upload file.");
+            throw new IllegalArgumentException("File cannot be null");
+        }
         
         validateFile(file);
         
@@ -164,6 +173,8 @@ public class LocalStorageService implements StorageService {
      * Validate uploaded file
      */
     private void validateFile(MultipartFile file) throws IllegalArgumentException {
+        // Note: file null check is performed in calling method
+        
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot store empty file");
         }

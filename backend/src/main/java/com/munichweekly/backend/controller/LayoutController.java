@@ -167,23 +167,7 @@ public class LayoutController {
         return Optional.empty();
     }
     
-    /**
-     * Generate a simple version hash for cache invalidation.
-     * This is a basic implementation - in production, consider more sophisticated versioning.
-     * 
-     * @param submissions List of submissions to generate hash from
-     * @return Version hash string for cache invalidation
-     */
-    private String generateVersionHash(List<SubmissionResponseDTO> submissions) {
-        if (submissions == null || submissions.isEmpty()) {
-            return "empty";
-        }
-        
-        // Create a simple hash based on submission count and IDs
-        StringBuilder hashBuilder = new StringBuilder();
-        submissions.forEach(s -> hashBuilder.append(s.getId()).append(";"));
-        return String.valueOf(hashBuilder.toString().hashCode());
-    }
+
     
     /**
      * Health check endpoint for the layout service

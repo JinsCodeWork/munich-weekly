@@ -4,7 +4,6 @@ import com.munichweekly.backend.dto.FileUploadResponseDTO;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.service.StorageService;
-import com.munichweekly.backend.service.SubmissionService;
 import com.munichweekly.backend.service.R2StorageService;
 import com.munichweekly.backend.service.LocalStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,19 +37,16 @@ public class FileUploadController {
     private static final Logger logger = Logger.getLogger(FileUploadController.class.getName());
     private final StorageService storageService;
     private final SubmissionRepository submissionRepository;
-    private final SubmissionService submissionService; // **NEW: For dimension optimization**
     private final R2StorageService r2StorageService;  // Direct R2 service for debugging
     private final LocalStorageService localStorageService;
 
     @Autowired
     public FileUploadController(StorageService storageService, 
                                SubmissionRepository submissionRepository,
-                               SubmissionService submissionService,
                                R2StorageService r2StorageService,
                                LocalStorageService localStorageService) {
         this.storageService = storageService;
         this.submissionRepository = submissionRepository;
-        this.submissionService = submissionService;
         this.r2StorageService = r2StorageService;
         this.localStorageService = localStorageService;
     }
@@ -265,10 +261,10 @@ public class FileUploadController {
     }
     
     /**
-     * 调试端点：检查文件是否存在于R2存储中
+     * Debug endpoint: Check if file exists in R2 storage
      * 
-     * @param submissionId 提交ID
-     * @return 文件状态信息
+     * @param submissionId submission ID
+     * @return file status information
      */
     @GetMapping("/{submissionId}/check-image")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
@@ -297,7 +293,7 @@ public class FileUploadController {
                 response.put("status", "File exists in R2 storage");
                 
                 try {
-                    // 获取文件大小和其他元数据
+                    // Get file size and other metadata
                     String objectKey = r2StorageService.extractObjectKeyFromUrl(imageUrl);
                     if (objectKey != null) {
                         software.amazon.awssdk.services.s3.model.HeadObjectRequest headRequest = 
@@ -331,10 +327,10 @@ public class FileUploadController {
     }
     
     /**
-     * 调试端点：直接从R2获取图片内容
+     * Debug endpoint: Get image content directly from R2
      * 
-     * @param submissionId 提交ID
-     * @return 图片内容
+     * @param submissionId submission ID
+     * @return image content
      */
     @GetMapping(value = "/{submissionId}/direct-image", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
@@ -362,8 +358,8 @@ public class FileUploadController {
             
             logger.info("Successfully retrieved image data. Size: " + imageData.length + " bytes");
             
-            // 确定内容类型
-            String contentType = MediaType.IMAGE_JPEG_VALUE; // 默认为JPEG
+            // Determine content type
+            String contentType = MediaType.IMAGE_JPEG_VALUE; // Default to JPEG
             if (imageUrl.toLowerCase().endsWith("png")) {
                 contentType = MediaType.IMAGE_PNG_VALUE;
             }
@@ -378,11 +374,11 @@ public class FileUploadController {
     }
     
     /**
-     * 专门用于主页hero图片上传的端点
-     * 上传的图片将直接保存为 /uploads/hero.jpg，覆盖现有文件
+     * Dedicated endpoint for uploading homepage hero image
+     * The uploaded image will be saved as /uploads/hero.jpg, replacing any existing file
      * 
-     * @param file 上传的图片文件
-     * @return 上传结果
+     * @param file uploaded image file
+     * @return upload result
      */
     @Description("Upload hero image for homepage. The image will be saved as /uploads/hero.jpg, replacing any existing file.")
     @PostMapping("/admin/upload-hero")
@@ -394,7 +390,7 @@ public class FileUploadController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 基本验证
+            // Basic validation
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -402,7 +398,7 @@ public class FileUploadController {
                 ));
             }
             
-            // 文件大小检查 (30MB)
+            // File size check (30MB)
             long maxSize = 30 * 1024 * 1024;
             if (file.getSize() > maxSize) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -411,7 +407,7 @@ public class FileUploadController {
                 ));
             }
             
-            // 文件类型检查
+            // File type check
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -420,9 +416,9 @@ public class FileUploadController {
                 ));
             }
             
-            // 如果使用LocalStorageService，我们需要手动保存到特定位置
+            // If using LocalStorageService, we need to manually save to a specific location
             if (storageService instanceof LocalStorageService) {
-                // 使用特殊的路径来保存hero图片
+                // Use special path to save hero image
                 String heroFileUrl = saveHeroImageLocally(file, localStorageService);
                 
                 if (heroFileUrl != null) {
@@ -438,7 +434,7 @@ public class FileUploadController {
                     ));
                 }
             } else {
-                // 对于R2存储，使用现有逻辑但保存到特定路径
+                // For R2 storage, use existing logic but save to specific path
                 String fileUrl = storageService.storeFile(file, "static", "admin", "hero");
                 response.put("success", true);
                 response.put("message", "Hero image uploaded successfully");
@@ -465,34 +461,34 @@ public class FileUploadController {
     }
     
     /**
-     * 将hero图片保存到本地存储的特定位置
+     * Save hero image to specific location in local storage
      */
     private String saveHeroImageLocally(MultipartFile file, LocalStorageService localService) throws IOException {
-        // 获取uploads目录的根路径
+        // Get the root path of uploads directory
         try {
             java.lang.reflect.Field rootLocationField = LocalStorageService.class.getDeclaredField("rootLocation");
             rootLocationField.setAccessible(true);
             java.nio.file.Path rootLocation = (java.nio.file.Path) rootLocationField.get(localService);
             
-            // 确定文件扩展名
+            // Determine file extension
             String originalFilename = file.getOriginalFilename();
-            String extension = "jpg"; // 默认
+            String extension = "jpg"; // Default
             if (originalFilename != null && originalFilename.contains(".")) {
                 extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
             }
             
-            // 固定保存为 hero.jpg
+            // Save as fixed hero.jpg
             java.nio.file.Path heroImagePath = rootLocation.resolve("hero." + extension);
             
             logger.info("Saving hero image to: " + heroImagePath);
             
-            // 保存文件，覆盖现有文件
+            // Save file, replace existing file
             java.nio.file.Files.copy(file.getInputStream(), heroImagePath, 
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             
             logger.info("Hero image saved successfully: " + heroImagePath);
             
-            // 返回可访问的URL路径
+            // Return accessible URL path
             return "/uploads/hero." + extension;
             
         } catch (Exception e) {

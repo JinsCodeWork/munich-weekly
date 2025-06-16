@@ -50,3 +50,14 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Configure compiler options to show all warnings
+tasks.withType(JavaCompile) {
+    options.compilerArgs += [
+        '-Xlint:all',           // Enable all warnings
+        '-Xlint:-processing',   // Disable annotation processing warnings
+        '-Xlint:-serial',       // Disable serialVersionUID warnings
+        '-Xlint:-this-escape'   // Disable this-escape warnings for constructors
+    ]
+    options.encoding = 'UTF-8'
+}

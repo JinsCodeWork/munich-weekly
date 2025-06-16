@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -84,7 +85,16 @@ public class Submission {
     public Submission(User user, Issue issue, String imageUrl, String description, 
                      Integer imageWidth, Integer imageHeight) {
         this(user, issue, imageUrl, description);
-        this.setImageDimensions(imageWidth, imageHeight);
+        // Set dimensions directly to avoid this-escape warning
+        if (imageWidth != null && imageHeight != null) {
+            if (imageWidth <= 0 || imageHeight <= 0) {
+                throw new IllegalArgumentException("Image dimensions must be positive");
+            }
+            this.imageWidth = imageWidth;
+            this.imageHeight = imageHeight;
+            this.aspectRatio = BigDecimal.valueOf((double) imageWidth / imageHeight)
+                    .setScale(6, RoundingMode.HALF_UP);
+        }
     }
     
     // **NEW METHODS: Image dimension handling**
@@ -105,7 +115,7 @@ public class Submission {
             this.imageWidth = width;
             this.imageHeight = height;
             this.aspectRatio = BigDecimal.valueOf((double) width / height)
-                    .setScale(6, BigDecimal.ROUND_HALF_UP);
+                    .setScale(6, RoundingMode.HALF_UP);
         } else {
             // If either dimension is null, clear all dimension data
             this.imageWidth = null;
@@ -231,7 +241,7 @@ public class Submission {
         // Recalculate aspect ratio if both dimensions are available
         if (imageWidth != null && imageHeight != null) {
             this.aspectRatio = BigDecimal.valueOf((double) imageWidth / imageHeight)
-                    .setScale(6, BigDecimal.ROUND_HALF_UP);
+                    .setScale(6, RoundingMode.HALF_UP);
         }
     }
     
@@ -244,7 +254,7 @@ public class Submission {
         // Recalculate aspect ratio if both dimensions are available
         if (imageWidth != null && imageHeight != null) {
             this.aspectRatio = BigDecimal.valueOf((double) imageWidth / imageHeight)
-                    .setScale(6, BigDecimal.ROUND_HALF_UP);
+                    .setScale(6, RoundingMode.HALF_UP);
         }
     }
     

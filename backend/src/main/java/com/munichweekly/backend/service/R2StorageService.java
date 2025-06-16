@@ -19,9 +19,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadBucketResponse;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
@@ -151,7 +149,7 @@ public class R2StorageService implements StorageService {
                     .bucket(bucketName)
                     .build();
                 
-                HeadBucketResponse headBucketResponse = s3Client.headBucket(headBucketRequest);
+                s3Client.headBucket(headBucketRequest);
                 logger.info("Bucket exists: " + bucketName);
             } catch (NoSuchBucketException e) {
                 logger.warning("Bucket does not exist: " + bucketName + ". Attempting to create it.");
@@ -160,7 +158,7 @@ public class R2StorageService implements StorageService {
                         .bucket(bucketName)
                         .build();
                     
-                    CreateBucketResponse createBucketResponse = s3Client.createBucket(createBucketRequest);
+                    s3Client.createBucket(createBucketRequest);
                     logger.info("Bucket created successfully: " + bucketName);
                     
                     // Verify bucket was created by checking it again
@@ -215,6 +213,12 @@ public class R2StorageService implements StorageService {
      */
     @Override
     public String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException {
+        // Check if file is null first
+        if (file == null) {
+            logger.severe("File parameter is null. Cannot upload file.");
+            throw new IllegalArgumentException("File cannot be null");
+        }
+        
         // Use the enhanced method but only return the URL for backward compatibility
         StorageResult result = storeFileWithDimensions(file, issueId, userId, submissionId);
         return result.getUrl();
@@ -229,6 +233,12 @@ public class R2StorageService implements StorageService {
         logger.info("Issue ID: " + issueId);
         logger.info("User ID: " + userId);
         logger.info("Submission ID: " + submissionId);
+        
+        // Check if file is null first
+        if (file == null) {
+            logger.severe("File parameter is null. Cannot upload file.");
+            throw new IllegalArgumentException("File cannot be null");
+        }
         
         // Check if R2 client is initialized
         if (s3Client == null) {
@@ -259,6 +269,16 @@ public class R2StorageService implements StorageService {
         } catch (Exception e) {
             logger.warning("Failed to extract dimensions during upload: " + e.getMessage());
             // Continue with file storage even if dimension extraction fails
+        }
+        
+        // Ensure fileBytes is not null before proceeding
+        if (fileBytes == null) {
+            try {
+                fileBytes = file.getBytes();
+            } catch (IOException e) {
+                logger.severe("Failed to read file bytes: " + e.getMessage());
+                throw new IOException("Failed to read file content", e);
+            }
         }
         
         try {
@@ -371,6 +391,8 @@ public class R2StorageService implements StorageService {
      * Validate file and upload parameters
      */
     private void validateFileAndParameters(MultipartFile file, String issueId, String userId, String submissionId) {
+        // Note: file null check is performed in calling method
+        
         // Check if file is empty
         if (file.isEmpty()) {
             logger.warning("Cannot upload empty file");

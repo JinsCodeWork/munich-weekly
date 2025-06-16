@@ -4,7 +4,6 @@ import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.model.Vote;
 import com.munichweekly.backend.repository.IssueRepository;
-import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.repository.VoteRepository;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -23,13 +22,10 @@ public class VoteService {
 
     private final VoteRepository voteRepository;
     private final IssueRepository issueRepository;
-    private final SubmissionRepository submissionRepository;
 
     public VoteService(VoteRepository voteRepository,
-                       SubmissionRepository submissionRepository,
                        IssueRepository issueRepository) {
         this.voteRepository = voteRepository;
-        this.submissionRepository = submissionRepository;
         this.issueRepository = issueRepository;
     }
 
@@ -137,7 +133,7 @@ public class VoteService {
             throw new IllegalStateException("Voting window is closed");
         }
 
-        // 详细检查visitorId参数
+        // Detailed check for visitorId parameter
         if (visitorId == null || visitorId.isEmpty()) {
             logger.error("Cancel vote rejected: missing visitorId for submissionId={}", submission.getId());
             throw new IllegalStateException("Visitor ID is required to cancel a vote");
@@ -148,7 +144,7 @@ public class VoteService {
             logger.warn("Cancel vote rejected: no matching vote found, visitorId={}, submissionId={}", 
                       visitorId, submission.getId());
             
-            // 尝试查找是否存在任何投票记录
+            // Try to find if any vote records exist
             int voteCount = voteRepository.findBySubmission(submission).size();
             logger.info("Total votes for submission: {}", voteCount);
             
