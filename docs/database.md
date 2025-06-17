@@ -91,6 +91,15 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 
 ---
 
+### Promotion Tables
+
+Two tables were added to support the promotion feature.
+
+- **`promotion_config`**: Stores the main configuration for a promotion.
+  - `id`, `is_enabled`, `nav_title`, `page_url`, `description`, `created_at`, `updated_at`
+- **`promotion_images`**: Stores images associated with a promotion.
+  - `id`, `promotion_config_id` (FK), `image_url`, `image_title`, `image_description`, `display_order`, and image dimension fields.
+
 ## 🔗 Relationships
 
 * **User ↔️ Submission** *(one-to-many)*
@@ -98,6 +107,7 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 * **Submission ↔️ Vote** *(one-to-many)*
 * **Issue ↔️ Vote** *(one-to-many)*
 * **User ↔️ UserAuthProvider** *(one-to-many)*
+* **PromotionConfig ↔️ PromotionImages** *(one-to-many)*
 
 > Note: Votes are no longer linked to `User`, but use `visitorId` from cookies for anonymous vote tracking.
 

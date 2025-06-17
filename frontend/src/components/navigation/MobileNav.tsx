@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Thumbnail } from '@/components/ui/Thumbnail';
 import { NAV_LINKS } from '@/lib/constants';
+import { usePromotionConfig } from '@/hooks/usePromotionConfig';
 import { 
   getMobileNavStyles,
   navLinkHoverStyles
@@ -24,6 +25,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { promotionConfig } = usePromotionConfig();
   const router = useRouter();
 
   // Handle logout
@@ -242,6 +244,20 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Dynamic promotion link */}
+              {promotionConfig && (
+                <Link
+                  href={`/${promotionConfig.pageUrl}`}
+                  className={`font-heading ${pathname === `/${promotionConfig.pageUrl}` 
+                    ? getMobileNavStyles('navItemActive') 
+                    : getMobileNavStyles('navItem')
+                  } relative nav-link-hover ${pathname === `/${promotionConfig.pageUrl}` ? 'nav-link-active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  {promotionConfig.navTitle}
+                </Link>
+              )}
             </div>
 
             {/* Authentication buttons */}

@@ -58,6 +58,10 @@ const ADMIN_SIDEBAR_ITEMS = [
   {
     label: "Users Management",
     href: "/account/users"
+  },
+  {
+    label: "Promotion Settings",
+    href: "/account/promotion-settings"
   }
 ]
 

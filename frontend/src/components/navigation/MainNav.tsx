@@ -9,6 +9,7 @@ import { Logo } from '../ui/Logo';
 import MobileNav from './MobileNav';
 import { NAV_LINKS } from '@/lib/constants';
 import { Thumbnail } from '../ui/Thumbnail';
+import { usePromotionConfig } from '@/hooks/usePromotionConfig';
 import { 
   getNavContainerStyles,
   getNavLinkStyles, 
@@ -23,6 +24,7 @@ export default function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, logout, openLogin, openRegister } = useAuth();
+  const { promotionConfig } = usePromotionConfig();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +79,18 @@ export default function MainNav() {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Dynamic promotion link */}
+              {promotionConfig && (
+                <Link
+                  href={`/${promotionConfig.pageUrl}`}
+                  className={`font-heading ${getNavLinkStyles({
+                    isActive: pathname === `/${promotionConfig.pageUrl}`
+                  })} ${pathname === `/${promotionConfig.pageUrl}` ? 'nav-link-active' : ''}`}
+                >
+                  {promotionConfig.navTitle}
+                </Link>
+              )}
             </div>
           </div>
           

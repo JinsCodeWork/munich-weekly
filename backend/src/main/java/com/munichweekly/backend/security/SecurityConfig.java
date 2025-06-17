@@ -77,6 +77,12 @@ public class SecurityConfig {
                         // **NEW: Data migration endpoints - Admin only**
                         .requestMatchers("/api/admin/migration/**").hasAuthority("admin")          // All migration operations
                         
+                        // **NEW: Promotion endpoints** (Most specific first)
+                        .requestMatchers(HttpMethod.GET, "/api/promotion/config").permitAll()               // Public promotion config
+                        .requestMatchers(HttpMethod.GET, "/api/promotion/page/**").permitAll()             // Public promotion pages
+                        .requestMatchers("/api/promotion/admin/**").hasAuthority("admin")                  // Admin promotion endpoints
+                        .requestMatchers("/api/promotion/**").permitAll()                                  // Other promotion endpoints
+                        
                         // User endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users/me").hasAnyAuthority("user", "admin")
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me").hasAnyAuthority("user", "admin")

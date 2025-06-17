@@ -10,6 +10,8 @@ This guide provides information on how to use the Munich Weekly photography plat
 4. [Managing Your Content](#managing-your-content)
 5. [Privacy Controls](#privacy-controls)
 6. [Troubleshooting](#troubleshooting)
+7. [Promotions & Events](#promotions-events)
+8. [Admin Features](#admin-features)
 
 ---
 
@@ -173,6 +175,16 @@ If you wish to completely remove your presence from the platform:
 - Sever all connections to third-party login providers
 
 This comprehensive deletion process complies with GDPR requirements and ensures no user data remains in our systems.
+
+---
+
+## Promotions & Events
+
+From time to time, special promotions or events may appear as a new link in the main navigation bar. Clicking this link will take you to a dedicated page for that event.
+
+## Admin Features
+
+If you are an administrator, you will have access to additional management panels within your account dashboard. For more details, see the [Admin Guide](./admin-guide.md).
 
 ---
 

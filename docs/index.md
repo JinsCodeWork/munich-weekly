@@ -166,4 +166,18 @@ When updating documentation, ensure:
 
 ---
 
+*This documentation index provides navigation to all Munich Weekly platform documentation. Major performance optimization update completed December 2024.* ✨
+
+- **User Authentication**: Secure JWT-based authentication (login, registration, password reset).
+- **Submission System**: Users can submit photos to active issues.
+- **Voting System**: Users can vote on submissions.
+- **Promotion Management System**: Admins can create and manage dedicated promotion pages.
+- **Admin Dashboard**: Comprehensive tools for managing users, issues, and submissions.
+- **Image CDN & Optimization**: On-the-fly image processing via Cloudflare for optimal performance.
+- **Data Migration**: Tools for seamless data analysis and migration.
+- **Responsive UI**: Modern, responsive design built with Next.js and Tailwind CSS. ✨
+- **Lessons Learned**: [Lessons Learned](./lessons-learned.md)
+
+---
+
 *This documentation index provides navigation to all Munich Weekly platform documentation. Major performance optimization update completed December 2024.* ✨ 

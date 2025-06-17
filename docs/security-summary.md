@@ -176,4 +176,11 @@ Currently **missing** but recommended:
 ---
 
 *Last Updated: Based on codebase analysis performed in January 2025*  
-*For detailed implementation guidance, refer to the complete [Authentication & Security documentation](./auth.md)* 
+*For detailed implementation guidance, refer to the complete [Authentication & Security documentation](./auth.md)*
+
+## Protected API Endpoints
+
+- **/api/admin/****: All endpoints under this path are protected and require `admin` authority. This includes user management, issue management, and submission data access.
+- **/api/promotion/admin/****: All promotion management endpoints require `admin` authority.
+- **/api/users/me**: Requires an authenticated user to fetch their own profile.
+- **/api/submissions/my-submissions**: Requires an authenticated user to fetch their submissions. 

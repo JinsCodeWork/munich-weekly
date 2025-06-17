@@ -269,3 +269,24 @@ If downloads fail:
 - Original image quality is preserved by bypassing CDN optimization
 - Download functionality requires admin authentication
 - Large downloads may take time depending on the number and size of selected images 
+
+## Promotion Management
+
+Admins can create and manage promotional campaigns, which appear as special pages on the site.
+
+### Accessing Promotion Settings
+
+- Navigate to **Account -> Promotion Settings**.
+
+### Features
+
+- **Configuration Management**: Create new promotion configurations or select existing ones from a dropdown. Each configuration has a unique title, URL slug, and optional description.
+- **Enable/Disable**: Toggle promotions on or off. An enabled promotion will display a link in the main navigation bar.
+- **Image Management**: Upload, order, and delete images for each promotion.
+- **Deletion**: Completely delete a promotion configuration and all of its associated images from the database and cloud storage.
+
+## Data Migration
+
+The admin dashboard includes a powerful data migration tool.
+
+Admins can manage user roles, view user details, and manually verify or deactivate accounts. 

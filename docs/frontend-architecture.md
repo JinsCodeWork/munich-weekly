@@ -655,3 +655,16 @@ const optimizationStats = {
   optimizationPercentage: 100.0  // Percentage using stored dimensions
 };
 ```
+
+### Promotion Module Architecture
+
+The promotion feature is a self-contained module designed for managing marketing campaigns.
+
+- **Admin Interface (`/account/promotion-settings`)**: A client-rendered React component that provides a full suite of tools for admins. It allows for creating, selecting, updating, and deleting promotion configurations and their associated images.
+- **Public Page (`/[promotionUrl]`)**: A dynamic, server-rendered page that displays the content of an enabled promotion based on its URL slug.
+- **API Layer (`/api/promotion`)**: A unified API service layer that exports both public-facing functions (e.g., `getPromotionPageByUrl`) and admin-only functions (e.g., `updatePromotionConfig`). This consolidates all promotion-related network requests.
+- **State Management**: State is managed locally within the admin components using `useState`. There is no global state for promotions, ensuring the module remains decoupled.
+
+## State Management
+
+The primary method for global state management is **React Context**.

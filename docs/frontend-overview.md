@@ -467,3 +467,22 @@ Planned feature enhancements:
 4. Write appropriate unit tests
 5. Update relevant documentation
 6. Use modular API structure for API integration
+
+### Key Features
+
+- **Modern Tech Stack**: Built with **Next.js 14**, React, and TypeScript.
+- **App Router**: Utilizes the Next.js App Router for optimized rendering and layout management.
+- **Component-Based Architecture**: A rich library of reusable UI components.
+- **State Management**: Centralized authentication state via React Context (`AuthContext`).
+- **Styling**: Styled with **Tailwind CSS** using a custom design system.
+- **Admin Dashboard**: A comprehensive suite of tools for site administration.
+- **Promotion System**: Admins can create dynamic promotion pages viewable by the public.
+- **API Integration**: Robust integration with the backend via `fetch`-based API services.
+
+## Additional Features
+
+- **/account/settings**: User profile and password management.
+- **/account/promotion-settings**: (Admin) Interface to create, manage, and delete promotion configurations and their associated images.
+- **/submit**: Page for users to upload new photo submissions.
+- **/vote**: The main voting interface.
+- **`/[promotionUrl]`**: (Public) Dynamically rendered promotion page based on the URL slug configured by an admin.

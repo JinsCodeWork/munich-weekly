@@ -341,6 +341,28 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
   > **Params**: `ForgotPasswordRequestDTO dto`
 
+## Promotion API
+
+Endpoints for managing and viewing promotions.
+
+### Public Endpoints
+
+- `GET /api/promotion/config`: Retrieves the currently enabled promotion configuration for the navigation link.
+- `GET /api/promotion/page/{pageUrl}`: Retrieves the full content (config and images) for a public promotion page.
+
+### Admin Endpoints
+
+All admin endpoints require `admin` authority and are prefixed with `/api/promotion/admin`.
+
+- `GET /configs`: Get a list of all promotion configurations.
+- `GET /config/{id}`: Get a specific promotion configuration by its ID.
+- `PUT /config`: Create or update a promotion configuration.
+- `DELETE /config/{id}`: Delete a promotion configuration and its associated images.
+- `GET /images?configId={id}`: Get all images for a specific configuration.
+- `POST /images`: Create a new image record.
+- `POST /images/{imageId}/upload`: Upload a file for an image record.
+- `DELETE /images/{imageId}`: Delete an image record and its file.
+
 ---
 
 ## Frontend API Endpoints

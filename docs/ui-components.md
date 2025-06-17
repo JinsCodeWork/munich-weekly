@@ -356,6 +356,23 @@ The `VoteButton` is a client-side component responsible for handling the user in
         *   **Voted**: "Voted" text with a green checkmark icon, styled as a `ghost` button.
     *   Handles error display gracefully.
 
+### Voting Components (`/components/voting`)
+
+- **`VoteCard`**: Displays a submission with voting actions.
+- **`VoteImage`**: Renders the image within a `VoteCard`, handling aspect ratio and loading states.
+- **`VoteInstructions`**: Provides guidance to users on the voting process.
+
+### Promotion Components (`/components/promotion`)
+
+- **`PromotionPageContent`**: (Public) Renders the entire content of a promotion page, including title, description, and a gallery of images.
+- **`PromotionConfigSelector`**: (Admin) A dropdown component allowing admins to browse, select, create, and delete different promotion configurations.
+- **`PromotionConfigForm`**: (Admin) A form for creating or updating a promotion's settings, such as its title, URL, and description.
+- **`PromotionImageManager`**: (Admin) A comprehensive tool for uploading, ordering, and deleting images associated with a promotion.
+
+### Generic UI Components (`/components/ui`)
+
+This directory contains generic, reusable components that form the building blocks of the user interface. They are designed to be application-agnostic and are used extensively across the platform.
+
 ## Animation System
 
 The component library uses the tailwindcss-animate plugin for consistent animations. Common animations include:
