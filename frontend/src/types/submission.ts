@@ -6,7 +6,7 @@ export enum SubmissionStatus {
   SELECTED = "selected"
 }
 
-// 期刊类型
+// Issue type
 export interface Issue {
   id: number;
   title: string;
@@ -37,7 +37,7 @@ export interface Submission {
   voteCount: number;
   issue: Issue;
   userId: number;
-  userVote?: 'up' | 'down' | null; // 用户的投票状态
+  userVote?: 'up' | 'down' | null; // User's voting status
   
   // **NEW: Image dimension fields for optimized masonry layout**
   // These fields are populated from backend for new submissions
@@ -47,7 +47,7 @@ export interface Submission {
   aspectRatio?: number;     // Precomputed aspect ratio (width/height)
 }
 
-// 分页响应类型
+// Paginated response type
 export interface PaginatedResponse<T> {
   content: T[];
   pageable: {
@@ -58,10 +58,10 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// 提交列表响应类型
+// Submission list response type
 export type SubmissionListResponse = PaginatedResponse<Submission>;
 
-// 提交请求类型
+// Submission request type
 export interface SubmissionRequest {
   issueId: number;
   description: string;

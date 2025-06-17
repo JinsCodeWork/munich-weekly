@@ -82,7 +82,7 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
 
       if (!res.ok) {
         const data = await res.json();
-        // 处理特定错误类型，提供更友好的错误信息
+        // Handle specific error types and provide more user-friendly error messages
         if (data.error === "Invalid Request" && data.message && data.message.includes("Email already registered")) {
           throw new Error("Email already registered. Please use a different email address.");
         } else if (data.error === "Invalid Request") {

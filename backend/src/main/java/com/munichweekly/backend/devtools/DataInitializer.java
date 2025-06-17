@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userRepository.count() > 0) {
-            System.out.println("➡️ 数据已存在，跳过初始化。");
+            System.out.println("➡️ Data already exists, skipping initialization.");
             return;
         }
         User admin1 = new User("dongkai.jin@tum.de", passwordEncoder.encode("123456"),"Marc", null, "admin");
@@ -36,7 +36,7 @@ public class DataInitializer implements CommandLineRunner {
         User user = new User("marcjingames@gmail.com", passwordEncoder.encode("123456"),"UserJin", null, "user");
         User savedUser = userRepository.saveAndFlush(user);
 
-        System.out.println("✅ 初始化数据完成！");
+        System.out.println("✅ Data initialization completed!");
         System.out.println("🧪 admin1Id = " + savedAdmin1.getId());
         System.out.println("🧪 admin2Id = " + savedAdmin2.getId());
         System.out.println("🧪 userId = " + savedUser.getId());

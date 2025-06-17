@@ -6,16 +6,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * 密码重置令牌仓库接口
+ * Password reset token repository interface
  */
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
     
-    // 根据令牌查找
+    // Find by token
     Optional<PasswordResetToken> findByToken(String token);
     
-    // 查找用户未使用的令牌
+    // Find unused tokens for a user
     Optional<PasswordResetToken> findByUserAndUsedAtIsNull(User user);
     
-    // 删除用户未使用的令牌
+    // Delete unused tokens for a user
     void deleteByUserAndUsedAtIsNull(User user);
 } 

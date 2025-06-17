@@ -43,6 +43,8 @@ frontend/
 │   │   │   └── index.ts    # User API exports
 │   │   ├── votes/          # Voting-related APIs
 │   │   │   └── index.ts    # Voting API exports
+│   │   ├── gallery/        # Gallery-related APIs ✨ **NEW**
+│   │   │   └── index.ts    # Gallery API exports
 │   │   ├── http.ts         # Base HTTP request utilities
 │   │   ├── types.ts        # API-related type definitions
 │   │   └── index.ts        # Unified API exports
@@ -80,6 +82,9 @@ frontend/
 │   │   │   │   ├── ImageViewer.tsx # Image viewing modal
 │   │   │   │   ├── MasonrySubmissionCard.tsx # Masonry-optimized submission card
 │   │   │   │   └── SubmissionCard.tsx # Submission card
+│   │   │   ├── gallery/        # Gallery components ✨ **NEW**
+│   │   │   │   ├── FeaturedCarousel.tsx   # Main carousel display
+│   │   │   │   └── GalleryImageViewer.tsx # Full-screen image viewer
 │   │   │   ├── voting/         # Voting components
 │   │   │   │   └── VoteButton.tsx  # Interactive voting button
 │   │   │   ├── ui/             # Core UI components
@@ -171,6 +176,23 @@ Components for managing submission content:
 - **ImageViewer**: Modal for viewing full-size images
 - **SubmissionTable**: Admin interface for managing submissions
 - **IssueSelector**: Reusable component for selecting publication issues
+
+### Gallery System ✨ **NEW**
+
+A featured submissions carousel system for showcasing curated photography:
+
+- **FeaturedCarousel**: Auto-playing carousel with responsive navigation and indicators
+- **GalleryImageViewer**: Full-screen image viewer with zoom, pan, and touch gesture support
+- **Admin Configuration**: Backend-managed submission curation with display order control
+- **Mobile Optimization**: Enhanced mobile experience with direct full-screen viewing
+- **Progressive Enhancement**: Responsive design adapting from desktop hover interactions to mobile touch navigation
+
+Gallery components:
+- `FeaturedCarousel`: Main carousel display with autoplay, navigation arrows, and indicators
+- `GalleryImageViewer`: Full-screen viewer extending base `ImageViewer` with gallery-specific metadata
+- **Responsive Interaction**: Desktop hover overlays vs mobile direct interaction patterns
+- **Touch Gestures**: Double-tap zoom, pinch-to-zoom, drag navigation support
+- **Keyboard Navigation**: ESC to close, arrow keys for navigation
 
 ### Voting System
 

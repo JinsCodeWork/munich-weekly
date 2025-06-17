@@ -29,40 +29,37 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const initialPosRef = useRef({ x: 0, y: 0 });
   const initialScaleRef = useRef(1);
 
-  // 检查imageUrl是否有效
-  const hasValidImage = imageUrl && imageUrl.trim() !== '';
+  // Check if imageUrl is valid
+  const hasValidImage = imageUrl && imageUrl.trim() !== '' && !imageUrl.includes('undefined');
   
-  // 防止背景滚动的effect - 优化移动端兼容性
+  // Prevent background scrolling effect - optimized for mobile compatibility
   useEffect(() => {
-    if (isOpen) {
-      // 记录当前滚动位置
+    if (isOpen && hasValidImage) {
+      // Record current scroll position
       const scrollY = window.scrollY;
       
-      // 更温和的防止滚动方式，减少对移动端渲染的影响
+      // Gentle way to prevent scrolling, reducing impact on mobile rendering
       document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-      // 移除position fixed的设置，避免移动端渲染问题
-      document.body.style.touchAction = 'none'; // 防止移动端触摸滚动
+      // Remove position fixed setting to avoid mobile rendering issues
+      document.body.style.touchAction = 'none'; // Prevent mobile touch scrolling
       
       return () => {
-        // 恢复body样式
+        // Restore body styles
         document.body.style.overflow = '';
-        document.body.style.height = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
         document.body.style.touchAction = '';
-        
-        // 恢复滚动位置
+        // Restore scroll position
         window.scrollTo(0, scrollY);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, hasValidImage]);
   
-  // 如果没有有效图片，直接关闭viewer
-  useEffect(() => {
-    if (isOpen && !hasValidImage) {
-      console.warn('ImageViewer: No valid image URL provided, closing viewer');
-      onClose();
-    }
-  }, [isOpen, hasValidImage, onClose]);
+  // If no valid image, close viewer directly
+  if (!hasValidImage && isOpen) {
+    onClose();
+    return null;
+  }
 
   // Create high quality image URL (without specifying width/height, letting the Worker adapt based on the original image and screen)
   const highQualityUrl = useMemo(() => {
@@ -73,7 +70,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       return createImageUrl(imageUrl, {
         quality: 95,
         format: 'auto', // Use the best format supported by the client
-        fit: 'contain' // 强制使用contain，确保完整显示图片
+        fit: 'contain' // Force use of contain to ensure complete image display
       });
     }
     

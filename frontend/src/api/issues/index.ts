@@ -1,6 +1,6 @@
 /**
- * 期刊相关API模块
- * 提供期刊获取、创建、更新等功能
+ * Issue-related API module
+ * Provides issue retrieval, creation, update and other functionality
  */
 import { fetchAPI, getAuthHeader } from "../http";
 import { Issue } from "@/types/submission";
@@ -24,7 +24,7 @@ interface IssueUpdateRequest {
 }
 
 /**
- * 获取所有期刊
+ * Get all issues
  * GET /api/issues
  */
 export const getAllIssues = async (): Promise<Issue[]> => {
@@ -32,7 +32,7 @@ export const getAllIssues = async (): Promise<Issue[]> => {
 };
 
 /**
- * 获取单个期刊详情
+ * Get single issue details
  * GET /api/issues/{id}
  */
 export const getIssueById = async (id: number): Promise<Issue> => {
@@ -40,7 +40,7 @@ export const getIssueById = async (id: number): Promise<Issue> => {
 };
 
 /**
- * 创建新期刊（仅限管理员）
+ * Create new issue (admin only)
  * POST /api/issues
  */
 export const createIssue = async (data: IssueCreateRequest): Promise<Issue> => {
@@ -52,7 +52,7 @@ export const createIssue = async (data: IssueCreateRequest): Promise<Issue> => {
 };
 
 /**
- * 更新现有期刊（仅限管理员）
+ * Update existing issue (admin only)
  * PUT /api/issues/{id}
  */
 export const updateIssue = async (id: number, data: IssueUpdateRequest): Promise<Issue> => {

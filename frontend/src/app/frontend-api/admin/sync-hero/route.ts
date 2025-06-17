@@ -24,7 +24,7 @@ function getAuthToken(request: NextRequest): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    // 简化的身份验证检查，与其他admin API保持一致
+    // Simplified authentication check, consistent with other admin APIs
     const token = getAuthToken(request);
     if (!token) {
       console.warn('No authentication token found for sync-hero');
@@ -33,20 +33,20 @@ export async function POST(request: NextRequest) {
     
     console.log('Processing hero image sync with authentication');
     
-    // 获取请求体，检查是否传递了上传的URL
+    // Get request body, check if uploaded URL was passed
     let heroImageUrl = null;
     try {
       const body = await request.json();
       heroImageUrl = body.imageUrl;
     } catch {
-      // 请求体可能为空，这是正常的
+      // Request body may be empty, this is normal
       console.log('No request body provided, will attempt to sync from backend uploads');
     }
     
     let sourceImageData: ArrayBuffer | Buffer | null = null;
     
     if (heroImageUrl && heroImageUrl.startsWith('http')) {
-      // 情况1：从R2 URL下载图片
+      // Case 1: Download image from R2 URL
       console.log('Downloading hero image from R2 URL:', heroImageUrl);
       
       try {

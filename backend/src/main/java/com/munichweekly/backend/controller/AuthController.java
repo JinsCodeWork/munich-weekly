@@ -69,7 +69,7 @@ public class AuthController {
     @PostMapping("/bind")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
     public ResponseEntity<?> bindProvider(@Valid @RequestBody BindRequestDTO dto) {
-        Long userId = CurrentUserUtil.getUserIdOrThrow(); // ← 直接拿当前登录用户ID
+        Long userId = CurrentUserUtil.getUserIdOrThrow(); // ← Get current logged-in user ID directly
         userService.bindThirdPartyAccount(userId, dto);
         return ResponseEntity.ok().body(
                 java.util.Map.of("message", "Binding successful")

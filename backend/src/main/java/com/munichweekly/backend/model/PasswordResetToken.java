@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * 密码重置令牌实体类，用于存储密码重置请求
+ * Password reset token entity class for storing password reset requests
  */
 @Entity
 @Table(name = "password_reset_tokens")
@@ -27,27 +27,27 @@ public class PasswordResetToken {
 
     private LocalDateTime usedAt;
 
-    // 默认构造函数
+    // Default constructor
     public PasswordResetToken() {}
 
-    // 创建一个新的重置令牌
+    // Create a new reset token
     public PasswordResetToken(User user) {
         this.user = user;
         this.token = UUID.randomUUID().toString();
-        this.expiryDate = LocalDateTime.now().plusMinutes(30); // 30分钟有效期
+        this.expiryDate = LocalDateTime.now().plusMinutes(30); // 30-minute validity period
     }
 
-    // 检查令牌是否过期
+    // Check if token is expired
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiryDate);
+        return LocalDateTime.now().isAfter(this.expiryDate);
     }
 
-    // 检查令牌是否已被使用
+    // Check if token has been used
     public boolean isUsed() {
-        return usedAt != null;
+        return this.usedAt != null;
     }
 
-    // 标记令牌为已使用
+    // Mark token as used
     public void markAsUsed() {
         this.usedAt = LocalDateTime.now();
     }
@@ -76,4 +76,4 @@ public class PasswordResetToken {
     public void setUsedAt(LocalDateTime usedAt) {
         this.usedAt = usedAt;
     }
-} 
+}

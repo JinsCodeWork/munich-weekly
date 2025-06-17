@@ -1,7 +1,7 @@
 package com.munichweekly.backend.service;
 
 /**
- * 邮件服务接口
+ * Service for sending password reset emails
  */
 public interface EmailService {
     

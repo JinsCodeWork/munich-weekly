@@ -61,6 +61,7 @@ The platform now features a revolutionary **stored dimension optimization** that
 ### Key Frontend Features ✨ **ENHANCED**
 - **Next.js 15** with App Router and TypeScript
 - **Stored Dimension Optimization** - 60-80% faster masonry layout calculation ✨ **NEW**
+- **Gallery Carousel System** - Featured submissions with auto-play and full-screen viewing ✨ **NEW**
 - **Enhanced Responsive Container System** with professional spacing (20px mobile → 60px ultra-wide)
 - **Multi-Variant Layout Support** (narrow/wide/ultrawide containers for different content types)
 - **Hybrid Masonry Layout** with backend ordering and frontend Skyline positioning ✨ **ENHANCED**
@@ -85,6 +86,7 @@ The platform now features a revolutionary **stored dimension optimization** that
 
 ### New Admin Features ✨ **NEW**
 - **Data Migration Tools** - Safe batch processing for image dimension optimization
+- **Gallery Management** - Featured submissions carousel configuration and curation ✨ **NEW**
 - **Performance Monitoring** - Real-time optimization metrics and statistics
 - **Migration Analytics** - Analysis mode to preview migration requirements
 - **Batch Configuration** - Configurable processing sizes and delays
@@ -131,12 +133,13 @@ The platform now features a revolutionary **stored dimension optimization** that
 ## 🔄 Documentation Maintenance ✨ **UPDATED**
 
 ### Last Updated
+- **Gallery System**: January 2025 ✨ **NEW** (Featured submissions carousel, full-screen viewer, admin curation tools)
 - **Image Dimension Optimization**: December 2024 ✨ **NEW** (Stored dimension system, database migration, admin tools)
 - **Masonry Layout System**: December 2024 ✨ **MAJOR UPDATE** (Complete rewrite for stored dimension optimization)
-- **API Documentation**: December 2024 ✨ **ENHANCED** (Added dimension fields and migration endpoints)
+- **API Documentation**: January 2025 ✨ **ENHANCED** (Added Gallery endpoints and authentication fixes)
 - **Database Design**: December 2024 ✨ **ENHANCED** (Added image dimension fields documentation)
-- **Admin Guide**: December 2024 ✨ **ENHANCED** (Added data migration section)
-- **Frontend Architecture**: December 2024 ✨ **ENHANCED** (Updated with optimization system details)
+- **Admin Guide**: January 2025 ✨ **ENHANCED** (Added Gallery management and data migration sections)
+- **Frontend Architecture**: January 2025 ✨ **ENHANCED** (Updated with Gallery system and optimization details)
 - **Storage System**: December 2024 ✨ **ENHANCED** (Added dimension extraction documentation)
 - **Performance Optimizations**: 02.06.2025 (Mobile connection optimization, batch vote checking, progressive loading)
 - **Issue Management System**: 28.05.2025 (New comprehensive admin interface for CRUD operations)
@@ -171,6 +174,7 @@ When updating documentation, ensure:
 - **User Authentication**: Secure JWT-based authentication (login, registration, password reset).
 - **Submission System**: Users can submit photos to active issues.
 - **Voting System**: Users can vote on submissions.
+- **Gallery Carousel System** ✨ **NEW**: Featured submissions carousel with auto-play and full-screen viewing
 - **Promotion Management System**: Admins can create and manage dedicated promotion pages.
 - **Admin Dashboard**: Comprehensive tools for managing users, issues, and submissions.
 - **Image CDN & Optimization**: On-the-fly image processing via Cloudflare for optimal performance.

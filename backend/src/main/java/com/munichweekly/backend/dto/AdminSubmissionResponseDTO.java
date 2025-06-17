@@ -18,7 +18,7 @@ public class AdminSubmissionResponseDTO {
     private boolean isCover;
     private int voteCount;
     
-    // 用户信息
+    // User information
     private Long userId;
     private String userEmail;
     private String userNickname;
@@ -38,7 +38,7 @@ public class AdminSubmissionResponseDTO {
         this.isCover = Boolean.TRUE.equals(s.getCover());
         this.voteCount = voteCount;
         
-        // 设置用户信息
+        // Set user information
         if (s.getUser() != null) {
             this.userId = s.getUser().getId();
             this.userEmail = s.getUser().getEmail();

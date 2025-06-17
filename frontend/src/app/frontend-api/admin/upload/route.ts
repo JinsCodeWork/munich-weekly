@@ -10,16 +10,16 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_
 // Remove trailing slash if present to ensure correct URL concatenation
 const NORMALIZED_API_URL = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-// 改进的获取JWT token的函数，与用户上传保持一致的认证机制
+// Improved JWT token retrieval function, consistent authentication mechanism with user uploads
 function getAuthToken(request: NextRequest): string | null {
-  // 优先使用Authorization头中的token，这与前端getAuthHeader()函数生成的头一致
+  // Prioritize token in Authorization header, consistent with frontend getAuthHeader() function
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     console.log('Found JWT token in Authorization header');
     return authHeader.substring(7);
   }
   
-  // 再尝试从cookies获取token
+  // Try to get token from cookies
   const authCookie = request.cookies.get('jwt')?.value;
   if (authCookie) {
     console.log('Found JWT token in cookies');

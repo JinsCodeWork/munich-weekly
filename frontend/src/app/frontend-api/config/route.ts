@@ -3,64 +3,64 @@ import fs from 'fs/promises';
 import path from 'path';
 import { homePageConfig } from '@/lib/config';
 
-// 获取主页配置 - 公开API，不需要身份验证
+// Get homepage configuration - Public API, no authentication required
 export async function GET(request: NextRequest) {
   try {
-    // 打印cookie和头信息用于调试
+    // Print cookie and header information for debugging
     console.log('Config API cookies:', [...request.cookies.getAll()].map(c => c.name));
     console.log('Config API headers:', [...request.headers.entries()].map(([key, value]) => 
       `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
     
-    // 检查是否强制刷新
+    // Check if force refresh is requested
     const url = new URL(request.url);
     const forceRefresh = url.searchParams.get('_force') === '1';
     console.log('Force refresh requested:', forceRefresh);
     
-    // 尝试从文件读取配置
+    // Try to read configuration from file
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
     let config;
-    let lastModified = new Date().toISOString(); // 默认当前时间
+    let lastModified = new Date().toISOString(); // Default to current time
 
     try {
       const fileContent = await fs.readFile(configPath, 'utf-8');
       config = JSON.parse(fileContent);
       
-      // 获取文件修改时间
+      // Get file modification time
       const stats = await fs.stat(configPath);
       lastModified = stats.mtime.toISOString();
     } catch {
-      // 如果文件不存在或无法解析，使用默认配置
+      // If file doesn't exist or cannot be parsed, use default configuration
       config = { heroImage: homePageConfig.heroImage };
-      console.log('未找到配置文件，使用默认配置');
+      console.log('Configuration file not found, using default configuration');
     }
     
-    // 生成基于内容和修改时间的ETag
+    // Generate ETag based on content and modification time
     const etag = `"${Buffer.from(lastModified + JSON.stringify(config)).toString('base64').slice(0, 16)}"`;
     
-    // 强制刷新时跳过缓存检查
+    // Skip cache check if force refresh is requested
     if (!forceRefresh) {
-      // 检查客户端缓存
+      // Check client cache
       const clientETag = request.headers.get('if-none-match');
       if (clientETag === etag) {
-        return new NextResponse(null, { status: 304 }); // 未修改，返回304
+        return new NextResponse(null, { status: 304 }); // Not modified, return 304
       }
     }
     
-    // 创建响应对象并添加缓存控制响应头
+    // Create response object and add cache control response headers
     const response = NextResponse.json({
       success: true,
       config
     });
     
-    // 强制刷新时设置无缓存头，否则使用正常缓存策略
+    // Set no-cache headers if force refresh is requested, otherwise use normal cache strategy
     if (forceRefresh) {
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       response.headers.set('Pragma', 'no-cache');
       response.headers.set('Expires', '0');
       console.log('Set no-cache headers for force refresh');
     } else {
-      // 设置缓存头和ETag，配置更新后会自动失效缓存
-      response.headers.set('Cache-Control', 'public, max-age=3600'); // 1小时缓存
+      // Set cache headers and ETag, cache will automatically expire when configuration is updated
+      response.headers.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache
       response.headers.set('ETag', etag);
     }
     
@@ -68,11 +68,11 @@ export async function GET(request: NextRequest) {
     
     return response;
   } catch (error) {
-    console.error('获取配置失败:', error);
+    console.error('Failed to get configuration:', error);
     return NextResponse.json(
       { 
-        error: `获取配置失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        // 返回默认配置作为回退
+        error: `Failed to get configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        // Return default configuration as fallback
         config: { heroImage: homePageConfig.heroImage }
       },
       { status: 500 }

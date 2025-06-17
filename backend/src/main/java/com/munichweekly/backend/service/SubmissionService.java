@@ -130,28 +130,28 @@ public class SubmissionService {
     }
 
     public List<SubmissionResponseDTO> listApprovedByIssue(Long issueId) {
-        // 1. 检查期刊是否存在
+        // 1. Check if the issue exists
         Issue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
 
-        // 2. 查询所有"审核通过"和"精选"的投稿（包含approved和selected状态）
+        // 2. Query all "approved" and "selected" submissions (includes approved and selected statuses)
         List<Submission> submissions = submissionRepository.findByIssueAndApprovedOrSelected(issue);
 
-        // 3. 查询投票统计（返回 List<Object[]>: [submissionId, voteCount]）
+        // 3. Query vote statistics (returns List<Object[]>: [submissionId, voteCount])
         List<Object[]> voteCounts = voteRepository.countVotesByIssue(issueId);
 
-        // 4. 转换为 Map<submissionId, voteCount>
+        // 4. Convert to Map<submissionId, voteCount>
         Map<Long, Long> voteCountMap = voteCounts.stream()
                 .collect(Collectors.toMap(
                         obj -> (Long) obj[0],
                         obj -> (Long) obj[1]
                 ));
 
-        // 5. 构造响应 DTO，附带每个投稿的票数
+        // 5. Construct response DTO, with vote count for each submission
         return submissions.stream()
                 .map(submission -> new SubmissionResponseDTO(
                         submission,
-                        voteCountMap.getOrDefault(submission.getId(), 0L) // 默认0票
+                        voteCountMap.getOrDefault(submission.getId(), 0L) // Default 0 votes
                 ))
                 .collect(Collectors.toList());
     }
@@ -263,7 +263,7 @@ public class SubmissionService {
             throw new SecurityException("Not authorized to delete this submission");
         }
         
-        // 获取图片URL
+        // Get image URL
         String imageUrl = submission.getImageUrl();
         
         // Delete any votes associated with this submission
@@ -272,7 +272,7 @@ public class SubmissionService {
         // Delete the submission from database
         submissionRepository.delete(submission);
         
-        // 删除存储在云端的图片文件
+        // Delete image file stored in cloud
         if (imageUrl != null && !imageUrl.isEmpty()) {
             logger.info("Deleting image file: " + imageUrl);
             boolean deleteSuccessful = storageService.deleteFile(imageUrl);

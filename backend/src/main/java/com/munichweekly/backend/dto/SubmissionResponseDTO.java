@@ -26,7 +26,7 @@ public class SubmissionResponseDTO {
     private BigDecimal aspectRatio;
 
     public SubmissionResponseDTO() {
-        // 默认构造器（可选）
+        // Default constructor (optional)
     }
 
     public SubmissionResponseDTO(Submission s, long voteCount) {

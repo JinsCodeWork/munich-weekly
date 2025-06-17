@@ -238,7 +238,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // 查询是否存在该绑定
+        // Check if the binding exists
         Optional<UserAuthProvider> existing = authProviderRepository.findByUserAndProvider(user, provider);
 
         if (existing.isEmpty()) {
@@ -340,11 +340,11 @@ public class UserService {
      * @throws IllegalArgumentException 如果令牌无效或过期
      */
     public void resetPassword(ResetPasswordRequestDTO dto) {
-        // 查找令牌
+        // Validate token validity
         PasswordResetToken token = passwordResetTokenRepository.findByToken(dto.getToken())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
         
-        // 验证令牌有效性
+        // Verify token validity
         if (token.isExpired()) {
             throw new IllegalArgumentException("Token has expired");
         }
@@ -353,17 +353,14 @@ public class UserService {
             throw new IllegalArgumentException("Token has already been used");
         }
         
-        // 获取用户
+        // Get user
         User user = token.getUser();
         
-        // 更新密码
+        // Update password
         String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
         user.setPassword(hashedPassword);
         
-        // 标记令牌为已使用
-        token.markAsUsed();
-        
-        // 保存更改
+        // Save changes
         userRepository.save(user);
         passwordResetTokenRepository.save(token);
         

@@ -101,7 +101,7 @@ export function SubmissionCard({
     (displayContext === 'previousResults' && 
       (submission.status === SubmissionStatus.SELECTED || submission.isCover)); // In previousResults, only show 'selected' or 'cover' badge
 
-  // 防止投票按钮点击事件冒泡
+  // Prevent vote button click events from bubbling up
   const handleButtonContainerClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -176,7 +176,7 @@ export function SubmissionCard({
           )}
         </div>
 
-        {/* Content area - 减小移动端的间距 */}
+        {/* Content area - Reduce spacing on mobile */}
         <div className={cn(getSubmissionCardElementStyles('contentContainer'), "sm:py-4 py-1")}>
           <h3 className={cn(getSubmissionCardElementStyles('title'), "sm:text-lg text-base sm:mb-1 mb-0")}>
             {submission.description.split('\n')[0]}
@@ -189,7 +189,7 @@ export function SubmissionCard({
           <div className={cn(getSubmissionCardElementStyles('metaContainer'), "sm:mt-3 mt-1")}>
             {displayContext === 'default' && (
               <>
-                {/* 在移动端隐藏日期和Issue信息 */}
+                {/* Hide date and Issue info on mobile */}
                 <div className={cn(getSubmissionCardElementStyles('metaItem'), "hidden sm:flex")}>
                   <span>{formatDate(submission.submittedAt)}</span>
                 </div>
@@ -198,7 +198,7 @@ export function SubmissionCard({
                   <span>Issue {submission.issue.id}</span>
                 </div>
                 
-                {/* 移动端只显示投票数 */}
+                {/* Show only vote count on mobile */}
                 <div className={cn(getSubmissionCardElementStyles('metaItem'), "sm:hidden w-full text-xs")}>
                   <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>

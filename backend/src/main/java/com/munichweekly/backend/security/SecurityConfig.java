@@ -77,6 +77,16 @@ public class SecurityConfig {
                         // **NEW: Data migration endpoints - Admin only**
                         .requestMatchers("/api/admin/migration/**").hasAuthority("admin")          // All migration operations
                         
+                        // **NEW: Gallery endpoints** (Most specific first)
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/featured").permitAll()              // Public featured submissions
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/stats").permitAll()                 // Public gallery stats
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/featured/config").hasAuthority("admin")    // Admin get active config
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/featured/configs").hasAuthority("admin")   // Admin get all configs
+                        .requestMatchers(HttpMethod.POST, "/api/gallery/featured/config").hasAuthority("admin")   // Admin save config
+                        .requestMatchers(HttpMethod.DELETE, "/api/gallery/featured/config/*").hasAuthority("admin") // Admin delete config
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/submissions/*/preview").hasAuthority("admin")       // Admin submission preview
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/submissions/*/featured-status").hasAuthority("admin") // Admin featured status check
+                        
                         // **NEW: Promotion endpoints** (Most specific first)
                         .requestMatchers(HttpMethod.GET, "/api/promotion/config").permitAll()               // Public promotion config
                         .requestMatchers(HttpMethod.GET, "/api/promotion/page/**").permitAll()             // Public promotion pages

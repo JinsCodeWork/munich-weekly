@@ -77,7 +77,7 @@ public class AdminMigrationController {
         return ResponseEntity.ok(status);
     }
 
-    // 🔧 新增：获取重新迁移状态
+    // 🔧 Added: Get remigration status
     /**
      * Get remigration status and statistics
      * GET /api/admin/migration/remigration/status
@@ -192,7 +192,7 @@ public class AdminMigrationController {
         }
     }
 
-    // 🔧 新增：启动重新迁移
+    // 🔧 Added: Start remigration
     /**
      * Start safe batch remigration of ALL submission dimensions (including existing ones)
      * POST /api/admin/migration/remigration/start
@@ -260,7 +260,7 @@ public class AdminMigrationController {
         ));
     }
 
-    // 🔧 新增：停止重新迁移
+    // 🔧 Added: Stop remigration
     /**
      * Stop ongoing remigration (graceful stop after current batch)
      * POST /api/admin/migration/remigration/stop
@@ -356,7 +356,7 @@ public class AdminMigrationController {
         }
     }
 
-    // 🔧 新增：执行重新迁移过程
+    // 🔧 Added: Execute remigration process
     /**
      * Execute the actual remigration process for ALL submissions
      */
@@ -370,18 +370,18 @@ public class AdminMigrationController {
             remigrationSuccessCount.set(0);
             remigrationErrorCount.set(0);
             
-            logger.info(String.format("开始重新迁移所有图片尺寸 batchSize=%d, delayMs=%d", batchSize, delayMs));
+            logger.info(String.format("Starting remigration of all image dimensions batchSize=%d, delayMs=%d", batchSize, delayMs));
             
             // Get ALL submissions for remigration
             List<Submission> allSubmissions = submissionService.getAllSubmissionEntities();
             
             remigrationTotalCount = allSubmissions.size();
-            logger.info(String.format("重新迁移：发现 %d 个投稿需要重新处理", remigrationTotalCount));
+            logger.info(String.format("Remigration: Found %d submissions to reprocess", remigrationTotalCount));
             
             if (remigrationTotalCount == 0) {
                 remigrationStatus = "completed";
                 remigrationInProgress = false;
-                logger.info("没有投稿需要重新迁移");
+                logger.info("No submissions need remigration");
                 return;
             }
             
@@ -391,14 +391,14 @@ public class AdminMigrationController {
                 if ("stopping".equals(remigrationStatus)) {
                     remigrationStatus = "stopped";
                     remigrationInProgress = false;
-                    logger.info("重新迁移被管理员停止");
+                    logger.info("Remigration stopped by admin");
                     return;
                 }
                 
                 int endIndex = Math.min(i + batchSize, allSubmissions.size());
                 List<Submission> batch = allSubmissions.subList(i, endIndex);
                 
-                logger.info(String.format("重新迁移批次 %d-%d，总计 %d 个投稿", 
+                logger.info(String.format("Remigration batch %d-%d of %d total submissions", 
                            i + 1, endIndex, remigrationTotalCount));
                 
                 // Process batch for remigration
@@ -410,7 +410,7 @@ public class AdminMigrationController {
                         Thread.sleep(delayMs);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        logger.warning("重新迁移在延迟期间被中断");
+                        logger.warning("Remigration interrupted during delay");
                         break;
                     }
                 }
@@ -419,11 +419,11 @@ public class AdminMigrationController {
             remigrationStatus = "completed";
             remigrationInProgress = false;
             
-            logger.info(String.format("重新迁移完成: %d 已处理, %d 成功, %d 错误", 
+            logger.info(String.format("Remigration completed: %d processed, %d successful, %d errors", 
                        remigrationProcessedCount.get(), remigrationSuccessCount.get(), remigrationErrorCount.get()));
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "重新迁移执行过程中发生错误", e);
+            logger.log(Level.SEVERE, "Error occurred during remigration execution", e);
             remigrationStatus = "error";
             remigrationInProgress = false;
         }
@@ -462,7 +462,7 @@ public class AdminMigrationController {
         }
     }
 
-    // 🔧 新增：处理重新迁移批次
+    // 🔧 Added: Process remigration batch
     /**
      * Process a single batch of submissions for remigration (ALL submissions)
      */
@@ -471,7 +471,7 @@ public class AdminMigrationController {
             try {
                 remigrationProcessedCount.incrementAndGet();
                 
-                // 🔧 使用修复后的getImageDimensionsFromUrl方法，获取原始图片尺寸
+                // 🔧 Use fixed getImageDimensionsFromUrl method to get original image dimensions
                 var dimensions = imageDimensionService.getImageDimensionsFromUrl(submission.getImageUrl());
                 
                 if (dimensions != null) {
@@ -480,19 +480,19 @@ public class AdminMigrationController {
                     submissionService.updateSubmission(submission);
                     
                     remigrationSuccessCount.incrementAndGet();
-                    logger.info(String.format("重新迁移投稿 %d 尺寸: %dx%d (比例: %.4f)", 
+                    logger.info(String.format("Remigrated submission %d dimensions: %dx%d (ratio: %.4f)", 
                                submission.getId(), dimensions.getWidth(), dimensions.getHeight(), 
                                (double) dimensions.getWidth() / dimensions.getHeight()));
                 } else {
                     remigrationErrorCount.incrementAndGet();
-                    logger.warning(String.format("无法获取投稿 %d 的图片尺寸: %s", 
+                    logger.warning(String.format("Could not get dimensions for submission %d: %s", 
                                   submission.getId(), submission.getImageUrl()));
                 }
                 
             } catch (Exception e) {
                 remigrationErrorCount.incrementAndGet();
                 logger.log(Level.WARNING, 
-                          String.format("处理投稿 %d 重新迁移时发生错误", submission.getId()), e);
+                          String.format("Error processing submission %d remigration", submission.getId()), e);
             }
         }
     }

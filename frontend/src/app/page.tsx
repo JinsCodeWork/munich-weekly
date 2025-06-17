@@ -15,17 +15,17 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const lastConfigUpdateRef = useRef<string | null>(null);
 
-  // 创建可重复调用的配置加载函数
+  // Create reusable configuration loading function
   const loadConfig = useCallback(async (forceRefresh = false) => {
     try {
-      // 强制刷新时添加时间戳参数以绕过缓存
+              // Add timestamp parameter when force refreshing to bypass cache
       const timestamp = Date.now();
       const url = forceRefresh 
         ? `/frontend-api/config?_t=${timestamp}&_force=1`
         : `/frontend-api/config?_t=${timestamp}`;
       
       const response = await fetch(url, {
-        // 强制刷新时禁用缓存
+        // Disable cache when force refreshing
         cache: forceRefresh ? 'no-store' : 'default',
         headers: forceRefresh ? {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -90,12 +90,12 @@ export default function Home() {
     return () => clearInterval(pollingInterval);
   }, [loadConfig]);
 
-  // 监听 localStorage 变化，检测管理员上传
+  // Listen for localStorage changes to detect admin uploads
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'hero_image_updated') {
         console.log('Detected hero image update event, force refreshing config...');
-        // 延迟一秒后刷新，确保后端处理完成
+        // Delay refresh by one second to ensure backend processing is complete
         setTimeout(() => {
           loadConfig(true);
         }, 1000);
@@ -106,7 +106,7 @@ export default function Home() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [loadConfig]);
 
-  // 监听自定义事件（用于同一标签页内的通信）
+  // Listen for custom events (for communication within the same tab)
   useEffect(() => {
     const handleConfigUpdate = () => {
       console.log('Detected config update event, refreshing...');
@@ -128,7 +128,7 @@ export default function Home() {
             imageUrl={heroImage.imageUrl} 
             description={heroImage.description} 
             imageCaption={heroImage.imageCaption}
-            // 传递配置更新时间，用于强制刷新图片缓存
+            // Pass configuration update time for forced image cache refresh
             lastUpdated={lastConfigUpdateRef.current}
           />
           

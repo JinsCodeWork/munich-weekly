@@ -1,6 +1,6 @@
 /**
- * 用户相关API模块
- * 提供用户信息获取、更新等功能
+ * User-related API module
+ * Provides user information retrieval, updates and other functionality
  */
 import { fetchAPI, getAuthHeader } from "../http";
 
@@ -23,7 +23,7 @@ interface PasswordChangeRequest {
 }
 
 /**
- * 获取当前登录用户信息
+ * Get current logged-in user information
  * GET /api/users/me
  */
 export const getCurrentUser = async (): Promise<User> => {
@@ -33,7 +33,7 @@ export const getCurrentUser = async (): Promise<User> => {
 };
 
 /**
- * 更新当前登录用户信息
+ * Update current logged-in user information
  * PATCH /api/users/me
  */
 export const updateCurrentUser = async (data: UserUpdateRequest): Promise<User> => {
@@ -45,7 +45,7 @@ export const updateCurrentUser = async (data: UserUpdateRequest): Promise<User> 
 };
 
 /**
- * 更改当前用户密码
+ * Change current user password
  * POST /api/users/change-password
  */
 export const changePassword = async (data: PasswordChangeRequest): Promise<void> => {
@@ -57,7 +57,7 @@ export const changePassword = async (data: PasswordChangeRequest): Promise<void>
 };
 
 /**
- * 获取所有用户列表（仅限管理员）
+ * Get all users list (admin only)
  * GET /api/users
  */
 export const getAllUsers = async (): Promise<User[]> => {

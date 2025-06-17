@@ -86,11 +86,11 @@ export function useFileUpload() {
     try {
       console.log(`Starting upload of file "${file.name}" (${formatFileSize(file.size)}) to ${url}`);
       
-      // 创建FormData对象
+      // Create FormData object
       const formData = new FormData();
       formData.append('file', file);
       
-      // 发送请求
+      // Send request
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
@@ -100,7 +100,7 @@ export function useFileUpload() {
         credentials: 'include'
       });
       
-      // 处理响应
+      // Handle response
       if (!response.ok) {
         let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
         let responseText = '';
@@ -125,12 +125,12 @@ export function useFileUpload() {
         throw new Error(errorMessage);
       }
       
-      // 处理成功响应
+      // Handle successful response
       let responseText = '';
       try {
         responseText = await response.text();
         
-        // 检查响应是否为空
+        // Check if response is empty
         if (!responseText.trim()) {
           console.log('Server returned an empty response, but status code was successful');
           setUploadProgress(100);
@@ -155,7 +155,7 @@ export function useFileUpload() {
       } catch (parseError) {
         console.error('Failed to parse response:', parseError, 'Original response:', responseText);
         
-        // 虽然解析失败，但HTTP状态是成功的，所以我们认为上传成功了
+        // Although parsing failed, HTTP status is successful, so we consider upload successful
         setUploadProgress(100);
         return { 
           success: true, 
@@ -190,14 +190,14 @@ export function useFileUpload() {
     
     return new Promise((resolve, reject) => {
       try {
-        // 创建FormData
+        // Create FormData
         const formData = new FormData();
         formData.append('file', file);
         
-        // 使用XMLHttpRequest跟踪进度
+        // Use XMLHttpRequest to track progress
         const xhr = new XMLHttpRequest();
         
-        // 跟踪上传进度
+        // Track upload progress
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
@@ -206,7 +206,7 @@ export function useFileUpload() {
           }
         });
         
-        // 处理响应
+        // Handle response
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
@@ -240,23 +240,23 @@ export function useFileUpload() {
           }
         };
         
-        // 处理网络错误
+        // Handle network errors
         xhr.onerror = () => {
           setError('Network error, please check your connection');
           setIsUploading(false);
           reject(new Error('Network error'));
         };
         
-        // 发送请求
+        // Send request
         xhr.open('POST', endpoint);
         
-        // 添加认证头
+        // Add authentication headers
         const authHeader = getAuthHeader();
         Object.keys(authHeader).forEach(key => {
           xhr.setRequestHeader(key, authHeader[key]);
         });
         
-        // 添加自定义头
+        // Add custom headers
         if (options?.headers) {
           Object.keys(options.headers!).forEach(key => {
             xhr.setRequestHeader(key, options.headers![key]);

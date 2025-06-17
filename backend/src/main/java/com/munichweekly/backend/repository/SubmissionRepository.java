@@ -14,24 +14,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     // Find submissions by a specific user in a specific issue
     List<Submission> findByUserIdAndIssue(Long userId, Issue issue);
 
-    // 查询某期所有通过审核的投稿（用于投票展示）
+    // Query all approved submissions for a specific issue (for voting display)
     List<Submission> findByIssueAndStatus(Issue issue, String status);
     
-    // 查询某期所有通过审核和精选的投稿（包含approved和selected状态）
+    // Query all approved and featured submissions for a specific issue (includes approved and selected status)
     @Query("SELECT s FROM Submission s WHERE s.issue = :issue AND (s.status = 'approved' OR s.status = 'selected')")
     List<Submission> findByIssueAndApprovedOrSelected(Issue issue);
 
-    // 查询某期的封面作品
+    // Query cover submissions for a specific issue
     Optional<Submission> findByIssueAndIsCoverTrue(Issue issue);
 
     // 🔍 Find all submissions by a specific user (across all issues)
     List<Submission> findByUserId(Long userId);
 
-    // 查询某作品是否属于某用户（用于权限校验）
+    // Query whether a submission belongs to a specific user (for permission verification)
     Optional<Submission> findByIdAndUser(Long id, User user);
 
     long countByUserAndIssue(User user, Issue issue);
     
-    // 查询某期所有投稿（不分状态，用于管理员审核）
+    // Query all submissions for a specific issue (regardless of status, for admin review)
     List<Submission> findByIssue(Issue issue);
 }

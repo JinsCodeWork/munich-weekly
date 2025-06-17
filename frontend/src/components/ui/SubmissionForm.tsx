@@ -56,7 +56,7 @@ export function SubmissionForm({
         issueId,
         description: description.trim()
       });
-      // 成功后回调返回submissionId
+      // Callback returns submissionId after success
       if (onSuccess) {
         onSuccess(res.submissionId);
       }

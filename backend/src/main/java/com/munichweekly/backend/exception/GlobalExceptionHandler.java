@@ -13,7 +13,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    //投稿超限、时间不符、非法状态等
+    // Submission limit exceeded, time mismatch, invalid status, etc.
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<?> handleIllegalState(IllegalStateException ex) {
         return ResponseEntity
@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ID 不存在、参数缺失等
+    // ID does not exist, missing parameters, etc.
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // 可扩展更多异常类型（如认证失败、数据库错误等）
+    // Extensible for more exception types (e.g., authentication failure, database errors, etc.)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

@@ -7,12 +7,12 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // 通过邮箱查找用户（用于邮箱登录）
+    // Find user by email (used for email login)
     Optional<User> findByEmail(String email);
 
-    // 查找是否存在管理员账号
+    // Find if admin accounts exist
     List<User> findByRole(String role);
 
-    // 查找被封禁用户
+    // Find banned users
     List<User> findByIsBannedTrue();
 }

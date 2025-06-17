@@ -80,7 +80,7 @@ frontend/
 │   │   ├── content/        # Content pages
 │   │   ├── debug/          # Development debug tools
 │   │   ├── forgot-password/# Password recovery
-│   │   ├── gallery/        # Gallery page
+│   │   ├── gallery/        # Gallery page ✨ **NEW**
 │   │   ├── privacy-policy/ # Privacy policy page
 │   │   ├── register/       # Registration page
 │   │   ├── reset-password/ # Password reset page
@@ -94,6 +94,7 @@ frontend/
 │   │   ├── home/           # Home page components
 │   │   ├── navigation/     # Navigation components
 │   │   ├── submission/     # Submission components
+│   │   ├── gallery/        # Gallery components ✨ **NEW**
 │   │   ├── ui/             # Core UI components
 │   │   └── voting/         # Voting components
 │   ├── context/            # React Context providers
@@ -230,7 +231,39 @@ The system uses a Greedy Best-Fit algorithm that dynamically selects items from 
 
 This system is used across multiple pages including the voting interface (`/vote`), user submissions management (`/account/submissions`), and testing environments. For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
 
-### 7. Enhanced Container System & Layout Optimization
+### 7. Gallery Carousel System ✨ **NEW**
+
+Munich Weekly features a sophisticated carousel system for showcasing featured photography submissions on the homepage:
+
+**Featured Carousel (`/gallery`):**
+- **Auto-playing Display** - Smooth transitions with configurable intervals (5-second default)
+- **Interactive Navigation** - Arrow buttons and dot indicators for manual navigation
+- **Responsive Design** - Optimized layouts for desktop and mobile viewing experiences
+- **Full-screen Viewing** - Integrated with enhanced image viewer for detailed inspection
+
+**Gallery Image Viewer:**
+- **High-quality Display** - Zoom and pan capabilities for detailed photo inspection
+- **Touch Gesture Support** - Double-tap zoom, pinch-to-zoom, and drag navigation on mobile
+- **Keyboard Navigation** - ESC to close, arrow keys for next/previous navigation
+- **Submission Metadata** - Author information, issue title, and descriptions with elegant styling
+
+**Mobile Optimization:**
+- **Direct Interaction** - Tap to open full-screen viewer (bypassing desktop hover states)
+- **Touch-friendly Controls** - Larger touch targets and gesture-based navigation
+- **Performance Optimized** - Lazy loading and progressive enhancement
+
+**Admin Configuration:**
+- **Backend Curation** - Admin-selectable submissions with custom display ordering
+- **Dynamic Content** - Real-time configuration updates without code deployment
+- **Preview System** - Admin preview of submissions before featuring
+
+**Technical Architecture:**
+- `FeaturedCarousel` component with state management for autoplay and navigation
+- `GalleryImageViewer` extending base `ImageViewer` with gallery-specific features
+- Integration with Gallery API for fetching featured submissions
+- Responsive interaction patterns adapting to device capabilities
+
+### 8. Enhanced Container System & Layout Optimization
 
 Munich Weekly features a modern, flexible container system optimized for photography presentation and responsive design:
 
@@ -265,18 +298,19 @@ This system provides consistent, professional layouts across all devices while m
 - Mobile sidebar menu
 - User-state aware elements
 
-### 9. API Integration System
+### 10. API Integration System
 
 - Modular API structure
-- Grouped by business function (authentication, users, submissions, **issues**, votes)
+- Grouped by business function (authentication, users, submissions, **issues**, votes, **gallery** ✨ **NEW**)
 - Unified error handling
 - **Enhanced Issue API**: Full CRUD operations with `getAllIssues()`, `getIssueById()`, `createIssue()`, and `updateIssue()`
+- **Gallery API** ✨ **NEW**: Featured submissions management with `getFeaturedSubmissions()`, `getGalleryStats()`, and admin configuration endpoints
 - **Batch Vote Optimization**: `checkBatchVoteStatus()` reduces N individual requests to 1 batch request
 - **Performance improvements**: 95%+ reduction in vote status API calls
 - JWT authentication integration with automatic token management
 - Comprehensive error handling with user-friendly messages
 
-### 10. Style Management System
+### 11. Style Management System
 
 - Centralized style functions
 - Type-safe style variants

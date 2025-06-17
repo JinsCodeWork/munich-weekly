@@ -43,9 +43,9 @@ export function useConfigAdmin() {
     try {
       console.log('Loading admin configuration');
       
-      // 添加额外的验证措施 - 明确将token作为cookie也发送
+      // Add additional verification measures - explicitly send token as cookie
       const token = localStorage.getItem('jwt');
-      // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
+      // Ensure cookie can be accessed on both client and server side, preventing security restrictions
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
       
       const response = await fetch('/frontend-api/admin/config', {
@@ -78,7 +78,7 @@ export function useConfigAdmin() {
       // Try fallback to public config
       try {
         console.log('Attempting to load public config as fallback');
-        // 公共API不需要认证头
+        // Public API does not require authentication headers
         const publicResponse = await fetch('/frontend-api/config');
         
         if (!publicResponse.ok) {
@@ -119,12 +119,12 @@ export function useConfigAdmin() {
       
       console.log('Uploading hero image to backend local storage');
       
-      // 添加额外的验证措施 - 确保cookie中也有token
+      // Add additional verification measures - ensure token is also in cookie
       const token = localStorage.getItem('jwt');
-      // 确保cookie可以在客户端和服务端都能访问，并防止安全限制
+      // Ensure cookie can be accessed on both client and server side, preventing security restrictions
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
       
-      // 使用新的hero图片专用上传端点
+      // Use new dedicated hero image upload endpoint
       const response = await fetch('/api/submissions/admin/upload-hero', {
         method: 'POST',
         body: formData,
@@ -148,7 +148,7 @@ export function useConfigAdmin() {
       
       console.log('Hero image upload successful:', data.url);
       
-      // 图片上传到后端成功后，需要同步到前端目录
+      // After successful upload to backend, need to sync to frontend directory
       console.log('Syncing hero image to frontend directory...');
       
       try {
@@ -166,7 +166,7 @@ export function useConfigAdmin() {
         
         if (!syncResponse.ok) {
           console.warn('Failed to sync hero image to frontend:', syncResponse.status);
-          // 不抛出错误，因为后端上传已经成功
+          // Don't throw error since backend upload was successful
         } else {
           const syncData = await syncResponse.json();
           if (syncData.success) {
@@ -177,10 +177,10 @@ export function useConfigAdmin() {
         }
       } catch (syncError) {
         console.warn('Error during hero image sync:', syncError);
-        // 不抛出错误，因为后端上传已经成功
+        // Don't throw error since backend upload was successful
       }
       
-      // 返回前端的本地路径
+      // Return frontend local path
       return '/images/home/hero.jpg';
       
     } catch (err) {

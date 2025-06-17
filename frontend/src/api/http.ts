@@ -101,16 +101,16 @@ export const fetchAPI = async <T>(
           requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
         });
         
-        // 不要自动清除token，可能是权限问题而不是token过期
-        // 对/api/admin/开头的URL不清除token，可能是权限问题
+        // Don't automatically clear token, might be permissions issue rather than token expiration
+        // For URLs starting with /api/admin/, don't clear token, might be permissions issue
         if (url !== "/api/auth/login/email" && url !== "/api/auth/register" && !url.startsWith("/api/admin/")) {
           try {
-            console.warn("401错误但不清除token，URL:", url);
-            // 不再自动清除token
+            console.warn("401 error but not clearing token, URL:", url);
+            // No longer automatically clear token
             // localStorage.removeItem("jwt");
             // console.warn("Cleared potentially expired JWT token");
           } catch (err) {
-            console.error("处理401错误时发生异常:", err);
+            console.error("Exception occurred while handling 401 error:", err);
           }
         }
       } else {

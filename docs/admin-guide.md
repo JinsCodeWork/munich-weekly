@@ -285,6 +285,139 @@ Admins can create and manage promotional campaigns, which appear as special page
 - **Image Management**: Upload, order, and delete images for each promotion.
 - **Deletion**: Completely delete a promotion configuration and all of its associated images from the database and cloud storage.
 
+## Gallery Management ✨ **NEW**
+
+The Gallery system allows admins to curate and manage featured submissions that appear in the homepage carousel.
+
+### Accessing Gallery Settings
+
+1. Log in as an admin user
+2. Navigate to "Account" → "Gallery Settings"
+3. Access the featured submissions configuration interface
+
+### Gallery Configuration Features
+
+#### Creating a Gallery Configuration
+
+1. **Submission Selection**: Choose from approved submissions across all issues
+2. **Display Order**: Arrange submissions in preferred viewing sequence
+3. **Autoplay Settings**: Configure carousel transition intervals (default: 5 seconds)
+4. **Metadata Management**: Set configuration title and description for admin reference
+
+#### Configuration Management
+
+- **Active Configuration**: Only one configuration can be active at a time
+- **Multiple Configurations**: Create and save multiple configurations for different themes
+- **Instant Updates**: Changes appear immediately on the homepage carousel
+- **Preview System**: Preview submissions before adding to featured carousel
+
+#### Submission Selection Process
+
+1. **Search by ID**: Enter submission ID to preview and add specific submissions
+2. **Validation**: System verifies submission exists and is approved
+3. **Duplicate Prevention**: Cannot add the same submission multiple times
+4. **Status Check**: Verify if submissions are already featured in active configuration
+
+#### Display Order Management
+
+- **Drag and Drop**: Reorder submissions using intuitive drag-and-drop interface
+- **Numerical Order**: Each submission gets a display order number (1, 2, 3, ...)
+- **Preview**: See how the carousel will appear before saving
+
+### Gallery Administration Tools
+
+#### Configuration List View
+
+- **View All Configurations**: Browse all saved gallery configurations
+- **Status Indicators**: Clearly identify the active configuration
+- **Quick Actions**: Activate, edit, or delete configurations
+- **Creation Timestamps**: Track when configurations were created and last modified
+
+#### Configuration Actions
+
+- **Activate**: Set a configuration as the active featured carousel
+- **Edit**: Modify submission selection and display order
+- **Delete**: Remove configuration (includes confirmation dialog)
+- **Duplicate**: Create a copy of existing configuration for modifications
+
+### Featured Submissions Requirements
+
+Submissions must meet the following criteria to be featured:
+
+- **Approval Status**: Must be approved by admin
+- **Image Quality**: Must have valid image URLs and dimensions
+- **Accessibility**: Must be publicly viewable
+
+### Gallery Display Features
+
+The gallery carousel on the homepage provides:
+
+- **Auto-playing Slideshow**: Smooth transitions with configurable timing
+- **Interactive Navigation**: Arrow buttons and dot indicators
+- **Responsive Design**: Optimized for desktop and mobile viewing
+- **Full-screen Viewing**: Click/tap to open high-quality image viewer
+- **Submission Information**: Author, issue, and description display
+
+### Technical Implementation
+
+#### Backend Configuration
+
+- **Database Storage**: Gallery configurations stored in `gallery_featured_config` table
+- **Submission Links**: Manages relationships between configurations and submissions
+- **Automatic Deactivation**: System ensures only one active configuration
+
+#### Frontend Integration
+
+- **Real-time Updates**: Configuration changes appear immediately
+- **Mobile Optimization**: Touch-friendly navigation and full-screen viewing
+- **Performance**: Lazy loading and optimized image delivery
+- **User Experience**: Seamless transitions between carousel and full viewer
+
+### Best Practices
+
+#### Submission Selection
+
+- **Quality**: Choose high-resolution, visually striking photographs
+- **Variety**: Mix different photography styles and subjects
+- **Balance**: Consider aspect ratios for optimal carousel display
+- **Representation**: Showcase diverse photographers and issues
+
+#### Configuration Management
+
+- **Descriptive Titles**: Use clear, descriptive names for configurations
+- **Regular Updates**: Refresh featured content periodically
+- **Performance**: Limit to 3-7 submissions for optimal loading
+- **Mobile Testing**: Verify carousel works well on mobile devices
+
+### Troubleshooting Gallery Issues
+
+#### Common Issues
+
+**Submissions not appearing:**
+1. Verify submission is approved status
+2. Check if submission ID exists
+3. Ensure configuration is set as active
+4. Clear browser cache if needed
+
+**Configuration not saving:**
+1. Verify admin authentication
+2. Check all required fields are completed
+3. Ensure at least one submission is selected
+4. Review server logs for errors
+
+**Carousel not updating:**
+1. Refresh homepage to see changes
+2. Verify configuration is marked as active
+3. Check browser developer tools for JavaScript errors
+4. Confirm submission images are accessible
+
+#### Performance Optimization
+
+- **Image Quality**: Featured submissions automatically use optimized delivery
+- **Loading States**: Carousel includes loading indicators for smooth UX
+- **Cache Management**: System handles cache invalidation automatically
+- **Error Handling**: Graceful fallbacks for missing or broken images
+
 ## Data Migration
 
 The admin dashboard includes a powerful data migration tool.

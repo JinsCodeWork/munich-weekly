@@ -230,7 +230,7 @@ export default function SubmitPage() {
               />
             </div>
             
-            {/* Step 2: Upload Photo - 始终显示，不管是否已上传图片 */}
+            {/* Step 2: Upload Photo - Always display, regardless of whether image has been uploaded */}
             {selectedIssue && (
               <div className={getFormContainerStyles()}>
                 <h2 className="font-heading text-lg font-medium mb-4">Step 2: Upload Photo</h2>

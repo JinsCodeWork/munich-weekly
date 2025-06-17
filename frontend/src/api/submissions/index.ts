@@ -1,6 +1,6 @@
 /**
- * 投稿相关API模块
- * 提供投稿的增删改查和审核功能
+ * Submission-related API module
+ * Provides CRUD and review functionality for submissions
  */
 import { fetchAPI, getAuthHeader } from "../http";
 import { 
@@ -12,19 +12,19 @@ import {
 } from "@/types/submission";
 
 /**
- * 获取用户自己的投稿
+ * Get user's own submissions
  * GET /api/submissions/mine
- * @param issueId 可选的期刊ID过滤
- * @param page 页码 (从0开始)
- * @param size 每页数量
- * @returns 分页的用户投稿列表
+ * @param issueId Optional issue ID filter
+ * @param page Page number (starting from 0)
+ * @param size Items per page
+ * @returns Paginated list of user submissions
  */
 export const getUserSubmissions = async (
   issueId?: number,
   page: number = 0,
   size: number = 8
 ): Promise<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>> => {
-  // 构建查询参数
+  // Build query parameters
   const params = new URLSearchParams();
   if (issueId) {
     params.append('issueId', issueId.toString());
@@ -34,15 +34,15 @@ export const getUserSubmissions = async (
   
   const url = `/api/submissions/mine?${params.toString()}`;
 
-  // 请求API
+  // Request API
   const response = await fetchAPI<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>>(url, {
     headers: getAuthHeader()
   });
   
-  // 后端可能已经支持分页，也可能还未支持
-  // 如果返回的是数组，我们手动将其转换为分页格式
+  // Backend may already support pagination, or may not yet support it
+  // If an array is returned, we manually convert it to paginated format
   if (Array.isArray(response)) {
-    // 手动分页
+    // Manual pagination
     const startIndex = page * size;
     const endIndex = startIndex + size;
     const paginatedItems = response.slice(startIndex, endIndex);
@@ -58,7 +58,7 @@ export const getUserSubmissions = async (
     };
   }
   
-  // 否则直接返回后端的分页响应
+  // Otherwise directly return backend's paginated response
   return response;
 };
 
@@ -76,7 +76,7 @@ export const getSubmissionsByIssue = async (
 };
 
 /**
- * 获取某期刊的所有投稿（仅限管理员）
+ * Get all submissions for an issue (admin only)
  * GET /api/submissions/all?issueId={issueId}
  */
 export const getAllSubmissionsByIssue = async (
@@ -88,7 +88,7 @@ export const getAllSubmissionsByIssue = async (
 };
 
 /**
- * 创建新投稿
+ * Create new submission
  * POST /api/submissions
  */
 export const createSubmission = async (data: SubmissionRequest): Promise<{ submissionId: number, uploadUrl: string }> => {
@@ -100,7 +100,7 @@ export const createSubmission = async (data: SubmissionRequest): Promise<{ submi
 };
 
 /**
- * 批准投稿（仅限管理员）
+ * Approve submission (admin only)
  * PATCH /api/submissions/{id}/approve
  */
 export const approveSubmission = async (submissionId: number): Promise<void> => {
@@ -122,7 +122,7 @@ export const rejectSubmission = async (submissionId: number): Promise<void> => {
 };
 
 /**
- * 选择投稿作为特色（仅限管理员）
+ * Select submission as featured (admin only)
  * PATCH /api/submissions/{id}/select
  */
 export const selectSubmission = async (submissionId: number): Promise<void> => {
@@ -133,7 +133,7 @@ export const selectSubmission = async (submissionId: number): Promise<void> => {
 };
 
 /**
- * 删除投稿
+ * Delete submission
  * DELETE /api/submissions/{id}
  */
 export const deleteSubmission = async (submissionId: number): Promise<void> => {

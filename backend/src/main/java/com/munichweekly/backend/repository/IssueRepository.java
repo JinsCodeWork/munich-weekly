@@ -8,12 +8,12 @@ import java.util.Optional;
 
 public interface IssueRepository extends JpaRepository<Issue, Long> {
 
-    // 查找当前处于投稿阶段的期数
+    // Find issues currently in submission phase
     List<Issue> findBySubmissionStartBeforeAndSubmissionEndAfter(LocalDateTime now1, LocalDateTime now2);
 
-    // 查找当前处于投票阶段的期数
+    // Find issues currently in voting phase
     List<Issue> findByVotingStartBeforeAndVotingEndAfter(LocalDateTime now1, LocalDateTime now2);
 
-    // 查找最新一期（根据 submissionStart 降序排序）
+    // Find the latest issue (sorted by submissionStart in descending order)
     Optional<Issue> findFirstByOrderBySubmissionStartDesc();
 }

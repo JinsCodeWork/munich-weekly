@@ -1,6 +1,6 @@
 /**
- * 投票相关API模块
- * 提供投票功能和投票状态检查
+ * Voting-related API module
+ * Provides voting functionality and vote status checking
  */
 import { fetchAPI } from "../http";
 import { getOrGenerateVisitorId } from "@/lib/visitorId";

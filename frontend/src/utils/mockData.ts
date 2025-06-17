@@ -7,7 +7,7 @@ import { AdminSubmissionResponse, Issue, SubmissionStatus } from "@/types/submis
 export function generateMockSubmissions(): AdminSubmissionResponse[] {
   return Array.from({ length: 10 }, (_, i) => {
     const userId = i + 100;
-    const nickname = `摄影师 ${userId}`;
+    const nickname = `Photographer ${userId}`;
     const email = `user${userId}@example.com`;
     
     return {

@@ -12,28 +12,28 @@ import java.util.Optional;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
 
-    // 判断匿名访客是否对某个作品投过票
+    // Check if an anonymous visitor has voted for a specific submission
     boolean existsByVisitorIdAndSubmission(String visitorId, Submission submission);
     
-    // 判断登录用户是否对某个作品投过票
+    // Check if a logged-in user has voted for a specific submission
     boolean existsByUserIdAndSubmission(Long userId, Submission submission);
 
-    // 查询某个作品收到的所有投票（用于计算得票数）
+    // Query all votes received by a submission (used to calculate vote count)
     List<Vote> findBySubmission(Submission submission);
 
-    // 查询用户投过的所有票
+    // Query all votes cast by a user
     List<Vote> findByUserId(Long userId);
     
-    // 查找特定访客对特定投稿的投票
+    // Find votes by a specific visitor for a specific submission
     Optional<Vote> findByVisitorIdAndSubmission(String visitorId, Submission submission);
     
-    // 查找特定用户对特定投稿的投票
+    // Find votes by a specific user for a specific submission
     Optional<Vote> findByUserIdAndSubmission(Long userId, Submission submission);
 
-    // 删除用户投过的所有票
+    // Delete all votes cast by a user
     void deleteByUserId(Long userId);
     
-    // 删除某个作品收到的所有投票
+    // Delete all votes received by a submission
     @Transactional
     void deleteBySubmission(Submission submission);
 

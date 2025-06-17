@@ -86,8 +86,8 @@ public class ApiScanner {
 
             markdown.append("\n");
         }
-        Path output = Paths.get("docs/api.md"); // ⬅️ 注意不再是 ../docs
-        output.toFile().getParentFile().mkdirs(); // 确保目录存在
+        Path output = Paths.get("docs/api.md"); // ⬅️ Note: no longer ../docs
+        output.toFile().getParentFile().mkdirs(); // Ensure directory exists
         // Save to file
         try (FileWriter writer = new FileWriter(String.valueOf(output))) {
             writer.write(markdown.toString());

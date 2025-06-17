@@ -20,7 +20,7 @@ public class UserAuthProvider {
 
     private String provider; // wechat / google / apple
     private String providerUserId;
-    private String displayName; // e.g., "abc@gmail.com" for Google, "小明" for WeChat
+    private String displayName; // e.g., "abc@gmail.com" for Google, "John Doe" for WeChat
     private String avatarUrl;   // Optional, from platform
 
     private LocalDateTime linkedAt = LocalDateTime.now();

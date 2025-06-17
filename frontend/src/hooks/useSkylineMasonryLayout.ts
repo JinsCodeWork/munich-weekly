@@ -145,7 +145,7 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     // Check if request is already in progress for this issueId
     if (requestIdRef.current === issueId && activeRequest) {
-      console.log(`🎯 防重复请求: issueId=${issueId} 已在请求中，复用中...`);
+              console.log(`🎯 Preventing duplicate requests: issueId=${issueId} already in progress, reusing...`);
       try {
         const response = await activeRequest;
         setOrderingState({

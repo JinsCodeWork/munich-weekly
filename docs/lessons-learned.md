@@ -26,4 +26,59 @@ const response = await fetch('/api/promotion/config');
 
 // Incorrect (Absolute Path)
 const response = await fetch('http://localhost:8080/api/promotion/config');
+```
+
+---
+
+## 3. Spring Security Requires Exact Path Matching for Admin Endpoints
+
+During Gallery feature development, all admin API calls returned 401 Unauthorized errors despite valid JWT tokens. Investigation revealed two critical authentication issues.
+
+- **Lesson 1**: Spring Security's `requestMatchers()` requires **exact path matching** with specific HTTP methods. Wildcard patterns like `/api/gallery/featured/config/**` do not work as expected.
+- **Lesson 2**: Frontend API calls must include the `Authorization: Bearer {token}` header. Using only `credentials: 'include'` for cookies is insufficient for JWT-based authentication.
+
+**Backend Fix**:
+```java
+// Incorrect (Wildcard patterns fail)
+.requestMatchers("/api/gallery/featured/config/**").hasAuthority("admin")
+
+// Correct (Exact paths with HTTP methods)
+.requestMatchers(HttpMethod.GET, "/api/gallery/featured/config").hasAuthority("admin")
+.requestMatchers(HttpMethod.POST, "/api/gallery/featured/config").hasAuthority("admin")
+.requestMatchers(HttpMethod.DELETE, "/api/gallery/featured/config/*").hasAuthority("admin")
+```
+
+**Frontend Fix**:
+```javascript
+// Incorrect (Missing Authorization header)
+const response = await fetch('/api/gallery/featured/config', {
+  credentials: 'include'
+});
+
+// Correct (Include JWT token)
+const authHeaders = getAuthHeader();
+const response = await fetch('/api/gallery/featured/config', {
+  headers: { ...authHeaders },
+  credentials: 'include'
+});
+```
+
+---
+
+## 4. JPA @Modifying Annotation Required for UPDATE/DELETE Queries
+
+Gallery configuration saving failed with "Query executed via 'getResultList()' must be a 'select' query" error when deactivating other configurations.
+
+- **Lesson**: Spring Data JPA requires the `@Modifying` annotation for all UPDATE, DELETE, or INSERT `@Query` methods. Without it, JPA treats the query as a SELECT operation.
+- **Guideline**: Always add `@Modifying` to repository methods that modify data.
+
+```java
+// Incorrect (Missing @Modifying)
+@Query("UPDATE GalleryFeaturedConfig gfc SET gfc.isActive = false WHERE gfc.id != :excludeId")
+int deactivateOtherConfigs(@Param("excludeId") Long excludeId);
+
+// Correct (With @Modifying)
+@Modifying
+@Query("UPDATE GalleryFeaturedConfig gfc SET gfc.isActive = false WHERE gfc.id != :excludeId")
+int deactivateOtherConfigs(@Param("excludeId") Long excludeId);
 ``` 

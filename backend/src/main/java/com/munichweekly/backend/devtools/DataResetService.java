@@ -38,11 +38,11 @@ public class DataResetService {
 
     @Transactional
     public void resetAllData() {
-        System.out.println("🧹 开始清空数据库数据...");
+        System.out.println("🧹 Starting database data cleanup...");
         voteRepository.deleteAll();
         submissionRepository.deleteAll();
         issueRepository.deleteAll();
-        passwordResetTokenRepository.deleteAll(); // 先删除密码重置令牌
+        passwordResetTokenRepository.deleteAll(); // Delete password reset tokens first
         authProviderRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -52,6 +52,6 @@ public class DataResetService {
         entityManager.createNativeQuery("ALTER SEQUENCE votes_id_seq RESTART WITH 1").executeUpdate();
         entityManager.createNativeQuery("ALTER SEQUENCE password_reset_tokens_id_seq RESTART WITH 1").executeUpdate();
 
-        System.out.println("✅ 数据清空完成！");
+        System.out.println("✅ Data cleanup completed!");
     }
 }

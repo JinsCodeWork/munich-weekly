@@ -1,9 +1,9 @@
 /**
- * API相关类型定义
+ * API-related type definitions
  */
 
 /**
- * API错误类型
+ * API error type
  */
 export default interface ApiError {
   status: number;

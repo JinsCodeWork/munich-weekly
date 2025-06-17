@@ -9,12 +9,12 @@ import java.util.Optional;
 
 public interface UserAuthProviderRepository extends JpaRepository<UserAuthProvider, Long> {
 
-    // 查找某个 provider 中的某个用户（用于登录）
+    // Find a specific user in a specific provider (for login)
     Optional<UserAuthProvider> findByProviderAndProviderUserId(String provider, String providerUserId);
 
-    // 查找某用户已绑定的所有登录方式（用于个人账号页展示）
+    // Find all login methods bound to a specific user (for personal account page display)
     List<UserAuthProvider> findByUser(User user);
 
-    // 查找某个用户绑定的指定 provider（用于解绑）
+    // Find a specific provider bound to a specific user (for unbinding)
     Optional<UserAuthProvider> findByUserAndProvider(User user, String provider);
 }

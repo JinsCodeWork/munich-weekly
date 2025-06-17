@@ -47,7 +47,7 @@ export default function DataMigrationPage() {
   const [delayMs, setDelayMs] = useState(2000);
   const [error, setError] = useState<string | null>(null);
   
-  // 🔧 新增：重新迁移相关状态
+            // 🔧 Added: Remigration related states
   const [remigrationStatus, setRemigrationStatus] = useState<RemigrationStatus | null>(null);
   const [remigrationBatchSize, setRemigrationBatchSize] = useState(3);
   const [remigrationDelayMs, setRemigrationDelayMs] = useState(3000);
@@ -74,7 +74,7 @@ export default function DataMigrationPage() {
     }
   }, [token]);
 
-  // 🔧 新增：获取重新迁移状态
+  // 🔧 Added: Get remigration status
   const fetchRemigrationStatus = useCallback(async () => {
     if (!token) return;
     
@@ -285,10 +285,10 @@ export default function DataMigrationPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">数据迁移管理</h1>
-          <p className="text-gray-600">
-            安全批量处理现有submissions，为其添加图片尺寸信息以优化布局性能
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Data Migration Management</h1>
+                      <p className="text-gray-600">
+              Safely batch process existing submissions to add image dimension information for optimized layout performance
+            </p>
         </div>
 
         {/* Error Display */}
@@ -296,7 +296,7 @@ export default function DataMigrationPage() {
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">错误</h3>
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
             </div>
@@ -306,7 +306,7 @@ export default function DataMigrationPage() {
         {/* Analysis Section */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">数据分析</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Data Analysis</h2>
             <Button
               onClick={analyzeSubmissions}
               disabled={isAnalyzing}
@@ -316,10 +316,10 @@ export default function DataMigrationPage() {
               {isAnalyzing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                  分析中...
+                  Analyzing...
                 </>
               ) : (
-                '重新分析'
+                'Reanalyze'
               )}
             </Button>
           </div>
@@ -327,19 +327,19 @@ export default function DataMigrationPage() {
           {analysisResult ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-blue-600">总投稿数</p>
+                <p className="text-sm font-medium text-blue-600">Total Submissions</p>
                 <p className="text-2xl font-bold text-blue-900">{analysisResult.totalSubmissions}</p>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-green-600">已优化</p>
+                <p className="text-sm font-medium text-green-600">Optimized</p>
                 <p className="text-2xl font-bold text-green-900">{analysisResult.submissionsWithDimensions}</p>
               </div>
               <div className="bg-yellow-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-yellow-600">需要迁移</p>
+                <p className="text-sm font-medium text-yellow-600">Needing Migration</p>
                 <p className="text-2xl font-bold text-yellow-900">{analysisResult.submissionsNeedingMigration}</p>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-purple-600">优化比例</p>
+                <p className="text-sm font-medium text-purple-600">Optimization Percentage</p>
                 <p className="text-2xl font-bold text-purple-900">
                   {analysisResult.currentOptimizationPercentage.toFixed(1)}%
                 </p>
@@ -348,7 +348,7 @@ export default function DataMigrationPage() {
           ) : (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">正在分析数据...</p>
+              <p className="text-gray-600">Analyzing data...</p>
             </div>
           )}
         </div>
@@ -362,10 +362,10 @@ export default function DataMigrationPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h2 className="text-xl font-semibold text-orange-900">重新生成图片尺寸</h2>
-              <p className="text-sm text-orange-700 mt-1">
-                如果发现图片尺寸数据不正确（例如竖图显示为横图比例），可以使用此功能重新获取所有图片的正确尺寸信息
-              </p>
+              <h2 className="text-xl font-semibold text-orange-900">Re-generate Image Dimensions</h2>
+                              <p className="text-sm text-orange-700 mt-1">
+                  If image dimension data is found to be incorrect (e.g., portrait images displaying as landscape ratio), use this function to re-obtain correct dimension information for all images
+                </p>
             </div>
           </div>
 

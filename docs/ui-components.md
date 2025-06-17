@@ -356,6 +356,68 @@ The `VoteButton` is a client-side component responsible for handling the user in
         *   **Voted**: "Voted" text with a green checkmark icon, styled as a `ghost` button.
     *   Handles error display gracefully.
 
+### Gallery Components ✨ **NEW** (`/components/gallery`)
+
+Munich Weekly's featured submissions carousel system for showcasing curated photography:
+
+#### `FeaturedCarousel.tsx`
+
+The main carousel component for displaying featured submissions with auto-play and interactive navigation:
+
+**Location**: `frontend/src/components/gallery/FeaturedCarousel.tsx`
+
+**Key Features:**
+- **Auto-playing Display**: 5-second interval with smooth fade transitions
+- **Interactive Navigation**: Arrow buttons and dot indicators for manual control
+- **Responsive Design**: Mobile-optimized layouts with appropriate touch targets
+- **State Management**: Centralized state for current slide, autoplay, and user interactions
+
+**Props:**
+- `submissions: FeaturedSubmission[]`: Array of featured submissions to display
+- `autoplayInterval?: number`: Configurable autoplay duration (default: 5000ms)
+- `className?: string`: Additional CSS classes for customization
+
+**Responsive Behavior:**
+- **Desktop**: Hover effects reveal author information and descriptions
+- **Mobile**: Direct tap interaction opens full-screen gallery viewer
+- **Touch Navigation**: Swipe gestures for slide navigation (future enhancement)
+
+**Technical Implementation:**
+- Uses `useMediaQuery` hook for responsive behavior detection
+- Integration with `GalleryImageViewer` for full-screen viewing
+- Automatic pause on user interaction with smart resume logic
+- Keyboard navigation support (arrow keys, ESC)
+
+#### `GalleryImageViewer.tsx`
+
+Enhanced full-screen image viewer specifically designed for gallery submissions:
+
+**Location**: `frontend/src/components/gallery/GalleryImageViewer.tsx`
+
+**Key Features:**
+- **High-quality Display**: Zoom and pan capabilities with smooth interactions
+- **Touch Gesture Support**: Double-tap zoom, pinch-to-zoom, drag navigation
+- **Submission Metadata**: Author information, issue title, and description display
+- **Navigation Controls**: Next/previous buttons and keyboard support
+
+**Props:**
+- `submission: FeaturedSubmission`: Current submission data
+- `submissions: FeaturedSubmission[]`: Full array for navigation
+- `isOpen: boolean`: Visibility state
+- `onClose: () => void`: Close handler
+- `onNavigate?: (direction: 'prev' | 'next') => void`: Navigation handler
+
+**Information Display:**
+- **Author**: "Photo by [nickname]" with elegant typography
+- **Issue Title**: Contest or weekly issue identification
+- **Description**: Quoted description with italic styling for artistic presentation
+- **Clean Design**: Simplified metadata focusing on core submission information
+
+**Mobile Optimization:**
+- **Touch-friendly Controls**: Large touch targets for navigation
+- **Gesture Recognition**: Zoom, pan, and navigation gestures
+- **Performance**: Lazy loading and optimized image rendering
+
 ### Voting Components (`/components/voting`)
 
 - **`VoteCard`**: Displays a submission with voting actions.

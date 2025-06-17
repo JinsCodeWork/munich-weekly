@@ -71,7 +71,7 @@ export function ImageUploader({
     }
   };
 
-  // 拖拽事件处理
+  // Drag and drop event handling
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -82,7 +82,7 @@ export function ImageUploader({
     e.preventDefault();
     e.stopPropagation();
     
-    // 只有当离开整个拖放区域时才设置为false
+    // Only set to false when leaving the entire drop zone
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
     }
@@ -91,7 +91,7 @@ export function ImageUploader({
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // 确保拖拽状态保持true
+    // Ensure drag state remains true
     setIsDragging(true);
   }, []);
 

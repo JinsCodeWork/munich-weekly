@@ -10,7 +10,7 @@ export const SITE = {
   url: 'https://munich-weekly.com',
 };
 
-// API路径
+// API paths
 export const API_PATHS = {
   login: '/api/auth/login',
   register: '/api/auth/register',

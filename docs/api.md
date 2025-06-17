@@ -341,6 +341,158 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
   > **Params**: `ForgotPasswordRequestDTO dto`
 
+## Gallery API ✨ **NEW**
+
+Endpoints for managing and viewing featured submissions carousel.
+
+### Public Endpoints
+
+- **GET** `/api/gallery/featured`
+  > Get featured submissions for carousel display (public endpoint)
+  
+  > **Response**: Array of featured submissions with display order
+  > ```json
+  > [
+  >   {
+  >     "id": 123,
+  >     "imageUrl": "/uploads/issues/1/submissions/photo.jpg",
+  >     "thumbnailUrl": "/uploads/issues/1/submissions/photo.jpg?width=400",
+  >     "description": "Beautiful sunset over Munich",
+  >     "authorName": "photographer_nick",
+  >     "authorId": 456,
+  >     "issueTitle": "Week 1 - Nature",
+  >     "issueId": 1,
+  >     "imageWidth": 3648,
+  >     "imageHeight": 2432,
+  >     "aspectRatio": 1.5,
+  >     "status": "approved",
+  >     "isCover": false,
+  >     "submittedAt": "2024-01-01T12:00:00",
+  >     "displayOrder": 1
+  >   }
+  > ]
+  > ```
+
+- **GET** `/api/gallery/stats`
+  > Get gallery statistics (public endpoint)
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "totalFeaturedSubmissions": 5,
+  >   "hasActiveConfig": true,
+  >   "totalConfigs": 3
+  > }
+  > ```
+
+### Admin Endpoints
+
+All admin endpoints require `admin` authority:
+
+- **GET** `/api/gallery/featured/config`
+  > Get current active gallery configuration (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "config": {
+  >     "id": 1,
+  >     "submissionIds": [123, 456, 789],
+  >     "displayOrder": [1, 2, 3],
+  >     "autoplayInterval": 5000,
+  >     "isActive": true,
+  >     "configTitle": "Featured Photography",
+  >     "configDescription": "Best submissions this week",
+  >     "createdAt": "2024-01-01T10:00:00",
+  >     "updatedAt": "2024-01-01T15:30:00",
+  >     "featuredCount": 3
+  >   },
+  >   "hasConfig": true
+  > }
+  > ```
+
+- **GET** `/api/gallery/featured/configs`
+  > Get all gallery configurations (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "configs": [/* array of configurations */],
+  >   "total": 5
+  > }
+  > ```
+
+- **POST** `/api/gallery/featured/config`
+  > Create or update gallery configuration (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Request Body**:
+  > ```json
+  > {
+  >   "submissionIds": [123, 456, 789],
+  >   "displayOrder": [1, 2, 3],
+  >   "autoplayInterval": 5000,
+  >   "isActive": true,
+  >   "configTitle": "Featured Photography",
+  >   "configDescription": "Best submissions this week"
+  > }
+  > ```
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "config": {/* saved configuration */},
+  >   "message": "Gallery configuration saved successfully",
+  >   "success": true
+  > }
+  > ```
+
+- **DELETE** `/api/gallery/featured/config/{id}`
+  > Delete gallery configuration (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "message": "Gallery configuration deleted successfully",
+  >   "success": true,
+  >   "deletedId": 123
+  > }
+  > ```
+
+- **GET** `/api/gallery/submissions/{id}/preview`
+  > Preview submission by ID (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "submission": {/* submission details */},
+  >   "found": true
+  > }
+  > ```
+
+- **GET** `/api/gallery/submissions/{id}/featured-status`
+  > Check if submission is featured (admin only)
+  
+  > **Headers**: `Authorization: Bearer {jwt_token}`
+  
+  > **Response**:
+  > ```json
+  > {
+  >   "submissionId": 123,
+  >   "isFeatured": true,
+  >   "message": "Submission is featured in active configuration"
+  > }
+  > ```
+
 ## Promotion API
 
 Endpoints for managing and viewing promotions.

@@ -118,25 +118,25 @@ export function MasonrySubmissionCard({
     });
   }
   
-  // 🚨 调试：对于所有图片，添加详细的处理策略调试信息
+  // 🚨 Debug: Add detailed processing strategy debug info for all images
   if (process.env.NODE_ENV === 'development') {
-    const objectFitStrategy = aspectRatio < 1 ? 'contain (竖图完整显示)' : 'cover (横图填满容器)';
-    const imageType = aspectRatio < 1 ? '竖图' : (aspectRatio >= 1.9 ? '超宽图' : '横图');
+    const objectFitStrategy = aspectRatio < 1 ? 'contain (portrait full display)' : 'cover (landscape fill container)';
+    const imageType = aspectRatio < 1 ? 'portrait' : (aspectRatio >= 1.9 ? 'ultra-wide' : 'landscape');
     
-    if (aspectRatio >= 1.9 || aspectRatio < 1) { // 只输出超宽图和竖图的调试信息
-      console.log(`🖼️ ${imageType}处理调试:`, {
-        传入的aspectRatio: aspectRatio.toFixed(3),
-        图片类型: imageType,
-        图片分类: (() => {
+    if (aspectRatio >= 1.9 || aspectRatio < 1) { // Only output debug info for ultra-wide and portrait images
+      console.log(`🖼️ ${imageType} processing debug:`, {
+        inputAspectRatio: aspectRatio.toFixed(3),
+        imageType: imageType,
+        imageClassification: (() => {
           if (aspectRatio > 2.1) return 'ultrawide (21:9+)';
           if (aspectRatio > 1.9) return 'cinema (1.9-2.1)';
           if (aspectRatio > 1.6) return 'widescreen (16:9)';
-          if (aspectRatio >= 1) return 'landscape (横图)';
-          if (aspectRatio > 0.69) return 'portrait (3:4竖图)';
-          return 'tallportrait (9:16竖图)';
+          if (aspectRatio >= 1) return 'landscape';
+          if (aspectRatio > 0.69) return 'portrait (3:4)';
+          return 'tall portrait (9:16)';
         })(),
-        容器宽高比: aspectRatio.toString(),
-        Thumbnail参数: {
+        containerAspectRatio: aspectRatio.toString(),
+        thumbnailParams: {
           objectFit: objectFitStrategy,
           objectPosition: aspectRatio > 1.6 ? 'center' : 'top',
           preserveAspectRatio: false,
@@ -144,36 +144,36 @@ export function MasonrySubmissionCard({
         },
         submissionId: submission.id,
         imageUrl: imageUrl?.substring(0, 50) + '...',
-        预期效果: aspectRatio < 1 ? '竖图完整显示，无裁切' : '横图填满容器，无灰色填充'
+        expectedEffect: aspectRatio < 1 ? 'Portrait full display, no cropping' : 'Landscape fill container, no gray padding'
       });
     }
   }
   
-  // 🚨 调试：对于宽高比有问题的图片，添加更详细的分析
+  // 🚨 Debug: Add detailed analysis for images with aspect ratio issues
   if (process.env.NODE_ENV === 'development' && 
       submission.imageWidth && submission.imageHeight && submission.aspectRatio) {
     const storedRatio = submission.aspectRatio;
     const calculatedRatio = submission.imageWidth / submission.imageHeight;
     const ratioDifference = Math.abs(storedRatio - calculatedRatio);
     
-    // 如果存储的宽高比和计算的宽高比差异很大，说明有问题
+    // If stored aspect ratio differs significantly from calculated ratio, there's an issue
     if (ratioDifference > 0.1) {
-      console.error('🚨 宽高比数据异常:', {
+      console.error('🚨 Aspect ratio data anomaly:', {
         imageUrl: imageUrl.substring(0, 50) + '...',
         submissionId: submission.id,
-        存储的数据: {
+        storedData: {
           width: submission.imageWidth,
           height: submission.imageHeight,
           storedAspectRatio: storedRatio.toFixed(3)
         },
-        计算结果: {
+        calculatedResult: {
           calculatedAspectRatio: calculatedRatio.toFixed(3),
           shouldBePortrait: calculatedRatio < 1,
           shouldBeLandscape: calculatedRatio > 1
         },
-        传入的aspectRatio: aspectRatio.toFixed(3),
-        差异程度: ratioDifference.toFixed(3),
-        可能的问题: ratioDifference > 0.5 ? '宽高可能被颠倒了' : '数据轻微不一致'
+        inputAspectRatio: aspectRatio.toFixed(3),
+        deviationLevel: ratioDifference.toFixed(3),
+        possibleIssue: ratioDifference > 0.5 ? 'Width and height may be swapped' : 'Data slightly inconsistent'
       });
     }
   }
@@ -295,49 +295,49 @@ export function MasonrySubmissionCard({
             </div>
           )}
           
-          {/* 🎯 条件渲染：只在有有效图片时渲染 Thumbnail */}
+          {/* 🎯 Conditional rendering: Only render Thumbnail when valid image exists */}
           {hasValidImage ? (
             <Thumbnail
               src={displayUrl}
               alt={submission.description}
               fill={true}
               
-              // 🎯 性能优化：优先使用存储的图片尺寸数据
+              // 🎯 Performance optimization: Prioritize stored image dimension data
               precomputedDimensions={submission.imageWidth && submission.imageHeight ? {
                 width: submission.imageWidth,
                 height: submission.imageHeight,
                 aspectRatio: submission.aspectRatio || (submission.imageWidth / submission.imageHeight)
               } : undefined}
               
-              // 🚨 修复双重宽高比冲突：使用传入的 aspectRatio 而不是 "auto"
-              // 这样 Thumbnail 内部就不会进行宽高比检测，避免与外层容器冲突
+              // 🚨 Fix double aspect ratio conflict: Use passed aspectRatio instead of "auto"
+              // This prevents Thumbnail from internal aspect ratio detection, avoiding conflicts with outer container
               aspectRatio={(() => {
-                // 根据传入的数值 aspectRatio 确定对应的比例类型
-                // 🔧 修复：与detectAspectRatio函数的分类逻辑保持一致
-                if (aspectRatio > 2.1) return 'ultrawide';       // 21:9及以上的超宽图片
-                if (aspectRatio > 1.9) return 'cinema';          // 1.9-2.1之间的电影比例图片
-                if (aspectRatio > 1.6) return 'widescreen';      // 1.6-1.9之间的宽屏图片（包括16:9）
-                if (aspectRatio > 1.1) return 'landscape';       // 1.1-1.6之间的横向图片
-                if (aspectRatio > 0.9) return 'square';          // 0.9-1.1接近正方形
-                if (aspectRatio > 0.69) return 'portrait';       // 0.69-0.9为portrait范围
-                return 'tallportrait';                           // 0.69以下为tallportrait
+                // Determine corresponding ratio type based on input aspectRatio value
+                // 🔧 Fix: Keep consistent with detectAspectRatio function classification logic
+                if (aspectRatio > 2.1) return 'ultrawide';       // Ultra-wide images 21:9 and above
+                if (aspectRatio > 1.9) return 'cinema';          // Cinema ratio images between 1.9-2.1
+                if (aspectRatio > 1.6) return 'widescreen';      // Widescreen images between 1.6-1.9 (including 16:9)
+                if (aspectRatio > 1.1) return 'landscape';       // Landscape images between 1.1-1.6
+                if (aspectRatio > 0.9) return 'square';          // Near-square images 0.9-1.1
+                if (aspectRatio > 0.69) return 'portrait';       // Portrait range 0.69-0.9
+                return 'tallportrait';                           // Tall portrait below 0.69
               })()}
-              autoDetectAspectRatio={false} // 禁用自动检测，使用上面明确指定的比例
-              preserveAspectRatio={false} // 🔧 关键修复：禁用Thumbnail的智能objectFit逻辑
-              // 🔧 修复：根据图片类型智能选择objectFit
+              autoDetectAspectRatio={false} // Disable auto-detection, use explicitly specified ratio above
+              preserveAspectRatio={false} // 🔧 Critical fix: Disable Thumbnail's intelligent objectFit logic
+              // 🔧 Fix: Intelligently select objectFit based on image type
               objectFit={(() => {
                 if (aspectRatio < 1) {
-                  // 竖图：使用contain完整显示，避免裁切
+                  // Portrait: Use contain for full display, avoid cropping
                   return 'contain';
                 } else {
-                  // 横图和超宽图：使用cover填满容器，避免灰色填充
+                  // Landscape and ultra-wide: Use cover to fill container, avoid gray padding
                   return 'cover';
                 }
               })()} 
-              // 🔧 修复超宽图片定位：超宽图片使用center定位更好地居中显示
+              // 🔧 Fix ultra-wide image positioning: Ultra-wide images use center positioning for better centering
               objectPosition={(() => {
-                if (aspectRatio > 1.6) return 'center'; // 宽屏和超宽图片居中显示
-                return 'top'; // 其他图片使用top定位
+                if (aspectRatio > 1.6) return 'center'; // Widescreen and ultra-wide images centered
+                return 'top'; // Other images use top positioning
               })()}
               sizes={isWide 
                 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 580px"
@@ -354,7 +354,7 @@ export function MasonrySubmissionCard({
               )}
             />
           ) : (
-            // 🎯 无效图片时显示占位符，避免 Thumbnail 组件的无效计算
+            // 🎯 Show placeholder for invalid images, avoid invalid calculations in Thumbnail component
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
               <span className="text-gray-400 text-sm">No Image</span>
             </div>
@@ -387,7 +387,7 @@ export function MasonrySubmissionCard({
             </div>
           )}
 
-          {/* Hover overlay for enhanced visual feedback - 移动端禁用 */}
+          {/* Hover overlay for enhanced visual feedback - Disabled on mobile */}
           {enableHoverEffects && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-200" />
           )}
@@ -405,7 +405,7 @@ export function MasonrySubmissionCard({
             "font-medium text-gray-900 mb-2",
             // Dynamic text size based on image width
             isWide ? "text-base sm:text-lg" : "text-sm sm:text-base",
-            // 限制所有标题为单行显示，避免布局问题
+            // Limit all titles to single line display to avoid layout issues
             "line-clamp-1",
             // Force width constraints to prevent card expansion
             "w-full min-w-0 max-w-full overflow-hidden",

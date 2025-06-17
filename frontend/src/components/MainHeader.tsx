@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Thumbnail } from '@/components/ui/Thumbnail';
 import { Container } from '@/components/ui/Container';
 import { 
@@ -31,7 +32,7 @@ export default function MainHeader() {
           
           {/* Navigation menu */}
           <div className="flex">
-            <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Gallery</a>
+                            <Link href="/gallery" className={getNavLinkStyles({ className: 'mr-6' })}>Gallery</Link>
             <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Submit</a>
             <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Vote</a>
             <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>About</a>

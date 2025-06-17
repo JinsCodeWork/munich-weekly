@@ -8,21 +8,21 @@ import MainNav from '@/components/navigation/MainNav'
 import { GlobalAuthModals } from '@/components/auth/GlobalAuthModals'
 import { DragDropProtection } from '@/components/ui/DragDropProtection'
 
-// 配置DM Sans字体（替代Inter）
+// Configure DM Sans font (replacing Inter)
 const dmSans = DM_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-dm-sans',
 })
 
-// 配置Space Grotesk字体（用于标题）
+// Configure Space Grotesk font (for headings)
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-space-grotesk',
 })
 
-// 配置Playfair Display字体（保留用于LOGO）
+// Configure Playfair Display font (retained for LOGO)
 const playfair = Playfair_Display({
   subsets: ['latin'],
   display: 'swap',

@@ -5,7 +5,7 @@
 /* Import Poppins font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* 自定义滚动条样式 */
+/* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -27,7 +27,7 @@
 .custom-scrollbar {
   scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
   scrollbar-width: thin;
-  /* 确保移动端文本容器正确显示 */
+  /* Ensure mobile text container displays correctly */
   word-break: break-word;
   white-space: pre-wrap;
   text-align: left;
@@ -42,14 +42,14 @@
   }
 }
 
-/* 移动端支持 - 为HeroImage组件添加点击态 */
+/* Mobile support - Add active state for HeroImage component */
 @media (hover: none) {
-  /* 在不支持悬停的设备上隐藏悬停效果，使用text-active类代替 */
+  /* Hide hover effects on devices that don't support hover, use text-active class instead */
   .group:hover .group-hover\:opacity-100,
   .group:hover .group-hover\:translate-y-0,
   .group:hover .group-hover\:bg-black\/50,
   .group:hover .group-hover\:scale-105 {
-    /* 在移动设备上禁用悬停效果 */
+    /* Disable hover effects on mobile devices */
     opacity: inherit;
     transform: inherit;
     background-color: inherit;
@@ -57,7 +57,7 @@
     --tw-scale-y: inherit;
   }
   
-  /* 为点击态添加样式 */
+  /* Add styles for active state */
   .text-active .text-active\:opacity-100 {
     opacity: 1 !important;
   }

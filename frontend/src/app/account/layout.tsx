@@ -52,6 +52,10 @@ const ADMIN_SIDEBAR_ITEMS = [
     href: "/account/manage-issues"
   },
   {
+    label: "Gallery Settings",
+    href: "/account/gallery-settings"
+  },
+  {
     label: "Home Settings",
     href: "/account/home-settings"
   },
