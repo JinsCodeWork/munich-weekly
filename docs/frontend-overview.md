@@ -231,9 +231,28 @@ The system uses a Greedy Best-Fit algorithm that dynamically selects items from 
 
 This system is used across multiple pages including the voting interface (`/vote`), user submissions management (`/account/submissions`), and testing environments. For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
 
-### 7. Gallery Carousel System ✨ **NEW**
+### 7. Gallery System ✨ **NEW**
 
-Munich Weekly features a sophisticated carousel system for showcasing featured photography submissions on the homepage:
+Munich Weekly features a comprehensive gallery system with both featured carousel and issue-based organization:
+
+**Gallery Issue Management:**
+- **Issue-based Organization**: Display photography issues with automatic ordering by ID (newest first)
+- **Cover Image Management**: Upload and manage cover images for visual appeal with responsive sizing
+- **Submission Ordering**: Admin control over submission display order with hero image designation
+- **Publication Control**: Draft/published status for controlled content release
+
+**Gallery Issue Display:**
+- **Clean Design**: Minimal interface focusing on photographic content presentation
+- **Hero Presentation**: Large featured images with optimal responsive sizing and minimal margins
+- **Vertical Layout**: Sequential submission display with title and author attribution
+- **Full-screen Viewing**: Advanced image viewer with zoom, pan, and touch gesture support
+
+**Admin Management Interface:**
+- **Issue Configuration**: Create, edit, and delete gallery issue configurations with visual feedback
+- **Cover Upload**: Drag-and-drop cover image management with instant preview and processing
+- **Order Management**: Visual drag-and-drop interface for submission ordering with live preview
+- **Publication Toggle**: Instant enable/disable of gallery issues with status indicators
+- **Bulk Operations**: Manage multiple configurations simultaneously with confirmation dialogs
 
 **Featured Carousel (`/gallery`):**
 - **Auto-playing Display** - Smooth transitions with configurable intervals (5-second default)
@@ -251,16 +270,14 @@ Munich Weekly features a sophisticated carousel system for showcasing featured p
 - **Direct Interaction** - Tap to open full-screen viewer (bypassing desktop hover states)
 - **Touch-friendly Controls** - Larger touch targets and gesture-based navigation
 - **Performance Optimized** - Lazy loading and progressive enhancement
-
-**Admin Configuration:**
-- **Backend Curation** - Admin-selectable submissions with custom display ordering
-- **Dynamic Content** - Real-time configuration updates without code deployment
-- **Preview System** - Admin preview of submissions before featuring
+- **Responsive Margins** - Desktop margins for visual appeal, mobile edge-to-edge for maximum space utilization
 
 **Technical Architecture:**
+- `GalleryIssueCard` component for issue display with hover effects and action buttons
+- `GallerySubmissionCard` component with clean image presentation and attribution
 - `FeaturedCarousel` component with state management for autoplay and navigation
 - `GalleryImageViewer` extending base `ImageViewer` with gallery-specific features
-- Integration with Gallery API for fetching featured submissions
+- Integration with Gallery API for fetching featured submissions and issue management
 - Responsive interaction patterns adapting to device capabilities
 
 ### 8. Enhanced Container System & Layout Optimization

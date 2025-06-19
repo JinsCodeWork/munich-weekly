@@ -287,136 +287,155 @@ Admins can create and manage promotional campaigns, which appear as special page
 
 ## Gallery Management ✨ **NEW**
 
-The Gallery system allows admins to curate and manage featured submissions that appear in the homepage carousel.
+The Gallery system provides comprehensive management for both featured submissions carousel and issue-based galleries.
 
-### Accessing Gallery Settings
+### Gallery Issue Management
+
+**Overview:**
+Admins can manage which issues appear in the public gallery, configure cover images, and control submission display order.
+
+**Key Features:**
+- Issue-based gallery organization with automatic display ordering
+- Cover image upload and management for visual appeal
+- Submission ordering controls for optimal presentation
+- Publication status management for controlled release
+
+#### Accessing Gallery Issue Settings
 
 1. Log in as an admin user
-2. Navigate to "Account" → "Gallery Settings"
-3. Access the featured submissions configuration interface
+2. Navigate to "Account" → "Gallery Settings" → "Issues"
+3. View and manage all gallery-enabled issues
 
-### Gallery Configuration Features
+#### Creating Gallery Issue Configurations
 
-#### Creating a Gallery Configuration
+1. **Add New Issue**: Click "Add Issue to Gallery"
+2. **Issue Selection**: Choose from available issues with selected submissions
+3. **Publication Control**: Set immediate publication or save as draft
+4. **Automatic Ordering**: Issues are automatically ordered by ID (newest first)
 
-1. **Submission Selection**: Choose from approved submissions across all issues
-2. **Display Order**: Arrange submissions in preferred viewing sequence
-3. **Autoplay Settings**: Configure carousel transition intervals (default: 5 seconds)
-4. **Metadata Management**: Set configuration title and description for admin reference
+#### Cover Image Management
 
-#### Configuration Management
+**Upload Process:**
+1. **Hover over issue card** to reveal action buttons
+2. **Click upload icon** to select cover image
+3. **Supported formats**: JPEG, JPG, PNG
+4. **Automatic processing**: Images are optimized and stored
+5. **Instant preview**: Cover updates immediately in interface
 
-- **Active Configuration**: Only one configuration can be active at a time
-- **Multiple Configurations**: Create and save multiple configurations for different themes
-- **Instant Updates**: Changes appear immediately on the homepage carousel
-- **Preview System**: Preview submissions before adding to featured carousel
+**Cover Image Features:**
+- High-quality display with responsive sizing
+- Automatic aspect ratio preservation
+- Fallback gradient design for issues without covers
+- Quick replacement with visual feedback
 
-#### Submission Selection Process
+#### Submission Order Management
 
-1. **Search by ID**: Enter submission ID to preview and add specific submissions
-2. **Validation**: System verifies submission exists and is approved
-3. **Duplicate Prevention**: Cannot add the same submission multiple times
-4. **Status Check**: Verify if submissions are already featured in active configuration
+**Order Control Interface:**
+1. **Access ordering**: Click "Manage Submissions" on any issue
+2. **Drag-and-drop**: Reorder submissions by dragging cards
+3. **Number input**: Set specific positions using order numbers
+4. **Hero designation**: First submission becomes the featured hero image
+5. **Save changes**: Apply new ordering with immediate effect
 
-#### Display Order Management
+**Ordering Features:**
+- Visual drag-and-drop interface with live preview
+- Automatic position recalculation for seamless ordering
+- Hero image highlighting for featured submission identification
+- Real-time validation and conflict resolution
 
-- **Drag and Drop**: Reorder submissions using intuitive drag-and-drop interface
-- **Numerical Order**: Each submission gets a display order number (1, 2, 3, ...)
-- **Preview**: See how the carousel will appear before saving
+#### Gallery Issue Display
+
+**Public Gallery Features:**
+- Clean, minimal design focusing on image presentation
+- Hero image with large display and prominent positioning
+- Vertical layout for other submissions with title and author credits
+- Full-screen image viewer with zoom and pan capabilities
+- Responsive design optimizing for both desktop and mobile
+
+**Display Characteristics:**
+- Issue-based organization with automatic navigation
+- Title and description presentation with submission/voting periods
+- Author attribution and copyright information
+- Progressive image loading with quality optimization
+
+### Gallery Featured Carousel Management
+
+The Gallery system allows admins to curate and manage featured submissions that appear in the homepage carousel.
+
+#### Accessing Gallery Settings
+
+1. Log in as an admin user
+2. Navigate to "Account" → "Gallery Settings" → "Featured"
+3. Configure carousel content and behavior
+
+#### Gallery Configuration Features
+
+**Creating a Gallery Configuration:**
+1. **Select Submissions**: Choose from available high-quality submissions
+2. **Set Display Order**: Arrange submissions for optimal visual flow
+3. **Configure Timing**: Set auto-play intervals and transition effects
+4. **Preview System**: Test configuration before publication
+5. **Activation**: Enable configuration to display on homepage
+
+**Configuration Options:**
+- **Submission Selection**: Filter by issue, author, or submission quality
+- **Display Order**: Custom arrangement with drag-and-drop interface
+- **Carousel Settings**: Auto-play timing, transition effects, and navigation options
+- **Responsive Behavior**: Mobile-optimized display with touch gesture support
 
 ### Gallery Administration Tools
 
-#### Configuration List View
-
+**Management Interface:**
 - **View All Configurations**: Browse all saved gallery configurations
-- **Status Indicators**: Clearly identify the active configuration
-- **Quick Actions**: Activate, edit, or delete configurations
-- **Creation Timestamps**: Track when configurations were created and last modified
+- **Quick Actions**: Enable/disable, edit, or delete configurations rapidly
+- **Preview Mode**: Test configurations without affecting live display
+- **Status Indicators**: Clear visibility of active vs. draft configurations
 
-#### Configuration Actions
+**Technical Features:**
+- **Real-time Updates**: Changes appear immediately without page refresh
+- **Conflict Resolution**: Automatic handling of multiple active configurations
+- **Database Persistence**: Reliable storage with transaction safety
+- **Performance Optimization**: Efficient loading and caching strategies
 
-- **Activate**: Set a configuration as the active featured carousel
-- **Edit**: Modify submission selection and display order
-- **Delete**: Remove configuration (includes confirmation dialog)
-- **Duplicate**: Create a copy of existing configuration for modifications
-
-### Featured Submissions Requirements
-
-Submissions must meet the following criteria to be featured:
-
-- **Approval Status**: Must be approved by admin
-- **Image Quality**: Must have valid image URLs and dimensions
-- **Accessibility**: Must be publicly viewable
+**Administrative Controls:**
+- **Publication Toggle**: Instant enable/disable of gallery issues
+- **Bulk Operations**: Manage multiple configurations simultaneously
+- **Delete Protection**: Confirmation dialogs for destructive operations
+- **Access Control**: Admin-only access with proper authentication
 
 ### Gallery Display Features
 
-The gallery carousel on the homepage provides:
+The gallery system provides comprehensive presentation features:
 
-- **Auto-playing Slideshow**: Smooth transitions with configurable timing
-- **Interactive Navigation**: Arrow buttons and dot indicators
-- **Responsive Design**: Optimized for desktop and mobile viewing
-- **Full-screen Viewing**: Click/tap to open high-quality image viewer
-- **Submission Information**: Author, issue, and description display
+**Gallery Issue Pages:**
+- **Clean Design**: Minimal interface highlighting photographic content
+- **Hero Presentation**: Large featured image with optimal sizing
+- **Metadata Display**: Issue information, submission periods, and author credits
+- **Full-screen Viewing**: Advanced image viewer with zoom and gesture support
 
-### Technical Implementation
+**Carousel Features:**
+- **Auto-playing Display**: Smooth transitions with configurable intervals
+- **Interactive Navigation**: Arrow buttons and dot indicators for manual control
+- **Responsive Design**: Optimized layouts for all device sizes
+- **Performance Optimization**: Lazy loading and progressive enhancement
 
-#### Backend Configuration
-
-- **Database Storage**: Gallery configurations stored in `gallery_featured_config` table
-- **Submission Links**: Manages relationships between configurations and submissions
-- **Automatic Deactivation**: System ensures only one active configuration
-
-#### Frontend Integration
-
-- **Real-time Updates**: Configuration changes appear immediately
-- **Mobile Optimization**: Touch-friendly navigation and full-screen viewing
-- **Performance**: Lazy loading and optimized image delivery
-- **User Experience**: Seamless transitions between carousel and full viewer
-
-### Best Practices
-
-#### Submission Selection
-
-- **Quality**: Choose high-resolution, visually striking photographs
-- **Variety**: Mix different photography styles and subjects
-- **Balance**: Consider aspect ratios for optimal carousel display
-- **Representation**: Showcase diverse photographers and issues
-
-#### Configuration Management
-
-- **Descriptive Titles**: Use clear, descriptive names for configurations
-- **Regular Updates**: Refresh featured content periodically
-- **Performance**: Limit to 3-7 submissions for optimal loading
-- **Mobile Testing**: Verify carousel works well on mobile devices
+**Technical Implementation:**
+- **Database Storage**: Gallery configurations stored in dedicated tables
+- **API Integration**: RESTful endpoints for configuration management
+- **Image Processing**: Automatic optimization and multiple format support
+- **Caching Strategy**: Efficient content delivery with cache management
 
 ### Troubleshooting Gallery Issues
 
-#### Common Issues
+**Common Issues:**
+- **Upload Failures**: Check file format, size limits, and network connectivity
+- **Order Conflicts**: Refresh interface if drag-and-drop becomes unresponsive
+- **Publication Delays**: Verify admin permissions and active configurations
 
-**Submissions not appearing:**
-1. Verify submission is approved status
-2. Check if submission ID exists
-3. Ensure configuration is set as active
-4. Clear browser cache if needed
-
-**Configuration not saving:**
-1. Verify admin authentication
-2. Check all required fields are completed
-3. Ensure at least one submission is selected
-4. Review server logs for errors
-
-**Carousel not updating:**
-1. Refresh homepage to see changes
-2. Verify configuration is marked as active
-3. Check browser developer tools for JavaScript errors
-4. Confirm submission images are accessible
-
-#### Performance Optimization
-
-- **Image Quality**: Featured submissions automatically use optimized delivery
-- **Loading States**: Carousel includes loading indicators for smooth UX
-- **Cache Management**: System handles cache invalidation automatically
-- **Error Handling**: Graceful fallbacks for missing or broken images
+**Performance Optimization:**
+- **Image Quality**: Use high-resolution images for best display results
+- **Load Times**: Monitor submission count impact on page performance
+- **Mobile Experience**: Test touch interactions and responsive behavior
 
 ## Data Migration
 

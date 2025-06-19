@@ -1,7 +1,6 @@
-// Gallery API Module Exports
-
-export * from './types';
+// Gallery API exports
 export * from './galleryApi';
+export * from './types';
 
 // Default export for convenience
-export { default as galleryApi } from './galleryApi'; 
+export { default } from './galleryApi'; 

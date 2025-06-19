@@ -170,4 +170,116 @@ export interface AdminFormState {
     configTitle?: string;
     autoplayInterval?: string;
   };
+}
+
+// ========== NEW: Gallery Issue Types ==========
+
+/**
+ * Gallery issue configuration for magazine-style display
+ */
+export interface GalleryIssueConfig {
+  id: number;
+  issueId: number;
+  issue: {
+    id: number;
+    title: string;
+    description: string;
+    submissionStart: string;  
+    submissionEnd: string;
+    votingStart: string;
+    votingEnd: string;
+    createdAt: string;
+  };
+  coverImageUrl?: string;
+  isPublished: boolean;
+  displayOrder: number;
+  submissionCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Gallery submission with display order for issue detail
+ */
+export interface GallerySubmission {
+  id: number;
+  imageUrl: string;
+  thumbnailUrl: string;
+  title: string;
+  description: string;
+  authorName: string;
+  authorId: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  aspectRatio?: number;
+  status: 'selected' | 'cover';
+  submittedAt: string;
+  displayOrder: number;
+}
+
+/**
+ * Gallery issue statistics
+ */
+export interface GalleryIssueStats {
+  totalPublishedIssues: number;
+  totalSubmissions: number;
+  hasActiveConfig: boolean;
+}
+
+/**
+ * Request for creating new gallery configuration
+ */
+export interface CreateGalleryConfigRequest {
+  issueId: number;
+  isPublished?: boolean;
+}
+
+/**
+ * Request for updating gallery configuration
+ */
+export interface UpdateGalleryConfigRequest {
+  issueId?: number;
+  isPublished?: boolean;
+  displayOrder?: number;
+  coverImageUrl?: string;
+}
+
+/**
+ * Submission order update item
+ */
+export interface SubmissionOrderUpdate {
+  submissionId: number;
+  displayOrder: number;
+}
+
+/**
+ * Available issue for gallery configuration
+ */
+export interface AvailableIssue {
+  id: number;
+  title: string;
+  description: string;
+  submissionStart: string;
+  submissionEnd: string;
+  votingStart: string;
+  votingEnd: string;
+  selectedSubmissionCount: number;
+}
+
+/**
+ * Gallery issue card props for display
+ */
+export interface GalleryIssueCardProps {
+  issue: GalleryIssueConfig;
+  className?: string;
+  onClick?: () => void;
+}
+
+/**
+ * Gallery submission card props for issue detail
+ */
+export interface GallerySubmissionCardProps {
+  submission: GallerySubmission;
+  isHero?: boolean;
+  className?: string;
 } 

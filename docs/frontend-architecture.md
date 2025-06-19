@@ -44,7 +44,9 @@ frontend/
 │   │   ├── votes/          # Voting-related APIs
 │   │   │   └── index.ts    # Voting API exports
 │   │   ├── gallery/        # Gallery-related APIs ✨ **NEW**
-│   │   │   └── index.ts    # Gallery API exports
+│   │   │   ├── index.ts    # Gallery API exports
+│   │   │   ├── galleryApi.ts  # Gallery issue management
+│   │   │   └── types.ts    # Gallery TypeScript interfaces
 │   │   ├── http.ts         # Base HTTP request utilities
 │   │   ├── types.ts        # API-related type definitions
 │   │   └── index.ts        # Unified API exports
@@ -83,8 +85,10 @@ frontend/
 │   │   │   │   ├── MasonrySubmissionCard.tsx # Masonry-optimized submission card
 │   │   │   │   └── SubmissionCard.tsx # Submission card
 │   │   │   ├── gallery/        # Gallery components ✨ **NEW**
-│   │   │   │   ├── FeaturedCarousel.tsx   # Main carousel display
-│   │   │   │   └── GalleryImageViewer.tsx # Full-screen image viewer
+│   │   │   │   ├── FeaturedCarousel.tsx   # Homepage carousel display
+│   │   │   │   ├── GalleryImageViewer.tsx # Full-screen image viewer
+│   │   │   │   ├── GalleryIssueCard.tsx   # Gallery issue display card
+│   │   │   │   └── GallerySubmissionCard.tsx # Gallery submission presentation
 │   │   │   ├── voting/         # Voting components
 │   │   │   │   └── VoteButton.tsx  # Interactive voting button
 │   │   │   ├── ui/             # Core UI components
@@ -127,6 +131,7 @@ frontend/
 │   │   │   └── submission.ts   # Submission-related types
 │   │   └── utils/              # Additional utilities
 │   │       └── mockData.ts     # Mock data for development
+│   │   └── types.ts    # Gallery TypeScript interfaces
 ```
 
 ## Key Features
@@ -179,20 +184,38 @@ Components for managing submission content:
 
 ### Gallery System ✨ **NEW**
 
-A featured submissions carousel system for showcasing curated photography:
+A comprehensive gallery system with both featured carousel and issue-based organization:
 
+**Gallery Issue Management:**
+- **Issue-based Organization**: Display photography issues with automatic ordering by ID (newest first)
+- **Cover Image Management**: Upload and manage cover images for visual appeal
+- **Submission Ordering**: Admin control over submission display order with hero image designation
+- **Publication Control**: Draft/published status for controlled content release
+
+**Featured Carousel System:**
 - **FeaturedCarousel**: Auto-playing carousel with responsive navigation and indicators
 - **GalleryImageViewer**: Full-screen image viewer with zoom, pan, and touch gesture support
 - **Admin Configuration**: Backend-managed submission curation with display order control
 - **Mobile Optimization**: Enhanced mobile experience with direct full-screen viewing
-- **Progressive Enhancement**: Responsive design adapting from desktop hover interactions to mobile touch navigation
 
-Gallery components:
-- `FeaturedCarousel`: Main carousel display with autoplay, navigation arrows, and indicators
-- `GalleryImageViewer`: Full-screen viewer extending base `ImageViewer` with gallery-specific metadata
-- **Responsive Interaction**: Desktop hover overlays vs mobile direct interaction patterns
-- **Touch Gestures**: Double-tap zoom, pinch-to-zoom, drag navigation support
-- **Keyboard Navigation**: ESC to close, arrow keys for navigation
+**Gallery Display Components:**
+- `GalleryIssueCard`: Issue display with cover images and hover effects
+- `GallerySubmissionCard`: Clean image presentation with author attribution
+- `FeaturedCarousel`: Homepage carousel with autoplay and navigation
+- `GalleryImageViewer`: Full-screen viewer with gallery-specific metadata
+
+**Admin Management Features:**
+- **Issue Configuration**: Create, edit, and delete gallery issue configurations
+- **Cover Upload**: Drag-and-drop cover image management with instant preview
+- **Order Management**: Visual drag-and-drop interface for submission ordering
+- **Publication Toggle**: Instant enable/disable of gallery issues
+- **Bulk Operations**: Manage multiple configurations simultaneously
+
+**Public Gallery Features:**
+- **Clean Design**: Minimal interface highlighting photographic content
+- **Hero Presentation**: Large featured images with optimal responsive sizing
+- **Full-screen Viewing**: Advanced image viewer with zoom and gesture support
+- **Progressive Loading**: Optimized image loading with quality enhancement
 
 ### Voting System
 

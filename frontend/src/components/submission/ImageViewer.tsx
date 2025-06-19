@@ -55,12 +55,6 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   }, [isOpen, hasValidImage]);
   
-  // If no valid image, close viewer directly
-  if (!hasValidImage && isOpen) {
-    onClose();
-    return null;
-  }
-
   // Create high quality image URL (without specifying width/height, letting the Worker adapt based on the original image and screen)
   const highQualityUrl = useMemo(() => {
     if (!hasValidImage) return '';
@@ -211,7 +205,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
     }
   );
   
-  if (!isOpen) return null;
+  if (!isOpen || (!hasValidImage && isOpen)) {
+    // If no valid image, close viewer directly
+    if (!hasValidImage && isOpen) {
+      onClose();
+    }
+    return null;
+  }
 
   // Calculate appropriate image dimensions
   const calculateImageDimensions = () => {

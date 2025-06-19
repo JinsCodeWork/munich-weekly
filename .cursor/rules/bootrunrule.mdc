@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+when you need to run gradle bootrun, please cd backend to run it

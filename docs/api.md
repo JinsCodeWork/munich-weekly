@@ -343,155 +343,359 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
 ## Gallery API ✨ **NEW**
 
-Endpoints for managing and viewing featured submissions carousel.
+**Base URL**: `/api/gallery`
 
-### Public Endpoints
+**Authentication**: Some endpoints require admin authentication
+
+### Public Gallery Endpoints
 
 - **GET** `/api/gallery/featured`
-  > Get featured submissions for carousel display (public endpoint)
-  
-  > **Response**: Array of featured submissions with display order
-  > ```json
-  > [
-  >   {
-  >     "id": 123,
-  >     "imageUrl": "/uploads/issues/1/submissions/photo.jpg",
-  >     "thumbnailUrl": "/uploads/issues/1/submissions/photo.jpg?width=400",
-  >     "description": "Beautiful sunset over Munich",
-  >     "authorName": "photographer_nick",
-  >     "authorId": 456,
-  >     "issueTitle": "Week 1 - Nature",
-  >     "issueId": 1,
-  >     "imageWidth": 3648,
-  >     "imageHeight": 2432,
-  >     "aspectRatio": 1.5,
-  >     "status": "approved",
-  >     "isCover": false,
-  >     "submittedAt": "2024-01-01T12:00:00",
-  >     "displayOrder": 1
-  >   }
-  > ]
-  > ```
+> Get currently featured submissions for homepage carousel (public endpoint)
+
+**Response**:
+```json
+{
+  "submissions": [
+    {
+      "id": 123,
+      "imageUrl": "/uploads/image.jpg",
+      "title": "Sunset at English Garden",
+      "authorName": "John Doe",
+      "issueTitle": "Munich Streets - January 2024",
+      "description": "A beautiful sunset...",
+      "displayOrder": 1
+    }
+  ]
+}
+```
 
 - **GET** `/api/gallery/stats`
-  > Get gallery statistics (public endpoint)
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "totalFeaturedSubmissions": 5,
-  >   "hasActiveConfig": true,
-  >   "totalConfigs": 3
-  > }
-  > ```
+> Get gallery statistics (public endpoint)
 
-### Admin Endpoints
+**Response**:
+```json
+{
+  "totalFeaturedSubmissions": 5,
+  "lastUpdated": "2024-01-15T10:30:00Z"
+}
+```
 
-All admin endpoints require `admin` authority:
+### Gallery Issue Management ✨ **NEW**
+
+- **GET** `/api/gallery/issues`
+> Get all published gallery issues with cover images and submission counts (public endpoint)
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "issue": {
+      "id": 44,
+      "title": "Munich Streets - January 2024",
+      "description": "Capturing urban life...",
+      "submissionStart": "2024-01-01T00:00:00Z",
+      "submissionEnd": "2024-01-15T23:59:59Z",
+      "votingStart": "2024-01-16T00:00:00Z",
+      "votingEnd": "2024-01-31T23:59:59Z"
+    },
+    "coverImageUrl": "/uploads/covers/issue-44.jpg",
+    "isPublished": true,
+    "displayOrder": 1,
+    "submissionCount": 12
+  }
+]
+```
+
+- **GET** `/api/gallery/issues/{issueId}/submissions`
+> Get ordered submissions for a specific gallery issue (public endpoint)
+
+**Response**:
+```json
+[
+  {
+    "id": 123,
+    "title": "Sunset Photography",
+    "description": "Beautiful sunset captured...",
+    "imageUrl": "/uploads/submissions/image.jpg",
+    "authorName": "John Doe",
+    "submittedAt": "2024-01-10T15:30:00Z",
+    "displayOrder": 1,
+    "status": "cover",
+    "aspectRatio": 1.777
+  }
+]
+```
+
+- **GET** `/api/gallery/issues/{issueId}`
+> Get gallery issue configuration with metadata (public endpoint)
+
+**Response**:
+```json
+{
+  "issue": {
+    "id": 44,
+    "title": "Munich Streets - January 2024",
+    "description": "Capturing urban life and architecture",
+    "submissionStart": "2024-01-01T00:00:00Z",
+    "submissionEnd": "2024-01-15T23:59:59Z",
+    "votingStart": "2024-01-16T00:00:00Z",
+    "votingEnd": "2024-01-31T23:59:59Z"
+  },
+  "coverImageUrl": "/uploads/covers/issue-44.jpg",
+  "isPublished": true,
+  "submissionCount": 12,
+  "success": true
+}
+```
+
+### Admin Gallery Issue Management
+
+- **GET** `/api/gallery/admin/issues`
+> Get all gallery issue configurations (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "issue": {
+      "id": 44,
+      "title": "Munich Streets - January 2024"
+    },
+    "coverImageUrl": "/uploads/covers/issue-44.jpg",
+    "isPublished": true,
+    "displayOrder": 1
+  }
+]
+```
+
+- **GET** `/api/gallery/admin/issues/available`
+> Get available issues that can be added to gallery (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+[
+  {
+    "id": 45,
+    "title": "Winter Landscapes - February 2024",
+    "selectedSubmissionCount": 8
+  }
+]
+```
+
+- **POST** `/api/gallery/admin/issues`
+> Create new gallery issue configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Request Body**:
+```json
+{
+  "issueId": 45,
+  "isPublished": true
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Gallery issue configuration created successfully",
+  "configId": 2
+}
+```
+
+- **PUT** `/api/gallery/admin/issues/{issueId}`
+> Update gallery issue configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Request Body**:
+```json
+{
+  "issueId": 45,
+  "isPublished": false
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Gallery issue configuration updated successfully"
+}
+```
+
+- **DELETE** `/api/gallery/admin/issues/{issueId}`
+> Delete gallery issue configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+{
+  "message": "Gallery issue configuration deleted successfully"
+}
+```
+
+- **POST** `/api/gallery/admin/issues/{issueId}/cover`
+> Upload cover image for gallery issue (admin only)
+
+**Headers**: 
+- `Authorization: Bearer <jwt_token>`
+- `Content-Type: multipart/form-data`
+
+**Request**: Form data with `file` field containing image
+
+**Response**:
+```json
+{
+  "message": "Cover image uploaded successfully",
+  "imageUrl": "/uploads/covers/issue-45.jpg"
+}
+```
+
+- **PUT** `/api/gallery/admin/issues/{issueId}/submissions/order`
+> Update submission display order for gallery issue (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Request Body**:
+```json
+{
+  "orderUpdates": [
+    {
+      "submissionId": 123,
+      "displayOrder": 1
+    },
+    {
+      "submissionId": 124,
+      "displayOrder": 2
+    }
+  ]
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Submission order updated successfully"
+}
+```
+
+### Gallery Featured Carousel Management
 
 - **GET** `/api/gallery/featured/config`
-  > Get current active gallery configuration (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "config": {
-  >     "id": 1,
-  >     "submissionIds": [123, 456, 789],
-  >     "displayOrder": [1, 2, 3],
-  >     "autoplayInterval": 5000,
-  >     "isActive": true,
-  >     "configTitle": "Featured Photography",
-  >     "configDescription": "Best submissions this week",
-  >     "createdAt": "2024-01-01T10:00:00",
-  >     "updatedAt": "2024-01-01T15:30:00",
-  >     "featuredCount": 3
-  >   },
-  >   "hasConfig": true
-  > }
-  > ```
+> Get current active gallery configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+{
+  "id": 1,
+  "title": "Winter Collection 2024",
+  "description": "Beautiful winter photography",
+  "isActive": true,
+  "submissions": [
+    {
+      "id": 123,
+      "imageUrl": "/uploads/image.jpg",
+      "title": "Snow in Munich",
+      "authorName": "Jane Smith",
+      "displayOrder": 1
+    }
+  ],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T12:45:00Z"
+}
+```
 
 - **GET** `/api/gallery/featured/configs`
-  > Get all gallery configurations (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "configs": [/* array of configurations */],
-  >   "total": 5
-  > }
-  > ```
+> Get all gallery configurations (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "title": "Winter Collection 2024",
+    "isActive": true,
+    "submissionCount": 5,
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
 
 - **POST** `/api/gallery/featured/config`
-  > Create or update gallery configuration (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Request Body**:
-  > ```json
-  > {
-  >   "submissionIds": [123, 456, 789],
-  >   "displayOrder": [1, 2, 3],
-  >   "autoplayInterval": 5000,
-  >   "isActive": true,
-  >   "configTitle": "Featured Photography",
-  >   "configDescription": "Best submissions this week"
-  > }
-  > ```
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "config": {/* saved configuration */},
-  >   "message": "Gallery configuration saved successfully",
-  >   "success": true
-  > }
-  > ```
+> Create or update gallery configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Request Body**:
+```json
+{
+  "title": "Spring Collection 2024",
+  "description": "Fresh spring photography",
+  "submissionIds": [123, 124, 125]
+}
+```
+
+**Response**:
+```json
+{
+  "id": 2,
+  "message": "Gallery configuration saved successfully",
+  "isActive": true
+}
+```
 
 - **DELETE** `/api/gallery/featured/config/{id}`
-  > Delete gallery configuration (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "message": "Gallery configuration deleted successfully",
-  >   "success": true,
-  >   "deletedId": 123
-  > }
-  > ```
+> Delete gallery configuration (admin only)
+
+**Headers**: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+{
+  "message": "Gallery configuration deleted successfully",
+  "deletedConfigId": 2
+}
+```
+
+### Gallery Submission Management
 
 - **GET** `/api/gallery/submissions/{id}/preview`
-  > Preview submission by ID (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "submission": {/* submission details */},
-  >   "found": true
-  > }
-  > ```
+> Get submission preview for gallery configuration
+
+**Response**:
+```json
+{
+  "id": 123,
+  "imageUrl": "/uploads/image.jpg",
+  "title": "Beautiful Sunset",
+  "authorName": "John Doe",
+  "issueTitle": "Munich Streets",
+  "isAlreadyFeatured": false
+}
+```
 
 - **GET** `/api/gallery/submissions/{id}/featured-status`
-  > Check if submission is featured (admin only)
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "submissionId": 123,
-  >   "isFeatured": true,
-  >   "message": "Submission is featured in active configuration"
-  > }
-  > ```
+> Check if submission is featured in active configuration
+
+**Response**:
+```json
+{
+  "submissionId": 123,
+  "isFeatured": true,
+  "featuredInConfig": "Winter Collection 2024"
+}
+```
 
 ## Promotion API
 

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, Eye, AlertCircle, RefreshCw, Settings, ImageIcon } from 'lucide-react';
+import { Save, Trash2, Eye, AlertCircle, RefreshCw, Settings, ImageIcon, BookOpen, Layers } from 'lucide-react';
+import Link from 'next/link';
 import { 
   getActiveConfig, 
   getAllConfigs, 
@@ -237,7 +238,35 @@ export default function GallerySettingsPage() {
             Gallery Settings
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage featured submissions in the gallery carousel
+            Configure gallery display settings
+          </p>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="mb-8 border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8">
+            <div className="whitespace-nowrap py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600 dark:text-blue-400">
+              <Layers className="w-4 h-4 inline mr-2" />
+              Featured Carousel
+            </div>
+            <Link
+              href="/account/gallery-settings/issues"
+              className="whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600 transition-colors"
+            >
+              <BookOpen className="w-4 h-4 inline mr-2" />
+              Issue Management
+            </Link>
+          </nav>
+        </div>
+
+        {/* Featured Carousel Section */}
+        <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+            Featured Carousel Configuration
+          </h3>
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            This section manages the featured carousel that appears at the top of the gallery homepage. 
+            Configure which submissions are displayed as featured content with automatic slideshow functionality.
           </p>
         </div>
 
