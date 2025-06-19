@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { FeaturedSubmission } from '@/api/gallery/types';
@@ -8,6 +8,7 @@ import { useCarousel } from '@/hooks/useCarousel';
 import { useTouchSwipe } from '@/hooks/useTouchSwipe';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { GalleryImageViewer } from './GalleryImageViewer';
+import { createImageUrl } from '@/lib/utils';
 import {
   getCarouselStyles,
   getCarouselSlideStyles,
@@ -47,6 +48,46 @@ export default function FeaturedCarousel({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isDesktop = !isMobile;
 
+  // 🎯 图片优化：为轮播场景创建优化的图片URL
+  const optimizedSubmissions = useMemo(() => {
+    return submissions.map(submission => {
+      // 根据设备类型设置不同的优化参数
+      const optimizationParams = isMobile ? {
+        width: 800,         // 移动端：中等尺寸
+        quality: 75,        // 移动端：较低质量，节省流量
+        format: 'auto' as const,
+        fit: 'cover' as const
+      } : {
+        width: 1200,        // 桌面端：较高尺寸
+        quality: 80,        // 桌面端：中等质量，平衡质量与速度
+        format: 'auto' as const,
+        fit: 'cover' as const
+      };
+
+      // 创建优化的图片URL
+      const optimizedImageUrl = createImageUrl(submission.imageUrl, optimizationParams);
+
+      // 🔍 调试信息：显示优化效果
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🎯 FeaturedCarousel优化:`, {
+          id: submission.id,
+          device: isMobile ? 'Mobile' : 'Desktop',
+          original: submission.imageUrl.substring(0, 60) + '...',
+          optimized: optimizedImageUrl.substring(0, 60) + '...',
+          params: optimizationParams
+        });
+      }
+
+      return {
+        ...submission,
+        // 保留原始URL用于全屏查看
+        originalImageUrl: submission.imageUrl,
+        // 使用优化的URL用于轮播显示
+        imageUrl: optimizedImageUrl
+      };
+    });
+  }, [submissions, isMobile]);
+
   const {
     currentSlide,
     isPlaying,
@@ -58,9 +99,9 @@ export default function FeaturedCarousel({
     play,
     setHovered,
   } = useCarousel({
-    itemCount: submissions.length,
+    itemCount: optimizedSubmissions.length,
     autoplayInterval,
-    enabled: submissions.length > 1,
+    enabled: optimizedSubmissions.length > 1,
   });
 
   const touchHandlers = useTouchSwipe({
@@ -68,13 +109,17 @@ export default function FeaturedCarousel({
     onSwipeRight: previousSlide,
     onTap: () => {
       if (isMobile) {
-        // Mobile: Direct tap opens image viewer
-        const currentSubmissionData = submissions[currentSlide];
-        setSelectedSubmission(currentSubmissionData);
+        // Mobile: Direct tap opens image viewer with original high-quality URL
+        const currentSubmissionData = optimizedSubmissions[currentSlide];
+        // 恢复原始URL用于全屏查看
+        setSelectedSubmission({
+          ...currentSubmissionData,
+          imageUrl: currentSubmissionData.originalImageUrl || currentSubmissionData.imageUrl
+        });
         setImageViewerOpen(true);
       }
     },
-    enabled: isMobile && submissions.length > 0,
+    enabled: isMobile && optimizedSubmissions.length > 0,
   });
 
 
@@ -104,9 +149,13 @@ export default function FeaturedCarousel({
   };
 
   // Handle image click (desktop only - opens image viewer)
-  const handleImageClick = (submission: FeaturedSubmission) => {
+  const handleImageClick = (submission: FeaturedSubmission & { originalImageUrl?: string }) => {
     if (isDesktop) {
-      setSelectedSubmission(submission);
+      // 恢复原始高质量URL用于全屏查看
+      setSelectedSubmission({
+        ...submission,
+        imageUrl: submission.originalImageUrl || submission.imageUrl
+      });
       setImageViewerOpen(true);
     }
   };
@@ -119,7 +168,7 @@ export default function FeaturedCarousel({
 
   // Autoplay progress bar effect
   useEffect(() => {
-    if (!isPlaying || isHovered || submissions.length <= 1) {
+    if (!isPlaying || isHovered || optimizedSubmissions.length <= 1) {
       setProgressWidth(0);
       return;
     }
@@ -132,7 +181,7 @@ export default function FeaturedCarousel({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isHovered, autoplayInterval, submissions.length, currentSlide]);
+  }, [isPlaying, isHovered, autoplayInterval, optimizedSubmissions.length, currentSlide]);
 
   // Reset progress on slide change
   useEffect(() => {
@@ -140,7 +189,7 @@ export default function FeaturedCarousel({
   }, [currentSlide]);
 
   // Loading state
-  if (submissions.length === 0) {
+  if (optimizedSubmissions.length === 0) {
     return (
       <div className={getCarouselStyles({ size: isMobile ? 'mobile' : 'desktop' })}>
         <div className={getCarouselLoadingStyles()}>
@@ -161,7 +210,7 @@ export default function FeaturedCarousel({
       {...(isMobile ? touchHandlers : {})}
     >
       {/* Main carousel slides */}
-      {submissions.map((submission, index) => {
+      {optimizedSubmissions.map((submission, index) => {
         const isActive = index === currentSlide;
         const isLoaded = imageLoadStates[submission.id] === true;
         
@@ -192,7 +241,10 @@ export default function FeaturedCarousel({
                 onLoad={() => handleImageLoad(submission.id)}
                 onError={() => handleImageError(submission.id)}
                 priority={index === 0}
-                sizes="(max-width: 768px) 100vw, 80vw"
+                sizes={isMobile 
+                  ? "(max-width: 768px) 800px" 
+                  : "(min-width: 769px) 1200px"
+                }
               />
 
               {/* Overlay for description and controls */}
@@ -231,7 +283,7 @@ export default function FeaturedCarousel({
       })}
 
       {/* Desktop navigation controls */}
-      {isDesktop && submissions.length > 1 && (
+      {isDesktop && optimizedSubmissions.length > 1 && (
         <>
           <button
             className={getCarouselControlStyles({
@@ -260,9 +312,9 @@ export default function FeaturedCarousel({
       )}
 
       {/* Indicators (dots) */}
-      {submissions.length > 1 && (
+      {optimizedSubmissions.length > 1 && (
         <div className={getCarouselIndicatorsStyles({ visible: true })}>
-          {submissions.map((_, index) => (
+          {optimizedSubmissions.map((_, index) => (
             <button
               key={index}
               className={getCarouselIndicatorStyles({ active: index === currentSlide })}
@@ -274,7 +326,7 @@ export default function FeaturedCarousel({
       )}
 
       {/* Play/pause control (desktop only) */}
-      {isDesktop && submissions.length > 1 && (
+      {isDesktop && optimizedSubmissions.length > 1 && (
         <button
           className="absolute top-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-white backdrop-blur-sm transition-opacity duration-300 hover:bg-black/30"
           style={{ opacity: isHovered ? 1 : 0 }}
@@ -286,7 +338,7 @@ export default function FeaturedCarousel({
       )}
 
       {/* Autoplay progress bar */}
-      {isPlaying && !isHovered && submissions.length > 1 && (
+      {isPlaying && !isHovered && optimizedSubmissions.length > 1 && (
         <div className={getAutoplayProgressStyles({ playing: true })}>
           <div 
             className="h-full bg-white transition-all duration-100 ease-linear"
