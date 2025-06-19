@@ -8,8 +8,8 @@ export const getCarouselStyles = cva(
   {
     variants: {
       size: {
-        desktop: 'h-[60vh] max-w-5xl mx-auto',
-        mobile: 'h-[50vh] w-full',
+        desktop: 'h-[60vh] max-w-5xl mx-auto', // 🎯 桌面端：保持原来的灵活高度设置
+        mobile: 'aspect-[4/3] w-full max-w-lg mx-auto sm:max-w-xl', // 🎯 移动端：固定4:3比例，适合手机查看
       },
       loading: {
         true: 'animate-pulse',
