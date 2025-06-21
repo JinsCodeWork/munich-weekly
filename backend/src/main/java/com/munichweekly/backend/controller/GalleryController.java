@@ -3,7 +3,6 @@ package com.munichweekly.backend.controller;
 import com.munichweekly.backend.dto.FeaturedSubmissionDto;
 import com.munichweekly.backend.dto.GalleryFeaturedConfigDto;
 import com.munichweekly.backend.service.GalleryService;
-import com.munichweekly.backend.repository.UserRepository;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +29,10 @@ public class GalleryController {
     private static final Logger logger = Logger.getLogger(GalleryController.class.getName());
 
     private final GalleryService galleryService;
-    private final UserRepository userRepository;
 
     @Autowired
-    public GalleryController(GalleryService galleryService, UserRepository userRepository) {
+    public GalleryController(GalleryService galleryService) {
         this.galleryService = galleryService;
-        this.userRepository = userRepository;
     }
 
     // Debug endpoint - Check current user permissions

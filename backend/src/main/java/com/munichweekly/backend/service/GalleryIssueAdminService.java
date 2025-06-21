@@ -281,8 +281,8 @@ public class GalleryIssueAdminService {
             logger.info("Validation passed, creating GallerySubmissionOrder...");
             GallerySubmissionOrder order = new GallerySubmissionOrder(
                     config, submission, orderRequest.getDisplayOrder());
-            GallerySubmissionOrder savedOrder = submissionOrderRepository.save(order);
-            logger.info("Successfully saved order with ID: " + savedOrder.getId() + " for submission: " + submission.getId() + " with display order: " + orderRequest.getDisplayOrder());
+            submissionOrderRepository.save(order);
+            logger.info("Successfully saved order with ID: " + order.getId() + " for submission: " + submission.getId() + " with display order: " + orderRequest.getDisplayOrder());
         }
     }
 
@@ -481,7 +481,7 @@ public class GalleryIssueAdminService {
 
         try {
             // Validate issue exists
-            Issue issue = issueRepository.findById(issueId)
+            issueRepository.findById(issueId)
                     .orElseThrow(() -> new IllegalArgumentException("Issue not found: " + issueId));
 
             // Get or create gallery configuration

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 
 /**
@@ -48,12 +49,12 @@ export function AnimatedFooter() {
               <span className="text-xs text-gray-400">© 2025 Munich Weekly® </span>
             </div>
             <div className="flex space-x-4">
-              <a href="/about" className="text-white hover:text-gray-300 transition-colors text-xs">
+              <Link href="/about" className="text-white hover:text-gray-300 transition-colors text-xs">
                 About
-              </a>
-              <a href="/privacy-policy" className="text-white hover:text-gray-300 transition-colors text-xs">
+              </Link>
+              <Link href="/privacy-policy" className="text-white hover:text-gray-300 transition-colors text-xs">
                 Privacy Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>

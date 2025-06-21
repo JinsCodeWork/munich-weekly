@@ -5,7 +5,6 @@ import com.munichweekly.backend.model.*;
 import com.munichweekly.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -87,7 +86,6 @@ public class GalleryIssueService {
 
         } catch (Exception e) {
             logger.severe("Error retrieving published gallery issues: " + e.getMessage());
-            e.printStackTrace(); // Add stack trace for debugging
             throw new RuntimeException("Failed to retrieve published gallery issues", e);
         }
     }
@@ -108,7 +106,6 @@ public class GalleryIssueService {
 
         } catch (Exception e) {
             logger.severe("Error retrieving gallery issue by issue ID: " + e.getMessage());
-            e.printStackTrace(); // Add stack trace for debugging
             throw new RuntimeException("Failed to retrieve gallery issue", e);
         }
     }
