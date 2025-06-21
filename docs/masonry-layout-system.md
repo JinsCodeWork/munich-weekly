@@ -11,7 +11,7 @@ Munich Weekly implements a **hybrid masonry layout system** with **stored dimens
 
 ## Architecture
 
-### Current Implementation: Stored Dimension Optimization ✨ **NEW**
+### Current Implementation: Stored Dimension Optimization
 
 The masonry layout system now leverages **stored image dimensions** for maximum performance:
 
@@ -34,7 +34,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 
 ## Core Features
 
-### Stored Dimension System ✨ **NEW**
+### Stored Dimension System
 
 **Upload-time Optimization:**
 - **Single calculation**: Dimensions computed once during upload process
@@ -48,7 +48,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 - **Network optimization**: Eliminates redundant image dimension API calls
 - **Memory efficiency**: No client-side image loading for dimension detection
 
-### Progressive Loading with Stored Dimensions ✨ **ENHANCED**
+### Progressive Loading with Stored Dimensions
 
 **Hybrid Loading Strategy:**
 - **Phase 1**: Instant display of submissions with stored dimensions (100% optimized)
@@ -61,7 +61,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 - **Timeout reduction**: 6s for any dynamic loading
 - **Connection stability**: Prevents mobile browser saturation
 
-### Backend Ordering Service ✨ **ENHANCED**
+### Backend Ordering Service
 
 **Stored Dimension Advantages:**
 - **Instant access** to accurate aspect ratios for ordering algorithms
@@ -69,7 +69,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 - **Wide image detection** using stored aspect ratios (>= 16:9)
 - **Dual column optimization** for 2-col and 4-col layouts with exact dimensions
 
-### Frontend Skyline Positioning ✨ **OPTIMIZED**
+### Frontend Skyline Positioning
 
 **Direct Dimension Usage:**
 - **No calculation overhead** - aspect ratios retrieved from API response
@@ -79,7 +79,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 
 ## Implementation
 
-### Upload Process Integration ✨ **NEW**
+### Upload Process Integration
 
 ```typescript
 // Backend: StorageService enhanced with dimension extraction
@@ -100,7 +100,7 @@ public void updateSubmissionWithImageUrl(Long submissionId, String imageUrl, Ima
 }
 ```
 
-### API Response Enhancement ✨ **NEW**
+### API Response Enhancement
 
 ```typescript
 // SubmissionResponseDTO now includes dimension fields
@@ -108,18 +108,18 @@ public void updateSubmissionWithImageUrl(Long submissionId, String imageUrl, Ima
   "id": 10,
   "imageUrl": "https://img.munichweekly.art/uploads/...",
   "description": "Photo description",
-  "imageWidth": 3648,     // ✨ NEW: Stored width
-  "imageHeight": 5472,    // ✨ NEW: Stored height  
-  "aspectRatio": 0.666667 // ✨ NEW: Precomputed ratio
+  "imageWidth": 3648,     // Stored width
+  "imageHeight": 5472,    // Stored height  
+  "aspectRatio": 0.666667 // Precomputed ratio
 }
 ```
 
-### Frontend Optimization ✨ **NEW**
+### Frontend Optimization
 
 ```typescript
 // useSubmissionDimensions: Optimized hook with stored dimension support
 const optimizedDimensionsResult = useSubmissionDimensions(submissions, {
-  preferStoredDimensions: true, // ✨ NEW: Prioritize stored data
+  preferStoredDimensions: true, // Prioritize stored data
   enableProgressiveLoading: true,
   batchSize: 4
 });
@@ -128,12 +128,12 @@ const optimizedDimensionsResult = useSubmissionDimensions(submissions, {
 const skylineGetDimensions = (item: Submission) => ({
   width: item.imageWidth,
   height: item.imageHeight,
-  aspectRatio: item.aspectRatio, // ✨ Direct usage of stored ratio
+  aspectRatio: item.aspectRatio, // Direct usage of stored ratio
   isLoaded: true // Instant availability
 });
 ```
 
-### Performance Monitoring ✨ **NEW**
+### Performance Monitoring
 
 **Admin-only Performance Indicators:**
 ```typescript
@@ -148,7 +148,7 @@ const skylineGetDimensions = (item: Submission) => ({
 
 ## Data Migration
 
-### Automatic Migration System ✨ **NEW**
+### Automatic Migration System
 
 **Safe Production Migration:**
 - **Admin-only access**: Migration tools available at `/account/data-migration`
@@ -165,11 +165,11 @@ const skylineGetDimensions = (item: Submission) => ({
 
 ## Configuration
 
-### Hybrid Loading Configuration ✨ **UPDATED**
+### Hybrid Loading Configuration
 
 ```typescript
 const DIMENSION_CONFIG = {
-  preferStoredDimensions: true,    // ✨ NEW: Prioritize database dimensions
+  preferStoredDimensions: true,    // Prioritize database dimensions
   enableProgressiveLoading: true,  // Fallback for legacy data
   batchSize: 4,                   // Mobile-optimized concurrent loading
   timeout: 6000,                  // Timeout for dynamic loading only
@@ -185,7 +185,7 @@ const CONTAINER_CONFIG = {
     margins: { mobile: 8, tablet: 16, desktop: 24 },
     gap: { mobile: 4, tablet: 8, desktop: 12 },
     columns: { mobile: 2, tablet: 2, desktop: 4 },
-    wideImageThreshold: 16/9 // ✨ Uses stored aspect ratios
+    wideImageThreshold: 16/9 // Uses stored aspect ratios
   }
 }
 ```
@@ -198,7 +198,7 @@ const CONTAINER_CONFIG = {
 - Redundant API calls for image dimensions
 - Poor mobile performance on slow networks
 
-### After: Stored Dimension System ✨ **NEW**
+### After: Stored Dimension System
 - **60-80% faster** layout calculation
 - **Instant** aspect ratio availability  
 - **Zero redundant** API calls for dimensions
@@ -207,25 +207,25 @@ const CONTAINER_CONFIG = {
 
 ## Troubleshooting
 
-### Layout Issues ✨ **UPDATED**
+### Layout Issues
 - **Verify stored dimensions**: Check admin optimization metrics
 - **Monitor API responses**: Ensure dimension fields are populated
 - **Check migration status**: Use admin migration tools if needed
 - **Aspect ratio conflicts**: Resolved by using stored ratios exclusively
 
-### Performance Issues ✨ **UPDATED**
+### Performance Issues
 - **Check optimization percentage**: Should be near 100% after migration
 - **Monitor stored vs. dynamic**: Admin metrics show breakdown
 - **Verify dimension data**: API responses should include width/height/aspectRatio
 - **Progressive fallback**: Legacy data uses optimized batch loading
 
-### Data Migration ✨ **NEW**
+### Data Migration
 - **Access migration tools**: Admin account → "Data Migration" page
 - **Analyze before migrating**: Review submission counts and optimization potential
 - **Monitor progress**: Real-time status during migration execution
 - **Safe execution**: Migration only adds data, never removes existing records
 
-## API Endpoints ✨ **NEW**
+## API Endpoints
 
 ### Migration Management (Admin Only)
 - **GET** `/api/admin/migration/analyze` - Analyze migration requirements

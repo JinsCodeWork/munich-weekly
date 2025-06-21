@@ -182,7 +182,7 @@ Components for managing submission content:
 - **SubmissionTable**: Admin interface for managing submissions
 - **IssueSelector**: Reusable component for selecting publication issues
 
-### Gallery System ✨ **NEW**
+### Gallery System
 
 A comprehensive gallery system with both featured carousel and issue-based organization:
 
@@ -542,7 +542,7 @@ The home page provides an engaging entry point to the platform with the followin
 
 ## Recent Architecture Enhancements
 
-### Advanced Image Display System (2024)
+### Advanced Image Display System
 
 Significant improvements were made to the image rendering and display logic throughout the platform, focusing on optimal presentation across different device contexts and aspect ratios.
 

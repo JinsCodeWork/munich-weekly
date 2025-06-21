@@ -50,6 +50,7 @@ munich-weekly/
 
 ### 🚀 Getting Started
 - 🧭 [Deployment Guide](./docs/deployment.md) - Complete deployment instructions for Hetzner Cloud
+- 🤝 [Contributing Guide](./docs/contributing.md) - GitHub Flow workflow for developers
 - 👤 [User Guide](./docs/user-guide.md) - End-user documentation
 
 ### 🔐 Security & Privacy

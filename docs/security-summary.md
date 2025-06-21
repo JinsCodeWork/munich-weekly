@@ -175,7 +175,7 @@ Currently **missing** but recommended:
 
 ---
 
-*Last Updated: Based on codebase analysis performed in January 2025*  
+*This document reflects the current security implementation of the Munich Weekly platform*  
 *For detailed implementation guidance, refer to the complete [Authentication & Security documentation](./auth.md)*
 
 ## Protected API Endpoints
