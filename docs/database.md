@@ -59,15 +59,15 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 | issue\_id    | BIGINT (FK)   | Issue ID (issues table)     | Many-to-one                                            |
 | imageUrl     | VARCHAR       | Submission image URL        |                                                        |
 | description  | VARCHAR(1000) | Submission description      |                                                        |
-| image\_width | INTEGER       | Image width in pixels       | ✨ NEW: Performance optimization field                                                |
-| image\_height| INTEGER       | Image height in pixels      | ✨ NEW: Performance optimization field                                                |
-| aspect\_ratio| DECIMAL(10,6)  | Precomputed aspect ratio    | ✨ NEW: width/height for layout optimization                                                |
+| image\_width | INTEGER       | Image width in pixels       | Performance optimization field                                                |
+| image\_height| INTEGER       | Image height in pixels      | Performance optimization field                                                |
+| aspect\_ratio| DECIMAL(10,6)  | Precomputed aspect ratio    | Width/height for layout optimization                                                |
 | isCover      | BOOLEAN       | Cover image status          | Default: `false`                                       |
 | status       | VARCHAR       | Review status               | Default: `pending`; `approved`, `rejected`, `selected` |
 | submittedAt  | TIMESTAMP     | Submission timestamp        | Default current time                                   |
 | reviewedAt   | TIMESTAMP     | Review timestamp            | Optional                                               |
 
-✨ NEW Performance Features:
+Performance Features:
 - **Image dimensions captured during upload** - eliminates frontend calculation overhead
 - **Aspect ratio stored** - enables instant masonry layout without dynamic computation  
 - **Database constraints** - ensures positive dimensions and valid aspect ratios (0.1-10.0)
@@ -115,9 +115,9 @@ Two tables were added to support the promotion feature.
 
 ## 🚀 Performance Optimizations
 
-### Image Dimension Storage ✨ **NEW**
+### Image Dimension Storage
 
-**Database Migration V6:**
+**Database Schema Enhancement:**
 - Added `image_width`, `image_height`, `aspect_ratio` fields to submissions table
 - Computed during upload process - no frontend calculation needed
 - Enables instant masonry layout rendering without external API calls

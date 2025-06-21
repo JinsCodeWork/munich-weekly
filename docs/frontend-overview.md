@@ -8,7 +8,8 @@ Munich Weekly is a photography submission and voting platform, built with modern
 
 This document serves as the entry point to the frontend development documentation system, which includes the following related documents:
 
-### Frontend-Specific Documentation
+### Development & Contribution
+- [**Contributing Guide**](./contributing.md) - GitHub Flow workflow and development guidelines
 - [**Frontend Architecture Details**](./frontend-architecture.md) - Detailed architecture design and technical decisions
 - [**UI Component Library**](./ui-components.md) - UI component library specifications and usage guide
 - [**Style System**](./style-system.md) - Comprehensive documentation of the style management system
@@ -80,7 +81,7 @@ frontend/
 │   │   ├── content/        # Content pages
 │   │   ├── debug/          # Development debug tools
 │   │   ├── forgot-password/# Password recovery
-│   │   ├── gallery/        # Gallery page ✨ **NEW**
+│   │   ├── gallery/        # Gallery page
 │   │   ├── privacy-policy/ # Privacy policy page
 │   │   ├── register/       # Registration page
 │   │   ├── reset-password/ # Password reset page
@@ -94,7 +95,7 @@ frontend/
 │   │   ├── home/           # Home page components
 │   │   ├── navigation/     # Navigation components
 │   │   ├── submission/     # Submission components
-│   │   ├── gallery/        # Gallery components ✨ **NEW**
+│   │   ├── gallery/        # Gallery components
 │   │   ├── ui/             # Core UI components
 │   │   └── voting/         # Voting components
 │   ├── context/            # React Context providers
@@ -231,7 +232,7 @@ The system uses a Greedy Best-Fit algorithm that dynamically selects items from 
 
 This system is used across multiple pages including the voting interface (`/vote`), user submissions management (`/account/submissions`), and testing environments. For complete technical details, see the [Masonry Layout System](./masonry-layout-system.md) documentation.
 
-### 7. Gallery System ✨ **NEW**
+### 7. Gallery System
 
 Munich Weekly features a comprehensive gallery system with both featured carousel and issue-based organization:
 
@@ -321,7 +322,7 @@ This system provides consistent, professional layouts across all devices while m
 - Grouped by business function (authentication, users, submissions, **issues**, votes, **gallery** ✨ **NEW**)
 - Unified error handling
 - **Enhanced Issue API**: Full CRUD operations with `getAllIssues()`, `getIssueById()`, `createIssue()`, and `updateIssue()`
-- **Gallery API** ✨ **NEW**: Featured submissions management with `getFeaturedSubmissions()`, `getGalleryStats()`, and admin configuration endpoints
+- **Gallery API**: Featured submissions management with `getFeaturedSubmissions()`, `getGalleryStats()`, and admin configuration endpoints
 - **Batch Vote Optimization**: `checkBatchVoteStatus()` reduces N individual requests to 1 batch request
 - **Performance improvements**: 95%+ reduction in vote status API calls
 - JWT authentication integration with automatic token management
@@ -497,43 +498,3 @@ const createNewIssue = async () => {
 4. Maintain good code comments and documentation
 5. Follow modular API structure for API calls
 
-## Roadmap
-
-Planned feature enhancements:
-
-1. Image submission interface improvements
-2. Weekly journal gallery view
-3. Voting system refinements
-4. User notification system
-5. Multilingual support (English/Chinese)
-6. Dark mode
-7. Batch submission management tools
-8. Advanced issue management features
-
-## Contribution Guidelines
-
-1. Follow code standards and development best practices
-2. Reuse existing components to ensure UI consistency
-3. Ensure responsive design adapts to various devices
-4. Write appropriate unit tests
-5. Update relevant documentation
-6. Use modular API structure for API integration
-
-### Key Features
-
-- **Modern Tech Stack**: Built with **Next.js 14**, React, and TypeScript.
-- **App Router**: Utilizes the Next.js App Router for optimized rendering and layout management.
-- **Component-Based Architecture**: A rich library of reusable UI components.
-- **State Management**: Centralized authentication state via React Context (`AuthContext`).
-- **Styling**: Styled with **Tailwind CSS** using a custom design system.
-- **Admin Dashboard**: A comprehensive suite of tools for site administration.
-- **Promotion System**: Admins can create dynamic promotion pages viewable by the public.
-- **API Integration**: Robust integration with the backend via `fetch`-based API services.
-
-## Additional Features
-
-- **/account/settings**: User profile and password management.
-- **/account/promotion-settings**: (Admin) Interface to create, manage, and delete promotion configurations and their associated images.
-- **/submit**: Page for users to upload new photo submissions.
-- **/vote**: The main voting interface.
-- **`/[promotionUrl]`**: (Public) Dynamically rendered promotion page based on the URL slug configured by an admin.

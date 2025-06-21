@@ -214,4 +214,4 @@ For any issues not covered in this guide, please contact:
 
 ---
 
-*Last updated: May, 2025*
+*For technical documentation, see the [Documentation Index](./index.md)*

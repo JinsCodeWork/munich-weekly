@@ -8,6 +8,7 @@ This document provides a comprehensive reference for all API endpoints in the Mu
 
 **Related Documentation:**
 - 🔐 [Security Summary](./security-summary.md) - Security overview and authentication requirements
+- 🤝 [Contributing Guide](./contributing.md) - API development guidelines and workflow
 - 🏠 [Project Overview](../README.md) - Platform features and architecture
 - 🚀 [Deployment Guide](./deployment.md) - Production API configuration
 - 📱 [Frontend Overview](./frontend-overview.md) - Client-side API integration

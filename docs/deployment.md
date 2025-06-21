@@ -11,6 +11,7 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 
 **Architecture & Development:**
 - 🏠 [Project Overview](../README.md) - Platform overview and tech stack
+- 🤝 [Contributing Guide](./contributing.md) - Development workflow and guidelines
 - 📦 [API Reference](./api.md) - Endpoint configuration and authentication
 - 💾 [Storage System](./storage.md) - File storage setup (Local vs Cloudflare R2)
 
@@ -455,7 +456,7 @@ If SSH key authentication fails:
 
 ---
 
-## ✅ Status Summary (as of May 2025)
+## ✅ Status Summary
 
 * Server IP: `188.245.71.169`
 * OS: Ubuntu 22.04 LTS

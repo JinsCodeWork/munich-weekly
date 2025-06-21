@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Effective Date:** May 2025
+**Effective Date:** Current
 
 This website (Munich Weekly) is operated as a non-commercial, student-run platform. We are committed to respecting your privacy and ensuring transparent data practices. Below is a summary of how we handle data.
 
