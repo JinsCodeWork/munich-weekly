@@ -13,6 +13,8 @@ interface MigrationStatus {
   successCount: number;
   errorCount: number;
   progressPercentage: number;
+  filteredByIssue?: boolean;
+  issueId?: number;
 }
 
 interface AnalysisResult {
@@ -21,6 +23,8 @@ interface AnalysisResult {
   submissionsNeedingMigration: number;
   migrationRequired: boolean;
   currentOptimizationPercentage: number;
+  filteredByIssue?: boolean;
+  issueId?: number;
 }
 
 // 🔧 新增：重新迁移状态接口
@@ -32,6 +36,20 @@ interface RemigrationStatus {
   successCount: number;
   errorCount: number;
   progressPercentage: number;
+  filteredByIssue?: boolean;
+  issueId?: number;
+}
+
+// 🔧 新增：期刊接口
+interface Issue {
+  id: number;
+  title: string;
+  description: string;
+  submissionStart: string;
+  submissionEnd: string;
+  votingStart: string;
+  votingEnd: string;
+  createdAt: string;
 }
 
 /**
@@ -52,8 +70,38 @@ export default function DataMigrationPage() {
   const [remigrationBatchSize, setRemigrationBatchSize] = useState(3);
   const [remigrationDelayMs, setRemigrationDelayMs] = useState(3000);
 
+  // 🔧 新增：期刊相关状态
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [selectedIssue, setSelectedIssue] = useState<number | null>(null);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false);
+
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
+
+  // 🔧 新增：获取期刊列表
+  const fetchIssues = useCallback(async () => {
+    if (!token) return;
+    
+    setIsLoadingIssues(true);
+    try {
+      const response = await fetch('/api/issues', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const issuesData = await response.json();
+        // 按ID降序排序（最新的在前）
+        const sortedIssues = issuesData.sort((a: Issue, b: Issue) => b.id - a.id);
+        setIssues(sortedIssues);
+      }
+    } catch (err) {
+      console.error('Error fetching issues:', err);
+    } finally {
+      setIsLoadingIssues(false);
+    }
+  }, [token]);
 
   const fetchMigrationStatus = useCallback(async () => {
     if (!token) return;
@@ -119,7 +167,11 @@ export default function DataMigrationPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/admin/migration/analyze', {
+      const url = selectedIssue 
+        ? `/api/admin/migration/analyze?issueId=${selectedIssue}`
+        : '/api/admin/migration/analyze';
+        
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -138,7 +190,7 @@ export default function DataMigrationPage() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [token]);
+  }, [token, selectedIssue]);
 
   const startMigration = useCallback(async () => {
     if (!token) return;
@@ -146,13 +198,20 @@ export default function DataMigrationPage() {
     setError(null);
     
     try {
+      const params = new URLSearchParams();
+      params.append('batchSize', batchSize.toString());
+      params.append('delayMs', delayMs.toString());
+      if (selectedIssue) {
+        params.append('issueId', selectedIssue.toString());
+      }
+      
       const response = await fetch('/api/admin/migration/start', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `batchSize=${batchSize}&delayMs=${delayMs}`,
+        body: params.toString(),
       });
       
       if (response.ok) {
@@ -165,7 +224,7 @@ export default function DataMigrationPage() {
       setError('Network error while starting migration');
       console.error('Error starting migration:', err);
     }
-  }, [batchSize, delayMs, fetchMigrationStatus, token]);
+  }, [batchSize, delayMs, selectedIssue, fetchMigrationStatus, token]);
 
   const stopMigration = useCallback(async () => {
     if (!token) return;
@@ -199,13 +258,20 @@ export default function DataMigrationPage() {
     setError(null);
     
     try {
+      const params = new URLSearchParams();
+      params.append('batchSize', remigrationBatchSize.toString());
+      params.append('delayMs', remigrationDelayMs.toString());
+      if (selectedIssue) {
+        params.append('issueId', selectedIssue.toString());
+      }
+      
       const response = await fetch('/api/admin/migration/remigration/start', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `batchSize=${remigrationBatchSize}&delayMs=${remigrationDelayMs}`,
+        body: params.toString(),
       });
       
       if (response.ok) {
@@ -218,7 +284,7 @@ export default function DataMigrationPage() {
       setError('Network error while starting remigration');
       console.error('Error starting remigration:', err);
     }
-  }, [remigrationBatchSize, remigrationDelayMs, fetchRemigrationStatus, token]);
+  }, [remigrationBatchSize, remigrationDelayMs, selectedIssue, fetchRemigrationStatus, token]);
 
   // 🔧 新增：停止重新迁移
   const stopRemigration = useCallback(async () => {
@@ -252,9 +318,18 @@ export default function DataMigrationPage() {
       fetchMigrationStatus();
       fetchRemigrationStatus();
       analyzeSubmissions();
+      fetchIssues();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
+
+  // 🔧 新增：当选择的期刊变化时重新分析
+  useEffect(() => {
+    if (isAdmin && issues.length > 0) {
+      analyzeSubmissions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIssue]);
 
   // Loading state
   if (loading) {
@@ -285,10 +360,10 @@ export default function DataMigrationPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Data Migration Management</h1>
-                      <p className="text-gray-600">
-              Safely batch process existing submissions to add image dimension information for optimized layout performance
-            </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">数据迁移管理</h1>
+          <p className="text-gray-600">
+            安全地批量处理现有投稿，为其添加图片尺寸信息以优化布局性能。支持按期刊筛选迁移。
+          </p>
         </div>
 
         {/* Error Display */}
@@ -306,7 +381,7 @@ export default function DataMigrationPage() {
         {/* Analysis Section */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Data Analysis</h2>
+            <h2 className="text-xl font-semibold text-gray-900">数据分析</h2>
             <Button
               onClick={analyzeSubmissions}
               disabled={isAnalyzing}
@@ -316,33 +391,74 @@ export default function DataMigrationPage() {
               {isAnalyzing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                  Analyzing...
+                  分析中...
                 </>
               ) : (
-                'Reanalyze'
+                '重新分析'
               )}
             </Button>
           </div>
 
+          {/* 🔧 新增：期刊筛选器 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              按期刊筛选 (可选)
+            </label>
+            <div className="flex items-center space-x-4">
+              <select
+                value={selectedIssue || ''}
+                onChange={(e) => setSelectedIssue(e.target.value ? parseInt(e.target.value) : null)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={migrationStatus?.inProgress || remigrationStatus?.inProgress || isLoadingIssues}
+              >
+                <option value="">全部期刊</option>
+                {issues.map((issue) => (
+                  <option key={issue.id} value={issue.id}>
+                    Issue #{issue.id}: {issue.title}
+                  </option>
+                ))}
+              </select>
+              {isLoadingIssues && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              )}
+            </div>
+            {selectedIssue && (
+              <p className="text-xs text-blue-600 mt-1">
+                已选择期刊 #{selectedIssue}，分析和迁移将仅针对此期刊的投稿
+              </p>
+            )}
+          </div>
+
           {analysisResult ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-blue-600">Total Submissions</p>
-                <p className="text-2xl font-bold text-blue-900">{analysisResult.totalSubmissions}</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-green-600">Optimized</p>
-                <p className="text-2xl font-bold text-green-900">{analysisResult.submissionsWithDimensions}</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-yellow-600">Needing Migration</p>
-                <p className="text-2xl font-bold text-yellow-900">{analysisResult.submissionsNeedingMigration}</p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-purple-600">Optimization Percentage</p>
-                <p className="text-2xl font-bold text-purple-900">
-                  {analysisResult.currentOptimizationPercentage.toFixed(1)}%
-                </p>
+            <div>
+              {/* 筛选信息显示 */}
+              {analysisResult.filteredByIssue && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    📊 当前分析范围：期刊 #{analysisResult.issueId}
+                  </p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="text-sm font-medium text-blue-600">总投稿数</p>
+                  <p className="text-2xl font-bold text-blue-900">{analysisResult.totalSubmissions}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-sm font-medium text-green-600">已优化</p>
+                  <p className="text-2xl font-bold text-green-900">{analysisResult.submissionsWithDimensions}</p>
+                </div>
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <p className="text-sm font-medium text-yellow-600">需要迁移</p>
+                  <p className="text-2xl font-bold text-yellow-900">{analysisResult.submissionsNeedingMigration}</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <p className="text-sm font-medium text-purple-600">优化百分比</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {analysisResult.currentOptimizationPercentage.toFixed(1)}%
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
@@ -414,6 +530,15 @@ export default function DataMigrationPage() {
             <div className="bg-white rounded-lg border border-orange-200 p-4 mb-4">
               <h3 className="text-lg font-medium text-gray-900 mb-3">重新迁移状态</h3>
               
+              {/* 筛选信息 */}
+              {remigrationStatus.filteredByIssue && (
+                <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                  <p className="text-xs text-orange-800">
+                    🎯 迁移范围：期刊 #{remigrationStatus.issueId}
+                  </p>
+                </div>
+              )}
+              
               {/* Status Badge */}
               <div className="flex items-center space-x-3 mb-4">
                 <span className="text-sm font-medium text-gray-700">状态:</span>
@@ -478,16 +603,16 @@ export default function DataMigrationPage() {
                 停止重新迁移
               </Button>
             ) : (
-              <Button
-                onClick={startRemigration}
-                className="flex items-center bg-orange-600 hover:bg-orange-700 text-white"
-                disabled={migrationStatus?.inProgress}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                开始重新生成图片尺寸
-              </Button>
+                              <Button
+                  onClick={startRemigration}
+                  className="flex items-center bg-orange-600 hover:bg-orange-700 text-white"
+                  disabled={migrationStatus?.inProgress}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {selectedIssue ? `重新生成期刊 #${selectedIssue} 图片尺寸` : '开始重新生成图片尺寸'}
+                </Button>
             )}
           </div>
 
@@ -562,6 +687,15 @@ export default function DataMigrationPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">首次迁移状态</h2>
             
             <div className="space-y-4">
+              {/* 筛选信息 */}
+              {migrationStatus.filteredByIssue && (
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-xs text-blue-800">
+                    🎯 迁移范围：期刊 #{migrationStatus.issueId}
+                  </p>
+                </div>
+              )}
+              
               {/* Status Badge */}
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-700">状态:</span>
@@ -634,7 +768,7 @@ export default function DataMigrationPage() {
                   className="flex items-center bg-blue-600 hover:bg-blue-700"
                   disabled={remigrationStatus?.inProgress}
                 >
-                  开始首次迁移
+                  {selectedIssue ? `开始迁移期刊 #${selectedIssue}` : '开始首次迁移'}
                 </Button>
               )
             ) : (

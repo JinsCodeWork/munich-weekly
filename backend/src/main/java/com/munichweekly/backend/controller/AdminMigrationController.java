@@ -37,6 +37,7 @@ public class AdminMigrationController {
     private final AtomicInteger successCount = new AtomicInteger(0);
     private final AtomicInteger errorCount = new AtomicInteger(0);
     private volatile int totalCount = 0;
+    private volatile Long currentMigrationIssueId = null;
 
     // 🔧 新增：重新迁移状态追踪
     private volatile boolean remigrationInProgress = false;
@@ -45,6 +46,7 @@ public class AdminMigrationController {
     private final AtomicInteger remigrationSuccessCount = new AtomicInteger(0);
     private final AtomicInteger remigrationErrorCount = new AtomicInteger(0);
     private volatile int remigrationTotalCount = 0;
+    private volatile Long currentRemigrationIssueId = null;
 
     @Autowired
     public AdminMigrationController(SubmissionService submissionService, 
@@ -66,6 +68,8 @@ public class AdminMigrationController {
         status.put("processedCount", processedCount.get());
         status.put("successCount", successCount.get());
         status.put("errorCount", errorCount.get());
+        status.put("issueId", currentMigrationIssueId);
+        status.put("filteredByIssue", currentMigrationIssueId != null);
         
         if (totalCount > 0) {
             double progressPercentage = (processedCount.get() * 100.0) / totalCount;
@@ -91,6 +95,8 @@ public class AdminMigrationController {
         status.put("processedCount", remigrationProcessedCount.get());
         status.put("successCount", remigrationSuccessCount.get());
         status.put("errorCount", remigrationErrorCount.get());
+        status.put("issueId", currentRemigrationIssueId);
+        status.put("filteredByIssue", currentRemigrationIssueId != null);
         
         if (remigrationTotalCount > 0) {
             double progressPercentage = (remigrationProcessedCount.get() * 100.0) / remigrationTotalCount;
@@ -105,13 +111,25 @@ public class AdminMigrationController {
     /**
      * Analyze submissions that need dimension migration
      * GET /api/admin/migration/analyze
+     * @param issueId Optional issue ID to filter analysis by specific issue
      */
     @GetMapping("/analyze")
-    public ResponseEntity<Map<String, Object>> analyzeSubmissions() {
+    public ResponseEntity<Map<String, Object>> analyzeSubmissions(@RequestParam(required = false) Long issueId) {
         try {
-            logger.info("Starting submission analysis for dimension migration");
+            logger.info("Starting submission analysis for dimension migration" + 
+                       (issueId != null ? " for issue ID: " + issueId : " for all issues"));
             
-            List<Submission> allSubmissions = submissionService.getAllSubmissionEntities();
+            List<Submission> allSubmissions;
+            if (issueId != null) {
+                // Get submissions for specific issue
+                allSubmissions = submissionService.getSubmissionRepository()
+                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
+                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+            } else {
+                // Get all submissions
+                allSubmissions = submissionService.getAllSubmissionEntities();
+            }
+            
             int totalSubmissions = allSubmissions.size();
             
             long submissionsWithDimensions = allSubmissions.stream()
@@ -125,6 +143,8 @@ public class AdminMigrationController {
             analysis.put("submissionsWithDimensions", submissionsWithDimensions);
             analysis.put("submissionsNeedingMigration", submissionsNeedingMigration);
             analysis.put("migrationRequired", submissionsNeedingMigration > 0);
+            analysis.put("filteredByIssue", issueId != null);
+            analysis.put("issueId", issueId);
             
             if (totalSubmissions > 0) {
                 double optimizationPercentage = (submissionsWithDimensions * 100.0) / totalSubmissions;
@@ -133,8 +153,9 @@ public class AdminMigrationController {
                 analysis.put("currentOptimizationPercentage", 100.0);
             }
             
-            logger.info(String.format("Analysis complete: %d total, %d with dimensions, %d need migration", 
-                       totalSubmissions, submissionsWithDimensions, submissionsNeedingMigration));
+            logger.info(String.format("Analysis complete: %d total, %d with dimensions, %d need migration%s", 
+                       totalSubmissions, submissionsWithDimensions, submissionsNeedingMigration,
+                       issueId != null ? " (filtered by issue " + issueId + ")" : ""));
             
             return ResponseEntity.ok(analysis);
             
@@ -151,11 +172,13 @@ public class AdminMigrationController {
      * 
      * @param batchSize Number of submissions to process in each batch (default: 5)
      * @param delayMs Delay between batches in milliseconds (default: 2000)
+     * @param issueId Optional issue ID to filter migration by specific issue
      */
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startMigration(
             @RequestParam(value = "batchSize", defaultValue = "5") int batchSize,
-            @RequestParam(value = "delayMs", defaultValue = "2000") int delayMs) {
+            @RequestParam(value = "delayMs", defaultValue = "2000") int delayMs,
+            @RequestParam(required = false) Long issueId) {
         
         if (migrationInProgress || remigrationInProgress) {
             return ResponseEntity.badRequest()
@@ -175,12 +198,14 @@ public class AdminMigrationController {
         
         try {
             // Start migration asynchronously
-            CompletableFuture.runAsync(() -> executeMigration(batchSize, delayMs));
+            CompletableFuture.runAsync(() -> executeMigration(batchSize, delayMs, issueId));
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Migration started successfully");
             response.put("batchSize", batchSize);
             response.put("delayMs", delayMs);
+            response.put("issueId", issueId);
+            response.put("filteredByIssue", issueId != null);
             response.put("status", "starting");
             
             return ResponseEntity.ok(response);
@@ -199,11 +224,13 @@ public class AdminMigrationController {
      * 
      * @param batchSize Number of submissions to process in each batch (default: 3)
      * @param delayMs Delay between batches in milliseconds (default: 3000)
+     * @param issueId Optional issue ID to filter remigration by specific issue
      */
     @PostMapping("/remigration/start")
     public ResponseEntity<Map<String, Object>> startRemigration(
             @RequestParam(value = "batchSize", defaultValue = "3") int batchSize,
-            @RequestParam(value = "delayMs", defaultValue = "3000") int delayMs) {
+            @RequestParam(value = "delayMs", defaultValue = "3000") int delayMs,
+            @RequestParam(required = false) Long issueId) {
         
         if (migrationInProgress || remigrationInProgress) {
             return ResponseEntity.badRequest()
@@ -223,12 +250,14 @@ public class AdminMigrationController {
         
         try {
             // Start remigration asynchronously
-            CompletableFuture.runAsync(() -> executeRemigration(batchSize, delayMs));
+            CompletableFuture.runAsync(() -> executeRemigration(batchSize, delayMs, issueId));
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Remigration started successfully");
             response.put("batchSize", batchSize);
             response.put("delayMs", delayMs);
+            response.put("issueId", issueId);
+            response.put("filteredByIssue", issueId != null);
             response.put("status", "starting");
             
             return ResponseEntity.ok(response);
@@ -284,26 +313,39 @@ public class AdminMigrationController {
     /**
      * Execute the actual migration process
      */
-    private void executeMigration(int batchSize, int delayMs) {
+    private void executeMigration(int batchSize, int delayMs, Long issueId) {
         try {
             migrationInProgress = true;
             migrationStatus = "running";
+            currentMigrationIssueId = issueId;
             
             // Reset counters
             processedCount.set(0);
             successCount.set(0);
             errorCount.set(0);
             
-            logger.info(String.format("Starting dimension migration with batchSize=%d, delayMs=%d", batchSize, delayMs));
+            logger.info(String.format("Starting dimension migration with batchSize=%d, delayMs=%d%s", 
+                       batchSize, delayMs, issueId != null ? " for issue " + issueId : " for all issues"));
             
-            // Get all submissions without dimensions
-            List<Submission> allSubmissions = submissionService.getAllSubmissionEntities();
+            // Get submissions without dimensions
+            List<Submission> allSubmissions;
+            if (issueId != null) {
+                // Get submissions for specific issue
+                allSubmissions = submissionService.getSubmissionRepository()
+                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
+                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+            } else {
+                // Get all submissions
+                allSubmissions = submissionService.getAllSubmissionEntities();
+            }
+            
             List<Submission> submissionsNeedingMigration = allSubmissions.stream()
                 .filter(s -> s.getImageWidth() == null || s.getImageHeight() == null || s.getAspectRatio() == null)
                 .toList();
             
             totalCount = submissionsNeedingMigration.size();
-            logger.info(String.format("Found %d submissions needing dimension migration", totalCount));
+            logger.info(String.format("Found %d submissions needing dimension migration%s", 
+                       totalCount, issueId != null ? " in issue " + issueId : ""));
             
             if (totalCount == 0) {
                 migrationStatus = "completed";
@@ -318,6 +360,7 @@ public class AdminMigrationController {
                 if ("stopping".equals(migrationStatus)) {
                     migrationStatus = "stopped";
                     migrationInProgress = false;
+                    currentMigrationIssueId = null;
                     logger.info("Migration stopped by admin request");
                     return;
                 }
@@ -346,13 +389,16 @@ public class AdminMigrationController {
             migrationStatus = "completed";
             migrationInProgress = false;
             
-            logger.info(String.format("Migration completed: %d processed, %d successful, %d errors", 
-                       processedCount.get(), successCount.get(), errorCount.get()));
+            logger.info(String.format("Migration completed: %d processed, %d successful, %d errors%s", 
+                       processedCount.get(), successCount.get(), errorCount.get(),
+                       issueId != null ? " (issue " + issueId + ")" : ""));
             
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error during migration execution", e);
             migrationStatus = "error";
             migrationInProgress = false;
+        } finally {
+            currentMigrationIssueId = null;
         }
     }
 
@@ -360,23 +406,35 @@ public class AdminMigrationController {
     /**
      * Execute the actual remigration process for ALL submissions
      */
-    private void executeRemigration(int batchSize, int delayMs) {
+    private void executeRemigration(int batchSize, int delayMs, Long issueId) {
         try {
             remigrationInProgress = true;
             remigrationStatus = "running";
+            currentRemigrationIssueId = issueId;
             
             // Reset counters
             remigrationProcessedCount.set(0);
             remigrationSuccessCount.set(0);
             remigrationErrorCount.set(0);
             
-            logger.info(String.format("Starting remigration of all image dimensions batchSize=%d, delayMs=%d", batchSize, delayMs));
+            logger.info(String.format("Starting remigration of image dimensions batchSize=%d, delayMs=%d%s", 
+                       batchSize, delayMs, issueId != null ? " for issue " + issueId : " for all issues"));
             
-            // Get ALL submissions for remigration
-            List<Submission> allSubmissions = submissionService.getAllSubmissionEntities();
+            // Get submissions for remigration
+            List<Submission> allSubmissions;
+            if (issueId != null) {
+                // Get submissions for specific issue
+                allSubmissions = submissionService.getSubmissionRepository()
+                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
+                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+            } else {
+                // Get ALL submissions for remigration
+                allSubmissions = submissionService.getAllSubmissionEntities();
+            }
             
             remigrationTotalCount = allSubmissions.size();
-            logger.info(String.format("Remigration: Found %d submissions to reprocess", remigrationTotalCount));
+            logger.info(String.format("Remigration: Found %d submissions to reprocess%s", 
+                       remigrationTotalCount, issueId != null ? " in issue " + issueId : ""));
             
             if (remigrationTotalCount == 0) {
                 remigrationStatus = "completed";
@@ -391,6 +449,7 @@ public class AdminMigrationController {
                 if ("stopping".equals(remigrationStatus)) {
                     remigrationStatus = "stopped";
                     remigrationInProgress = false;
+                    currentRemigrationIssueId = null;
                     logger.info("Remigration stopped by admin");
                     return;
                 }
@@ -419,13 +478,16 @@ public class AdminMigrationController {
             remigrationStatus = "completed";
             remigrationInProgress = false;
             
-            logger.info(String.format("Remigration completed: %d processed, %d successful, %d errors", 
-                       remigrationProcessedCount.get(), remigrationSuccessCount.get(), remigrationErrorCount.get()));
+            logger.info(String.format("Remigration completed: %d processed, %d successful, %d errors%s", 
+                       remigrationProcessedCount.get(), remigrationSuccessCount.get(), remigrationErrorCount.get(),
+                       issueId != null ? " (issue " + issueId + ")" : ""));
             
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error occurred during remigration execution", e);
             remigrationStatus = "error";
             remigrationInProgress = false;
+        } finally {
+            currentRemigrationIssueId = null;
         }
     }
 
