@@ -27,6 +27,7 @@ export default function SubmissionsPage() {
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showSelectedDeleteDialog, setShowSelectedDeleteDialog] = useState(false)
   const [isFilterChanging, setIsFilterChanging] = useState(false)
 
   const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number) => {
@@ -136,9 +137,19 @@ export default function SubmissionsPage() {
   };
 
   const handleDeleteClick = useCallback((submissionId: number) => {
-    setSubmissionToDelete(submissionId);
-    setShowDeleteDialog(true);
-  }, []);
+    // Find the submission to check its status
+    const submission = allSubmissions.find(s => s.id === submissionId);
+    
+    if (submission && submission.status === 'selected') {
+      // For selected submissions, show special dialog requiring email contact
+      setSubmissionToDelete(submissionId);
+      setShowSelectedDeleteDialog(true);
+    } else {
+      // For other submissions, show normal delete dialog
+      setSubmissionToDelete(submissionId);
+      setShowDeleteDialog(true);
+    }
+  }, [allSubmissions]);
 
   const handleConfirmDelete = async () => {
     if (submissionToDelete === null) return;
@@ -161,6 +172,28 @@ export default function SubmissionsPage() {
 
   const handleCancelDelete = () => {
     setShowDeleteDialog(false);
+    setSubmissionToDelete(null);
+  };
+
+  const handleCancelSelectedDelete = () => {
+    setShowSelectedDeleteDialog(false);
+    setSubmissionToDelete(null);
+  };
+
+  const handleContactForDeletion = () => {
+    // Get submission details for email
+    const submission = allSubmissions.find(s => s.id === submissionToDelete);
+    if (submission) {
+      const emailSubject = encodeURIComponent("Request to Delete Selected Photo - Munich Weekly");
+      const emailBody = encodeURIComponent(
+        `Dear Munich Weekly Team,\n\nI would like to request the deletion of my photo that has been selected for publication.\n\nSubmission ID: ${submission.id}\nPhoto Description: ${submission.description || "No description provided"}\nSubmitted Date: ${new Date(submission.submittedAt).toLocaleDateString()}\n\nReason for deletion request:\n[Please explain your reason here, especially if it involves privacy concerns or personal information]\n\nI understand that this photo has been selected for public exhibition and that deletion may affect publication integrity. I request this deletion in accordance with GDPR Article 17 (Right to Erasure).\n\nThank you for your consideration.\n\nBest regards,\n[Your name]`
+      );
+      
+      window.open(`mailto:contact@munichweekly.art?subject=${emailSubject}&body=${emailBody}`, '_blank');
+    }
+    
+    // Close the dialog
+    setShowSelectedDeleteDialog(false);
     setSubmissionToDelete(null);
   };
 
@@ -378,6 +411,7 @@ export default function SubmissionsPage() {
         </>
       )}
       
+      {/* Normal Delete Dialog */}
       <Modal
         isOpen={showDeleteDialog}
         onClose={handleCancelDelete}
@@ -407,6 +441,60 @@ export default function SubmissionsPage() {
               type="button"
               disabled={isDeleting}
               onClick={handleCancelDelete}
+              className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Selected Photo Delete Dialog */}
+      <Modal
+        isOpen={showSelectedDeleteDialog}
+        onClose={handleCancelSelectedDelete}
+        contentVariant="dark-glass"
+      >
+        <div className="p-6 text-center max-w-lg">
+          <div className="mb-4">
+            <svg className="w-16 h-16 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold mb-4 text-white font-heading">Selected Photo Deletion Request</h2>
+          <div className="text-left text-white mb-6 space-y-3">
+            <p className="text-center">
+              This photo has been <span className="font-semibold text-yellow-400">selected for publication</span> and is part of our public gallery.
+            </p>
+            <p>
+              According to our privacy policy and GDPR Article 17, you have the right to request deletion of your photos. However, for selected photos that affect publication integrity, we require editorial review.
+            </p>
+            <p>
+              <span className="font-semibold">To request deletion:</span>
+            </p>
+            <ul className="list-disc list-inside ml-4 space-y-1 text-sm">
+              <li>Click &ldquo;Send Email Request&rdquo; below</li>
+              <li>Explain your reason (especially privacy concerns)</li>
+              <li>Our editorial team will review within 3-5 business days</li>
+            </ul>
+          </div>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              type="button"
+              onClick={handleContactForDeletion}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              Send Email Request
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelSelectedDelete}
               className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
             >
               Cancel

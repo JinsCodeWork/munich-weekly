@@ -4,9 +4,9 @@ import { GallerySubmissionCardProps } from '@/api/gallery/types';
 import { ImageViewer } from '@/components/submission/ImageViewer';
 
 /**
- * Gallery Submission Card Component - Clean Design
+ * Gallery Submission Card Component - Clean Design with Robust Error Handling
  * Redesigned for pure image display with minimal text below
- * Includes full-screen image viewer functionality
+ * Includes full-screen image viewer functionality and graceful error handling
  */
 export default function GallerySubmissionCard({ 
   submission, 
@@ -15,22 +15,42 @@ export default function GallerySubmissionCard({
 }: GallerySubmissionCardProps) {
   
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
-  // 检查是否有有效图片
+  // Check if submission has valid image
   const hasValidImage = submission.imageUrl && submission.imageUrl.trim() !== '';
 
-  // 处理点击打开大图查看器
+  // Handle image load error - gracefully hide this submission
+  const handleImageError = () => {
+    console.warn(`Gallery image failed to load: ${submission.imageUrl} (submission ID: ${submission.id})`);
+    setImageError(true);
+    setImageLoaded(false);
+  };
+
+  // Handle image load success
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  // Handle opening image viewer
   const handleOpenViewer = () => {
-    if (hasValidImage) {
+    if (hasValidImage && !imageError) {
       setIsViewerOpen(true);
     }
   };
 
-  // 处理关闭大图查看器
+  // Handle closing image viewer
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
   };
+
+  // If image failed to load or no valid image, don't render anything
+  // This prevents broken layout in gallery view
+  if (!hasValidImage || imageError) {
+    return null;
+  }
 
   // Hero mode (cover image) - Clean with margins
   if (isHero) {
@@ -57,11 +77,12 @@ export default function GallerySubmissionCard({
                     imageLoaded ? 'opacity-100' : 'opacity-0'
                   }`}
                   priority={true}
-                  onLoad={() => setImageLoaded(true)}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
                 />
                 
                 {/* Loading placeholder */}
-                {!imageLoaded && (
+                {!imageLoaded && !imageError && (
                   <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
                 )}
 
@@ -86,7 +107,7 @@ export default function GallerySubmissionCard({
         </div>
 
         {/* Image Viewer for hero image */}
-        {hasValidImage && (
+        {hasValidImage && !imageError && (
           <ImageViewer
             imageUrl={submission.imageUrl}
             description={submission.description || submission.title}
@@ -119,11 +140,12 @@ export default function GallerySubmissionCard({
               className={`object-cover transition-all duration-500 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
-              onLoad={() => setImageLoaded(true)}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
             
             {/* Loading placeholder */}
-            {!imageLoaded && (
+            {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
             )}
 
@@ -147,7 +169,7 @@ export default function GallerySubmissionCard({
       </div>
 
       {/* Image Viewer for regular submission */}
-      {hasValidImage && (
+      {hasValidImage && !imageError && (
         <ImageViewer
           imageUrl={submission.imageUrl}
           description={submission.description || submission.title}

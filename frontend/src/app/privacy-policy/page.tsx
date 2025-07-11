@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
             to associate you with a record unless you have logged in.
           </p>
           <p>
-            To make a request, contact: <a href="mailto:dongkai.jin@tum.de">dongkai.jin@tum.de</a>
+            To make a request, contact: <a href="mailto:contact@munichweekly.art">contact@munichweekly.art</a>
           </p>
           
           <hr className="my-6" />
@@ -152,16 +152,64 @@ export default function PrivacyPolicyPage() {
             This multi-step process ensures that no trace of your data remains in our systems after deletion, 
             in compliance with GDPR Article 17.
           </p>
+
+          <h3 className="text-xl font-heading font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">
+            Special Process for Selected Photos
+          </h3>
+          <p>
+            For photos that have been <strong>selected for publication</strong> and are featured in our public gallery, 
+            we require additional consideration to balance your privacy rights with publication integrity:
+          </p>
+          
+          <ul>
+            <li>
+              <strong>Editorial Review Process</strong>: Deletion requests for selected photos require editorial review 
+              to assess the impact on publication integrity and ensure compliance with GDPR requirements.
+            </li>
+            <li>
+              <strong>Contact Process</strong>: When attempting to delete a selected photo through your account dashboard, 
+              you will be guided to contact our editorial team at <a href="mailto:contact@munichweekly.art">contact@munichweekly.art</a> 
+              with your deletion request.
+            </li>
+            <li>
+              <strong>Response Time</strong>: We commit to reviewing and responding to selected photo deletion requests 
+              within 3-5 business days.
+            </li>
+            <li>
+              <strong>Valid Grounds</strong>: Deletion requests are particularly considered when:
+              <ul>
+                <li>The photo contains your personally identifiable information (e.g., recognizable faces)</li>
+                <li>Privacy concerns or risks have arisen</li>
+                <li>Legal requirements mandate deletion</li>
+                <li>GDPR Article 17 grounds are clearly established</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Deletion Options</strong>: Depending on the situation, we may:
+              <ul>
+                <li>Remove the photo completely from all systems</li>
+                <li>Remove it from public display while preserving historical records</li>
+                <li>Replace it with a placeholder noting &ldquo;Photo removed upon user request&rdquo;</li>
+                <li>Request to delay deletion until the end of the current publication period</li>
+              </ul>
+            </li>
+          </ul>
+          
+          <p>
+            This process ensures we fulfill our legal obligations under GDPR Article 17 (&ldquo;Right to Erasure&rdquo;) 
+            while maintaining the integrity of our published content and respecting the interests of our community.
+          </p>
           
           <h3 className="text-xl font-heading font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">
             How to Request Deletion
           </h3>
           <ul>
-            <li><strong>For Submission Deletion</strong>: Use the &quot;Manage My Submissions&quot; feature in your account dashboard</li>
-            <li><strong>For Account Deletion</strong>: Access &quot;Account Settings&quot; and select &quot;Delete Account&quot;</li>
-            <li><strong>For Manual Requests</strong>: Contact us directly at <a href="mailto:dongkai.jin@tum.de">dongkai.jin@tum.de</a></li>
+            <li><strong>For Regular Submissions</strong>: Use the &ldquo;Manage My Submissions&rdquo; feature in your account dashboard</li>
+            <li><strong>For Selected Photos</strong>: Click the deletion button in your submissions, which will guide you to send an email request to <a href="mailto:contact@munichweekly.art">contact@munichweekly.art</a></li>
+            <li><strong>For Account Deletion</strong>: Access &ldquo;Account Settings&rdquo; and select &ldquo;Delete Account&rdquo;</li>
+            <li><strong>For Manual Requests</strong>: Contact us directly at <a href="mailto:contact@munichweekly.art">contact@munichweekly.art</a></li>
           </ul>
-          <p>All deletion operations are carried out as soon as technically feasible, typically within 72 hours.</p>
+          <p>All deletion operations are carried out as soon as technically feasible, typically within 72 hours for regular submissions and within 3-5 business days for selected photos requiring editorial review.</p>
           
           <hr className="my-6" />
           
@@ -186,10 +234,10 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-2xl font-heading font-bold mt-10 mb-4 text-gray-900 dark:text-gray-50">
             7. Contact
           </h2>
-          <p>If you have any questions about this privacy policy, you can contact the project lead:</p>
+          <p>If you have any questions about this privacy policy, you can contact us:</p>
           <p>
-            <strong>Dongkai Jin</strong><br />
-            Email: <a href="mailto:dongkai.jin@tum.de">dongkai.jin@tum.de</a><br />
+            <strong>Munich Weekly Team</strong><br />
+            Email: <a href="mailto:contact@munichweekly.art">contact@munichweekly.art</a><br />
             Location: Munich, Germany
           </p>
           

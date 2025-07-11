@@ -88,6 +88,25 @@ export default function FeaturedCarousel({
     });
   }, [submissions, isMobile]);
 
+  // Handle image load states
+  const handleImageLoad = (submissionId: number) => {
+    setImageLoadStates(prev => ({ ...prev, [submissionId]: true }));
+  };
+
+  const handleImageError = (submissionId: number) => {
+    console.warn(`Featured carousel image failed to load: submission ID ${submissionId}`);
+    setImageLoadStates(prev => ({ ...prev, [submissionId]: false }));
+  };
+
+  // Filter out submissions with failed images for stable carousel
+  const validSubmissions = useMemo(() => {
+    return optimizedSubmissions.filter(submission => {
+      const hasValidImage = submission.imageUrl && submission.imageUrl.trim() !== '';
+      const hasNotFailed = imageLoadStates[submission.id] !== false;
+      return hasValidImage && hasNotFailed;
+    });
+  }, [optimizedSubmissions, imageLoadStates]);
+
   const {
     currentSlide,
     isPlaying,
@@ -99,9 +118,9 @@ export default function FeaturedCarousel({
     play,
     setHovered,
   } = useCarousel({
-    itemCount: optimizedSubmissions.length,
+    itemCount: validSubmissions.length,
     autoplayInterval,
-    enabled: optimizedSubmissions.length > 1,
+    enabled: validSubmissions.length > 1,
   });
 
   const touchHandlers = useTouchSwipe({
@@ -110,48 +129,31 @@ export default function FeaturedCarousel({
     onTap: () => {
       if (isMobile) {
         // Mobile: Direct tap opens image viewer with original high-quality URL
-        const currentSubmissionData = optimizedSubmissions[currentSlide];
-        // 恢复原始URL用于全屏查看
-        setSelectedSubmission({
-          ...currentSubmissionData,
-          imageUrl: currentSubmissionData.originalImageUrl || currentSubmissionData.imageUrl
-        });
-        setImageViewerOpen(true);
+        const currentSubmissionData = validSubmissions[currentSlide];
+        if (currentSubmissionData) {
+          // Restore original URL for fullscreen viewing
+          setSelectedSubmission({
+            ...currentSubmissionData,
+            imageUrl: currentSubmissionData.originalImageUrl || currentSubmissionData.imageUrl
+          });
+          setImageViewerOpen(true);
+        }
       }
     },
-    enabled: isMobile && optimizedSubmissions.length > 0,
+    enabled: isMobile && validSubmissions.length > 0,
   });
 
-
-
-  // Handle container hover (desktop only)
-  const handleMouseEnter = () => {
-    if (isDesktop) {
-      setHovered(true);
-      setShowDescription(true);
+  // Update carousel when valid submissions change
+  useEffect(() => {
+    if (validSubmissions.length === 0) {
+      console.warn('No valid submissions available for featured carousel');
     }
-  };
-
-  const handleMouseLeave = () => {
-    if (isDesktop) {
-      setHovered(false);
-      setShowDescription(false);
-    }
-  };
-
-  // Handle image load states
-  const handleImageLoad = (submissionId: number) => {
-    setImageLoadStates(prev => ({ ...prev, [submissionId]: true }));
-  };
-
-  const handleImageError = (submissionId: number) => {
-    setImageLoadStates(prev => ({ ...prev, [submissionId]: false }));
-  };
+  }, [validSubmissions]);
 
   // Handle image click (desktop only - opens image viewer)
   const handleImageClick = (submission: FeaturedSubmission & { originalImageUrl?: string }) => {
     if (isDesktop) {
-      // 恢复原始高质量URL用于全屏查看
+      // Restore original high-quality URL for fullscreen viewing
       setSelectedSubmission({
         ...submission,
         imageUrl: submission.originalImageUrl || submission.imageUrl
@@ -168,7 +170,7 @@ export default function FeaturedCarousel({
 
   // Autoplay progress bar effect
   useEffect(() => {
-    if (!isPlaying || isHovered || optimizedSubmissions.length <= 1) {
+    if (!isPlaying || isHovered || validSubmissions.length <= 1) {
       setProgressWidth(0);
       return;
     }
@@ -181,7 +183,7 @@ export default function FeaturedCarousel({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isHovered, autoplayInterval, optimizedSubmissions.length, currentSlide]);
+  }, [isPlaying, isHovered, autoplayInterval, validSubmissions.length, currentSlide]);
 
   // Reset progress on slide change
   useEffect(() => {
@@ -189,12 +191,14 @@ export default function FeaturedCarousel({
   }, [currentSlide]);
 
   // Loading state
-  if (optimizedSubmissions.length === 0) {
+  if (validSubmissions.length === 0) {
     return (
       <div className={getCarouselStyles({ size: isMobile ? 'mobile' : 'desktop' })}>
         <div className={getCarouselLoadingStyles()}>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading featured submissions...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            {optimizedSubmissions.length === 0 ? 'Loading featured submissions...' : 'No valid images available'}
+          </p>
         </div>
       </div>
     );
@@ -205,12 +209,22 @@ export default function FeaturedCarousel({
       className={`${getCarouselStyles({ 
         size: isMobile ? 'mobile' : 'desktop' 
       })} ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => {
+        if (isDesktop) {
+          setHovered(true);
+          setShowDescription(true);
+        }
+      }}
+      onMouseLeave={() => {
+        if (isDesktop) {
+          setHovered(false);
+          setShowDescription(false);
+        }
+      }}
       {...(isMobile ? touchHandlers : {})}
     >
       {/* Main carousel slides */}
-      {optimizedSubmissions.map((submission, index) => {
+      {validSubmissions.map((submission, index) => {
         const isActive = index === currentSlide;
         const isLoaded = imageLoadStates[submission.id] === true;
         
@@ -283,7 +297,7 @@ export default function FeaturedCarousel({
       })}
 
       {/* Desktop navigation controls */}
-      {isDesktop && optimizedSubmissions.length > 1 && (
+      {isDesktop && validSubmissions.length > 1 && (
         <>
           <button
             className={getCarouselControlStyles({
@@ -312,9 +326,9 @@ export default function FeaturedCarousel({
       )}
 
       {/* Indicators (dots) */}
-      {optimizedSubmissions.length > 1 && (
+      {validSubmissions.length > 1 && (
         <div className={getCarouselIndicatorsStyles({ visible: true })}>
-          {optimizedSubmissions.map((_, index) => (
+          {validSubmissions.map((_, index) => (
             <button
               key={index}
               className={getCarouselIndicatorStyles({ active: index === currentSlide })}
@@ -326,7 +340,7 @@ export default function FeaturedCarousel({
       )}
 
       {/* Play/pause control (desktop only) */}
-      {isDesktop && optimizedSubmissions.length > 1 && (
+      {isDesktop && validSubmissions.length > 1 && (
         <button
           className="absolute top-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/20 text-white backdrop-blur-sm transition-opacity duration-300 hover:bg-black/30"
           style={{ opacity: isHovered ? 1 : 0 }}
@@ -338,7 +352,7 @@ export default function FeaturedCarousel({
       )}
 
       {/* Autoplay progress bar */}
-      {isPlaying && !isHovered && optimizedSubmissions.length > 1 && (
+      {isPlaying && !isHovered && validSubmissions.length > 1 && (
         <div className={getAutoplayProgressStyles({ playing: true })}>
           <div 
             className="h-full bg-white transition-all duration-100 ease-linear"
