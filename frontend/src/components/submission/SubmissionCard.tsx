@@ -88,10 +88,7 @@ export function SubmissionCard({
   // 为查看大图准备的URL，不添加大小限制参数
   const fullImageUrl = hasValidImage ? getImageUrl(imageUrl) : '';
   
-  // Debug information
-  console.log("SubmissionCard original URL:", imageUrl);
-  console.log("SubmissionCard has valid image:", hasValidImage);
-  console.log("SubmissionCard display URL:", displayUrl);
+
 
   // Determine if status badge should be shown based on context
   const showStatusBadge = 

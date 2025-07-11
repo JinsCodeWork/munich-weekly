@@ -22,41 +22,20 @@ export default function SubmissionsPage() {
   const [selectedIssue, setSelectedIssue] = useState<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [showAllSubmissions, setShowAllSubmissions] = useState(false)
   const pageSize = 8
   const [isManageMode, setIsManageMode] = useState(false)
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number, showAll: boolean) => {
-    console.log('📄 updateDisplayedSubmissions called:', {
-      totalSubmissions: submissions.length,
-      page: page,
-      showAll: showAll,
-      pageSize: pageSize
-    });
+  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number) => {
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const paginatedItems = submissions.slice(startIndex, endIndex)
+    const calculatedTotalPages = Math.ceil(submissions.length / pageSize)
     
-    if (showAll) {
-      setDisplayedSubmissions(submissions)
-      setTotalPages(1)
-      console.log('📄 Set to show all submissions:', submissions.length);
-    } else {
-      const startIndex = (page - 1) * pageSize
-      const endIndex = startIndex + pageSize
-      const paginatedItems = submissions.slice(startIndex, endIndex)
-      const calculatedTotalPages = Math.ceil(submissions.length / pageSize)
-      
-      console.log('📄 Pagination calculation:', {
-        startIndex,
-        endIndex,
-        paginatedItems: paginatedItems.length,
-        calculatedTotalPages
-      });
-      
-      setDisplayedSubmissions(paginatedItems)
-      setTotalPages(calculatedTotalPages)
-    }
+    setDisplayedSubmissions(paginatedItems)
+    setTotalPages(calculatedTotalPages)
   }, [pageSize])
 
   const loadSubmissions = useCallback(async () => {
@@ -87,9 +66,11 @@ export default function SubmissionsPage() {
         }
       }
       
+      // Sort by submission time (newest first)
+      allSubmissions.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      
       setAllSubmissions(allSubmissions)
-      // Update displayed submissions immediately with current page state
-      updateDisplayedSubmissions(allSubmissions, currentPage, showAllSubmissions)
+      // Don't update displayed submissions here - let the useEffect handle it
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
@@ -99,7 +80,7 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedIssue, pageSize, currentPage, showAllSubmissions, updateDisplayedSubmissions])
+  }, [selectedIssue, pageSize])  // Remove currentPage and showAllSubmissions dependencies
 
   const loadIssues = async () => {
     try {
@@ -116,9 +97,9 @@ export default function SubmissionsPage() {
   // Update displayed submissions when pagination state changes
   useEffect(() => {
     if (allSubmissions.length > 0) {
-      updateDisplayedSubmissions(allSubmissions, currentPage, showAllSubmissions)
+      updateDisplayedSubmissions(allSubmissions, currentPage)
     }
-  }, [currentPage, showAllSubmissions, allSubmissions, updateDisplayedSubmissions])
+  }, [currentPage, allSubmissions, updateDisplayedSubmissions])
 
   // Load submissions when selectedIssue changes
   useEffect(() => {
@@ -134,34 +115,13 @@ export default function SubmissionsPage() {
   }, [])
 
   const handlePageChange = (page: number) => {
-    console.log('🔄 Page change clicked:', {
-      fromPage: currentPage,
-      toPage: page,
-      allSubmissionsCount: allSubmissions.length,
-      showAllSubmissions: showAllSubmissions
-    });
-    
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Force immediate update to test if the issue is with useEffect timing
-    setTimeout(() => {
-      console.log('⏱️ After page change state:', {
-        currentPage: page,
-        displayedSubmissionsCount: displayedSubmissions.length,
-        totalPages: totalPages
-      });
-    }, 100);
   }
 
   const handleIssueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setSelectedIssue(value === "all" ? undefined : parseInt(value))
-    setCurrentPage(1)
-  }
-
-  const toggleShowAllSubmissions = () => {
-    setShowAllSubmissions(!showAllSubmissions)
     setCurrentPage(1)
   }
 
@@ -249,11 +209,9 @@ export default function SubmissionsPage() {
                 ? `You have ${allSubmissions.length} submission${allSubmissions.length > 1 ? 's' : ''}`
                 : "You haven't submitted any photos yet"
               }
-              {showAllSubmissions 
-                ? " (showing all)" 
-                : totalPages > 1 
-                  ? ` (page ${currentPage} of ${totalPages}, showing ${displayedSubmissions.length} per page)`
-                  : ` (showing ${displayedSubmissions.length} submission${displayedSubmissions.length > 1 ? 's' : ''})`
+              {totalPages > 1 
+                ? ` (page ${currentPage} of ${totalPages}, showing ${displayedSubmissions.length} per page)`
+                : ` (showing ${displayedSubmissions.length} submission${displayedSubmissions.length > 1 ? 's' : ''})`
               }
             </p>
           </div>
@@ -303,33 +261,6 @@ export default function SubmissionsPage() {
             <span className="inline-block">{isManageMode ? 'Exit Management' : 'Manage My Submissions'}</span>
           </Button>
           
-          {allSubmissions.length > pageSize && (
-            <Button 
-              variant="outline"
-              onClick={toggleShowAllSubmissions}
-              className="whitespace-nowrap px-4 flex items-center"
-            >
-              {showAllSubmissions ? (
-                <>
-                  <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                  </svg>
-                  Show Paged View
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="9" y1="12" x2="15" y2="12"></line>
-                    <line x1="12" y1="9" x2="12" y2="15"></line>
-                  </svg>
-                  Show All ({allSubmissions.length})
-                </>
-              )}
-            </Button>
-          )}
         </div>
       )}
 
@@ -425,7 +356,7 @@ export default function SubmissionsPage() {
             })}
           </div>
           
-          {!showAllSubmissions && totalPages > 1 && (
+          {totalPages > 1 && (
             <div className="mt-8">
               <Pagination
                 currentPage={currentPage}
