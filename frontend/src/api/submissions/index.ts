@@ -22,7 +22,7 @@ import {
 export const getUserSubmissions = async (
   issueId?: number,
   page: number = 0,
-  size: number = 8
+  size: number = 8  // Match frontend pageSize setting
 ): Promise<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>> => {
   // Build query parameters
   const params = new URLSearchParams();

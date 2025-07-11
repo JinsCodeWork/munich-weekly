@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext"
 import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
 import { SubmissionCard } from "@/components/submission/SubmissionCard"
-import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { Pagination } from "@/components/ui/Pagination"
@@ -24,7 +23,7 @@ export default function SubmissionsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [showAllSubmissions, setShowAllSubmissions] = useState(false)
-  const pageSize = 16
+  const pageSize = 8
   const [isManageMode, setIsManageMode] = useState(false)
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -38,8 +37,10 @@ export default function SubmissionsPage() {
       const startIndex = (currentPage - 1) * pageSize
       const endIndex = startIndex + pageSize
       const paginatedItems = submissions.slice(startIndex, endIndex)
+      const calculatedTotalPages = Math.ceil(submissions.length / pageSize)
+      
       setDisplayedSubmissions(paginatedItems)
-      setTotalPages(Math.ceil(submissions.length / pageSize))
+      setTotalPages(calculatedTotalPages)
     }
   }, [currentPage, pageSize, showAllSubmissions])
 
@@ -48,41 +49,31 @@ export default function SubmissionsPage() {
       setLoading(true)
       setError(null)
       
-      console.log("Loading user submissions, filter:", selectedIssue, "showAll:", showAllSubmissions);
+      // Get first page to determine total count
+      const firstPageResponse = await submissionsApi.getUserSubmissions(selectedIssue, 0, pageSize)
       
-      const response = await submissionsApi.getUserSubmissions(selectedIssue)
+      let allSubmissions: MySubmissionResponse[] = []
       
-      let submissions: MySubmissionResponse[] = []
-      if (Array.isArray(response)) {
-        submissions = response
+      if (Array.isArray(firstPageResponse)) {
+        // If backend returns complete array, use it directly
+        allSubmissions = firstPageResponse
       } else {
-        submissions = response.content
-        if (response.totalPages > 1) {
-          for (let page = 1; page < response.totalPages; page++) {
+        // If backend supports pagination, get all pages
+        allSubmissions = [...firstPageResponse.content]
+        
+        // If there are multiple pages, get remaining pages
+        if (firstPageResponse.totalPages > 1) {
+          for (let page = 1; page < firstPageResponse.totalPages; page++) {
             const additionalResponse = await submissionsApi.getUserSubmissions(selectedIssue, page, pageSize)
             if (!Array.isArray(additionalResponse)) {
-              submissions = submissions.concat(additionalResponse.content)
+              allSubmissions = allSubmissions.concat(additionalResponse.content)
             }
           }
         }
       }
       
-      setAllSubmissions(submissions)
-      updateDisplayedSubmissions(submissions)
-      
-      console.log(`Successfully loaded ${submissions.length} user submissions`)
-      
-      if (submissions.length > 0) {
-        const firstSubmission = submissions[0];
-        console.log("First submission details:", {
-          id: firstSubmission.id,
-          imageUrl: firstSubmission.imageUrl,
-          processedUrl: getImageUrl(firstSubmission.imageUrl),
-          status: firstSubmission.status
-        });
-      } else {
-        console.log("User has no submissions");
-      }
+      setAllSubmissions(allSubmissions)
+      updateDisplayedSubmissions(allSubmissions)
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
@@ -92,7 +83,7 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedIssue, showAllSubmissions, updateDisplayedSubmissions])
+  }, [selectedIssue, updateDisplayedSubmissions, pageSize])
 
   const loadIssues = async () => {
     try {
@@ -223,7 +214,9 @@ export default function SubmissionsPage() {
               }
               {showAllSubmissions 
                 ? " (showing all)" 
-                : ` (showing ${displayedSubmissions.length} per page)`
+                : totalPages > 1 
+                  ? ` (page ${currentPage} of ${totalPages}, showing ${displayedSubmissions.length} per page)`
+                  : ` (showing ${displayedSubmissions.length} submission${displayedSubmissions.length > 1 ? 's' : ''})`
               }
             </p>
           </div>
