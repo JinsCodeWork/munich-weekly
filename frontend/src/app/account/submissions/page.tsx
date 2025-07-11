@@ -45,6 +45,9 @@ export default function SubmissionsPage() {
       setError(null)
       setIsFilterChanging(true)
       
+      // Clear displayed submissions immediately to prevent stale content
+      setDisplayedSubmissions([])
+      
       // Get first page to determine total count
       const firstPageResponse = await submissionsApi.getUserSubmissions(selectedIssue, 0, pageSize)
       
@@ -297,7 +300,7 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {!loading && !error && allSubmissions && allSubmissions.length === 0 && (
+      {!loading && !error && !isFilterChanging && allSubmissions && allSubmissions.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <div className="text-gray-400 mb-4">
             <svg className="w-12 h-12 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
