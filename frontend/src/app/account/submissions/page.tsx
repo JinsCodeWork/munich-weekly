@@ -102,6 +102,12 @@ export default function SubmissionsPage() {
   }, [allSubmissions, updateDisplayedSubmissions])
 
   useEffect(() => {
+    if (allSubmissions.length > 0) {
+      updateDisplayedSubmissions(allSubmissions)
+    }
+  }, [currentPage, showAllSubmissions, allSubmissions, updateDisplayedSubmissions])
+
+  useEffect(() => {
     if (user) {
       setCurrentPage(1)
       loadSubmissions()
