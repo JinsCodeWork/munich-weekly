@@ -27,6 +27,7 @@ export default function SubmissionsPage() {
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isFilterChanging, setIsFilterChanging] = useState(false)
 
   const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number) => {
     const startIndex = (page - 1) * pageSize
@@ -42,6 +43,7 @@ export default function SubmissionsPage() {
     try {
       setLoading(true)
       setError(null)
+      setIsFilterChanging(true)
       
       // Get first page to determine total count
       const firstPageResponse = await submissionsApi.getUserSubmissions(selectedIssue, 0, pageSize)
@@ -79,6 +81,7 @@ export default function SubmissionsPage() {
       setTotalPages(1)
     } finally {
       setLoading(false)
+      setIsFilterChanging(false)
     }
   }, [selectedIssue, pageSize])  // Remove currentPage and showAllSubmissions dependencies
 
@@ -264,7 +267,7 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {loading && (
+      {(loading || isFilterChanging) && (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
         </div>
@@ -317,7 +320,7 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {!loading && !error && displayedSubmissions && displayedSubmissions.length > 0 && (
+      {!loading && !error && !isFilterChanging && displayedSubmissions && displayedSubmissions.length > 0 && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {displayedSubmissions.map((submission) => {
