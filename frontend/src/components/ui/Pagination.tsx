@@ -89,6 +89,10 @@ export function Pagination({
   const normalButtonClass = cn(
     baseButtonClass,
     "text-gray-700 hover:bg-gray-100",
+    // Safari兼容性修复
+    "cursor-pointer select-none",
+    // 确保Safari中的点击区域完整
+    "relative z-10",
     buttonClassName
   );
 
@@ -96,6 +100,8 @@ export function Pagination({
   const disabledButtonClass = cn(
     baseButtonClass,
     "text-gray-400 cursor-not-allowed",
+    // Safari禁用状态修复
+    "select-none pointer-events-none",
     disabledButtonClassName
   );
 
@@ -109,15 +115,27 @@ export function Pagination({
         {showFirstLastButtons && (
           <li className={cn(simplifyOnMobile && "hidden sm:block")}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 if (currentPage > 1) {
                   onPageChange(1);
                 }
+              }}
+              onMouseDown={(e) => {
+                // Safari兼容性：确保mousedown事件正常
+                e.preventDefault();
               }}
               disabled={currentPage === 1}
               className={currentPage === 1 ? disabledButtonClass : normalButtonClass}
               aria-label="Go to first page"
               tabIndex={currentPage === 1 ? -1 : 0}
+              style={{ 
+                // Safari兼容性：确保元素可交互
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                touchAction: 'manipulation'
+              }}
             >
               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="11 17 6 12 11 7"></polyline>
@@ -130,15 +148,27 @@ export function Pagination({
         {/* 上一页按钮 */}
         <li>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (currentPage > 1) {
                 onPageChange(currentPage - 1);
               }
+            }}
+            onMouseDown={(e) => {
+              // Safari兼容性：确保mousedown事件正常
+              e.preventDefault();
             }}
             disabled={currentPage === 1}
             className={currentPage === 1 ? disabledButtonClass : normalButtonClass}
             aria-label="Previous page"
             tabIndex={currentPage === 1 ? -1 : 0}
+            style={{ 
+              // Safari兼容性：确保元素可交互
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none',
+              touchAction: 'manipulation'
+            }}
           >
             <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>
@@ -151,9 +181,23 @@ export function Pagination({
           <>
             <li className={cn(simplifyOnMobile && "hidden sm:block")}>
               <button
-                onClick={() => onPageChange(1)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPageChange(1);
+                }}
+                onMouseDown={(e) => {
+                  // Safari兼容性：确保mousedown事件正常
+                  e.preventDefault();
+                }}
                 className={normalButtonClass}
                 aria-label={`Go to page 1`}
+                style={{ 
+                  // Safari兼容性：确保元素可交互
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  touchAction: 'manipulation'
+                }}
               >
                 1
               </button>
@@ -172,10 +216,24 @@ export function Pagination({
             simplifyOnMobile && number !== currentPage && "hidden sm:block"
           )}>
             <button
-              onClick={() => onPageChange(number)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPageChange(number);
+              }}
+              onMouseDown={(e) => {
+                // Safari兼容性：确保mousedown事件正常
+                e.preventDefault();
+              }}
               className={currentPage === number ? activeButtonClass : normalButtonClass}
               aria-label={`Page ${number}`}
               aria-current={currentPage === number ? "page" : undefined}
+              style={{ 
+                // Safari兼容性：确保元素可交互
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                touchAction: 'manipulation'
+              }}
             >
               {number}
             </button>
@@ -192,9 +250,23 @@ export function Pagination({
             )}
             <li className={cn(simplifyOnMobile && "hidden sm:block")}>
               <button
-                onClick={() => onPageChange(totalPages)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPageChange(totalPages);
+                }}
+                onMouseDown={(e) => {
+                  // Safari兼容性：确保mousedown事件正常
+                  e.preventDefault();
+                }}
                 className={normalButtonClass}
                 aria-label={`Go to page ${totalPages}`}
+                style={{ 
+                  // Safari兼容性：确保元素可交互
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  touchAction: 'manipulation'
+                }}
               >
                 {totalPages}
               </button>
@@ -205,15 +277,27 @@ export function Pagination({
         {/* 下一页按钮 */}
         <li>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (currentPage < totalPages) {
                 onPageChange(currentPage + 1);
               }
+            }}
+            onMouseDown={(e) => {
+              // Safari兼容性：确保mousedown事件正常
+              e.preventDefault();
             }}
             disabled={currentPage === totalPages}
             className={currentPage === totalPages ? disabledButtonClass : normalButtonClass}
             aria-label="Next page"
             tabIndex={currentPage === totalPages ? -1 : 0}
+            style={{ 
+              // Safari兼容性：确保元素可交互
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none',
+              touchAction: 'manipulation'
+            }}
           >
             <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
@@ -225,15 +309,27 @@ export function Pagination({
         {showFirstLastButtons && (
           <li className={cn(simplifyOnMobile && "hidden sm:block")}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 if (currentPage < totalPages) {
                   onPageChange(totalPages);
                 }
+              }}
+              onMouseDown={(e) => {
+                // Safari兼容性：确保mousedown事件正常
+                e.preventDefault();
               }}
               disabled={currentPage === totalPages}
               className={currentPage === totalPages ? disabledButtonClass : normalButtonClass}
               aria-label="Go to last page"
               tabIndex={currentPage === totalPages ? -1 : 0}
+              style={{ 
+                // Safari兼容性：确保元素可交互
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                touchAction: 'manipulation'
+              }}
             >
               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="13 17 18 12 13 7"></polyline>
