@@ -109,7 +109,11 @@ export function Pagination({
         {showFirstLastButtons && (
           <li className={cn(simplifyOnMobile && "hidden sm:block")}>
             <button
-              onClick={() => currentPage > 1 && onPageChange(1)}
+              onClick={() => {
+                if (currentPage > 1) {
+                  onPageChange(1);
+                }
+              }}
               disabled={currentPage === 1}
               className={currentPage === 1 ? disabledButtonClass : normalButtonClass}
               aria-label="Go to first page"
@@ -126,7 +130,11 @@ export function Pagination({
         {/* 上一页按钮 */}
         <li>
           <button
-            onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+            onClick={() => {
+              if (currentPage > 1) {
+                onPageChange(currentPage - 1);
+              }
+            }}
             disabled={currentPage === 1}
             className={currentPage === 1 ? disabledButtonClass : normalButtonClass}
             aria-label="Previous page"
@@ -197,7 +205,11 @@ export function Pagination({
         {/* 下一页按钮 */}
         <li>
           <button
-            onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+            onClick={() => {
+              if (currentPage < totalPages) {
+                onPageChange(currentPage + 1);
+              }
+            }}
             disabled={currentPage === totalPages}
             className={currentPage === totalPages ? disabledButtonClass : normalButtonClass}
             aria-label="Next page"
@@ -213,7 +225,11 @@ export function Pagination({
         {showFirstLastButtons && (
           <li className={cn(simplifyOnMobile && "hidden sm:block")}>
             <button
-              onClick={() => currentPage < totalPages && onPageChange(totalPages)}
+              onClick={() => {
+                if (currentPage < totalPages) {
+                  onPageChange(totalPages);
+                }
+              }}
               disabled={currentPage === totalPages}
               className={currentPage === totalPages ? disabledButtonClass : normalButtonClass}
               aria-label="Go to last page"
