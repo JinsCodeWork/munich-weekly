@@ -145,6 +145,7 @@ frontend/
 - Voting mechanism
 - **Issue management system** with full CRUD operations
 - Dual-mode image storage (local/cloud)
+- **GDPR-compliant submission deletion** with special process for selected photos
 
 #### 4.1. Issue Management System (Admin Only)
 
@@ -198,6 +199,7 @@ The platform implements an advanced image processing system utilizing Cloudflare
 This system is implemented through:
 
 - Cloudflare Worker (`image-worker`) that processes image requests
+- **Robust error handling** for deleted or unavailable images with graceful fallbacks
 - Frontend utility functions that generate appropriate image URLs with transformation parameters
 - Integration with Next.js Image component for client-side optimization
 - Specialized viewing components that request high-quality versions only when needed

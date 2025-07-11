@@ -59,7 +59,7 @@ If you are an EU resident, you have the right to:
 
 Please note that since we do not track personal identity by default, we may not be able to associate you with a record unless you have logged in.
 
-To make a request, contact: [dongkai.jin@tum.de](mailto:dongkai.jin@tum.de)
+To make a request, contact: contact@munichweekly.art
 
 ---
 
@@ -91,13 +91,23 @@ When you request account deletion, we implement a comprehensive removal process:
 
 This multi-step process ensures that no trace of your data remains in our systems after deletion, in compliance with GDPR Article 17.
 
+### Special Process for Selected Photos
+
+For photos that have been **selected for publication** and are featured in our public gallery, we require additional consideration to balance your privacy rights with publication integrity:
+
+* **Editorial Review Process**: Deletion requests for selected photos require editorial review to assess the impact on publication integrity and ensure compliance with GDPR requirements.
+* **Contact Process**: When attempting to delete a selected photo through your account dashboard, you will be guided to contact our editorial team at contact@munichweekly.art with your deletion request.
+* **Response Time**: We commit to reviewing and responding to selected photo deletion requests within 3-5 business days.
+* **Valid Grounds**: Deletion requests are particularly considered when the photo contains personally identifiable information, privacy concerns have arisen, or GDPR Article 17 grounds are clearly established.
+
 ### How to Request Deletion
 
-* **For Submission Deletion**: Use the "Manage My Submissions" feature in your account dashboard
+* **For Regular Submissions**: Use the "Manage My Submissions" feature in your account dashboard
+* **For Selected Photos**: Click the deletion button in your submissions, which will guide you to send an email request to contact@munichweekly.art
 * **For Account Deletion**: Access "Account Settings" and select "Delete Account"
-* **For Manual Requests**: Contact us directly at [dongkai.jin@tum.de](mailto:dongkai.jin@tum.de)
+* **For Manual Requests**: Contact us directly at contact@munichweekly.art
 
-All deletion operations are carried out as soon as technically feasible, typically within 72 hours.
+All deletion operations are carried out as soon as technically feasible, typically within 72 hours for regular submissions and within 3-5 business days for selected photos requiring editorial review.
 
 ---
 
@@ -117,10 +127,10 @@ We use a specialized Image CDN system to serve optimized versions of your photos
 
 ## 7. Contact
 
-If you have any questions about this privacy policy, you can contact the project lead:
+If you have any questions about this privacy policy, you can contact us:
 
-**Dongkai Jin**
-Email: [dongkai.jin@tum.de](mailto:dongkai.jin@tum.de)
+**Munich Weekly Team**
+Email: contact@munichweekly.art
 Location: Munich, Germany
 
 ---

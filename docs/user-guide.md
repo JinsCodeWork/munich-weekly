@@ -127,7 +127,9 @@ When no current voting period is active:
 
 1. Navigate to your account page
 2. Select "My Submissions" from the sidebar menu
-3. Here you can see all your submissions across all issues
+3. Here you can see all your submissions across all issues, sorted by newest first
+4. Use the issue filter to view submissions from specific issues
+5. The page displays 8 submissions per page with pagination for larger collections
 
 ### Managing Submissions
 
@@ -139,12 +141,20 @@ The platform provides complete control over your submitted content:
 
 ### Deleting Submissions
 
-When you delete a submission:
+The deletion process varies based on your submission status:
 
+**For Regular Submissions (pending, approved, rejected):**
 1. The submission is permanently removed from our database
 2. The image file is deleted from our cloud storage
 3. Any votes associated with the submission are removed
 4. The submission cannot be recovered after deletion
+
+**For Selected Photos (featured in gallery):**
+1. A special dialog appears explaining the editorial review process
+2. You'll be guided to contact our editorial team at contact@munichweekly.art
+3. An email template is automatically generated with your submission details
+4. Our team reviews deletion requests within 3-5 business days
+5. This process ensures GDPR compliance while maintaining publication integrity
 
 A confirmation dialog will appear before the deletion is processed to prevent accidental removal.
 
