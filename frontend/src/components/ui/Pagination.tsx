@@ -139,7 +139,7 @@ export function Pagination({
         </li>
         
         {/* 第一页（如果当前页码范围不包括第一页） */}
-        {!simplifyOnMobile && getPageNumbers()[0] > 1 && (
+        {getPageNumbers()[0] > 1 && (
           <>
             <li className={cn(simplifyOnMobile && "hidden sm:block")}>
               <button
@@ -175,7 +175,7 @@ export function Pagination({
         ))}
         
         {/* 最后一页（如果当前页码范围不包括最后一页） */}
-        {!simplifyOnMobile && getPageNumbers()[getPageNumbers().length - 1] < totalPages && (
+        {getPageNumbers()[getPageNumbers().length - 1] < totalPages && (
           <>
             {getPageNumbers()[getPageNumbers().length - 1] < totalPages - 1 && (
               <li className={cn("flex items-center justify-center", getButtonSizeClass(), simplifyOnMobile && "hidden sm:flex")}>
