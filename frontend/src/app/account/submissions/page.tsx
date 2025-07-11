@@ -29,20 +29,35 @@ export default function SubmissionsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[]) => {
-    if (showAllSubmissions) {
+  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number, showAll: boolean) => {
+    console.log('📄 updateDisplayedSubmissions called:', {
+      totalSubmissions: submissions.length,
+      page: page,
+      showAll: showAll,
+      pageSize: pageSize
+    });
+    
+    if (showAll) {
       setDisplayedSubmissions(submissions)
       setTotalPages(1)
+      console.log('📄 Set to show all submissions:', submissions.length);
     } else {
-      const startIndex = (currentPage - 1) * pageSize
+      const startIndex = (page - 1) * pageSize
       const endIndex = startIndex + pageSize
       const paginatedItems = submissions.slice(startIndex, endIndex)
       const calculatedTotalPages = Math.ceil(submissions.length / pageSize)
       
+      console.log('📄 Pagination calculation:', {
+        startIndex,
+        endIndex,
+        paginatedItems: paginatedItems.length,
+        calculatedTotalPages
+      });
+      
       setDisplayedSubmissions(paginatedItems)
       setTotalPages(calculatedTotalPages)
     }
-  }, [currentPage, pageSize, showAllSubmissions])
+  }, [pageSize])
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -73,7 +88,8 @@ export default function SubmissionsPage() {
       }
       
       setAllSubmissions(allSubmissions)
-      updateDisplayedSubmissions(allSubmissions)
+      // Update displayed submissions immediately with current page state
+      updateDisplayedSubmissions(allSubmissions, currentPage, showAllSubmissions)
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
@@ -83,7 +99,7 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedIssue, updateDisplayedSubmissions, pageSize])
+  }, [selectedIssue, pageSize, currentPage, showAllSubmissions, updateDisplayedSubmissions])
 
   const loadIssues = async () => {
     try {
@@ -97,16 +113,14 @@ export default function SubmissionsPage() {
     }
   }
 
-  useEffect(() => {
-    updateDisplayedSubmissions(allSubmissions)
-  }, [allSubmissions, updateDisplayedSubmissions])
-
+  // Update displayed submissions when pagination state changes
   useEffect(() => {
     if (allSubmissions.length > 0) {
-      updateDisplayedSubmissions(allSubmissions)
+      updateDisplayedSubmissions(allSubmissions, currentPage, showAllSubmissions)
     }
   }, [currentPage, showAllSubmissions, allSubmissions, updateDisplayedSubmissions])
 
+  // Load submissions when selectedIssue changes
   useEffect(() => {
     if (user) {
       setCurrentPage(1)
@@ -114,13 +128,30 @@ export default function SubmissionsPage() {
     }
   }, [selectedIssue, user, loadSubmissions])
 
+  // Load issues on mount
   useEffect(() => {
     loadIssues()
   }, [])
 
   const handlePageChange = (page: number) => {
+    console.log('🔄 Page change clicked:', {
+      fromPage: currentPage,
+      toPage: page,
+      allSubmissionsCount: allSubmissions.length,
+      showAllSubmissions: showAllSubmissions
+    });
+    
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Force immediate update to test if the issue is with useEffect timing
+    setTimeout(() => {
+      console.log('⏱️ After page change state:', {
+        currentPage: page,
+        displayedSubmissionsCount: displayedSubmissions.length,
+        totalPages: totalPages
+      });
+    }, 100);
   }
 
   const handleIssueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
