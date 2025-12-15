@@ -1,5 +1,7 @@
 frontend/node_modules/
 frontend/.next/
+
+# 本地配置文件（不同步到Git）
 frontend/public/config/homepage.json
 frontend/public/images/home/hero.jpg
 # Ignore Node.js dependencies
@@ -17,6 +19,13 @@ backups/
 
 # 环境变量文件
 .env
+.env.backup*
+*.env.backup*
 
 *.log
+
+# 数据恢复和服务器备份文件（不上传到GitHub）
+recovery-data/
+serverbackups/
+RECOVERY_GUIDE.md
 
