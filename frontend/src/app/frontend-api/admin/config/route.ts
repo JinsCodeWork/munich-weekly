@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-// Helper function to get JWT token from request
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+// Get JWT token from request
 function getAuthToken(request: NextRequest): string | null {
-  // Try to get token from cookies
   const authCookie = request.cookies.get('jwt')?.value;
   if (authCookie) {
     console.log('Found JWT token in cookies');
     return authCookie;
   }
   
-  // If not in cookies, try authorization header
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     console.log('Found JWT token in Authorization header');
@@ -22,6 +22,29 @@ function getAuthToken(request: NextRequest): string | null {
   return null;
 }
 
+// Verify user has admin role
+async function verifyAdminRole(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      console.warn('Failed to verify user role:', response.status);
+      return false;
+    }
+    
+    const user = await response.json();
+    const isAdmin = user.role === 'admin';
+    console.log('User role verification:', isAdmin ? 'admin' : 'non-admin');
+    return isAdmin;
+  } catch (error) {
+    console.error('Error verifying admin role:', error);
+    return false;
+  }
+}
+
 // Get configuration API
 export async function GET(request: NextRequest) {
   try {
@@ -30,6 +53,13 @@ export async function GET(request: NextRequest) {
     if (!token) {
       console.warn('No authentication token found for config GET');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
+    }
+    
+    // Verify admin role
+    const isAdmin = await verifyAdminRole(token);
+    if (!isAdmin) {
+      console.warn('Non-admin user attempted to access admin config');
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
     
     console.log('Processing admin config GET request');
@@ -67,6 +97,13 @@ export async function POST(request: NextRequest) {
     if (!token) {
       console.warn('No authentication token found');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
+    }
+    
+    // Verify admin role
+    const isAdmin = await verifyAdminRole(token);
+    if (!isAdmin) {
+      console.warn('Non-admin user attempted to update config');
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
     
     console.log('Processing config update with authentication');
