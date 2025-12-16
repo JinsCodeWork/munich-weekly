@@ -63,8 +63,8 @@ Add this to your local `~/.ssh/config` for easy access:
 
 ```
 Host munichweekly
-    HostName 188.245.71.169
-    User root
+    HostName YOUR_SERVER_IP
+    User deploy
     IdentityFile ~/.ssh/id_ed25519
 ```
 
@@ -458,8 +458,8 @@ If SSH key authentication fails:
 
 ## ✅ Status Summary
 
-* Server IP: `188.245.71.169`
-* OS: Ubuntu 22.04 LTS
+* Server IP: `YOUR_SERVER_IP` (configured in Hetzner Cloud)
+* OS: Ubuntu 24.04 LTS
 * Docker: v28.0.4
 * Docker Compose: v2.34.0
 * Nginx: installed & SSL enabled

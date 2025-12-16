@@ -17,12 +17,20 @@ FROM eclipse-temurin:21-jdk-jammy
 
 WORKDIR /app
 
-RUN mkdir -p /app/docs
+# SECURITY FIX 2025-12-16: Create non-root user to run the application
+RUN groupadd --system --gid 1001 appgroup && \
+    useradd --system --uid 1001 --gid appgroup --shell /bin/bash --home-dir /app appuser && \
+    mkdir -p /app/docs /uploads && \
+    chown -R appuser:appgroup /app /uploads
+
 # Copy built JAR from previous build stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder --chown=appuser:appgroup /app/build/libs/*.jar app.jar
 
 # Use environment variables for runtime config
 ENV JAVA_OPTS=""
+
+# Switch to non-root user
+USER appuser
 
 # Expose port 8080
 EXPOSE 8080
