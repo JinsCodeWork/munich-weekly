@@ -32,7 +32,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findVisibleAdminUsers();
     }
 
     /**

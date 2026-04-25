@@ -27,7 +27,7 @@ export interface FeaturedSubmission {
   description: string;
   title?: string;
   authorName: string;
-  authorId: number;
+  authorId: number | null;
   issueTitle: string;
   issueId: number;
   imageWidth?: number;
@@ -208,7 +208,7 @@ export interface GallerySubmission {
   title: string;
   description: string;
   authorName: string;
-  authorId: number;
+  authorId: number | null;
   imageWidth?: number;
   imageHeight?: number;
   aspectRatio?: number;

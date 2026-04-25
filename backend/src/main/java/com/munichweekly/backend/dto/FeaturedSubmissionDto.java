@@ -2,6 +2,7 @@ package com.munichweekly.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.munichweekly.backend.model.Submission;
+import com.munichweekly.backend.model.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -146,8 +147,9 @@ public class FeaturedSubmissionDto {
 
         // Author information
         if (submission.getUser() != null) {
-            dto.setAuthorName(submission.getUser().getNickname());
-            dto.setAuthorId(submission.getUser().getId());
+            boolean anonymous = User.ACCOUNT_TYPE_ANONYMOUS_SUBMISSION.equals(submission.getUser().getAccountType());
+            dto.setAuthorName(anonymous ? "Anonymous" : submission.getUser().getNickname());
+            dto.setAuthorId(anonymous ? null : submission.getUser().getId());
         }
 
         // Issue information

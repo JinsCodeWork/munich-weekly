@@ -27,6 +27,8 @@ public class Submission {
     @Column(length = 200)
     private String description;
 
+    private String anonymousContactEmail;
+
     private Boolean isCover = false;
 
     // pending, approved, rejected, selected
@@ -196,6 +198,14 @@ public class Submission {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAnonymousContactEmail() {
+        return anonymousContactEmail;
+    }
+
+    public void setAnonymousContactEmail(String anonymousContactEmail) {
+        this.anonymousContactEmail = anonymousContactEmail;
     }
 
     public String getStatus() {

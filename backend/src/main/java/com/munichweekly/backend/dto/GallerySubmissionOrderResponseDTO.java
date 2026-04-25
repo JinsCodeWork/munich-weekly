@@ -2,6 +2,7 @@ package com.munichweekly.backend.dto;
 
 import com.munichweekly.backend.model.GallerySubmissionOrder;
 import com.munichweekly.backend.model.Submission;
+import com.munichweekly.backend.model.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -78,8 +79,9 @@ public class GallerySubmissionOrderResponseDTO {
 
             // Author information
             if (submission.getUser() != null) {
-                this.authorNickname = submission.getUser().getNickname();
-                this.authorId = submission.getUser().getId();
+                boolean anonymous = User.ACCOUNT_TYPE_ANONYMOUS_SUBMISSION.equals(submission.getUser().getAccountType());
+                this.authorNickname = anonymous ? "Anonymous" : submission.getUser().getNickname();
+                this.authorId = anonymous ? null : submission.getUser().getId();
             }
         }
 

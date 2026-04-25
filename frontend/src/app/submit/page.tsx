@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Script from 'next/script';
 import { useAuth } from '@/context/AuthContext';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
@@ -14,7 +16,24 @@ import { useFileUpload } from '@/hooks/useFileUpload';
 import { getFormContainerStyles } from '@/styles';
 import { cn } from '@/lib/utils';
 import { Issue } from '@/types/submission';
-import { createSubmission } from '@/api/submissions';
+import { createAnonymousSubmission, createSubmission, uploadAnonymousSubmissionFile } from '@/api/submissions';
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          'expired-callback'?: () => void;
+          'error-callback'?: () => void;
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 /**
  * Submission Page
@@ -34,6 +53,15 @@ export default function SubmitPage() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isAnonymousMode, setIsAnonymousMode] = useState(false);
+  const [isLoginFlow, setIsLoginFlow] = useState(false);
+  const [anonymousContactEmail, setAnonymousContactEmail] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
+
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   // Initial auth check and modal setup
   useEffect(() => {
@@ -45,15 +73,35 @@ export default function SubmitPage() {
     }
   }, [user, loading]);
 
-  // Redirect to home if info modal is closed and user is not authenticated
+  // Redirect to home if info modal is closed and user is not continuing anonymously
   useEffect(() => {
-    if (initialAuthCheckDone && !loading && !user && !showInfoModal) {
+    if (initialAuthCheckDone && !loading && !user && !showInfoModal && !isAnonymousMode && !isLoginFlow) {
       router.push('/');
     }
-  }, [user, loading, showInfoModal, router, initialAuthCheckDone]);
+  }, [user, loading, showInfoModal, router, initialAuthCheckDone, isAnonymousMode, isLoginFlow]);
+
+  useEffect(() => {
+    if (!isAnonymousMode || !turnstileReady || !turnstileSiteKey || !window.turnstile) {
+      return;
+    }
+
+    const container = document.getElementById('anonymous-turnstile');
+    if (!container || container.childElementCount > 0) {
+      return;
+    }
+
+    const widgetId = window.turnstile.render(container, {
+      sitekey: turnstileSiteKey,
+      callback: setCaptchaToken,
+      'expired-callback': () => setCaptchaToken(''),
+      'error-callback': () => setCaptchaToken('')
+    });
+    setTurnstileWidgetId(widgetId);
+  }, [isAnonymousMode, turnstileReady, turnstileSiteKey, file]);
 
   // Handle login button click - show login modal and hide info modal
   const handleLoginClick = () => {
+    setIsLoginFlow(true);
     setShowInfoModal(false); // Hide the info modal first
     openLogin(); // Use global login modal
   };
@@ -62,6 +110,18 @@ export default function SubmitPage() {
   const handleCloseInfoModal = () => {
     setShowInfoModal(false);
     router.push('/');
+  };
+
+  const handleAnonymousClick = () => {
+    setIsAnonymousMode(true);
+    setShowInfoModal(false);
+  };
+
+  const resetAnonymousCaptcha = () => {
+    setCaptchaToken('');
+    if (turnstileWidgetId && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetId);
+    }
   };
 
   // 上传逻辑：先创建submission，再上传图片
@@ -76,47 +136,57 @@ export default function SubmitPage() {
       setSubmitError("Description must be 200 characters or less");
       return;
     }
+
+    if (!acceptedPrivacyPolicy) {
+      setSubmitError("Please confirm that you agree to the Privacy Policy before submitting");
+      return;
+    }
     
     setIsSubmitting(true);
     setSubmitError(null);
     
     try {
-      // 1. 创建submission
-      console.log("Starting submission creation...");
-      const res = await createSubmission({
-        issueId: selectedIssue.id,
-        description: description.trim()
-      });
-      console.log("Submission created successfully:", res);
-      
-      // 2. 使用改进的钩子函数上传图片，跟踪进度
-      console.log("Starting image upload to:", res.uploadUrl);
-      const result = await uploadFileWithFetch(res.uploadUrl);
-      console.log("Image uploaded successfully:", result);
-      
-      // 3. 设置成功状态
-      setSubmissionSuccess(true);
-      
-      // 4. 成功后等待显示成功消息，然后跳转到用户的submissions页面
-      setTimeout(() => {
-        console.log("Redirecting to my submissions page...");
-        
-        // 在跳转前确保将token保存在会话存储中，这样即使页面刷新也能保持登录状态
-        const currentToken = localStorage.getItem("jwt");
-        if (currentToken) {
-          sessionStorage.setItem("preserve_auth", "true");
-          
-          // 使用window.location.href进行完全页面刷新
-          window.location.href = '/account/submissions';
-        } else {
-          // 如果没有token，使用路由器导航（不应该发生这种情况）
-          router.push('/account/submissions');
+      if (isAnonymousMode && !user) {
+        if (!captchaToken) {
+          setSubmitError("Please complete the verification before submitting anonymously");
+          return;
         }
-      }, 1500);
+
+        const res = await createAnonymousSubmission({
+          issueId: selectedIssue.id,
+          description: description.trim(),
+          contactEmail: anonymousContactEmail.trim() || undefined,
+          captchaToken
+        });
+        await uploadAnonymousSubmissionFile(res.uploadUrl, res.uploadToken, file);
+      } else {
+        const res = await createSubmission({
+          issueId: selectedIssue.id,
+          description: description.trim()
+        });
+        await uploadFileWithFetch(res.uploadUrl);
+      }
       
+      // 3. Set success state
+      setSubmissionSuccess(true);
+
+      if (!isAnonymousMode || user) {
+        setTimeout(() => {
+          const currentToken = localStorage.getItem("jwt");
+          if (currentToken) {
+            sessionStorage.setItem("preserve_auth", "true");
+            window.location.href = '/account/submissions';
+          } else {
+            router.push('/account/submissions');
+          }
+        }, 1500);
+      }
+
     } catch (err) {
-      console.error("Submission failed:", err);
       setSubmitError(err instanceof Error ? err.message : "An unknown error occurred during submission");
+      if (isAnonymousMode && !user) {
+        resetAnonymousCaptcha();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -134,8 +204,29 @@ export default function SubmitPage() {
     );
   }
 
-  // For unauthenticated users, only show the info modal
-  if (!user) {
+  if (!user && !isAnonymousMode && isLoginFlow) {
+    return (
+      <Container className="py-8">
+        <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <h1 className="font-heading text-2xl font-bold mb-4">Continue Your Submission</h1>
+          <p className="font-sans text-gray-600 mb-6">
+            Log in to manage your submissions later, or continue anonymously without a submission history.
+          </p>
+          <div className="space-y-3">
+            <Button onClick={openLogin} className="w-full">
+              Log In to Continue
+            </Button>
+            <Button onClick={handleAnonymousClick} variant="secondary" className="w-full">
+              Continue Anonymously
+            </Button>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  // For unauthenticated users, ask whether they want to log in or continue anonymously.
+  if (!user && !isAnonymousMode) {
     return (
       <>
         {/* Info modal with glassmorphism effect */}
@@ -155,7 +246,7 @@ export default function SubmitPage() {
             </h3>
             
             <p className="font-sans text-white text-center mb-8 animate-fadeIn opacity-0" style={{ animationDelay: "0.2s" }}>
-              Ready to share your unique view of the world? Please log in to upload your work.
+              Ready to share your unique view of the world? Log in to manage your submissions, or continue anonymously.
             </p>
             
             <button
@@ -169,6 +260,18 @@ export default function SubmitPage() {
             >
               Log In to Continue
             </button>
+
+            <button
+              onClick={handleAnonymousClick}
+              className={cn(
+                "font-sans w-full max-w-xs py-4 mt-4 rounded-full text-lg font-semibold tracking-wide transition-colors",
+                "animate-fadeIn opacity-0 border border-white/60 text-white hover:bg-white/10",
+                "shadow-md shadow-black/20"
+              )}
+              style={{ animationDelay: "0.4s" }}
+            >
+              Continue Anonymously
+            </button>
           </div>
         </Modal>
         
@@ -178,11 +281,25 @@ export default function SubmitPage() {
     );
   }
 
-  // Only authenticated users get past this point
   return (
     <Container className="py-8">
+      {isAnonymousMode && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+          onLoad={() => setTurnstileReady(true)}
+          onReady={() => setTurnstileReady(true)}
+        />
+      )}
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-2xl font-bold mb-6">Submit Your Photo</h1>
+        {isAnonymousMode && !user && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-6">
+            <p className="font-sans text-sm">
+              You are submitting anonymously. You will not be able to view or edit this submission later.
+            </p>
+          </div>
+        )}
         
         {/* Success message */}
         {submissionSuccess && (
@@ -196,11 +313,15 @@ export default function SubmitPage() {
               </div>
               <div className="ml-3">
                 <p className="font-sans text-sm font-medium">
-                  Your photo has been submitted successfully!
+                  {isAnonymousMode && !user
+                    ? 'Your anonymous submission has been received and is pending review.'
+                    : 'Your photo has been submitted successfully!'}
                 </p>
-                <p className="font-sans text-sm mt-1">
-                  Redirecting to your submissions...
-                </p>
+                {(!isAnonymousMode || user) && (
+                  <p className="font-sans text-sm mt-1">
+                    Redirecting to your submissions...
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -275,10 +396,65 @@ export default function SubmitPage() {
                     </p>
                   </div>
                 </div>
+
+                {isAnonymousMode && !user && (
+                  <div className="mb-4 space-y-4">
+                    <div>
+                      <label className="font-heading block text-sm font-medium text-gray-700 mb-1">
+                        Contact Email (optional)
+                      </label>
+                      <input
+                        type="email"
+                        value={anonymousContactEmail}
+                        onChange={(e) => setAnonymousContactEmail(e.target.value)}
+                        className="font-sans block w-full rounded-md border border-gray-300 focus:border-gray-500 focus:ring focus:ring-gray-500 focus:ring-opacity-50"
+                        placeholder="Only visible to administrators"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-heading block text-sm font-medium text-gray-700 mb-2">
+                        Verification
+                      </label>
+                      {turnstileSiteKey ? (
+                        <div id="anonymous-turnstile" />
+                      ) : (
+                        <p className="font-sans text-sm text-red-600">
+                          Anonymous submissions require Turnstile to be configured.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <label className="mb-4 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+                  <input
+                    type="checkbox"
+                    checked={acceptedPrivacyPolicy}
+                    onChange={(e) => setAcceptedPrivacyPolicy(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                  />
+                  <span className="font-sans text-sm text-gray-700">
+                    I agree to the{' '}
+                    <Link
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                    >
+                      Privacy Policy
+                    </Link>
+                    , including Munich Weekly&apos;s non-commercial publication and social media display terms.
+                  </span>
+                </label>
                 
                 <Button
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !description.trim()}
+                  disabled={
+                    isSubmitting ||
+                    !description.trim() ||
+                    (isAnonymousMode && !user && (!turnstileSiteKey || !captchaToken))
+                  }
                   className="w-full"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Photo'}

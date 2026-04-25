@@ -2,12 +2,16 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.AdminSubmissionResponseDTO;
+import com.munichweekly.backend.dto.AnonymousSubmissionRequestDTO;
+import com.munichweekly.backend.dto.AnonymousSubmissionResponseDTO;
 import com.munichweekly.backend.dto.MySubmissionResponseDTO;
 import com.munichweekly.backend.dto.SubmissionRequestDTO;
 import com.munichweekly.backend.dto.SubmissionResponseDTO;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.security.CurrentUserUtil;
+import com.munichweekly.backend.service.AnonymousSubmissionService;
 import com.munichweekly.backend.service.SubmissionService;
+import jakarta.validation.Valid;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -30,9 +34,12 @@ import java.util.Map;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
+    private final AnonymousSubmissionService anonymousSubmissionService;
 
-    public SubmissionController(SubmissionService submissionService) {
+    public SubmissionController(SubmissionService submissionService,
+                                AnonymousSubmissionService anonymousSubmissionService) {
         this.submissionService = submissionService;
+        this.anonymousSubmissionService = anonymousSubmissionService;
     }
 
     /**
@@ -49,6 +56,13 @@ public class SubmissionController {
             "submissionId", saved.getId(),
             "uploadUrl", "/api/submissions/" + saved.getId() + "/upload"
         ));
+    }
+
+    @Description("Submit a new photo anonymously. Requires CAPTCHA verification.")
+    @PostMapping("/anonymous")
+    public ResponseEntity<AnonymousSubmissionResponseDTO> submitAnonymous(
+            @RequestBody @Valid AnonymousSubmissionRequestDTO dto) {
+        return ResponseEntity.ok(anonymousSubmissionService.createAnonymousSubmission(dto));
     }
 
     /**

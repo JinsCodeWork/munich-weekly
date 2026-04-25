@@ -237,11 +237,18 @@ export function SubmissionTable({ submissions, onViewSubmission, onAction, actio
               </td>
               <td className={getTableCellStyles()}>
                 <div className="text-sm text-gray-900">
-                  {submission.userNickname || "Unknown User"}
+                  {submission.anonymousSubmission ? "Anonymous" : submission.userNickname || "Unknown User"}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {submission.userEmail || ""}
+                  {submission.anonymousSubmission
+                    ? submission.anonymousContactEmail || "No contact email provided"
+                    : submission.userEmail || ""}
                 </div>
+                {submission.anonymousSubmission && (
+                  <div className="text-xs text-blue-600">
+                    Anonymous submission
+                  </div>
+                )}
               </td>
               <td className={getTableCellStyles("text-right text-sm font-medium")}>
                 <div className="flex space-x-2">

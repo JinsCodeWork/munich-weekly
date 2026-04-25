@@ -154,6 +154,8 @@ Authentication components:
 - `AuthContext`: React Context for managing authentication state and user data
 - `useAuth`: Custom hook for accessing authentication functionality
 
+**Anonymous submission (unauthenticated):** the submit flow (`src/app/submit/page.tsx`) can create a shell submission via the API, run Cloudflare Turnstile (requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY`), send an optional contact email, then upload one image with the short-lived `X-Anonymous-Upload-Token` (not the login JWT in `AuthContext`). There is no in-app history for that path: anonymous senders are not given an account to list or manage past posts. Public and featured UIs show "Anonymous" where applicable; gallery-style payloads may omit `authorId` for those rows. The admin submission table shows anonymous state and the optional contact email for moderation.
+
 ### Navigation System
 
 A responsive navigation system that adjusts for different screen sizes:

@@ -5,6 +5,8 @@
 import { fetchAPI, getAuthHeader } from "../http";
 import { 
   SubmissionRequest, 
+  AnonymousSubmissionRequest,
+  AnonymousSubmissionResponse,
   MySubmissionResponse, 
   AdminSubmissionResponse,
   Submission,
@@ -97,6 +99,60 @@ export const createSubmission = async (data: SubmissionRequest): Promise<{ submi
     body: JSON.stringify(data),
     headers: getAuthHeader()
   });
+};
+
+/**
+ * Create anonymous submission
+ * POST /api/submissions/anonymous
+ */
+export const createAnonymousSubmission = async (
+  data: AnonymousSubmissionRequest
+): Promise<AnonymousSubmissionResponse> => {
+  return fetchAPI<AnonymousSubmissionResponse>("/api/submissions/anonymous", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+};
+
+/**
+ * Upload anonymous submission image with short-lived upload token.
+ * POST /api/submissions/{id}/anonymous-upload
+ */
+export const uploadAnonymousSubmissionFile = async (
+  uploadUrl: string,
+  uploadToken: string,
+  file: File
+): Promise<{ success: boolean; imageUrl?: string; error?: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: formData,
+    headers: {
+      "X-Anonymous-Upload-Token": uploadToken
+    },
+    credentials: "include"
+  });
+
+  const responseText = await response.text();
+  let data: { success: boolean; imageUrl?: string; error?: string } = { success: response.ok };
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText) as { success: boolean; imageUrl?: string; error?: string };
+    } catch {
+      data = {
+        success: response.ok,
+        error: response.ok ? undefined : responseText
+      };
+    }
+  }
+
+  if (!response.ok || data.error) {
+    throw new Error(data.error || `Upload failed: ${response.status} ${response.statusText}`);
+  }
+
+  return data;
 };
 
 /**

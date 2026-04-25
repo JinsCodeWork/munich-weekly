@@ -94,6 +94,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()                 // GET /api/issues (list all)
                         
                         // Submission endpoints - Public read
+                        .requestMatchers(HttpMethod.POST, "/api/submissions/anonymous").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/submissions/*/anonymous-upload").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll()   // Public GET for submissions
                         .requestMatchers("/api/submissions").permitAll()                   // Other submission endpoints
 

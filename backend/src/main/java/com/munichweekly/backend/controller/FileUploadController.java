@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.munichweekly.backend.devtools.annotation.Description;
+import com.munichweekly.backend.security.CurrentUserUtil;
+import com.munichweekly.backend.service.AnonymousUploadTokenService;
 
 /**
  * Enhanced REST controller for handling file uploads with image dimension optimization
@@ -39,16 +42,19 @@ public class FileUploadController {
     private final SubmissionRepository submissionRepository;
     private final R2StorageService r2StorageService;  // Direct R2 service for debugging
     private final LocalStorageService localStorageService;
+    private final AnonymousUploadTokenService anonymousUploadTokenService;
 
     @Autowired
     public FileUploadController(StorageService storageService, 
                                SubmissionRepository submissionRepository,
                                R2StorageService r2StorageService,
-                               LocalStorageService localStorageService) {
+                               LocalStorageService localStorageService,
+                               AnonymousUploadTokenService anonymousUploadTokenService) {
         this.storageService = storageService;
         this.submissionRepository = submissionRepository;
         this.r2StorageService = r2StorageService;
         this.localStorageService = localStorageService;
+        this.anonymousUploadTokenService = anonymousUploadTokenService;
     }
 
     /**
@@ -76,6 +82,11 @@ public class FileUploadController {
             // Fetch the submission
             Submission submission = submissionRepository.findById(subId)
                     .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+
+            if (!canCurrentUserUploadTo(submission)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new FileUploadResponseDTO(false, "You do not have permission to upload to this submission"));
+            }
             
             logger.info("Submission found. Issue ID: " + submission.getIssue().getId() + 
                        ", User ID: " + submission.getUser().getId());
@@ -137,6 +148,9 @@ public class FileUploadController {
             return ResponseEntity.badRequest().body(
                 new FileUploadResponseDTO(false, "Invalid submission ID: " + submissionId)
             );
+        } catch (IllegalStateException e) {
+            logger.warning("Unauthorized file upload: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new FileUploadResponseDTO(false, e.getMessage()));
         } catch (IllegalArgumentException e) {
             logger.warning("Invalid file upload: " + e.getMessage());
             return ResponseEntity.badRequest().body(new FileUploadResponseDTO(false, e.getMessage()));
@@ -151,6 +165,82 @@ public class FileUploadController {
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "An unexpected error occurred: " + e.getMessage()));
         }
+    }
+
+    @Description("Upload an image for an anonymous submission using a short-lived upload token.")
+    @PostMapping("/{submissionId}/anonymous-upload")
+    public ResponseEntity<FileUploadResponseDTO> uploadImageToAnonymousSubmission(
+            @PathVariable("submissionId") String submissionId,
+            @RequestHeader("X-Anonymous-Upload-Token") String uploadToken,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            Long subId = Long.valueOf(submissionId);
+            AnonymousUploadTokenService.AnonymousUploadTokenClaims claims =
+                    anonymousUploadTokenService.validateToken(uploadToken, subId);
+
+            Submission submission = submissionRepository.findById(subId)
+                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+
+            if (!submission.getUser().getId().equals(claims.userId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new FileUploadResponseDTO(false, "Anonymous upload token does not match submission owner"));
+            }
+
+            if (submission.getImageUrl() != null && !submission.getImageUrl().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new FileUploadResponseDTO(false, "Anonymous submission already has an uploaded image"));
+            }
+
+            StorageService.StorageResult storageResult = storageService.storeFileWithDimensions(
+                    file,
+                    submission.getIssue().getId().toString(),
+                    submission.getUser().getId().toString(),
+                    submissionId
+            );
+
+            String imageUrl = storageResult.getUrl();
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                return ResponseEntity.internalServerError()
+                        .body(new FileUploadResponseDTO(false, "Storage service returned invalid URL"));
+            }
+
+            submission.setImageUrl(imageUrl);
+            if (storageResult.hasDimensions()) {
+                submission.setImageDimensions(
+                        storageResult.getDimensions().getWidth(),
+                        storageResult.getDimensions().getHeight()
+                );
+            }
+            submissionRepository.save(submission);
+
+            return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(
+                    new FileUploadResponseDTO(false, "Invalid submission ID: " + submissionId)
+            );
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new FileUploadResponseDTO(false, "Invalid anonymous upload token"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new FileUploadResponseDTO(false, e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError()
+                    .body(new FileUploadResponseDTO(false, "Failed to store file: " + e.getMessage()));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error during anonymous upload", e);
+            return ResponseEntity.internalServerError()
+                    .body(new FileUploadResponseDTO(false, "An unexpected error occurred during upload"));
+        }
+    }
+
+    private boolean canCurrentUserUploadTo(Submission submission) {
+        var currentUser = CurrentUserUtil.getUser();
+        if (currentUser == null) {
+            return false;
+        }
+        boolean isOwner = submission.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = "admin".equals(currentUser.getRole());
+        return isOwner || isAdmin;
     }
     
     /**

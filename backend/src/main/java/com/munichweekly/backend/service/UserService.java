@@ -61,6 +61,7 @@ public class UserService {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
+        rejectAnonymousAccount(user);
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
@@ -317,6 +318,10 @@ public class UserService {
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            if (User.ACCOUNT_TYPE_ANONYMOUS_SUBMISSION.equals(user.getAccountType())) {
+                logger.info("Password reset request ignored for anonymous submission account");
+                return;
+            }
             
             // Remove unused tokens for this user (if any)
             passwordResetTokenRepository.deleteByUserAndUsedAtIsNull(user);
@@ -355,15 +360,23 @@ public class UserService {
         
         // Get user
         User user = token.getUser();
+        rejectAnonymousAccount(user);
         
         // Update password
         String hashedPassword = passwordEncoder.encode(dto.getNewPassword());
         user.setPassword(hashedPassword);
+        token.markAsUsed();
         
         // Save changes
         userRepository.save(user);
         passwordResetTokenRepository.save(token);
         
         logger.info("User password reset successful: " + user.getEmail());
+    }
+
+    private void rejectAnonymousAccount(User user) {
+        if (User.ACCOUNT_TYPE_ANONYMOUS_SUBMISSION.equals(user.getAccountType())) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
     }
 }

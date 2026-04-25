@@ -67,6 +67,17 @@ export interface SubmissionRequest {
   description: string;
 }
 
+export interface AnonymousSubmissionRequest extends SubmissionRequest {
+  contactEmail?: string;
+  captchaToken: string;
+}
+
+export interface AnonymousSubmissionResponse {
+  submissionId: number;
+  uploadUrl: string;
+  uploadToken: string;
+}
+
 // My submission response type
 export interface MySubmissionResponse {
   id: number;
@@ -108,6 +119,9 @@ export interface AdminSubmissionResponse {
   userEmail: string;
   userNickname: string;
   userAvatarUrl?: string;
+  userAccountType?: string;
+  anonymousSubmission?: boolean;
+  anonymousContactEmail?: string;
   
   // **NEW: Image dimension fields for AdminSubmissionResponse**
   imageWidth?: number;

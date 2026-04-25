@@ -25,7 +25,17 @@ Authorization: Bearer <jwt_token>
 - All `/api/auth/**` endpoints (login, register, password reset)
 - `GET /api/issues` - Public issue listing
 - `GET /api/submissions` - Public approved submissions
-- Voting endpoints (`/api/votes/**`) - Anonymous voting with visitorId cookie
+- `POST /api/submissions/anonymous` - Create anonymous submission shell (Cloudflare Turnstile; see `POST /api/submissions/anonymous` below)
+- `POST /api/submissions/{id}/anonymous-upload` - One-time image upload for that submission (header `X-Anonymous-Upload-Token`; not a login JWT)
+- Voting endpoints (`/api/votes/**`) - Anonymous voting with `visitorId` cookie
+
+### Anonymous submissions (behavior)
+
+- Unauthenticated users can submit a photo. The backend still creates a **synthetic `users` row** with `accountType = ANONYMOUS_SUBMISSION` so `submissions.user_id` remains a valid foreign key. That account cannot log in, is excluded from `GET /api/users` and normal “registered user” user-management views, and password-reset flows do not apply to it.
+- **Create:** `POST /api/submissions/anonymous` with `issueId`, `description`, `captchaToken` (Turnstile), and optional `contactEmail` (admin contact only, not on public pages).
+- **CAPTCHA:** `captchaToken` is verified with Cloudflare Turnstile (frontend: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, backend: `TURNSTILE_SECRET_KEY`); it is for bot checking only, not session authentication.
+- **Upload:** the create response returns a **short-lived upload token** and upload URL. Send it as `X-Anonymous-Upload-Token` on `POST /api/submissions/{submissionId}/anonymous-upload`. It authorizes a **single** image for that submission and does not grant `Authorization: Bearer` access to the rest of the API.
+- **Public listing:** `GET /api/submissions?issueId=…` shows nickname `Anonymous` for these rows. **Gallery/featured** responses use `authorName` `"Anonymous"` and may set `authorId` to `null` for anonymous authors. **Admin** listing responses include `anonymousSubmission` and optional `anonymousContactEmail`.
 
 **Authenticated Endpoints:** Require valid JWT token
 - User management (`/api/users/**`)
@@ -48,7 +58,7 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 - **DELETE** `/api/users/me`
   > Delete the currently authenticated user and all their data.
 - **GET** `/api/users`
-  > Get a list of all users. Admin only.
+  > Get a list of all users. Admin only. Excludes internal `ANONYMOUS_SUBMISSION` accounts (synthetic users created only to hold anonymous submissions).
 - **GET** `/api/users/me`
   > Get the profile of the currently authenticated user. Requires JWT token.
 - **PATCH** `/api/users/me`
@@ -88,6 +98,28 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
   > Submit a new photo to a specific issue. Requires authentication.
 
   > **Params**: `SubmissionRequestDTO dto`
+- **POST** `/api/submissions/anonymous`
+  > Create an anonymous submission shell. Requires CAPTCHA verification and returns a short-lived upload token.
+
+  > **Request**:
+  > ```json
+  > {
+  >   "issueId": 12,
+  >   "description": "A short photo description",
+  >   "contactEmail": "optional@example.com",
+  >   "captchaToken": "turnstile-token"
+  > }
+  > ```
+
+  > **Response**:
+  > ```json
+  > {
+  >   "submissionId": 123,
+  >   "uploadUrl": "/api/submissions/123/anonymous-upload",
+  >   "uploadToken": "short-lived-upload-token"
+  > }
+  > ```
+  > **Configuration**: frontend requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; backend requires `TURNSTILE_SECRET_KEY`.
 - **PATCH** `/api/submissions/{id}/approve`
   > Approve a submission by ID. Admin only.
 
@@ -173,6 +205,11 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
   > Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.
 
   > **Params**: `String submissionId, MultipartFile file`
+- **POST** `/api/submissions/{submissionId}/anonymous-upload`
+  > Upload an image file for an anonymous submission. Requires header `X-Anonymous-Upload-Token` with the short-lived token from `POST /api/submissions/anonymous`. Succeeds only while the submission has no image yet (one upload per submission). This header is for upload authorization only; it does not replace JWT login for other APIs.
+
+  > **Params**: `String submissionId, MultipartFile file`
+  > **Header**: `X-Anonymous-Upload-Token: <uploadToken>`
 - **POST** `/api/submissions/admin/upload-hero`
   > Upload hero image for homepage. Admin only. The image will be saved as /uploads/hero.jpg, replacing any existing file.
 
@@ -351,7 +388,7 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 ### Public Gallery Endpoints
 
 - **GET** `/api/gallery/featured`
-> Get currently featured submissions for homepage carousel (public endpoint)
+> Get currently featured submissions for homepage carousel (public endpoint). Anonymous authors are returned with `authorName` `"Anonymous"` and `authorId` may be `null`.
 
 **Response**:
 ```json

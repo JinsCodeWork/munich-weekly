@@ -33,6 +33,9 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      - TURNSTILE_VERIFY_URL=${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      - ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS=${ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS:-900000}
     volumes:
       - ./uploads:/uploads
       - ../docs:/app/docs

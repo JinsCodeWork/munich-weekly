@@ -17,7 +17,7 @@ For technical implementation details and security architecture:
 
 ## 1. Use of Cookies
 
-We use a single technical cookie to help enforce the rule of "one vote per person" in our weekly photo voting system. This cookie is:
+We use a single technical cookie named `visitorId` for anonymous weekly voting: it ties votes to a browser and is **not** a logged-in user session. The cookie is:
 
 * Named `visitorId`
 * A randomly generated identifier (UUID)
@@ -39,37 +39,67 @@ When you vote, we may temporarily store:
 * Timestamp of the vote
 * (Optionally) Your IP address and browser metadata, only for abuse prevention
 
-We do not collect your name, email, or any other personal identifiers unless you explicitly log in (e.g. via email or Google, if available).
+We do not collect your name, email, or any other personal identifiers unless you explicitly log in (e.g. via email or Google, if available), create an account, or choose to provide optional contact details with an anonymous submission.
+
+When you submit a photo, we may store:
+
+* The uploaded photo file and optimized display versions
+* Your photo description and submission timestamp
+* Your user account ID, if you submit while logged in
+* An internal `users` row (anonymous-submission type) and related submission `userId`, if you submit without logging in, so the database can keep a normal `submission → user` link
+* Your optional `contactEmail`, only if you provide it; stored on the submission for **admin** contact only, never shown on public pages or the public gallery
+
+Anonymous submission accounts are marked accordingly: they **cannot** be used to sign in, reset a password, or list past submissions. The anonymous submitter cannot view or manage that photo in the app after it is sent.
 
 ---
 
 ## 3. Data Sharing
 
-We do not share any data with third parties. All voting records are stored securely on our server, hosted in Germany (Hetzner Cloud).
+We do not sell personal data and we do not use third-party advertising or analytics. Voting records are stored securely on our server, hosted in Germany (Hetzner Cloud).
+
+For technical operation, uploaded images may be stored and served through Cloudflare R2 and our image delivery system. Anonymous submissions also use Cloudflare Turnstile to verify that the submission is made by a human; CAPTCHA tokens are used only for verification and are not used for advertising or tracking.
 
 ---
 
-## 4. Your Rights (GDPR)
+## 4. Photo Publication and Copyright
+
+You retain the copyright to photos you submit. By submitting a photo to Munich Weekly, you grant us a non-exclusive, royalty-free permission to review, display, publish, and promote the submitted photo as part of Munich Weekly's non-commercial community project.
+
+This permission includes:
+
+* Displaying the photo on the Munich Weekly website and public gallery
+* Featuring selected photos in Munich Weekly editorial or community posts
+* Sharing selected photos on Munich Weekly's official social media channels with attribution where available
+
+Munich Weekly will not sell your submitted photos, sublicense them to third parties for their commercial use, or use them in paid advertising unless we obtain **separate** permission for that use. (Normal community display on this site and on Munich Weekly’s official non-commercial social posts is covered in the grant above, not in “paid ads” or third-party commercial licensing.)
+
+If you submit anonymously, public attribution may be shown as "Anonymous". If you provide a contact email, it will not be published as attribution unless you explicitly ask us to do so.
+
+---
+
+## 5. Your Rights (GDPR)
 
 If you are an EU resident, you have the right to:
 
 * Request access to data related to your visitorId
 * Request deletion of your voting record
+* Request deletion of submitted photos and optional contact details where applicable
 * Ask for clarification on how your data is processed
 
-Please note that since we do not track personal identity by default, we may not be able to associate you with a record unless you have logged in.
+Please note that since we do not track personal identity by default, we may not be able to associate you with a record unless you have logged in or provided a contact email with an anonymous submission.
 
 To make a request, contact: contact@munichweekly.art
 
 ---
 
-## 5. Data Deletion and GDPR Compliance
+## 6. Data Deletion and GDPR Compliance
 
 We are fully committed to compliance with the European General Data Protection Regulation (GDPR) and implement the "right to be forgotten" as follows:
 
-### For Non-Registered Users
+### For Non-Registered Users and Anonymous Submissions
 * Voting data associated with your `visitorId` can be deleted upon request
-* No other personal information is stored
+* Anonymous submission contact emails can be deleted upon request where we can identify the submission
+* Anonymous submitters cannot view a submission history because no login account is created
 
 ### For Registered Users
 When you request account deletion, we implement a comprehensive removal process:
@@ -103,6 +133,7 @@ For photos that have been **selected for publication** and are featured in our p
 ### How to Request Deletion
 
 * **For Regular Submissions**: Use the "Manage My Submissions" feature in your account dashboard
+* **For Anonymous Submissions**: Contact us directly and include enough information to identify the submission, such as the optional contact email, submission date, issue, or description
 * **For Selected Photos**: Click the deletion button in your submissions, which will guide you to send an email request to contact@munichweekly.art
 * **For Account Deletion**: Access "Account Settings" and select "Delete Account"
 * **For Manual Requests**: Contact us directly at contact@munichweekly.art
@@ -111,7 +142,7 @@ All deletion operations are carried out as soon as technically feasible, typical
 
 ---
 
-## 6. Cloud Storage Information
+## 7. Cloud Storage Information
 
 Your photos are stored using Cloudflare R2 cloud storage with the following safeguards:
 
@@ -125,7 +156,7 @@ We use a specialized Image CDN system to serve optimized versions of your photos
 
 ---
 
-## 7. Contact
+## 8. Contact
 
 If you have any questions about this privacy policy, you can contact us:
 

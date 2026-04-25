@@ -15,10 +15,12 @@ uploads/
 
 # 本地备份文件（如果你用 pg_dump）
 backups/
+backend/pgdata-backup-*/
 *.sql
 
 # 环境变量文件
 .env
+.env.local
 .env.backup*
 *.env.backup*
 
@@ -29,5 +31,10 @@ recovery-data/
 serverbackups/
 RECOVERY_GUIDE.md
 
-# Claude Code guidance file
+# Claude AI 相关文件
 CLAUDE.md
+.claude*
+*claude*
+
+# 本地凭据导出（不得上传）
+.credentials/

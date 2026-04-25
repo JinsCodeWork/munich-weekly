@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 @Table(name = "users") // Maps to the users table in PostgreSQL database
 public class User {
 
+    public static final String ACCOUNT_TYPE_REGISTERED = "REGISTERED";
+    public static final String ACCOUNT_TYPE_ANONYMOUS_SUBMISSION = "ANONYMOUS_SUBMISSION";
+
     @Id // Primary key identifier
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generate primary key ID
     private Long id;
@@ -27,6 +30,7 @@ public class User {
 
     private String password; // Password used for email-based login
 
+    private String accountType = ACCOUNT_TYPE_REGISTERED;
 
     // No-argument constructor (required by JPA specification)
     public User() {}
@@ -101,5 +105,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 }

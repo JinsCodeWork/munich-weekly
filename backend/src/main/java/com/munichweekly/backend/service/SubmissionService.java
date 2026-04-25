@@ -160,6 +160,7 @@ public class SubmissionService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
 
+        validateSubmissionHasImage(submission);
         submission.setStatus("approved");
         submission.setReviewedAt(LocalDateTime.now());
         return submissionRepository.save(submission);
@@ -184,10 +185,17 @@ public class SubmissionService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
         
+        validateSubmissionHasImage(submission);
         // Set this submission as selected
         submission.setStatus("selected");
         submission.setReviewedAt(LocalDateTime.now());
         return submissionRepository.save(submission);
+    }
+
+    private void validateSubmissionHasImage(Submission submission) {
+        if (submission.getImageUrl() == null || submission.getImageUrl().trim().isEmpty()) {
+            throw new IllegalStateException("Submission must have an uploaded image before review");
+        }
     }
 
     public List<MySubmissionResponseDTO> listMySubmissions(Long issueId) {

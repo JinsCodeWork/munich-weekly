@@ -23,6 +23,9 @@ public class AdminSubmissionResponseDTO {
     private String userEmail;
     private String userNickname;
     private String userAvatarUrl;
+    private String userAccountType;
+    private boolean anonymousSubmission;
+    private String anonymousContactEmail;
     
     public AdminSubmissionResponseDTO() {
         // Default constructor
@@ -44,7 +47,10 @@ public class AdminSubmissionResponseDTO {
             this.userEmail = s.getUser().getEmail();
             this.userNickname = s.getUser().getNickname();
             this.userAvatarUrl = s.getUser().getAvatarUrl();
+            this.userAccountType = s.getUser().getAccountType();
+            this.anonymousSubmission = "ANONYMOUS_SUBMISSION".equals(s.getUser().getAccountType());
         }
+        this.anonymousContactEmail = s.getAnonymousContactEmail();
     }
     
     // Getters and setters
@@ -143,5 +149,29 @@ public class AdminSubmissionResponseDTO {
     
     public void setUserAvatarUrl(String userAvatarUrl) {
         this.userAvatarUrl = userAvatarUrl;
+    }
+
+    public String getUserAccountType() {
+        return userAccountType;
+    }
+
+    public void setUserAccountType(String userAccountType) {
+        this.userAccountType = userAccountType;
+    }
+
+    public boolean isAnonymousSubmission() {
+        return anonymousSubmission;
+    }
+
+    public void setAnonymousSubmission(boolean anonymousSubmission) {
+        this.anonymousSubmission = anonymousSubmission;
+    }
+
+    public String getAnonymousContactEmail() {
+        return anonymousContactEmail;
+    }
+
+    public void setAnonymousContactEmail(String anonymousContactEmail) {
+        this.anonymousContactEmail = anonymousContactEmail;
     }
 } 

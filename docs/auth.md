@@ -135,7 +135,7 @@ export const getOrGenerateVisitorId = (): string => {
   let visitorId = Cookies.get('visitorId');
   if (!visitorId) {
     visitorId = uuidv4();
-    Cookies.set('visitorId', visitorId, { 
+    Cookies.set('visitorId', visitorId, {
       expires: 365,
       path: '/',
       sameSite: 'Lax'
@@ -149,7 +149,7 @@ export const getOrGenerateVisitorId = (): string => {
 
 **Database Constraint**:
 ```sql
-ALTER TABLE votes ADD CONSTRAINT unique_visitor_submission 
+ALTER TABLE votes ADD CONSTRAINT unique_visitor_submission
 UNIQUE (visitor_id, submission_id);
 ```
 
@@ -158,17 +158,31 @@ UNIQUE (visitor_id, submission_id);
 - Returns 400 Bad Request if `visitorId` cookie is missing for vote submission
 - Gracefully handles missing `visitorId` for vote checking (returns `{voted: false}`)
 
+### 4.3. Anonymous photo submissions (distinct from cookie-based voting)
+
+**Turnstile (Cloudflare):** `POST /api/submissions/anonymous` requires a valid `captchaToken`. The backend verifies it with Turnstile’s siteverify API using `TURNSTILE_SECRET_KEY`. The frontend needs `NEXT_PUBLIC_TURNSTILE_SITE_KEY` for the widget. The value is for bot/human checks only, not for building a user session.
+
+**Internal user record:** each anonymous submission is tied to a **synthetic `User`** with `accountType = ANONYMOUS_SUBMISSION` so `submissions.user_id` stays a valid FK. That row cannot be used to log in; password-reset handling does not treat it like a member account. Admin user listing **excludes** these accounts from the normal “all users” view.
+
+**Upload token:** after the shell `Submission` is created, the API returns a **short-lived upload token** and the client posts the image to `.../anonymous-upload` with `X-Anonymous-Upload-Token`. It authorizes a **single** image for that `submissionId` and is **not** a substitute for `Authorization: Bearer` JWT on other endpoints.
+
+**Submitters** using this flow have no in-app history for that row (no “my submissions” for the synthetic user).
+
+API details: [API reference](./api.md).
+
 ---
 
 ## 5. Security Configuration
 
 ### 5.1. Spring Security Setup
 
-**Public Endpoints**:
+**Public Endpoints** (excerpt; see `SecurityConfig` for the full list):
 ```java
 .requestMatchers("/api/auth/**").permitAll()          // Authentication endpoints
 .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()         // Public issue listing
 .requestMatchers(HttpMethod.GET, "/api/submissions").permitAll()    // Public submissions
+.requestMatchers(HttpMethod.POST, "/api/submissions/anonymous").permitAll()
+.requestMatchers(HttpMethod.POST, "/api/submissions/*/anonymous-upload").permitAll()
 .requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()    // Vote status checking
 .requestMatchers(HttpMethod.POST, "/api/votes").permitAll()         // Anonymous voting
 .requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()       // Vote cancellation

@@ -11,13 +11,14 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 | Column       | Type             | Description            | Remarks                     |
 | ------------ | ---------------- | ---------------------- | --------------------------- |
 | id           | BIGINT           | User ID (Primary Key)  | Auto-generated              |
-| email        | VARCHAR (unique) | Email address          | Used for login              |
-| password     | VARCHAR          | Encrypted password     | For email login             |
-| nickname     | VARCHAR          | User nickname          |                             |
+| email        | VARCHAR (unique) | Email address          | Login for real users; synthetic `anonymous-…@anonymous.munichweekly.local` for internal anonymous submissions |
+| password     | VARCHAR          | Encrypted password     | Email login; anonymous-submission users hold a non-usable hash |
+| nickname     | VARCHAR          | User nickname          | e.g. `Anonymous` for `ANONYMOUS_SUBMISSION` |
 | avatarUrl    | VARCHAR          | URL of user's avatar   |                             |
 | role         | VARCHAR          | User role              | Default: `user`, or `admin` |
 | registeredAt | TIMESTAMP        | Registration timestamp | Default current time        |
 | isBanned     | BOOLEAN          | Account banned status  | Default: `false`            |
+| account\_type | VARCHAR(64)     | `REGISTERED` or `ANONYMOUS_SUBMISSION` | Distinguishes real accounts from one-off anonymous submission users (excluded from admin user list) |
 
 ---
 
@@ -55,7 +56,7 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 | Column       | Type          | Description                 | Remarks                                                |
 | ------------ | ------------- | --------------------------- | ------------------------------------------------------ |
 | id           | BIGINT        | Submission ID (Primary Key) | Auto-generated                                         |
-| user\_id     | BIGINT (FK)   | User ID (users table)       | Many-to-one                                            |
+| user\_id     | BIGINT (FK)   | User ID (users table)       | Many-to-one; may reference an `ANONYMOUS_SUBMISSION` user for anonymous posts |
 | issue\_id    | BIGINT (FK)   | Issue ID (issues table)     | Many-to-one                                            |
 | imageUrl     | VARCHAR       | Submission image URL        |                                                        |
 | description  | VARCHAR(1000) | Submission description      |                                                        |
@@ -66,10 +67,11 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 | status       | VARCHAR       | Review status               | Default: `pending`; `approved`, `rejected`, `selected` |
 | submittedAt  | TIMESTAMP     | Submission timestamp        | Default current time                                   |
 | reviewedAt   | TIMESTAMP     | Review timestamp            | Optional                                               |
+| anonymous\_contact\_email | VARCHAR(255) | Optional email from anonymous flow | Shown to admins only; not public on gallery or issue views |
 
 Performance Features:
 - **Image dimensions captured during upload** - eliminates frontend calculation overhead
-- **Aspect ratio stored** - enables instant masonry layout without dynamic computation  
+- **Aspect ratio stored** - enables instant masonry layout without dynamic computation
 - **Database constraints** - ensures positive dimensions and valid aspect ratios (0.1-10.0)
 - **Indexed fields** - optimized queries for layout ordering algorithms
 
@@ -102,7 +104,7 @@ Two tables were added to support the promotion feature.
 
 ## 🔗 Relationships
 
-* **User ↔️ Submission** *(one-to-many)*
+* **User ↔️ Submission** *(one-to-many; includes synthetic users for `ANONYMOUS_SUBMISSION` rows)*
 * **Issue ↔️ Submission** *(one-to-many)*
 * **Submission ↔️ Vote** *(one-to-many)*
 * **Issue ↔️ Vote** *(one-to-many)*
@@ -124,5 +126,5 @@ Two tables were added to support the promotion feature.
 
 **Performance Impact:**
 - **60-80% faster** masonry layout calculation
-- **Eliminates** redundant image dimension fetching  
+- **Eliminates** redundant image dimension fetching
 - **Backend optimization** leverages stored ratios for optimal ordering algorithms
