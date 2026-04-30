@@ -59,7 +59,7 @@ This document outlines the structure of the PostgreSQL database used by the **Mu
 | user\_id     | BIGINT (FK)   | User ID (users table)       | Many-to-one; may reference an `ANONYMOUS_SUBMISSION` user for anonymous posts |
 | issue\_id    | BIGINT (FK)   | Issue ID (issues table)     | Many-to-one                                            |
 | imageUrl     | VARCHAR       | Submission image URL        |                                                        |
-| description  | VARCHAR(1000) | Submission description      |                                                        |
+| description  | VARCHAR(2000) | Submission description      |                                                        |
 | image\_width | INTEGER       | Image width in pixels       | Performance optimization field                                                |
 | image\_height| INTEGER       | Image height in pixels      | Performance optimization field                                                |
 | aspect\_ratio| DECIMAL(10,6)  | Precomputed aspect ratio    | Width/height for layout optimization                                                |

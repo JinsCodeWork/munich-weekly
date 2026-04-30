@@ -10,7 +10,7 @@ public class AnonymousSubmissionRequestDTO {
     private Long issueId;
 
     @NotBlank(message = "Description is required")
-    @Size(max = 200, message = "Description must be 200 characters or less")
+    @Size(max = 2000, message = "Description must be 2000 characters or less")
     private String description;
 
     @Email(message = "Contact email must be a valid email address")

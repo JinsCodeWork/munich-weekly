@@ -24,7 +24,7 @@ public class Submission {
 
     private String imageUrl;
 
-    @Column(length = 200)
+    @Column(length = 2000)
     private String description;
 
     private String anonymousContactEmail;

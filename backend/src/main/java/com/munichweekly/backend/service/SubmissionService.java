@@ -75,8 +75,8 @@ public class SubmissionService {
         }
 
         // Validate description length
-        if (dto.getDescription() != null && dto.getDescription().length() > 200) {
-            throw new IllegalArgumentException("Description must be 200 characters or less");
+        if (dto.getDescription() != null && dto.getDescription().length() > 2000) {
+            throw new IllegalArgumentException("Description must be 2000 characters or less");
         }
 
         // Create submission entity (imageUrl will be set during upload)

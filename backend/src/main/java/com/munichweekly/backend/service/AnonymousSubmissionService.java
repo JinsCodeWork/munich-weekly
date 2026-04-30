@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 @Service
 public class AnonymousSubmissionService {
 
-    private static final int MAX_DESCRIPTION_LENGTH = 200;
+    private static final int MAX_DESCRIPTION_LENGTH = 2000;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final IssueRepository issueRepository;
@@ -82,7 +82,7 @@ public class AnonymousSubmissionService {
         }
 
         if (request.getDescription().trim().length() > MAX_DESCRIPTION_LENGTH) {
-            throw new IllegalArgumentException("Description must be 200 characters or less");
+            throw new IllegalArgumentException("Description must be 2000 characters or less");
         }
 
         String contactEmail = normalizeOptionalEmail(request.getContactEmail());

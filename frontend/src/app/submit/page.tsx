@@ -35,6 +35,9 @@ declare global {
   }
 }
 
+/** Max photo description length on `/submit` (must stay in sync with backend). */
+const MAX_PHOTO_DESCRIPTION_LENGTH = 2000;
+
 /**
  * Submission Page
  * Allows users to submit photos to active issues
@@ -132,8 +135,8 @@ export default function SubmitPage() {
     }
     
     // 验证描述长度
-    if (description.trim().length > 200) {
-      setSubmitError("Description must be 200 characters or less");
+    if (description.trim().length > MAX_PHOTO_DESCRIPTION_LENGTH) {
+      setSubmitError(`Description must be ${MAX_PHOTO_DESCRIPTION_LENGTH} characters or less`);
       return;
     }
 
@@ -383,16 +386,16 @@ export default function SubmitPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
-                    maxLength={200}
+                    maxLength={MAX_PHOTO_DESCRIPTION_LENGTH}
                     className="font-sans block w-full rounded-md border border-gray-300 focus:border-gray-500 focus:ring focus:ring-gray-500 focus:ring-opacity-50"
                     placeholder="Tell us about your photo..."
                   />
                   <div className="flex justify-between mt-2">
                     <p className="font-sans text-sm text-gray-500">
-                      Max 200 characters. Tell us about your photo.
+                      Max {MAX_PHOTO_DESCRIPTION_LENGTH} characters. Tell us about your photo.
                     </p>
                     <p className="font-sans text-sm text-gray-500">
-                      {description.length}/200
+                      {description.length}/{MAX_PHOTO_DESCRIPTION_LENGTH}
                     </p>
                   </div>
                 </div>

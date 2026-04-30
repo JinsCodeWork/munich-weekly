@@ -97,9 +97,13 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 - **POST** `/api/submissions`
   > Submit a new photo to a specific issue. Requires authentication.
 
+  > **Note:** `description` is required; maximum length **2000** characters.
+
   > **Params**: `SubmissionRequestDTO dto`
 - **POST** `/api/submissions/anonymous`
   > Create an anonymous submission shell. Requires CAPTCHA verification and returns a short-lived upload token.
+
+  > **Note:** `description` is required; maximum length **2000** characters (validated with `@Valid`).
 
   > **Request**:
   > ```json

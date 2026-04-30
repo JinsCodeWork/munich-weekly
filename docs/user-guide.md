@@ -69,7 +69,7 @@ For security reasons:
 1. Navigate to the "Submit" page
 2. Select the active issue you want to submit to
 3. Upload your photo (JPG or PNG format, maximum 20MB)
-4. Add a description for your photo
+4. Add a description for your photo (up to 2000 characters)
 5. Click "Submit" to complete the process
 
 ### Submission Guidelines
