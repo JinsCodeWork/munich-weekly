@@ -85,15 +85,12 @@ export function VoteButton({
       // Update vote status in context immediately
       updateVoteStatus(submissionId, true);
       
-      console.log(`Vote successful for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}. Server returned vote count: ${response.voteCount}`);
-      
       // Notify parent component of successful vote
       if (onVoteSuccess && response.voteCount) {
         onVoteSuccess(submissionId, response.voteCount);
       }
       
     } catch (err: Error | unknown) {
-      console.error(`Failed to vote for submission ${submissionId}:`, err);
       
       // Handle specific error cases
       if (err instanceof Error && err.message.includes("already voted")) {
@@ -123,15 +120,11 @@ export function VoteButton({
         setVisitorId(newVisitorId);
       }
       
-      console.log(`Attempting to cancel vote for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}`);
-      
       const response = await votesApi.cancelVote(submissionId);
       
       if (response.success) {
         // Update vote status in context immediately
         updateVoteStatus(submissionId, false);
-        
-        console.log(`Vote cancelled for submission ${submissionId}, user ${user?.id || 'anonymous'}, visitorId: ${visitorId}. Server returned vote count: ${response.voteCount}`);
         
         // Notify parent component of cancelled vote
         if (onVoteCancelled && response.voteCount !== undefined) {
@@ -140,8 +133,7 @@ export function VoteButton({
       } else {
         throw new Error("Failed to cancel vote");
       }
-    } catch (err: Error | unknown) {
-      console.error(`Failed to cancel vote for submission ${submissionId}:`, err);
+    } catch {
       setError("Failed to cancel vote. Please try again.");
       
       // Reset vote status to trigger re-check
@@ -160,8 +152,6 @@ export function VoteButton({
     event.preventDefault();
     
     if (isLoading) return;
-
-    console.log(`VoteButton: Click handler, hasVoted=${hasVoted}, allowUnvote=${allowUnvote}, user=${user?.id || 'anonymous'}, visitorId=${visitorId}`);
 
     // If already voted and unvoting is allowed, cancel the vote
     if (hasVoted === true && allowUnvote) {

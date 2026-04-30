@@ -8,14 +8,11 @@ export const getAuthHeader = (): Record<string, string> => {
   try {
     const token = localStorage.getItem("jwt");
     if (token) {
-      console.log("Using auth token:", token.substring(0, 10) + "...");
       return {
         Authorization: `Bearer ${token}`
       };
     }
-    console.warn("No JWT token found in localStorage");
-  } catch (error) {
-    console.error("Unable to access localStorage:", error);
+  } catch {
     // Possible private browsing mode or disabled cookies environment
   }
   return {};
@@ -64,17 +61,7 @@ export const fetchAPI = async <T>(
     ...(options.headers as Record<string, string> || {})
   };
 
-  // Special handling for DELETE requests, ensure auth headers are correctly added
-  if (options.method === "DELETE") {
-    console.log("Making DELETE request to:", url);
-    console.log("Authorization header present:", !!headers.Authorization);
-  }
-
   try {
-    console.log(`API Request: ${options.method || 'GET'} ${url}`, { 
-      headers: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
-    });
-    
     const response = await fetchWithTimeout(url, {
       ...options,
       headers: headers as Record<string, string>,
@@ -88,40 +75,7 @@ export const fetchAPI = async <T>(
       try {
         errorData = JSON.parse(responseText);
       } catch {
-        console.warn("API Error response was not valid JSON. Raw text:", responseText);
-      }
-      
-      // Specifically log 401 errors and DELETE request details
-      if (response.status === 401) {
-        console.error("Authentication Error (401):", {
-          method: options.method || 'GET',
-          url,
-          errorData,
-          authHeader: headers.Authorization ? 'Present' : 'Missing',
-          requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
-        });
-        
-        // Don't automatically clear token, might be permissions issue rather than token expiration
-        // For URLs starting with /api/admin/, don't clear token, might be permissions issue
-        if (url !== "/api/auth/login/email" && url !== "/api/auth/register" && !url.startsWith("/api/admin/")) {
-          try {
-            console.warn("401 error but not clearing token, URL:", url);
-            // No longer automatically clear token
-            // localStorage.removeItem("jwt");
-            // console.warn("Cleared potentially expired JWT token");
-          } catch (err) {
-            console.error("Exception occurred while handling 401 error:", err);
-          }
-        }
-      } else {
-        console.error("API Error:", {
-          status: response.status,
-          statusText: response.statusText,
-          method: options.method || 'GET',
-          url,
-          errorData,
-          requestHeaders: { ...headers, Authorization: headers.Authorization ? '(set)' : '(none)' }
-        });
+        // Response was not valid JSON
       }
       
       const errorMessage = 
@@ -141,10 +95,8 @@ export const fetchAPI = async <T>(
     return data;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      console.error(`API Request Timeout for ${url} after ${API_TIMEOUT}ms`);
       throw new Error(`Request timeout: ${url}`);
     }
-    console.error(`API Request Failed for ${url}:`, error);
     throw error;
   }
-}; 
+};

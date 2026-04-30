@@ -39,26 +39,21 @@ export function HeroImage({ imageUrl, description, imageCaption, className, last
     }
   }, []);
 
-  // 当imageUrl、窗口大小或配置更新时间改变时更新图片源
+  // Update image source when imageUrl, window size, or config update time changes
   useEffect(() => {
     try {
-      console.log('图片URL:', imageUrl, '配置更新时间:', lastUpdated);
-      
-      // 判断是本地静态图片还是上传图片
       const isLocalStaticImage = imageUrl.startsWith('/images/');
       
       // 处理图片URL，使用正确的缓存策略
       let url;
       if (isLocalStaticImage) {
-        // 本地静态图片：如果有配置更新时间，添加时间戳参数破解缓存
+        // Local static image: add timestamp to break cache if config was updated
         if (lastUpdated) {
           const timestamp = new Date(lastUpdated).getTime();
           url = `${imageUrl}?v=${timestamp}`;
-          console.log('为本地静态图片添加版本参数:', url);
         } else {
-          // 没有更新时间时，添加当前时间戳作为fallback
+          // No update time, add current timestamp as fallback
           url = `${imageUrl}?v=${Date.now()}`;
-          console.log('添加当前时间戳作为版本参数:', url);
         }
       } else {
         // 上传图片使用createImageUrl处理，针对移动端优化质量
@@ -73,39 +68,35 @@ export function HeroImage({ imageUrl, description, imageCaption, className, last
           fit: 'contain' // 确保hero图片不被裁剪
         });
         
-        // 对于上传图片，也添加版本参数
+        // For uploaded images, also add version parameter
         if (lastUpdated) {
           const timestamp = new Date(lastUpdated).getTime();
           url += (url.includes('?') ? '&' : '?') + `v=${timestamp}`;
         }
       }
-      
-      console.log('处理后的图片URL:', url);
+
       setImgSrc(url);
       setImgError(false);
-    } catch (err) {
-      console.error('图片URL处理出错:', err);
+    } catch {
       setImgError(true);
     }
-  }, [imageUrl, windowSize, lastUpdated]); // 添加 lastUpdated 到依赖数组
+  }, [imageUrl, windowSize, lastUpdated]);
 
-  // 处理图片加载错误
+  // Handle image load error
   const handleError = () => {
-    console.log('图片加载失败，尝试使用默认图片');
     if (!imgError) {
-      // 如果是自定义图片路径加载失败，尝试加载默认图片
+      // If custom image path failed to load, try loading default image
       setImgSrc('/placeholder.jpg');
       setImgError(true);
     }
   };
 
-  // 处理点击事件（主要用于移动设备）
+  // Handle click event (mainly for mobile devices)
   const handleClick = () => {
-    // 只在移动设备上启用点击切换
+    // Only enable click toggle on mobile devices
     const isMobile = windowSize.width > 0 && windowSize.width < 768;
     if (isMobile) {
       setIsTextVisible(prev => !prev);
-      console.log('移动端点击切换文字显示:', !isTextVisible);
     }
   };
 

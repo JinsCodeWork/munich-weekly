@@ -8,17 +8,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 function getAuthToken(request: NextRequest): string | null {
   const authCookie = request.cookies.get('jwt')?.value;
   if (authCookie) {
-    console.log('Found JWT token in cookies');
     return authCookie;
   }
-  
+
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    console.log('Found JWT token in Authorization header');
     return authHeader.substring(7);
   }
-  
-  console.log('No JWT token found in standard locations');
+
   return null;
 }
 
@@ -31,16 +28,12 @@ async function verifyAdminRole(token: string): Promise<boolean> {
     });
     
     if (!response.ok) {
-      console.warn('Failed to verify user role:', response.status);
       return false;
     }
-    
+
     const user = await response.json();
-    const isAdmin = user.role === 'admin';
-    console.log('User role verification:', isAdmin ? 'admin' : 'non-admin');
-    return isAdmin;
-  } catch (error) {
-    console.error('Error verifying admin role:', error);
+    return user.role === 'admin';
+  } catch {
     return false;
   }
 }
@@ -51,18 +44,14 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const token = getAuthToken(request);
     if (!token) {
-      console.warn('No authentication token found for config GET');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
     }
-    
+
     // Verify admin role
     const isAdmin = await verifyAdminRole(token);
     if (!isAdmin) {
-      console.warn('Non-admin user attempted to access admin config');
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
-    
-    console.log('Processing admin config GET request');
     
     // Read existing configuration
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
@@ -72,7 +61,7 @@ export async function GET(request: NextRequest) {
       const fileContent = await fs.readFile(configPath, 'utf-8');
       config = JSON.parse(fileContent);
     } catch {
-      console.log('Configuration file not found or invalid, returning empty config');
+      // Configuration file not found or invalid, returning empty config
     }
     
     return NextResponse.json({
@@ -81,7 +70,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Configuration GET error:', error);
     return NextResponse.json(
       { error: `Failed to retrieve configuration: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
@@ -95,18 +83,14 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const token = getAuthToken(request);
     if (!token) {
-      console.warn('No authentication token found');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
     }
-    
+
     // Verify admin role
     const isAdmin = await verifyAdminRole(token);
     if (!isAdmin) {
-      console.warn('Non-admin user attempted to update config');
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
-    
-    console.log('Processing config update with authentication');
     
     // Get request data
     const data = await request.json();
@@ -121,8 +105,8 @@ export async function POST(request: NextRequest) {
     // Ensure directory exists
     try {
       await fs.mkdir(path.dirname(configPath), { recursive: true });
-    } catch (error) {
-      console.error('Failed to create config directory:', error);
+    } catch {
+      // Failed to create config directory
     }
     
     // Check if file exists, if not create initial configuration
@@ -132,7 +116,6 @@ export async function POST(request: NextRequest) {
       currentConfig = JSON.parse(fileContent);
     } catch {
       // File doesn't exist or can't be parsed, use empty object
-      console.log('Existing configuration not found or invalid, will create new config');
     }
     
     // Merge configuration
@@ -152,7 +135,6 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Configuration update error:', error);
     return NextResponse.json(
       { error: `Configuration update failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }

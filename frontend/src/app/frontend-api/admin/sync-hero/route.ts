@@ -7,18 +7,15 @@ function getAuthToken(request: NextRequest): string | null {
   // Try to get token from cookies
   const authCookie = request.cookies.get('jwt')?.value;
   if (authCookie) {
-    console.log('Found JWT token in cookies');
     return authCookie;
   }
-  
+
   // If not in cookies, try authorization header
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    console.log('Found JWT token in Authorization header');
     return authHeader.substring(7);
   }
-  
-  console.log('No JWT token found in standard locations');
+
   return null;
 }
 
@@ -27,11 +24,8 @@ export async function POST(request: NextRequest) {
     // Simplified authentication check, consistent with other admin APIs
     const token = getAuthToken(request);
     if (!token) {
-      console.warn('No authentication token found for sync-hero');
       return NextResponse.json({ error: 'Unauthorized - Please login first' }, { status: 401 });
     }
-    
-    console.log('Processing hero image sync with authentication');
     
     // Get request body, check if uploaded URL was passed
     let heroImageUrl = null;
@@ -40,26 +34,21 @@ export async function POST(request: NextRequest) {
       heroImageUrl = body.imageUrl;
     } catch {
       // Request body may be empty, this is normal
-      console.log('No request body provided, will attempt to sync from backend uploads');
     }
     
     let sourceImageData: ArrayBuffer | Buffer | null = null;
     
     if (heroImageUrl && heroImageUrl.startsWith('http')) {
       // Case 1: Download image from R2 URL
-      console.log('Downloading hero image from R2 URL:', heroImageUrl);
-      
       try {
         const response = await fetch(heroImageUrl);
         if (!response.ok) {
           throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
         }
-        
+
         sourceImageData = await response.arrayBuffer();
-        console.log('Successfully downloaded image from R2, size:', sourceImageData.byteLength, 'bytes');
-        
+
       } catch (downloadError) {
-        console.error('Failed to download image from R2:', downloadError);
         return NextResponse.json(
           { 
             success: false, 
@@ -70,22 +59,16 @@ export async function POST(request: NextRequest) {
       }
       
     } else {
-      // 情况2：从backend本地文件复制（保持原有逻辑）
+      // Case 2: Copy from backend local file
       const backendHeroPath = path.join(process.cwd(), '..', 'backend', 'uploads', 'hero.jpg');
-      console.log('Attempting to copy from backend file:', backendHeroPath);
-      
+
       try {
-        // 检查源文件是否存在
         await access(backendHeroPath);
-        console.log('Backend hero file exists, reading...');
-        
-        // 读取文件内容
+
         const fs = await import('fs/promises');
         sourceImageData = await fs.readFile(backendHeroPath);
-        console.log('Successfully read backend hero file, size:', sourceImageData.byteLength, 'bytes');
-        
+
       } catch (readError) {
-        console.error('Failed to read backend hero file:', readError);
         
         if (readError instanceof Error && 'code' in readError && (readError as NodeJS.ErrnoException).code === 'ENOENT') {
           return NextResponse.json(
@@ -100,18 +83,17 @@ export async function POST(request: NextRequest) {
         throw readError;
       }
     }
-    
-    // 保存到frontend目录
+
+    // Save to frontend directory
     const frontendHeroPath = path.join(process.cwd(), 'public', 'images', 'home', 'hero.jpg');
-    console.log('Saving hero image to frontend path:', frontendHeroPath);
-    
+
     try {
-      // 确保目录存在
+      // Ensure directory exists
       const dir = path.dirname(frontendHeroPath);
       const fs = await import('fs/promises');
       await fs.mkdir(dir, { recursive: true });
-      
-      // 保存图片数据，处理不同的数据类型
+
+      // Save image data, handling different data types
       let bufferToWrite: Buffer;
       if (sourceImageData instanceof ArrayBuffer) {
         bufferToWrite = Buffer.from(sourceImageData);
@@ -120,10 +102,8 @@ export async function POST(request: NextRequest) {
       } else {
         throw new Error('Invalid source image data type');
       }
-      
+
       await writeFile(frontendHeroPath, bufferToWrite);
-      
-      console.log('Hero image synced successfully to frontend');
       
       return NextResponse.json({
         success: true,
@@ -133,12 +113,10 @@ export async function POST(request: NextRequest) {
       });
       
     } catch (saveError) {
-      console.error('Failed to save hero image to frontend:', saveError);
       throw saveError;
     }
-    
+
   } catch (error) {
-    console.error('Sync hero error:', error);
     return NextResponse.json(
       { 
         success: false, 

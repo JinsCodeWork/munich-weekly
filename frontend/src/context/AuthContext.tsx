@@ -47,8 +47,7 @@ const isTokenExpired = (token: string): boolean => {
     
     // Check if expired (consider as expired 30 seconds before actual expiry to avoid edge cases)
     return Date.now() >= (exp * 1000 - 30000)
-  } catch (e) {
-    console.error("Token parsing failed:", e)
+  } catch {
     return true // Treat parsing failures as expired
   }
 }
@@ -77,8 +76,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           storedToken = sessionStorage.getItem("jwt")
           storedUser = sessionStorage.getItem("user_data")
         }
-      } catch (error) {
-        console.error("Storage access error:", error)
+      } catch {
+        // Storage access error (possible private browsing mode)
       }
       
       const preserveAuth = sessionStorage.getItem("preserve_auth")
@@ -86,7 +85,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (storedToken) {
         // Check if token is expired
         if (isTokenExpired(storedToken)) {
-          console.warn("Stored token is expired, clearing auth state")
           clearAuthStorage()
           setLoading(false)
           return
@@ -99,8 +97,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           try {
             const userData = JSON.parse(storedUser)
             setUser(userData)
-          } catch (e) {
-            console.error("User data parsing failed:", e)
+          } catch {
+            // User data parsing failed
           }
         }
         
@@ -113,17 +111,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           try {
             localStorage.setItem("user_data", JSON.stringify(userData))
             sessionStorage.setItem("user_data", JSON.stringify(userData))
-          } catch (e) {
-            console.warn("Unable to update cached user data:", e)
+          } catch {
+            // Unable to update cached user data
           }
-        } catch (err) {
-          console.error("Failed to fetch user data:", err)
+        } catch {
           clearAuthStorage()
         }
         
         // If we have preserve_auth flag, clear it
         if (preserveAuth === "true") {
-          console.log("Preserving authentication during redirect")
           sessionStorage.removeItem("preserve_auth")
         }
       }
@@ -141,8 +137,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem("user_data")
       sessionStorage.removeItem("jwt")
       sessionStorage.removeItem("user_data")
-    } catch (error) {
-      console.error("Failed to clear auth storage:", error)
+    } catch {
+      // Failed to clear auth storage
     }
     
     setToken(null)
@@ -158,13 +154,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         localStorage.setItem("user_data", JSON.stringify(userData))
         sessionStorage.setItem("user_data", JSON.stringify(userData))
-      } catch (e) {
-        console.warn("Unable to cache user data:", e)
+      } catch {
+        // Unable to cache user data
       }
-      
+
       return userData
-    } catch (err) {
-      console.error("Failed to fetch user data:", err)
+    } catch {
       clearAuthStorage()
       return null
     } finally {
@@ -188,15 +183,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           localStorage.setItem("user_data", JSON.stringify(userData))
           sessionStorage.setItem("user_data", JSON.stringify(userData))
-        } catch (e) {
-          console.warn("Unable to cache user data:", e)
+        } catch {
+          // Unable to cache user data
         }
       } else {
         // Otherwise fetch user data from API
         fetchUserData()
       }
-    } catch (error) {
-      console.error("Failed to save authentication info:", error)
+    } catch {
       // Try to use memory state only
       setToken(newToken)
       if (userData) {

@@ -48,10 +48,8 @@ export async function getFeaturedSubmissions(): Promise<FeaturedSubmission[]> {
     });
 
     const data = await handleApiResponse<FeaturedSubmission[]>(response);
-    console.log('✅ Featured submissions loaded:', data.length, 'items');
     return data;
   } catch (error) {
-    console.error('❌ Failed to load featured submissions:', error);
     throw error;
   }
 }
@@ -70,10 +68,8 @@ export async function getGalleryStats(): Promise<GalleryStats> {
     });
 
     const data = await handleApiResponse<GalleryStats>(response);
-    console.log('✅ Gallery stats loaded:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to load gallery stats:', error);
     throw error;
   }
 }
@@ -97,10 +93,8 @@ export async function getActiveConfig(): Promise<ConfigResponse> {
     });
 
     const data = await handleApiResponse<ConfigResponse>(response);
-    console.log('✅ Active config loaded:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to load active config:', error);
     throw error;
   }
 }
@@ -122,10 +116,8 @@ export async function getAllConfigs(): Promise<ConfigsResponse> {
     });
 
     const data = await handleApiResponse<ConfigsResponse>(response);
-    console.log('✅ All configs loaded:', data.total, 'configs');
     return data;
   } catch (error) {
-    console.error('❌ Failed to load all configs:', error);
     throw error;
   }
 }
@@ -136,8 +128,6 @@ export async function getAllConfigs(): Promise<ConfigsResponse> {
  */
 export async function saveConfig(config: SaveConfigRequest): Promise<SaveConfigResponse> {
   try {
-    console.log('📤 Saving gallery config:', config);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/featured/config`, {
       method: 'POST',
@@ -150,10 +140,8 @@ export async function saveConfig(config: SaveConfigRequest): Promise<SaveConfigR
     });
 
     const data = await handleApiResponse<SaveConfigResponse>(response);
-    console.log('✅ Config saved successfully:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to save config:', error);
     throw error;
   }
 }
@@ -164,8 +152,6 @@ export async function saveConfig(config: SaveConfigRequest): Promise<SaveConfigR
  */
 export async function deleteConfig(configId: number): Promise<DeleteConfigResponse> {
   try {
-    console.log('🗑️ Deleting config ID:', configId);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/featured/config/${configId}`, {
       method: 'DELETE',
@@ -177,10 +163,8 @@ export async function deleteConfig(configId: number): Promise<DeleteConfigRespon
     });
 
     const data = await handleApiResponse<DeleteConfigResponse>(response);
-    console.log('✅ Config deleted successfully:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to delete config:', error);
     throw error;
   }
 }
@@ -202,10 +186,8 @@ export async function previewSubmission(submissionId: number): Promise<Submissio
     });
 
     const data = await handleApiResponse<SubmissionPreviewResponse>(response);
-    console.log('✅ Submission preview loaded:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to preview submission:', error);
     throw error;
   }
 }
@@ -227,10 +209,8 @@ export async function checkFeaturedStatus(submissionId: number): Promise<Feature
     });
 
     const data = await handleApiResponse<FeaturedStatusResponse>(response);
-    console.log('✅ Featured status checked:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to check featured status:', error);
     throw error;
   }
 }
@@ -309,10 +289,8 @@ export async function getPublishedIssues(): Promise<GalleryIssueConfig[]> {
     });
 
     const data = await handleApiResponse<{ issues: GalleryIssueConfig[] }>(response);
-    console.log('✅ Published gallery issues loaded:', data.issues.length, 'issues');
     return data.issues;
-  } catch (error) {
-    console.error('❌ Failed to load published issues:', error);
+  } catch {
     return [];
   }
 }
@@ -331,10 +309,8 @@ export async function getIssueDetail(issueId: number): Promise<GalleryIssueConfi
     });
 
     const data = await handleApiResponse<{ issue: GalleryIssueConfig; success: boolean }>(response);
-    console.log('✅ Gallery issue detail loaded:', data.issue);
     return data.issue;
   } catch (error) {
-    console.error('❌ Failed to load issue detail:', error);
     throw error;
   }
 }
@@ -388,10 +364,8 @@ export async function getIssueSubmissions(issueId: number): Promise<GallerySubmi
       displayOrder: item.displayOrder
     }));
 
-    console.log('✅ Issue submissions loaded:', submissions.length, 'submissions');
     return submissions;
   } catch (error) {
-    console.error('❌ Failed to load issue submissions:', error);
     throw error;
   }
 }
@@ -410,10 +384,8 @@ export async function getGalleryIssueStats(): Promise<GalleryIssueStats> {
     });
 
     const data = await handleApiResponse<GalleryIssueStats>(response);
-    console.log('✅ Gallery issue stats loaded:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to load gallery issue stats:', error);
     throw error;
   }
 }
@@ -437,10 +409,8 @@ export async function getGalleryConfigs(): Promise<GalleryIssueConfig[]> {
     });
 
     const data = await handleApiResponse<{ configs: GalleryIssueConfig[] }>(response);
-    console.log('✅ Gallery configs loaded:', data.configs.length, 'configs');
     return data.configs;
   } catch (error) {
-    console.error('❌ Failed to load gallery configs:', error);
     throw error;
   }
 }
@@ -451,8 +421,6 @@ export async function getGalleryConfigs(): Promise<GalleryIssueConfig[]> {
  */
 export async function createGalleryConfig(config: CreateGalleryConfigRequest): Promise<GalleryIssueConfig> {
   try {
-    console.log('📤 Creating gallery config:', config);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/admin/configs`, {
       method: 'POST',
@@ -465,10 +433,8 @@ export async function createGalleryConfig(config: CreateGalleryConfigRequest): P
     });
 
     const data = await handleApiResponse<GalleryIssueConfig>(response);
-    console.log('✅ Gallery config created successfully:', data);
     return data;
   } catch (error) {
-    console.error('❌ Failed to create gallery config:', error);
     throw error;
   }
 }
@@ -479,8 +445,6 @@ export async function createGalleryConfig(config: CreateGalleryConfigRequest): P
  */
 export async function updateGalleryConfigByIssueId(issueId: number, config: UpdateGalleryConfigRequest): Promise<GalleryIssueConfig> {
   try {
-    console.log('📤 Updating gallery config for issue ID:', issueId, config);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/admin/issues/${issueId}`, {
       method: 'PUT',
@@ -493,10 +457,8 @@ export async function updateGalleryConfigByIssueId(issueId: number, config: Upda
     });
 
     const data = await handleApiResponse<{ config: GalleryIssueConfig }>(response);
-    console.log('✅ Gallery config updated successfully:', data.config);
     return data.config;
   } catch (error) {
-    console.error('❌ Failed to update gallery config:', error);
     throw error;
   }
 }
@@ -507,8 +469,6 @@ export async function updateGalleryConfigByIssueId(issueId: number, config: Upda
  */
 export async function getGalleryConfigByIssueId(issueId: number): Promise<GalleryIssueConfig> {
   try {
-    console.log('📤 Getting gallery config by issue ID:', issueId);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/admin/issues/${issueId}`, {
       method: 'GET',
@@ -520,10 +480,8 @@ export async function getGalleryConfigByIssueId(issueId: number): Promise<Galler
     });
 
     const data = await handleApiResponse<{ config: GalleryIssueConfig }>(response);
-    console.log('✅ Gallery config loaded successfully:', data.config);
     return data.config;
   } catch (error) {
-    console.error('❌ Failed to load gallery config:', error);
     throw error;
   }
 }
@@ -534,8 +492,6 @@ export async function getGalleryConfigByIssueId(issueId: number): Promise<Galler
  */
 export async function deleteGalleryConfigByIssueId(issueId: number): Promise<void> {
   try {
-    console.log('🗑️ Deleting gallery config for issue ID:', issueId);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/admin/issues/${issueId}`, {
       method: 'DELETE',
@@ -547,9 +503,7 @@ export async function deleteGalleryConfigByIssueId(issueId: number): Promise<voi
     });
 
     await handleApiResponse<{ message: string }>(response);
-    console.log('✅ Gallery config deleted successfully');
   } catch (error) {
-    console.error('❌ Failed to delete gallery config:', error);
     throw error;
   }
 }
@@ -560,8 +514,6 @@ export async function deleteGalleryConfigByIssueId(issueId: number): Promise<voi
  */
 export async function updateSubmissionOrderByIssueId(issueId: number, orders: SubmissionOrderUpdate[]): Promise<void> {
   try {
-    console.log(`📤 Updating submission order for issue ${issueId}:`, orders);
-
     const authHeaders = getAuthHeader();
     const response = await fetch(`${API_BASE}/admin/issues/${issueId}/order`, {
       method: 'PUT',
@@ -577,10 +529,7 @@ export async function updateSubmissionOrderByIssueId(issueId: number, orders: Su
       const errorData = await response.json().catch(() => ({ error: 'Failed to save order' }));
       throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
-    
-    console.log('✅ Submission order updated successfully for issue:', issueId);
   } catch (error) {
-    console.error('❌ Failed to update submission order:', error);
     throw error;
   }
 }
@@ -602,10 +551,8 @@ export async function getSelectedSubmissions(issueId: number): Promise<GallerySu
     });
 
     const data = await handleApiResponse<{ submissions: GallerySubmission[] }>(response);
-    console.log('✅ Selected submissions loaded:', data.submissions.length, 'submissions');
     return data.submissions;
-  } catch (error) {
-    console.error('❌ Failed to load selected submissions:', error);
+  } catch {
     return [];
   }
 }
@@ -627,10 +574,8 @@ export async function getAvailableIssues(): Promise<AvailableIssue[]> {
     });
 
     const data = await handleApiResponse<{ issues: AvailableIssue[] }>(response);
-    console.log('✅ Available issues loaded:', data.issues.length, 'issues');
     return data.issues;
-  } catch (error) {
-    console.error('❌ Failed to load available issues:', error);
+  } catch {
     return [];
   }
 }
@@ -641,8 +586,6 @@ export async function getAvailableIssues(): Promise<AvailableIssue[]> {
  */
 export async function uploadCoverImageByIssueId(issueId: number, file: File): Promise<{ imageUrl: string }> {
   try {
-    console.log('📤 Uploading cover image for issue:', issueId);
-
     const authHeaders = getAuthHeader();
     const formData = new FormData();
     formData.append('file', file);
@@ -657,10 +600,8 @@ export async function uploadCoverImageByIssueId(issueId: number, file: File): Pr
     });
 
     const data = await handleApiResponse<{ imageUrl: string }>(response);
-    console.log('✅ Cover image uploaded successfully:', data.imageUrl);
     return data;
   } catch (error) {
-    console.error('❌ Failed to upload cover image:', error);
     throw error;
   }
 }
@@ -672,8 +613,6 @@ export async function uploadCoverImageByIssueId(issueId: number, file: File): Pr
  */
 export async function uploadCoverImage(configId: number, file: File): Promise<{ imageUrl: string }> {
   try {
-    console.log('📤 Uploading cover image for config:', configId);
-
     const authHeaders = getAuthHeader();
     const formData = new FormData();
     formData.append('file', file);
@@ -688,10 +627,8 @@ export async function uploadCoverImage(configId: number, file: File): Promise<{ 
     });
 
     const data = await handleApiResponse<{ imageUrl: string }>(response);
-    console.log('✅ Cover image uploaded successfully:', data.imageUrl);
     return data;
   } catch (error) {
-    console.error('❌ Failed to upload cover image:', error);
     throw error;
   }
 }

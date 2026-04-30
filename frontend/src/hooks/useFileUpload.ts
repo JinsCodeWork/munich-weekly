@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { getAuthHeader } from '@/api/http';
-import { formatFileSize } from '@/lib/utils';
 
 interface UploadOptions {
   onProgress?: (progress: number) => void;
@@ -84,8 +83,6 @@ export function useFileUpload() {
     setError(null);
     
     try {
-      console.log(`Starting upload of file "${file.name}" (${formatFileSize(file.size)}) to ${url}`);
-      
       // Create FormData object
       const formData = new FormData();
       formData.append('file', file);
@@ -107,19 +104,17 @@ export function useFileUpload() {
         
         try {
           responseText = await response.text();
-          console.error('Upload failed, server response:', responseText);
-          
+
           try {
             const errorData = JSON.parse(responseText);
             if (errorData.error) {
               errorMessage = errorData.error;
             }
           } catch {
-            // If response is not JSON, log the raw response
-            console.log('Server returned non-JSON response:', responseText);
+            // Response is not JSON
           }
-        } catch (textError) {
-          console.error('Unable to read response content:', textError);
+        } catch {
+          // Unable to read response content
         }
         
         throw new Error(errorMessage);
@@ -132,7 +127,6 @@ export function useFileUpload() {
         
         // Check if response is empty
         if (!responseText.trim()) {
-          console.log('Server returned an empty response, but status code was successful');
           setUploadProgress(100);
           return { success: true, message: 'Upload successful, but server did not return any data' };
         }
@@ -143,18 +137,14 @@ export function useFileUpload() {
           throw new Error(result.error);
         }
         
-        console.log('Upload successful, server response:', result);
         setUploadProgress(100);
-        
+
         if (result.imageUrl) {
           setUploadedUrl(result.imageUrl);
-          console.log('Set uploaded image URL:', result.imageUrl);
         }
         
         return result;
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError, 'Original response:', responseText);
-        
+      } catch {
         // Although parsing failed, HTTP status is successful, so we consider upload successful
         setUploadProgress(100);
         return { 
@@ -164,7 +154,6 @@ export function useFileUpload() {
         };
       }
     } catch (err) {
-      console.error('Error during upload process:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred during upload');
       throw err;
     } finally {
@@ -223,7 +212,6 @@ export function useFileUpload() {
               setUploadProgress(100);
               resolve(response.imageUrl);
             } catch (parseError) {
-              console.error('Unable to parse response:', parseError);
               setError('Server response format error');
               setIsUploading(false);
               reject(parseError);
@@ -266,7 +254,6 @@ export function useFileUpload() {
         xhr.send(formData);
         
       } catch (err) {
-        console.error('Upload error:', err);
         setError('Upload file failed, please try again');
         setIsUploading(false);
         reject(err);

@@ -33,11 +33,8 @@ export default function Home() {
         } : {}
       });
       
-      console.log('Config API response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('Loaded config data:', data);
         
         if (data.success && data.config?.heroImage) {
           // 使用函数式更新避免依赖当前state
@@ -56,36 +53,31 @@ export default function Home() {
               JSON.stringify(newConfig.heroImage) !== JSON.stringify(prevConfig.heroImage);
               
             if (hasConfigChanged) {
-              console.log('Config has changed, updating state');
               lastConfigUpdateRef.current = data.config.lastUpdated || new Date().toISOString();
               return newConfig;
             } else {
-              console.log('Config unchanged, keeping current state');
               return prevConfig;
             }
           });
         }
-      } else {
-        console.error('Config API returned error:', response.status, response.statusText);
       }
-    } catch (error) {
-      console.error('Failed to load config:', error);
+    } catch {
+      // Failed to load config
     } finally {
       setIsLoading(false);
     }
-  }, []); // 移除所有依赖，使用函数式更新避免依赖state
+  }, []);
 
-  // 初始加载配置
+  // Initial config load
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
 
-  // 添加定期轮询配置更新（每30秒检查一次）
+  // Poll for config updates every 30 seconds
   useEffect(() => {
     const pollingInterval = setInterval(() => {
-      console.log('Polling for config updates...');
       loadConfig();
-    }, 30000); // 30秒轮询一次
+    }, 30000);
 
     return () => clearInterval(pollingInterval);
   }, [loadConfig]);
@@ -94,7 +86,6 @@ export default function Home() {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'hero_image_updated') {
-        console.log('Detected hero image update event, force refreshing config...');
         // Delay refresh by one second to ensure backend processing is complete
         setTimeout(() => {
           loadConfig(true);
@@ -109,7 +100,6 @@ export default function Home() {
   // Listen for custom events (for communication within the same tab)
   useEffect(() => {
     const handleConfigUpdate = () => {
-      console.log('Detected config update event, refreshing...');
       loadConfig(true);
     };
 

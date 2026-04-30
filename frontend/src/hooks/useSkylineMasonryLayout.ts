@@ -145,7 +145,6 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     // Check if request is already in progress for this issueId
     if (requestIdRef.current === issueId && activeRequest) {
-              console.log(`🎯 Preventing duplicate requests: issueId=${issueId} already in progress, reusing...`);
       try {
         const response = await activeRequest;
         setOrderingState({
@@ -154,7 +153,6 @@ export function useSkylineMasonryLayout<T = unknown>(
           error: null
         });
       } catch (error) {
-        console.error('Failed to fetch masonry ordering from active request:', error);
         setOrderingState({
           data: null,
           isLoading: false,
@@ -178,7 +176,6 @@ export function useSkylineMasonryLayout<T = unknown>(
         error: null
       });
     } catch (error) {
-      console.error('Failed to fetch masonry ordering:', error);
       setOrderingState({
         data: null,
         isLoading: false,
@@ -312,20 +309,18 @@ export function useSkylineMasonryLayout<T = unknown>(
       
       if (!dimensions) {
         // This should not happen for submissions with stored dimensions
-        console.warn('No dimensions available for item - this indicates a data issue');
-        imgWidth = 400;  
-        imgHeight = 300; 
+        imgWidth = 400;
+        imgHeight = 300;
         aspectRatio = 1.33; // Use reasonable fallback
         isLoaded = false;
       } else {
         ({ width: imgWidth, height: imgHeight, isLoaded } = dimensions);
-        
+
         // **CRITICAL: Always use stored aspect ratio - never calculate**
         aspectRatio = dimensions.aspectRatio || 1.33;
-        
+
         // Validate dimensions are positive
         if (!imgWidth || !imgHeight || imgWidth <= 0 || imgHeight <= 0) {
-          console.warn('Invalid stored dimensions - using fallback');
           imgWidth = 400;
           imgHeight = 300;
           // Keep using stored aspect ratio even with fallback dimensions
@@ -469,7 +464,6 @@ export function useSkylineMasonryLayout<T = unknown>(
           error: null
         });
       }).catch(error => {
-        console.error('Failed to fetch masonry ordering:', error);
         setOrderingState({
           data: null,
           isLoading: false,

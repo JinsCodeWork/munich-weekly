@@ -65,7 +65,6 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
     
     // Only clear cache if user actually changed (not just user object reference)
     if (lastUserIdRef.current !== currentUserId) {
-      console.log(`🔄 VoteStatusContext: User changed from ${lastUserIdRef.current} to ${currentUserId}, clearing cache`);
       setVoteStatusMap(new Map());
       setHasError(false);
       setErrorMessage(null);
@@ -135,11 +134,8 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
     
     // Prevent multiple simultaneous batch checks
     if (batchCheckInProgressRef.current) {
-      console.log(`⏳ VoteStatusContext: Batch check already in progress, skipping duplicate call`);
       return;
     }
-    
-    console.log(`🔍 VoteStatusContext: Batch checking vote status for ${submissionIds.length} submissions`);
     
     batchCheckInProgressRef.current = true;
     
@@ -155,7 +151,6 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       });
       
       if (uncachedIds.length === 0) {
-        console.log(`✅ VoteStatusContext: All ${submissionIds.length} submissions already cached`);
         return prev; // No changes needed
       }
       
@@ -192,11 +187,7 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
     setErrorMessage(null);
     
     try {
-      const startTime = performance.now();
       const response = await votesApi.checkBatchVoteStatus(uncachedIds);
-      const duration = performance.now() - startTime;
-      
-      console.log(`✅ VoteStatusContext: Batch check completed in ${duration.toFixed(2)}ms for ${response.totalChecked} submissions`);
       
       // Update cache with results in a single state update to prevent flickering
       setVoteStatusMap(prev => {
@@ -218,8 +209,6 @@ export function VoteStatusProvider({ children }: VoteStatusProviderProps) {
       });
       
     } catch (error) {
-      console.error('VoteStatusContext: Batch vote status check failed:', error);
-      
       setHasError(true);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to check vote status');
       
