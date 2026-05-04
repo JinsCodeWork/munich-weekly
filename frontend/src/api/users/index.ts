@@ -2,7 +2,7 @@
  * User-related API module
  * Provides user information retrieval, updates and other functionality
  */
-import { fetchAPI, getAuthHeader } from "../http";
+import { fetchAPI } from "../http";
 
 interface User {
   id: number;
@@ -27,9 +27,7 @@ interface PasswordChangeRequest {
  * GET /api/users/me
  */
 export const getCurrentUser = async (): Promise<User> => {
-  return fetchAPI<User>("/api/users/me", {
-    headers: getAuthHeader()
-  });
+  return fetchAPI<User>("/api/users/me");
 };
 
 /**
@@ -40,7 +38,6 @@ export const updateCurrentUser = async (data: UserUpdateRequest): Promise<User> 
   return fetchAPI<User>("/api/users/me", {
     method: "PATCH",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 };
 
@@ -52,7 +49,6 @@ export const changePassword = async (data: PasswordChangeRequest): Promise<void>
   return fetchAPI<void>("/api/users/change-password", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 };
 
@@ -61,9 +57,7 @@ export const changePassword = async (data: PasswordChangeRequest): Promise<void>
  * GET /api/users
  */
 export const getAllUsers = async (): Promise<User[]> => {
-  return fetchAPI<User[]>("/api/users", {
-    headers: getAuthHeader()
-  });
+  return fetchAPI<User[]>("/api/users");
 };
 
 /**
@@ -73,6 +67,5 @@ export const getAllUsers = async (): Promise<User[]> => {
 export const deleteCurrentUser = async (): Promise<void> => {
   return fetchAPI<void>("/api/users/me", {
     method: "DELETE",
-    headers: getAuthHeader()
   });
 }; 

@@ -18,26 +18,33 @@ export const getAuthHeader = (): Record<string, string> => {
   return {};
 };
 
-// Custom request headers type, using index signature to allow any string key
-interface RequestHeaders {
-  "Content-Type": string;
-  Authorization?: string;
-  [key: string]: string | undefined;
-}
+export type FetchAPIOptions = RequestInit & {
+  /** When false, Authorization header is omitted. Default true. */
+  auth?: boolean;
+  /** Request timeout in ms. Default 15000. */
+  timeoutMs?: number;
+  /**
+   * When false, success responses are not parsed as JSON (use for empty 204 / void endpoints).
+   * Default true.
+   */
+  parseResponseJson?: boolean;
+};
 
-// API request timeout setting (15 seconds)
-const API_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT_MS = 15000;
 
-// Create fetch request with timeout
-const fetchWithTimeout = async (url: string, options: RequestInit = {}): Promise<Response> => {
+const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<Response> => {
   const controller = new AbortController();
-  const { signal } = controller;
-  
-  // Set timeout
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-  
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const response = await fetch(url, { ...options, signal });
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
     clearTimeout(timeoutId);
     return response;
   } catch (error) {
@@ -46,53 +53,127 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}): Promise
   }
 };
 
-// Base API request function
-export const fetchAPI = async <T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  // Automatically get and add auth headers
-  const authHeader = getAuthHeader();
-  
-  // Ensure request headers are correctly merged
-  const headers: RequestHeaders = {
-    "Content-Type": "application/json",
-    ...authHeader, // Add auth headers
-    ...(options.headers as Record<string, string> || {})
-  };
+function flattenHeaders(init?: HeadersInit): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!init) return out;
+  if (init instanceof Headers) {
+    init.forEach((v, k) => {
+      out[k] = v;
+    });
+  } else if (Array.isArray(init)) {
+    for (const [k, v] of init) {
+      out[k] = v;
+    }
+  } else {
+    Object.assign(out, init);
+  }
+  return out;
+}
+
+/**
+ * Extract a human-readable error message from JSON or plain-text API error bodies.
+ */
+export function parseApiErrorMessage(responseText: string, response: Response): string {
+  let errorData: Record<string, unknown> | { rawText: string } = { rawText: responseText };
 
   try {
-    const response = await fetchWithTimeout(url, {
-      ...options,
-      headers: headers as Record<string, string>,
-      credentials: 'include' // Include cookies, for anonymous voting mechanism
-    });
+    errorData = JSON.parse(responseText) as Record<string, unknown>;
+  } catch {
+    // Response was not valid JSON — keep rawText wrapper
+  }
 
-    if (!response.ok) {
-      const responseText = await response.text();
-      let errorData: Record<string, unknown> | { rawText: string } = { rawText: responseText };
-      
-      try {
-        errorData = JSON.parse(responseText);
-      } catch {
-        // Response was not valid JSON
-      }
-      
-      const errorMessage = 
-        (errorData as Record<string, unknown>).message as string || 
-        (errorData as Record<string, unknown>).detail as string || 
-        (errorData as { rawText: string }).rawText || 
-        `API request failed: ${response.status} ${response.statusText}`;
-      throw new Error(errorMessage);
+  const obj = errorData as Record<string, unknown>;
+  const fromJson =
+    (typeof obj.error === "string" && obj.error) ||
+    (typeof obj.message === "string" && obj.message) ||
+    (typeof obj.detail === "string" && obj.detail);
+
+  if (fromJson) {
+    return fromJson;
+  }
+
+  const raw = (errorData as { rawText?: string }).rawText;
+  if (raw?.trim()) {
+    return raw.trim();
+  }
+
+  return `API request failed: ${response.status} ${response.statusText}`;
+}
+
+function buildHeaders(
+  isFormData: boolean,
+  auth: boolean,
+  userHeaders?: HeadersInit
+): Record<string, string> {
+  const merged = flattenHeaders(userHeaders);
+  const headers: Record<string, string> = {};
+
+  const hasContentType =
+    merged["Content-Type"] !== undefined || merged["content-type"] !== undefined;
+
+  if (!isFormData && !hasContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (auth) {
+    Object.assign(headers, getAuthHeader());
+  }
+
+  for (const [k, v] of Object.entries(merged)) {
+    if (isFormData && k.toLowerCase() === "content-type") {
+      continue;
     }
+    headers[k] = v;
+  }
+
+  return headers;
+}
+
+export const fetchAPI = async <T>(
+  url: string,
+  options: FetchAPIOptions = {}
+): Promise<T> => {
+  const {
+    auth = true,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    parseResponseJson = true,
+    ...requestInit
+  } = options;
+
+  const body = requestInit.body;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+  const headers = buildHeaders(isFormData, auth, requestInit.headers);
+
+  const credentials =
+    requestInit.credentials !== undefined ? requestInit.credentials : "include";
+
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        ...requestInit,
+        headers: headers as Record<string, string>,
+        credentials,
+      },
+      timeoutMs
+    );
 
     const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(parseApiErrorMessage(responseText, response));
+    }
+
+    if (!parseResponseJson) {
+      return undefined as T;
+    }
+
     if (!responseText) {
       return null as T;
     }
-    
-    const data = JSON.parse(responseText);
-    return data;
+
+    return JSON.parse(responseText) as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error(`Request timeout: ${url}`);

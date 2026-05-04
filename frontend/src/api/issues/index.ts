@@ -2,7 +2,7 @@
  * Issue-related API module
  * Provides issue retrieval, creation, update and other functionality
  */
-import { fetchAPI, getAuthHeader } from "../http";
+import { fetchAPI } from "../http";
 import { Issue } from "@/types/submission";
 
 interface IssueCreateRequest {
@@ -47,7 +47,6 @@ export const createIssue = async (data: IssueCreateRequest): Promise<Issue> => {
   return fetchAPI<Issue>("/api/issues", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 };
 
@@ -59,6 +58,5 @@ export const updateIssue = async (id: number, data: IssueUpdateRequest): Promise
   return fetchAPI<Issue>(`/api/issues/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 }; 

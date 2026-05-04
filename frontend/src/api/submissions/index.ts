@@ -36,10 +36,7 @@ export const getUserSubmissions = async (
   
   const url = `/api/submissions/mine?${params.toString()}`;
 
-  // Request API
-  const response = await fetchAPI<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>>(url, {
-    headers: getAuthHeader()
-  });
+  const response = await fetchAPI<MySubmissionResponse[] | PaginatedResponse<MySubmissionResponse>>(url);
   
   // Backend may already support pagination, or may not yet support it
   // If an array is returned, we manually convert it to paginated format
@@ -84,9 +81,7 @@ export const getSubmissionsByIssue = async (
 export const getAllSubmissionsByIssue = async (
   issueId: number
 ): Promise<AdminSubmissionResponse[]> => {
-  return fetchAPI<AdminSubmissionResponse[]>(`/api/submissions/all?issueId=${issueId}`, {
-    headers: getAuthHeader()
-  });
+  return fetchAPI<AdminSubmissionResponse[]>(`/api/submissions/all?issueId=${issueId}`);
 };
 
 /**
@@ -97,7 +92,6 @@ export const createSubmission = async (data: SubmissionRequest): Promise<{ submi
   return fetchAPI<{ submissionId: number, uploadUrl: string }>("/api/submissions", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 };
 
@@ -162,7 +156,6 @@ export const uploadAnonymousSubmissionFile = async (
 export const approveSubmission = async (submissionId: number): Promise<void> => {
   return fetchAPI<void>(`/api/submissions/${submissionId}/approve`, {
     method: "PATCH",
-    headers: getAuthHeader()
   });
 };
 
@@ -173,7 +166,6 @@ export const approveSubmission = async (submissionId: number): Promise<void> => 
 export const rejectSubmission = async (submissionId: number): Promise<void> => {
   return fetchAPI<void>(`/api/submissions/${submissionId}/reject`, {
     method: "PATCH",
-    headers: getAuthHeader()
   });
 };
 
@@ -184,7 +176,6 @@ export const rejectSubmission = async (submissionId: number): Promise<void> => {
 export const selectSubmission = async (submissionId: number): Promise<void> => {
   return fetchAPI<void>(`/api/submissions/${submissionId}/select`, {
     method: "PATCH",
-    headers: getAuthHeader()
   });
 };
 
@@ -195,7 +186,6 @@ export const selectSubmission = async (submissionId: number): Promise<void> => {
 export const deleteSubmission = async (submissionId: number): Promise<void> => {
   return fetchAPI<void>(`/api/submissions/${submissionId}`, {
     method: "DELETE",
-    headers: getAuthHeader()
   });
 };
 

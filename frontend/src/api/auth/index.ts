@@ -2,7 +2,7 @@
  * Auth related API module
  * Provides user registration, login, third-party authentication, etc.
  */
-import { fetchAPI, getAuthHeader } from "../http";
+import { fetchAPI } from "../http";
 
 interface UserRegisterRequest {
   email: string;
@@ -78,7 +78,6 @@ export const bindProvider = async (data: BindRequest): Promise<void> => {
   return fetchAPI<void>("/api/auth/bind", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: getAuthHeader()
   });
 };
 
@@ -89,7 +88,6 @@ export const bindProvider = async (data: BindRequest): Promise<void> => {
 export const unbindProvider = async (provider: string): Promise<void> => {
   return fetchAPI<void>(`/api/auth/bind/${provider}`, {
     method: "DELETE",
-    headers: getAuthHeader()
   });
 };
 
@@ -98,7 +96,5 @@ export const unbindProvider = async (provider: string): Promise<void> => {
  * GET /api/auth/providers
  */
 export const getLinkedProviders = async (): Promise<string[]> => {
-  return fetchAPI<string[]>("/api/auth/providers", {
-    headers: getAuthHeader()
-  });
+  return fetchAPI<string[]>("/api/auth/providers");
 }; 
