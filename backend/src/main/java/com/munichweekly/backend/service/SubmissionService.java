@@ -351,48 +351,4 @@ public class SubmissionService {
         
         return submissions;
     }
-
-    /**
-     * Get all submission entities for migration purposes.
-     * **ADMIN USE ONLY** - For data migration and analysis.
-     * 
-     * @return List of all submission entities
-     */
-    public List<Submission> getAllSubmissionEntities() {
-        logger.info("Retrieving all submission entities for migration analysis");
-        return submissionRepository.findAll();
-    }
-    
-    /**
-     * Update an existing submission entity.
-     * Used primarily for data migration to add dimension information.
-     * 
-     * @param submission The submission entity to update
-     * @return The updated submission
-     */
-    @Transactional
-    public Submission updateSubmission(Submission submission) {
-        if (submission == null || submission.getId() == null) {
-            throw new IllegalArgumentException("Submission and submission ID cannot be null");
-        }
-        
-        // Verify submission exists
-        if (!submissionRepository.existsById(submission.getId())) {
-            throw new IllegalArgumentException("Submission not found with ID: " + submission.getId());
-        }
-        
-        return submissionRepository.save(submission);
-    }
-
-    public SubmissionRepository getSubmissionRepository() {
-        return submissionRepository;
-    }
-
-    public IssueRepository getIssueRepository() {
-        return issueRepository;
-    }
-
-    public UserRepository getUserRepository() {
-        return userRepository;
-    }
 }

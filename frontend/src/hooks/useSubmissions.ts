@@ -4,8 +4,8 @@ import { issuesApi, submissionsApi } from "@/api";
 import { generateMockSubmissions } from "@/utils/mockData";
 
 /**
- * Custom hook for managing submissions data and operations
- * Handles fetching issues and submissions, and performing actions on submissions
+ * Data and mutations for admin submissions (issues list, submissions by issue, actions, ZIP download).
+ * Page-level composition (debug/mock sync, image viewer) lives in useManageSubmissionsOrchestration.
  */
 export function useSubmissions(useMockData: boolean = false, initialIssueId?: number | null) {
   // State for issues and submissions data

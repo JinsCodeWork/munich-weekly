@@ -161,13 +161,19 @@ export default function SubmitPage() {
           contactEmail: anonymousContactEmail.trim() || undefined,
           captchaToken
         });
-        await uploadAnonymousSubmissionFile(res.uploadUrl, res.uploadToken, file);
+        const anonymousUpload = await uploadAnonymousSubmissionFile(res.uploadUrl, res.uploadToken, file);
+        if (anonymousUpload.success !== true || !anonymousUpload.imageUrl.trim()) {
+          throw new Error('Upload did not complete successfully');
+        }
       } else {
         const res = await createSubmission({
           issueId: selectedIssue.id,
           description: description.trim()
         });
-        await uploadFileWithFetch(res.uploadUrl);
+        const authUpload = await uploadFileWithFetch(res.uploadUrl);
+        if (authUpload.success !== true || !authUpload.imageUrl.trim()) {
+          throw new Error('Upload did not complete successfully');
+        }
       }
       
       // 3. Set success state

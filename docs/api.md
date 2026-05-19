@@ -1,182 +1,92 @@
 # API Endpoints
 
-This document provides a comprehensive reference for all API endpoints in the Munich Weekly platform.
+## GalleryIssueAdminController
 
-## 📚 Documentation Navigation
+- **POST** `/api/gallery/admin/configs`
 
-**Security Implementation:** See [Authentication & Security](./auth.md) for complete security details
-
-**Related Documentation:**
-- 🔐 [Security Summary](./security-summary.md) - Security overview and authentication requirements
-- 🤝 [Contributing Guide](./contributing.md) - API development guidelines and workflow
-- 🏠 [Project Overview](../README.md) - Platform features and architecture
-- 🚀 [Deployment Guide](./deployment.md) - Production API configuration
-- 📱 [Frontend Overview](./frontend-overview.md) - Client-side API integration
-- 🛡️ [Privacy Policy](./privacy.md) - Data handling and GDPR compliance
-
-## 🔐 Authentication Requirements
-
-Most endpoints require authentication via JWT token in the Authorization header:
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Public Endpoints:** No authentication required
-- All `/api/auth/**` endpoints (login, register, password reset)
-- `GET /api/issues` - Public issue listing
-- `GET /api/submissions` - Public approved submissions
-- `POST /api/submissions/anonymous` - Create anonymous submission shell (Cloudflare Turnstile; see `POST /api/submissions/anonymous` below)
-- `POST /api/submissions/{id}/anonymous-upload` - One-time image upload for that submission (header `X-Anonymous-Upload-Token`; not a login JWT)
-- Voting endpoints (`/api/votes/**`) - Anonymous voting with `visitorId` cookie
-
-### Anonymous submissions (behavior)
-
-- Unauthenticated users can submit a photo. The backend still creates a **synthetic `users` row** with `accountType = ANONYMOUS_SUBMISSION` so `submissions.user_id` remains a valid foreign key. That account cannot log in, is excluded from `GET /api/users` and normal “registered user” user-management views, and password-reset flows do not apply to it.
-- **Create:** `POST /api/submissions/anonymous` with `issueId`, `description`, `captchaToken` (Turnstile), and optional `contactEmail` (admin contact only, not on public pages).
-- **CAPTCHA:** `captchaToken` is verified with Cloudflare Turnstile (frontend: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, backend: `TURNSTILE_SECRET_KEY`); it is for bot checking only, not session authentication.
-- **Upload:** the create response returns a **short-lived upload token** and upload URL. Send it as `X-Anonymous-Upload-Token` on `POST /api/submissions/{submissionId}/anonymous-upload`. It authorizes a **single** image for that submission and does not grant `Authorization: Bearer` access to the rest of the API.
-- **Public listing:** `GET /api/submissions?issueId=…` shows nickname `Anonymous` for these rows. **Gallery/featured** responses use `authorName` `"Anonymous"` and may set `authorId` to `null` for anonymous authors. **Admin** listing responses include `anonymousSubmission` and optional `anonymousContactEmail`.
-
-**Authenticated Endpoints:** Require valid JWT token
-- User management (`/api/users/**`)
-- Submission management (POST, PATCH, DELETE)
-- Account operations
-
-**Admin-Only Endpoints:** Require admin role
-- User administration
-- Submission approval/rejection
-- **Issue management** (create, edit, get details)
-
-For detailed security implementation, see [Authentication & Security](./auth.md).
-
-## UserController
-
-- **POST** `/api/users/change-password`
-  > Change the authenticated user's password.
-
-  > **Params**: `ChangePasswordRequestDTO dto`
-- **DELETE** `/api/users/me`
-  > Delete the currently authenticated user and all their data.
-- **GET** `/api/users`
-  > Get a list of all users. Admin only. Excludes internal `ANONYMOUS_SUBMISSION` accounts (synthetic users created only to hold anonymous submissions).
-- **GET** `/api/users/me`
-  > Get the profile of the currently authenticated user. Requires JWT token.
-- **PATCH** `/api/users/me`
-  > Update the authenticated user's nickname and avatar.
-
-  > **Params**: `UserUpdateRequestDTO dto`
-
-## VoteController
-
-- **POST** `/api/votes`
-  > Submit a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
-
-  > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
-- **DELETE** `/api/votes`
-  > Cancel/delete a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
-
-  > **Params**: `Long submissionId, String visitorId`
-- **GET** `/api/votes/check`
-  > Check if current user has voted for a submission.
-
-  > **Params**: `Long submissionId, String visitorId`
-- **GET** `/api/votes/check-batch`
-  > Batch check vote status for multiple submissions. Optimizes performance by reducing API calls from N to 1.
-
-  > **Params**: `List<Long> submissionIds, String visitorId`
-  
-  > **Response**: 
-  > ```json
-  > {
-  >   "votedSubmissionIds": [123, 456, 789]
-  > }
-  > ```
-
-## SubmissionController
-
-- **POST** `/api/submissions`
-  > Submit a new photo to a specific issue. Requires authentication.
-
-  > **Note:** `description` is required; maximum length **2000** characters.
-
-  > **Params**: `SubmissionRequestDTO dto`
-- **POST** `/api/submissions/anonymous`
-  > Create an anonymous submission shell. Requires CAPTCHA verification and returns a short-lived upload token.
-
-  > **Note:** `description` is required; maximum length **2000** characters (validated with `@Valid`).
-
-  > **Request**:
-  > ```json
-  > {
-  >   "issueId": 12,
-  >   "description": "A short photo description",
-  >   "contactEmail": "optional@example.com",
-  >   "captchaToken": "turnstile-token"
-  > }
-  > ```
-
-  > **Response**:
-  > ```json
-  > {
-  >   "submissionId": 123,
-  >   "uploadUrl": "/api/submissions/123/anonymous-upload",
-  >   "uploadToken": "short-lived-upload-token"
-  > }
-  > ```
-  > **Configuration**: frontend requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; backend requires `TURNSTILE_SECRET_KEY`.
-- **PATCH** `/api/submissions/{id}/approve`
-  > Approve a submission by ID. Admin only.
-
-  > **Params**: `Long id`
-- **PATCH** `/api/submissions/{id}/reject`
-  > Reject a submission by ID. Admin only.
-
-  > **Params**: `Long id`
-- **PATCH** `/api/submissions/{id}/select`
-  > Select a submission as featured. Admin only. Multiple submissions can be selected for the same issue.
-
-  > **Params**: `Long id`
-- **GET** `/api/submissions/download-selected/{issueId}`
-  > Download all selected submissions for an issue as a ZIP file. Admin only. 
-  > 
-  > Downloads original uncompressed images directly from storage (bypassing CDN optimization).
-  > Files are renamed for better organization: `001_UserNickname_SubmissionId.jpg`
-  > Includes a summary text file with submission details.
+  > **Params**: `GalleryIssueConfigRequestDTO requestDTO`
+- **GET** `/api/gallery/admin/issues/{issueId}/selected`
 
   > **Params**: `Long issueId`
-  
-  > **Response**: ZIP file download with filename format: `{IssueTitle}_selected_submissions.zip`
-  
-  > **Errors**: 
-  > - `404`: Issue not found
-  > - `204`: No selected submissions found for this issue
-- **DELETE** `/api/submissions/{id}`
-  > Delete a submission by ID. User can only delete their own submissions.
+- **GET** `/api/gallery/admin/issues/available`
+- **PUT** `/api/gallery/admin/issues/{issueId}`
+
+  > **Params**: `Long issueId, GalleryIssueConfigRequestDTO requestDTO`
+- **DELETE** `/api/gallery/admin/issues/{issueId}`
+
+  > **Params**: `Long issueId`
+- **GET** `/api/gallery/admin/issues/{issueId}`
+
+  > **Params**: `Long issueId`
+- **PUT** `/api/gallery/admin/issues/{issueId}/order`
+
+  > **Params**: `Long issueId, List orderRequests`
+- **POST** `/api/gallery/admin/issues/{issueId}/cover`
+
+  > **Params**: `Long issueId, MultipartFile file`
+- **GET** `/api/gallery/admin/configs`
+
+## AdminMigrationController
+
+
+  > **Params**: `Submission arg0`
+
+  > **Params**: `List batch`
+
+  > **Params**: `List batch`
+
+  > **Params**: `int batchSize, int delayMs, Long issueId`
+
+  > **Params**: `int batchSize, int delayMs, Long issueId`
+- **GET** `/api/admin/migration/status`
+- **GET** `/api/admin/migration/remigration/status`
+- **GET** `/api/admin/migration/analyze`
+
+  > **Params**: `Long issueId`
+- **POST** `/api/admin/migration/start`
+
+  > **Params**: `int batchSize, int delayMs, Long issueId`
+- **POST** `/api/admin/migration/remigration/start`
+
+  > **Params**: `int batchSize, int delayMs, Long issueId`
+- **POST** `/api/admin/migration/stop`
+- **POST** `/api/admin/migration/remigration/stop`
+
+  > **Params**: `Submission arg0`
+
+  > **Params**: `int arg0, int arg1, Long arg2`
+
+  > **Params**: `int arg0, int arg1, Long arg2`
+
+## PromotionController
+
+- **GET** `/api/promotion/admin/configs`
+- **GET** `/api/promotion/admin/config/{id}`
 
   > **Params**: `Long id`
-- **GET** `/api/submissions`
-  > Get approved submissions for a specific issue (public endpoint)
+- **GET** `/api/promotion/admin/config`
+- **PUT** `/api/promotion/admin/config`
 
-  > **Query Params**: `issueId` (required)
-  
-  > **Response**: ✨ **ENHANCED** with stored image dimensions
-  > ```json
-  > [
-  >   {
-  >     "id": 10,
-  >     "imageUrl": "https://img.munichweekly.art/uploads/issues/1/submissions/1_10_20250606-182805.jpg",
-  >     "description": "Photo description",
-  >     "nickname": "User123",
-  >     "submittedAt": "2024-01-01T12:00:00",
-  >     "voteCount": 42,
-  >     "imageWidth": 3648,     // ✨ NEW: Stored image width
-  >     "imageHeight": 5472,    // ✨ NEW: Stored image height
-  >     "aspectRatio": 0.666667 // ✨ NEW: Precomputed aspect ratio
-  >   }
-  > ]
-  > ```
-  
-  > **Performance**: Eliminates need for client-side dimension calculation
+  > **Params**: `PromotionConfigRequestDTO requestDTO`
+- **GET** `/api/promotion/admin/images`
+
+  > **Params**: `Long configId`
+- **POST** `/api/promotion/admin/images`
+
+  > **Params**: `PromotionImageRequestDTO requestDTO`
+- **POST** `/api/promotion/admin/images/{imageId}/upload`
+
+  > **Params**: `Long imageId, MultipartFile file`
+- **DELETE** `/api/promotion/admin/images/{imageId}`
+
+  > **Params**: `Long imageId`
+- **DELETE** `/api/promotion/admin/config/{id}`
+
+  > **Params**: `Long id`
+- **GET** `/api/promotion/config`
+- **GET** `/api/promotion/page/{pageUrl}`
+
+  > **Params**: `String pageUrl`
 
 ## AuthController
 
@@ -205,174 +115,30 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
 ## FileUploadController
 
+
+  > **Params**: `MultipartFile file, LocalStorageService localService`
 - **POST** `/api/submissions/{submissionId}/upload`
-  > Upload an image file for a specific submission. The image will be stored in local or cloud storage based on the environment, and the submission's imageUrl will be updated.
+  > Upload an image file for a specific submission with dimension optimization. The image will be stored and its dimensions captured for improved layout performance.
 
   > **Params**: `String submissionId, MultipartFile file`
 - **POST** `/api/submissions/{submissionId}/anonymous-upload`
-  > Upload an image file for an anonymous submission. Requires header `X-Anonymous-Upload-Token` with the short-lived token from `POST /api/submissions/anonymous`. Succeeds only while the submission has no image yet (one upload per submission). This header is for upload authorization only; it does not replace JWT login for other APIs.
+  > Upload an image for an anonymous submission using a short-lived upload token.
 
-  > **Params**: `String submissionId, MultipartFile file`
-  > **Header**: `X-Anonymous-Upload-Token: <uploadToken>`
-- **POST** `/api/submissions/admin/upload-hero`
-  > Upload hero image for homepage. Admin only. The image will be saved as /uploads/hero.jpg, replacing any existing file.
+  > **Params**: `String submissionId, String uploadToken, MultipartFile file`
+- **POST** `/api/submissions/admin/upload`
+  > Admin upload interface for static resources such as homepage images
 
-  > **Params**: `MultipartFile file`
+  > **Params**: `MultipartFile file, String path, String filename`
 - **GET** `/api/submissions/{submissionId}/check-image`
 
   > **Params**: `String submissionId`
 - **GET** `/api/submissions/{submissionId}/direct-image`
 
   > **Params**: `String submissionId`
+- **POST** `/api/submissions/admin/upload-hero`
+  > Upload hero image for homepage. The image will be saved as /uploads/hero.jpg, replacing any existing file.
 
-  > **Params**: `String arg0`
-
-  > **Params**: `String arg0`
-
-  > **Params**: `String arg0`
-
-## IssueController
-
-- **GET** `/api/issues`
-  > Get all issues in the system (public endpoint - no authentication required)
-
-- **GET** `/api/issues/{id}`
-  > Get a specific issue by ID. Admin only.
-
-  > **Params**: `Long id`
-  
-  > **Response**: Issue object with all details including title, description, and time periods
-
-- **POST** `/api/issues`
-  > Create a new issue. Admin only. Accepts title, description, and submission/voting periods
-
-  > **Params**: `IssueCreateRequestDTO dto`
-  
-  > **Request Body**:
-  > ```json
-  > {
-  >   "title": "Weekly Issue Title",
-  >   "description": "Issue description and guidelines",
-  >   "submissionStart": "2024-01-01T00:00:00",
-  >   "submissionEnd": "2024-01-07T23:59:59",
-  >   "votingStart": "2024-01-08T00:00:00",
-  >   "votingEnd": "2024-01-14T23:59:59"
-  > }
-  > ```
-
-- **PUT** `/api/issues/{id}`
-  > Update an existing issue. Admin only. Allows editing title, description, and all time periods
-
-  > **Params**: `Long id, IssueUpdateRequestDTO dto`
-  
-  > **Request Body**: Same format as create, all fields are editable
-  
-  > **Validation**: Ensures logical time ordering (submission before voting, start before end dates)
-
-## SubmissionController ✨ **ENHANCED**
-
-- **GET** `/api/submissions`
-  > Get approved submissions for a specific issue (public endpoint)
-
-  > **Query Params**: `issueId` (required)
-  
-  > **Response**: ✨ **ENHANCED** with stored image dimensions
-  > ```json
-  > [
-  >   {
-  >     "id": 10,
-  >     "imageUrl": "https://img.munichweekly.art/uploads/issues/1/submissions/1_10_20250606-182805.jpg",
-  >     "description": "Photo description",
-  >     "nickname": "User123",
-  >     "submittedAt": "2024-01-01T12:00:00",
-  >     "voteCount": 42,
-  >     "imageWidth": 3648,     // ✨ NEW: Stored image width
-  >     "imageHeight": 5472,    // ✨ NEW: Stored image height
-  >     "aspectRatio": 0.666667 // ✨ NEW: Precomputed aspect ratio
-  >   }
-  > ]
-  > ```
-  
-  > **Performance**: Eliminates need for client-side dimension calculation
-
-## AdminMigrationController ✨ **NEW**
-
-**Admin-only endpoints for managing image dimension data migration**
-
-- **GET** `/api/admin/migration/analyze`
-  > Analyze submissions requiring dimension migration. Returns statistics without executing migration.
-
-  > **Authorization**: Admin JWT token required
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "totalSubmissions": 150,
-  >   "submissionsWithDimensions": 120,
-  >   "submissionsNeedingMigration": 30,
-  >   "optimizationPercentage": 80.0,
-  >   "estimatedDuration": "5-10 minutes"
-  > }
-  > ```
-
-- **POST** `/api/admin/migration/start`
-  > Begin dimension migration for submissions without stored dimensions
-
-  > **Authorization**: Admin JWT token required
-  
-  > **Request Body**:
-  > ```json
-  > {
-  >   "batchSize": 10,        // 1-20 submissions per batch
-  >   "delaySeconds": 5       // 1-30 seconds delay between batches
-  > }
-  > ```
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "message": "Migration started successfully",
-  >   "migrationId": "mig_20240101_120000",
-  >   "estimatedCompletion": "2024-01-01T12:10:00"
-  > }
-  > ```
-
-- **POST** `/api/admin/migration/stop`
-  > Stop active migration process safely
-
-  > **Authorization**: Admin JWT token required
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "message": "Migration stopped successfully",
-  >   "processed": 25,
-  >   "remaining": 5,
-  >   "finalStatus": "STOPPED_BY_ADMIN"
-  > }
-  > ```
-
-- **GET** `/api/admin/migration/status`
-  > Get real-time migration status and progress
-
-  > **Authorization**: Admin JWT token required
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "isActive": true,
-  >   "progress": {
-  >     "totalItems": 30,
-  >     "processedItems": 15,
-  >     "successCount": 14,
-  >     "failureCount": 1,
-  >     "percentageComplete": 50.0
-  >   },
-  >   "currentBatch": 3,
-  >   "estimatedTimeRemaining": "00:05:30",
-  >   "lastProcessedAt": "2024-01-01T12:05:30"
-  > }
-  > ```
+  > **Params**: `MultipartFile file`
 
 ## PasswordResetController
 
@@ -383,484 +149,155 @@ For detailed security implementation, see [Authentication & Security](./auth.md)
 
   > **Params**: `ForgotPasswordRequestDTO dto`
 
-## Gallery API ✨ **NEW**
-
-**Base URL**: `/api/gallery`
-
-**Authentication**: Some endpoints require admin authentication
-
-### Public Gallery Endpoints
+## GalleryController
 
 - **GET** `/api/gallery/featured`
-> Get currently featured submissions for homepage carousel (public endpoint). Anonymous authors are returned with `authorName` `"Anonymous"` and `authorId` may be `null`.
-
-**Response**:
-```json
-{
-  "submissions": [
-    {
-      "id": 123,
-      "imageUrl": "/uploads/image.jpg",
-      "title": "Sunset at English Garden",
-      "authorName": "John Doe",
-      "issueTitle": "Munich Streets - January 2024",
-      "description": "A beautiful sunset...",
-      "displayOrder": 1
-    }
-  ]
-}
-```
-
 - **GET** `/api/gallery/stats`
-> Get gallery statistics (public endpoint)
-
-**Response**:
-```json
-{
-  "totalFeaturedSubmissions": 5,
-  "lastUpdated": "2024-01-15T10:30:00Z"
-}
-```
-
-### Gallery Issue Management ✨ **NEW**
-
-- **GET** `/api/gallery/issues`
-> Get all published gallery issues with cover images and submission counts (public endpoint)
-
-**Response**:
-```json
-[
-  {
-    "id": 1,
-    "issue": {
-      "id": 44,
-      "title": "Munich Streets - January 2024",
-      "description": "Capturing urban life...",
-      "submissionStart": "2024-01-01T00:00:00Z",
-      "submissionEnd": "2024-01-15T23:59:59Z",
-      "votingStart": "2024-01-16T00:00:00Z",
-      "votingEnd": "2024-01-31T23:59:59Z"
-    },
-    "coverImageUrl": "/uploads/covers/issue-44.jpg",
-    "isPublished": true,
-    "displayOrder": 1,
-    "submissionCount": 12
-  }
-]
-```
-
-- **GET** `/api/gallery/issues/{issueId}/submissions`
-> Get ordered submissions for a specific gallery issue (public endpoint)
-
-**Response**:
-```json
-[
-  {
-    "id": 123,
-    "title": "Sunset Photography",
-    "description": "Beautiful sunset captured...",
-    "imageUrl": "/uploads/submissions/image.jpg",
-    "authorName": "John Doe",
-    "submittedAt": "2024-01-10T15:30:00Z",
-    "displayOrder": 1,
-    "status": "cover",
-    "aspectRatio": 1.777
-  }
-]
-```
-
-- **GET** `/api/gallery/issues/{issueId}`
-> Get gallery issue configuration with metadata (public endpoint)
-
-**Response**:
-```json
-{
-  "issue": {
-    "id": 44,
-    "title": "Munich Streets - January 2024",
-    "description": "Capturing urban life and architecture",
-    "submissionStart": "2024-01-01T00:00:00Z",
-    "submissionEnd": "2024-01-15T23:59:59Z",
-    "votingStart": "2024-01-16T00:00:00Z",
-    "votingEnd": "2024-01-31T23:59:59Z"
-  },
-  "coverImageUrl": "/uploads/covers/issue-44.jpg",
-  "isPublished": true,
-  "submissionCount": 12,
-  "success": true
-}
-```
-
-### Admin Gallery Issue Management
-
-- **GET** `/api/gallery/admin/issues`
-> Get all gallery issue configurations (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-[
-  {
-    "id": 1,
-    "issue": {
-      "id": 44,
-      "title": "Munich Streets - January 2024"
-    },
-    "coverImageUrl": "/uploads/covers/issue-44.jpg",
-    "isPublished": true,
-    "displayOrder": 1
-  }
-]
-```
-
-- **GET** `/api/gallery/admin/issues/available`
-> Get available issues that can be added to gallery (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-[
-  {
-    "id": 45,
-    "title": "Winter Landscapes - February 2024",
-    "selectedSubmissionCount": 8
-  }
-]
-```
-
-- **POST** `/api/gallery/admin/issues`
-> Create new gallery issue configuration (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Request Body**:
-```json
-{
-  "issueId": 45,
-  "isPublished": true
-}
-```
-
-**Response**:
-```json
-{
-  "message": "Gallery issue configuration created successfully",
-  "configId": 2
-}
-```
-
-- **PUT** `/api/gallery/admin/issues/{issueId}`
-> Update gallery issue configuration (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Request Body**:
-```json
-{
-  "issueId": 45,
-  "isPublished": false
-}
-```
-
-**Response**:
-```json
-{
-  "message": "Gallery issue configuration updated successfully"
-}
-```
-
-- **DELETE** `/api/gallery/admin/issues/{issueId}`
-> Delete gallery issue configuration (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-{
-  "message": "Gallery issue configuration deleted successfully"
-}
-```
-
-- **POST** `/api/gallery/admin/issues/{issueId}/cover`
-> Upload cover image for gallery issue (admin only)
-
-**Headers**: 
-- `Authorization: Bearer <jwt_token>`
-- `Content-Type: multipart/form-data`
-
-**Request**: Form data with `file` field containing image
-
-**Response**:
-```json
-{
-  "message": "Cover image uploaded successfully",
-  "imageUrl": "/uploads/covers/issue-45.jpg"
-}
-```
-
-- **PUT** `/api/gallery/admin/issues/{issueId}/submissions/order`
-> Update submission display order for gallery issue (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Request Body**:
-```json
-{
-  "orderUpdates": [
-    {
-      "submissionId": 123,
-      "displayOrder": 1
-    },
-    {
-      "submissionId": 124,
-      "displayOrder": 2
-    }
-  ]
-}
-```
-
-**Response**:
-```json
-{
-  "message": "Submission order updated successfully"
-}
-```
-
-### Gallery Featured Carousel Management
-
 - **GET** `/api/gallery/featured/config`
-> Get current active gallery configuration (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-{
-  "id": 1,
-  "title": "Winter Collection 2024",
-  "description": "Beautiful winter photography",
-  "isActive": true,
-  "submissions": [
-    {
-      "id": 123,
-      "imageUrl": "/uploads/image.jpg",
-      "title": "Snow in Munich",
-      "authorName": "Jane Smith",
-      "displayOrder": 1
-    }
-  ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "updatedAt": "2024-01-15T12:45:00Z"
-}
-```
-
 - **GET** `/api/gallery/featured/configs`
-> Get all gallery configurations (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-[
-  {
-    "id": 1,
-    "title": "Winter Collection 2024",
-    "isActive": true,
-    "submissionCount": 5,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
-
 - **POST** `/api/gallery/featured/config`
-> Create or update gallery configuration (admin only)
 
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Request Body**:
-```json
-{
-  "title": "Spring Collection 2024",
-  "description": "Fresh spring photography",
-  "submissionIds": [123, 124, 125]
-}
-```
-
-**Response**:
-```json
-{
-  "id": 2,
-  "message": "Gallery configuration saved successfully",
-  "isActive": true
-}
-```
-
-- **DELETE** `/api/gallery/featured/config/{id}`
-> Delete gallery configuration (admin only)
-
-**Headers**: `Authorization: Bearer <jwt_token>`
-
-**Response**:
-```json
-{
-  "message": "Gallery configuration deleted successfully",
-  "deletedConfigId": 2
-}
-```
-
-### Gallery Submission Management
-
+  > **Params**: `GalleryFeaturedConfigDto configDto`
 - **GET** `/api/gallery/submissions/{id}/preview`
-> Get submission preview for gallery configuration
 
-**Response**:
-```json
-{
-  "id": 123,
-  "imageUrl": "/uploads/image.jpg",
-  "title": "Beautiful Sunset",
-  "authorName": "John Doe",
-  "issueTitle": "Munich Streets",
-  "isAlreadyFeatured": false
-}
-```
+  > **Params**: `Long id`
+- **DELETE** `/api/gallery/featured/config/{id}`
 
+  > **Params**: `Long id`
+- **GET** `/api/gallery/debug/auth`
 - **GET** `/api/gallery/submissions/{id}/featured-status`
-> Check if submission is featured in active configuration
 
-**Response**:
-```json
-{
-  "submissionId": 123,
-  "isFeatured": true,
-  "featuredInConfig": "Winter Collection 2024"
-}
-```
+  > **Params**: `Long id`
 
-## Promotion API
+## UserController
 
-Endpoints for managing and viewing promotions.
+- **POST** `/api/users/change-password`
+  > Change the authenticated user's password.
 
-### Public Endpoints
+  > **Params**: `ChangePasswordRequestDTO dto`
+- **DELETE** `/api/users/me`
+  > Delete the currently authenticated user and all their data.
+- **GET** `/api/users`
+  > Get a list of all users. Admin only.
+- **GET** `/api/users/me`
+  > Get the profile of the currently authenticated user. Requires JWT token.
+- **PATCH** `/api/users/me`
+  > Update the authenticated user's nickname and avatar.
 
-- `GET /api/promotion/config`: Retrieves the currently enabled promotion configuration for the navigation link.
-- `GET /api/promotion/page/{pageUrl}`: Retrieves the full content (config and images) for a public promotion page.
+  > **Params**: `UserUpdateRequestDTO dto`
 
-### Admin Endpoints
+## VoteController
 
-All admin endpoints require `admin` authority and are prefixed with `/api/promotion/admin`.
+- **POST** `/api/votes`
+  > Submit a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
 
-- `GET /configs`: Get a list of all promotion configurations.
-- `GET /config/{id}`: Get a specific promotion configuration by its ID.
-- `PUT /config`: Create or update a promotion configuration.
-- `DELETE /config/{id}`: Delete a promotion configuration and its associated images.
-- `GET /images?configId={id}`: Get all images for a specific configuration.
-- `POST /images`: Create a new image record.
-- `POST /images/{imageId}/upload`: Upload a file for an image record.
-- `DELETE /images/{imageId}`: Delete an image record and its file.
+  > **Params**: `Long submissionId, String visitorId, HttpServletRequest request`
+- **GET** `/api/votes/check`
+  > Check if current user has voted for a submission.
 
----
+  > **Params**: `Long submissionId, String visitorId`
+- **DELETE** `/api/votes`
+  > Cancel a vote for a submission. Uses userId for authenticated users, visitorId for anonymous users.
 
-## Frontend API Endpoints
+  > **Params**: `Long submissionId, String visitorId`
+- **GET** `/api/votes/check-batch`
+  > Batch check if current user has voted for multiple submissions. Performance optimization for vote page.
 
-The frontend also provides its own API routes for configuration management and real-time updates:
+  > **Params**: `String submissionIds, String visitorId`
 
-## Configuration Controller
+  > **Params**: `Long arg0`
 
-- **GET** `/frontend-api/config`
-  > Get homepage configuration (public endpoint). Supports ETag caching and force refresh.
-  
-  > **Query Params**: 
-  > - `_t`: Timestamp for cache busting
-  > - `_force`: Set to '1' to force refresh and bypass cache
-  
-  > **Response**: 
-  > ```json
-  > {
-  >   "success": true,
-  >   "config": {
-  >     "heroImage": {
-  >       "imageUrl": "/images/home/hero.jpg",
-  >       "description": "Main description text",
-  >       "imageCaption": "Image caption"
-  >     },
-  >     "lastUpdated": "2024-01-01T00:00:00.000Z"
-  >   }
-  > }
-  > ```
+  > **Params**: `Long arg0`
 
-- **GET** `/frontend-api/admin/config`
-  > Get homepage configuration (admin endpoint). Requires admin authentication.
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Response**: Same as public config endpoint
+  > **Params**: `String arg0`
 
-- **POST** `/frontend-api/admin/config`
-  > Update homepage configuration. Admin only. Triggers real-time updates across all connected clients.
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Body**:
-  > ```json
-  > {
-  >   "heroImage": {
-  >     "imageUrl": "/images/home/hero.jpg",
-  >     "description": "Updated description",
-  >     "imageCaption": "Updated caption"
-  >   }
-  > }
-  > ```
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "success": true,
-  >   "message": "Configuration updated successfully",
-  >   "config": { /* updated config */ }
-  > }
-  > ```
+## LayoutController
 
-## Admin Upload Controller
 
-- **POST** `/frontend-api/admin/upload`
-  > Upload files through frontend proxy to backend. Admin only. Forwards requests to backend API.
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Body**: `FormData` with file and metadata
+  > **Params**: `HttpServletRequest request`
 
-- **POST** `/frontend-api/admin/sync-hero`
-  > Sync hero image from backend to frontend directory. Admin only. Ensures image availability for static serving.
-  
-  > **Headers**: `Authorization: Bearer {jwt_token}`
-  
-  > **Body**:
-  > ```json
-  > {
-  >   "imageUrl": "/uploads/hero.jpg"
-  > }
-  > ```
-  
-  > **Response**:
-  > ```json
-  > {
-  >   "success": true,
-  >   "message": "Hero image synced successfully to frontend",
-  >   "localPath": "/images/home/hero.jpg",
-  >   "sourceType": "backend-file"
-  > }
-  > ```
+  > **Params**: `Long issueId, long startTime`
+- **GET** `/api/layout/order`
+  > Get optimal masonry ordering for hybrid layout approach with enhanced performance
 
-## Real-time Update Features
+  > **Params**: `Long issueId, HttpServletRequest request`
+- **GET** `/api/layout/health`
+  > Health check for layout calculation service
+- **GET** `/api/layout/debug`
+  > Debug endpoint for ordering calculation details - Development only
 
-The frontend API endpoints support real-time content synchronization:
+  > **Params**: `Long issueId, HttpServletRequest request`
 
-- **Event-driven Updates**: Configuration changes trigger custom events for immediate UI updates
-- **Cross-tab Communication**: Uses localStorage events to sync updates across browser tabs  
-- **Cache Management**: Automatic cache busting with version parameters on image URLs
-- **Smart Polling**: 30-second fallback polling for missed events
-- **Error Handling**: Graceful degradation with retry mechanisms
+  > **Params**: `SubmissionResponseDTO arg0`
+
+## SubmissionController
+
+- **POST** `/api/submissions`
+  > Submit a new photo to a specific issue. Requires authentication.
+
+  > **Params**: `SubmissionRequestDTO dto`
+- **PATCH** `/api/submissions/{id}/approve`
+  > Approve a submission by ID. Admin only.
+
+  > **Params**: `Long id`
+- **PATCH** `/api/submissions/{id}/reject`
+  > Reject a submission by ID. Admin only.
+
+  > **Params**: `Long id`
+- **PATCH** `/api/submissions/{id}/select`
+  > Select a submission as featured. Admin only.
+
+  > **Params**: `Long id`
+- **DELETE** `/api/submissions/{id}`
+  > Delete a submission by ID. User can only delete their own submissions.
+
+  > **Params**: `Long id`
+- **POST** `/api/submissions/anonymous`
+  > Submit a new photo anonymously. Requires CAPTCHA verification.
+
+  > **Params**: `AnonymousSubmissionRequestDTO dto`
+- **GET** `/api/submissions`
+  > Get all approved submissions under a given issue, including vote counts.
+
+  > **Params**: `Long issueId`
+- **GET** `/api/submissions/mine`
+  > Get the current user's own submissions, optionally filtered by issue.
+
+  > **Params**: `Long issueId`
+- **GET** `/api/submissions/all`
+  > Get all submissions for an issue, regardless of status. Admin only.
+
+  > **Params**: `Long issueId`
+- **GET** `/api/submissions/download-selected/{issueId}`
+  > Download all selected submissions for an issue as ZIP. Admin only.
+
+  > **Params**: `Long issueId`
+
+## IssueController
+
+- **GET** `/api/issues/{id}`
+  > Get a specific issue by ID - Admin only
+
+  > **Params**: `Long id`
+- **POST** `/api/issues`
+  > Create a new issue. Admin only. Accepts title, description, and submission/voting periods
+
+  > **Params**: `IssueCreateRequestDTO dto`
+- **PUT** `/api/issues/{id}`
+  > Update an existing issue. Admin only. Allows editing all issue fields including title, description, and time periods
+
+  > **Params**: `Long id, IssueUpdateRequestDTO dto`
+- **GET** `/api/issues`
+  > Get all issues in the system
+
+## GalleryIssueController
+
+- **GET** `/api/gallery/issues/{id}`
+
+  > **Params**: `Long id`
+- **GET** `/api/gallery/issues`
+- **GET** `/api/gallery/issues/{id}/submissions`
+
+  > **Params**: `Long id`
+- **GET** `/api/gallery/issues/stats`
 

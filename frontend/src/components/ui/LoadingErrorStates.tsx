@@ -30,7 +30,7 @@ export function LoadingState({
   return (
     <div className={getLoadingContainerStyles({ variant, className })}>
       <div className={getLoadingSpinnerStyles({ variant: spinnerVariant, className: spinnerClassName })}></div>
-      {message && <p className="mt-4 text-gray-500">{message}</p>}
+      {message ? <p className="mt-4 text-gray-500">{message}</p> : null}
     </div>
   );
 }
@@ -38,6 +38,9 @@ export function LoadingState({
 interface ErrorStateProps {
   message: string;
   onRetry?: () => void;
+  onUseMockData?: () => void;
+  showMockDataOption?: boolean;
+  mockDataButtonText?: string;
   variant?: keyof typeof errorContainerVariants;
   className?: string;
   buttonText?: string;
@@ -49,10 +52,15 @@ interface ErrorStateProps {
 export function ErrorState({ 
   message, 
   onRetry, 
+  onUseMockData,
+  showMockDataOption,
+  mockDataButtonText = "Use Mock Data",
   variant = 'default',
   className,
   buttonText = "Retry"
 }: ErrorStateProps) {
+  const showMock = Boolean(showMockDataOption && onUseMockData);
+
   return (
     <div className={getErrorContainerStyles({ variant, className })}>
       <div className="text-red-500 mb-4">
@@ -64,13 +72,19 @@ export function ErrorState({
       </div>
       <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
       <p className="text-red-600 mb-4">{message}</p>
-      {onRetry && (
-        <Button 
-          onClick={onRetry} 
-          variant="danger"
-        >
-          {buttonText}
-        </Button>
+      {(onRetry || showMock) && (
+        <div className="flex flex-wrap justify-center gap-4">
+          {onRetry && (
+            <Button onClick={onRetry} variant="danger">
+              {buttonText}
+            </Button>
+          )}
+          {showMock && (
+            <Button onClick={onUseMockData} variant="secondary">
+              {mockDataButtonText}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

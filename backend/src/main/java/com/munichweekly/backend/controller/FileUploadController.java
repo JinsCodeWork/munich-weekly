@@ -2,10 +2,10 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.FileUploadResponseDTO;
 import com.munichweekly.backend.model.Submission;
-import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.service.StorageService;
 import com.munichweekly.backend.service.R2StorageService;
 import com.munichweekly.backend.service.LocalStorageService;
+import com.munichweekly.backend.service.SubmissionUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,16 +20,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.munichweekly.backend.devtools.annotation.Description;
-import com.munichweekly.backend.security.CurrentUserUtil;
 import com.munichweekly.backend.service.AnonymousUploadTokenService;
-
 /**
  * Enhanced REST controller for handling file uploads with image dimension optimization
  */
@@ -37,21 +36,21 @@ import com.munichweekly.backend.service.AnonymousUploadTokenService;
 @RequestMapping("/api/submissions")
 public class FileUploadController {
 
-    private static final Logger logger = Logger.getLogger(FileUploadController.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(FileUploadController.class);
     private final StorageService storageService;
-    private final SubmissionRepository submissionRepository;
+    private final SubmissionUploadService submissionUploadService;
     private final R2StorageService r2StorageService;  // Direct R2 service for debugging
     private final LocalStorageService localStorageService;
     private final AnonymousUploadTokenService anonymousUploadTokenService;
 
     @Autowired
-    public FileUploadController(StorageService storageService, 
-                               SubmissionRepository submissionRepository,
+    public FileUploadController(StorageService storageService,
+                               SubmissionUploadService submissionUploadService,
                                R2StorageService r2StorageService,
                                LocalStorageService localStorageService,
                                AnonymousUploadTokenService anonymousUploadTokenService) {
         this.storageService = storageService;
-        this.submissionRepository = submissionRepository;
+        this.submissionUploadService = submissionUploadService;
         this.r2StorageService = r2StorageService;
         this.localStorageService = localStorageService;
         this.anonymousUploadTokenService = anonymousUploadTokenService;
@@ -80,10 +79,9 @@ public class FileUploadController {
             logger.info("Looking up submission with ID: " + subId);
             
             // Fetch the submission
-            Submission submission = submissionRepository.findById(subId)
-                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            Submission submission = submissionUploadService.requireSubmission(subId);
 
-            if (!canCurrentUserUploadTo(submission)) {
+            if (!submissionUploadService.currentUserMayUpload(submission)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new FileUploadResponseDTO(false, "You do not have permission to upload to this submission"));
             }
@@ -110,58 +108,46 @@ public class FileUploadController {
                     fileExists = storageService.fileExists(imageUrl);
                     logger.info("File existence check: " + (fileExists ? "File exists" : "File not found"));
                 } catch (Exception e) {
-                    logger.warning("Unable to verify file existence: " + e.getMessage());
+                    logger.warn("Unable to verify file existence: " + e.getMessage());
                 }
                 
                 if (!fileExists) {
-                    logger.warning("Uploaded file could not be verified at URL: " + imageUrl + 
+                    logger.warn("Uploaded file could not be verified at URL: " + imageUrl + 
                                   " but proceeding with database update anyway");
                 }
             } else {
-                logger.severe("Storage service returned empty or null URL");
+                logger.error("Storage service returned empty or null URL");
                 return ResponseEntity.internalServerError()
                         .body(new FileUploadResponseDTO(false, "Storage service returned invalid URL"));
             }
             
-            // **OPTIMIZED: Update submission with URL and dimensions in one operation**
-            submission.setImageUrl(imageUrl);
-            
-            // If dimensions were extracted during upload, store them directly
+            submissionUploadService.applyStoredImageAndSave(submission, storageResult);
             if (storageResult.hasDimensions()) {
-                submission.setImageDimensions(
-                    storageResult.getDimensions().getWidth(), 
-                    storageResult.getDimensions().getHeight()
-                );
-                logger.info("Stored dimensions from upload: " + storageResult.getDimensions());
+                logger.info("Stored dimensions from upload: {}", storageResult.getDimensions());
             } else {
                 logger.info("No dimensions available from upload, submission will use dynamic fetching when needed");
             }
-            
-            // Save the updated submission
-            submissionRepository.save(submission);
-            
+
             logger.info("Enhanced file upload process completed successfully with optimal dimension handling");
             return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
             
         } catch (NumberFormatException e) {
-            logger.severe("Invalid submission ID format: " + submissionId);
+            logger.error("Invalid submission ID format: " + submissionId);
             return ResponseEntity.badRequest().body(
                 new FileUploadResponseDTO(false, "Invalid submission ID: " + submissionId)
             );
         } catch (IllegalStateException e) {
-            logger.warning("Unauthorized file upload: " + e.getMessage());
+            logger.warn("Unauthorized file upload: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new FileUploadResponseDTO(false, e.getMessage()));
         } catch (IllegalArgumentException e) {
-            logger.warning("Invalid file upload: " + e.getMessage());
+            logger.warn("Invalid file upload: " + e.getMessage());
             return ResponseEntity.badRequest().body(new FileUploadResponseDTO(false, e.getMessage()));
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "File upload error: " + e.getMessage(), e);
-            e.printStackTrace();
+            logger.error("File upload error: " + e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "Failed to store file: " + e.getMessage()));
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error during file upload", e);
-            e.printStackTrace();
+            logger.error("Unexpected error during file upload", e);
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "An unexpected error occurred: " + e.getMessage()));
         }
@@ -178,8 +164,7 @@ public class FileUploadController {
             AnonymousUploadTokenService.AnonymousUploadTokenClaims claims =
                     anonymousUploadTokenService.validateToken(uploadToken, subId);
 
-            Submission submission = submissionRepository.findById(subId)
-                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            Submission submission = submissionUploadService.requireSubmission(subId);
 
             if (!submission.getUser().getId().equals(claims.userId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -204,14 +189,7 @@ public class FileUploadController {
                         .body(new FileUploadResponseDTO(false, "Storage service returned invalid URL"));
             }
 
-            submission.setImageUrl(imageUrl);
-            if (storageResult.hasDimensions()) {
-                submission.setImageDimensions(
-                        storageResult.getDimensions().getWidth(),
-                        storageResult.getDimensions().getHeight()
-                );
-            }
-            submissionRepository.save(submission);
+            submissionUploadService.applyStoredImageAndSave(submission, storageResult);
 
             return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
         } catch (NumberFormatException e) {
@@ -227,22 +205,12 @@ public class FileUploadController {
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "Failed to store file: " + e.getMessage()));
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error during anonymous upload", e);
+            logger.error("Unexpected error during anonymous upload", e);
             return ResponseEntity.internalServerError()
                     .body(new FileUploadResponseDTO(false, "An unexpected error occurred during upload"));
         }
     }
 
-    private boolean canCurrentUserUploadTo(Submission submission) {
-        var currentUser = CurrentUserUtil.getUser();
-        if (currentUser == null) {
-            return false;
-        }
-        boolean isOwner = submission.getUser().getId().equals(currentUser.getId());
-        boolean isAdmin = "admin".equals(currentUser.getRole());
-        return isOwner || isAdmin;
-    }
-    
     /**
      * Admin upload interface for static resources such as homepage images
      * 
@@ -311,11 +279,11 @@ public class FileUploadController {
                     fileExists = storageService.fileExists(fileUrl);
                     logger.info("File existence check: " + (fileExists ? "File exists" : "File not found"));
                 } catch (Exception e) {
-                    logger.warning("Unable to verify file existence: " + e.getMessage());
+                    logger.warn("Unable to verify file existence: " + e.getMessage());
                 }
                 
                 if (!fileExists) {
-                    logger.warning("Unable to verify uploaded file at URL: " + fileUrl + ", but continuing with processing");
+                    logger.warn("Unable to verify uploaded file at URL: " + fileUrl + ", but continuing with processing");
                 }
                 
                 // Return success response
@@ -324,26 +292,24 @@ public class FileUploadController {
                 response.put("url", fileUrl);
                 return ResponseEntity.ok(response);
             } else {
-                logger.severe("Storage service returned empty or null URL");
+                logger.error("Storage service returned empty or null URL");
                 response.put("success", false);
                 response.put("error", "Storage service returned invalid URL");
                 return ResponseEntity.internalServerError().body(response);
             }
             
         } catch (IllegalArgumentException e) {
-            logger.warning("Invalid file upload: " + e.getMessage());
+            logger.warn("Invalid file upload: " + e.getMessage());
             response.put("success", false);
             response.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "File upload error: " + e.getMessage(), e);
-            e.printStackTrace();
+            logger.error("File upload error: " + e.getMessage(), e);
             response.put("success", false);
             response.put("error", "Failed to store file: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error during file upload", e);
-            e.printStackTrace();
+            logger.error("Unexpected error during file upload", e);
             response.put("success", false);
             response.put("error", "An unexpected error occurred: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
@@ -364,8 +330,7 @@ public class FileUploadController {
         
         try {
             Long subId = Long.valueOf(submissionId);
-            Submission submission = submissionRepository.findById(subId)
-                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            Submission submission = submissionUploadService.requireSubmission(subId);
             
             String imageUrl = submission.getImageUrl();
             response.put("submissionId", submissionId);
@@ -401,7 +366,7 @@ public class FileUploadController {
                         response.put("lastModified", headResponse.lastModified().toString());
                     }
                 } catch (Exception e) {
-                    logger.warning("Failed to get file metadata: " + e.getMessage());
+                    logger.warn("Failed to get file metadata: " + e.getMessage());
                     response.put("metadata_error", e.getMessage());
                 }
             } else {
@@ -410,7 +375,7 @@ public class FileUploadController {
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error checking image: " + e.getMessage(), e);
+            logger.error("Error checking image: " + e.getMessage(), e);
             response.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -429,12 +394,11 @@ public class FileUploadController {
         
         try {
             Long subId = Long.valueOf(submissionId);
-            Submission submission = submissionRepository.findById(subId)
-                    .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+            Submission submission = submissionUploadService.requireSubmission(subId);
             
             String imageUrl = submission.getImageUrl();
             if (imageUrl == null || imageUrl.isEmpty()) {
-                logger.warning("No image URL found for submission: " + submissionId);
+                logger.warn("No image URL found for submission: " + submissionId);
                 return ResponseEntity.notFound().build();
             }
             
@@ -442,7 +406,7 @@ public class FileUploadController {
             byte[] imageData = r2StorageService.getObjectBytes(imageUrl);
             
             if (imageData == null || imageData.length == 0) {
-                logger.warning("Failed to retrieve image data for URL: " + imageUrl);
+                logger.warn("Failed to retrieve image data for URL: " + imageUrl);
                 return ResponseEntity.notFound().build();
             }
             
@@ -458,7 +422,7 @@ public class FileUploadController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(imageData);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error retrieving image: " + e.getMessage(), e);
+            logger.error("Error retrieving image: " + e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -533,17 +497,17 @@ public class FileUploadController {
             }
             
         } catch (IllegalArgumentException e) {
-            logger.warning("Invalid hero image upload: " + e.getMessage());
+            logger.warn("Invalid hero image upload: " + e.getMessage());
             response.put("success", false);
             response.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Hero image upload error: " + e.getMessage(), e);
+            logger.error("Hero image upload error: " + e.getMessage(), e);
             response.put("success", false);
             response.put("error", "Failed to store hero image: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error during hero image upload", e);
+            logger.error("Unexpected error during hero image upload", e);
             response.put("success", false);
             response.put("error", "An unexpected error occurred: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
@@ -582,7 +546,7 @@ public class FileUploadController {
             return "/uploads/hero." + extension;
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to save hero image locally: " + e.getMessage(), e);
+            logger.error("Failed to save hero image locally: " + e.getMessage(), e);
             throw new IOException("Failed to save hero image: " + e.getMessage(), e);
         }
     }

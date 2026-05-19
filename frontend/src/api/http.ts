@@ -28,6 +28,11 @@ export type FetchAPIOptions = RequestInit & {
    * Default true.
    */
   parseResponseJson?: boolean;
+  /**
+   * When set, called for non-OK responses instead of default {@link parseApiErrorMessage} throwing.
+   * Must throw an Error (or never return).
+   */
+  onHttpError?: (response: Response, responseText: string) => never;
 };
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -137,6 +142,7 @@ export const fetchAPI = async <T>(
     auth = true,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     parseResponseJson = true,
+    onHttpError,
     ...requestInit
   } = options;
 
@@ -162,6 +168,9 @@ export const fetchAPI = async <T>(
     const responseText = await response.text();
 
     if (!response.ok) {
+      if (onHttpError) {
+        onHttpError(response, responseText);
+      }
       throw new Error(parseApiErrorMessage(responseText, response));
     }
 

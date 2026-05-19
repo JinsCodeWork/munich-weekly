@@ -1,6 +1,47 @@
 import { useState } from 'react';
 import { getAuthHeader } from '@/api/http';
 
+const UPLOAD_RETRY_DELAY_MS = 400;
+
+function pickServerErrorMessage(parsed: unknown): string | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+  const o = parsed as Record<string, unknown>;
+  for (const key of ['error', 'message', 'detail'] as const) {
+    const v = o[key];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+function buildUploadHttpErrorMessage(
+  status: number,
+  statusText: string,
+  responseText: string
+): string {
+  const base = `Upload failed: ${status} ${statusText}`;
+  let fromJson: string | null = null;
+  const t = responseText.trim();
+  if (t) {
+    try {
+      fromJson = pickServerErrorMessage(JSON.parse(t) as unknown);
+    } catch {
+      /* body is not JSON */
+    }
+  }
+  if (fromJson) {
+    return `${base} — ${fromJson}`;
+  }
+  if (t) {
+    const snippet = t.length > 300 ? `${t.slice(0, 300)}…` : t;
+    return `${base} — ${snippet}`;
+  }
+  return base;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 interface UploadOptions {
   onProgress?: (progress: number) => void;
   headers?: Record<string, string>;
@@ -86,73 +127,80 @@ export function useFileUpload() {
       // Create FormData object
       const formData = new FormData();
       formData.append('file', file);
-      
-      // Send request
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          ...getAuthHeader()
-        },
-        credentials: 'include'
-      });
-      
+
+      const runAuthenticatedUpload = async () =>
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            ...getAuthHeader()
+          },
+          credentials: 'include'
+        });
+
+      let response = await runAuthenticatedUpload();
+      if (response.status >= 500 && response.status <= 599) {
+        try {
+          await response.text();
+        } catch {
+          /* ignore */
+        }
+        await sleep(UPLOAD_RETRY_DELAY_MS);
+        response = await runAuthenticatedUpload();
+      }
+
       // Handle response
       if (!response.ok) {
-        let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
         let responseText = '';
-        
         try {
           responseText = await response.text();
-
-          try {
-            const errorData = JSON.parse(responseText);
-            if (errorData.error) {
-              errorMessage = errorData.error;
-            }
-          } catch {
-            // Response is not JSON
-          }
         } catch {
-          // Unable to read response content
+          /* Unable to read response content */
         }
-        
-        throw new Error(errorMessage);
+        throw new Error(
+          buildUploadHttpErrorMessage(response.status, response.statusText, responseText)
+        );
       }
-      
-      // Handle successful response
-      let responseText = '';
-      try {
-        responseText = await response.text();
-        
-        // Check if response is empty
-        if (!responseText.trim()) {
-          setUploadProgress(100);
-          return { success: true, message: 'Upload successful, but server did not return any data' };
-        }
-        
-        const result = JSON.parse(responseText);
-        
-        if (!result.success && result.error) {
-          throw new Error(result.error);
-        }
-        
-        setUploadProgress(100);
 
-        if (result.imageUrl) {
-          setUploadedUrl(result.imageUrl);
-        }
-        
-        return result;
-      } catch {
-        // Although parsing failed, HTTP status is successful, so we consider upload successful
-        setUploadProgress(100);
-        return { 
-          success: true, 
-          message: 'Upload successful, but could not parse server response',
-          rawResponse: responseText
-        };
+      // Handle successful response — require explicit success flag and imageUrl
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error(
+          'Upload failed: server returned an empty response and success could not be confirmed'
+        );
       }
+
+      let result: unknown;
+      try {
+        result = JSON.parse(responseText) as unknown;
+      } catch {
+        throw new Error(
+          'Upload failed: server returned a non-JSON response so success could not be confirmed'
+        );
+      }
+
+      if (typeof result !== 'object' || result === null) {
+        throw new Error('Upload failed: invalid JSON response from server');
+      }
+
+      const body = result as Record<string, unknown>;
+      if (body.success !== true) {
+        const msg =
+          pickServerErrorMessage(result) ||
+          (typeof body.error === 'string' ? body.error : null) ||
+          'Upload failed: server did not report success';
+        throw new Error(msg);
+      }
+
+      const imageUrl = body.imageUrl;
+      if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
+        throw new Error('Upload failed: server response missing image URL');
+      }
+
+      setUploadProgress(100);
+      setUploadedUrl(imageUrl);
+
+      return { success: true as const, imageUrl };
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred during upload');
       throw err;

@@ -3,17 +3,13 @@ package com.munichweekly.backend.controller;
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.model.Vote;
-import com.munichweekly.backend.repository.SubmissionRepository;
-import com.munichweekly.backend.repository.VoteRepository;
 import com.munichweekly.backend.service.VoteService;
 import com.munichweekly.backend.security.CurrentUserUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,13 +24,9 @@ public class VoteController {
     private static final Logger logger = LoggerFactory.getLogger(VoteController.class);
 
     private final VoteService voteService;
-    private final SubmissionRepository submissionRepository;
-    private final VoteRepository voteRepository;
 
-    public VoteController(VoteService voteService, SubmissionRepository submissionRepository, VoteRepository voteRepository) {
+    public VoteController(VoteService voteService) {
         this.voteService = voteService;
-        this.submissionRepository = submissionRepository;
-        this.voteRepository = voteRepository;
     }
 
     /**
@@ -62,12 +54,10 @@ public class VoteController {
             return ResponseEntity.badRequest().body("Authentication required: either login or enable cookies for visitorId.");
         }
 
-        Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
+        Submission submission = voteService.requireSubmissionForVote(submissionId);
 
         String ipAddress = request.getRemoteAddr();
 
-        // Vote using either userId or visitorId
         Vote vote;
         if (currentUserId.isPresent()) {
             vote = voteService.voteAsUser(currentUserId.get(), submission, ipAddress);
@@ -77,8 +67,7 @@ public class VoteController {
             logger.info("Anonymous vote successful: visitorId={}, submissionId={}", visitorId, submissionId);
         }
         
-        // Get current vote count
-        int currentVoteCount = voteRepository.findBySubmission(submission).size();
+        int currentVoteCount = voteService.countVotesForSubmission(submission);
         
         // Create response with vote and count
         Map<String, Object> response = new HashMap<>();
@@ -111,8 +100,7 @@ public class VoteController {
             return ResponseEntity.ok(Map.of("voted", false));
         }
 
-        Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
+        Submission submission = voteService.requireSubmissionForVote(submissionId);
 
         boolean voted;
         if (currentUserId.isPresent()) {
@@ -182,49 +170,15 @@ public class VoteController {
             return ResponseEntity.ok(Map.of("statuses", statuses, "totalChecked", submissionIdList.size()));
         }
 
-        // Batch check vote status for all submissions
-        Map<String, Boolean> voteStatuses = new HashMap<>();
-        int checkedCount = 0;
-        
-        for (Long submissionId : submissionIdList) {
-            try {
-                // Find submission (skip if not found)
-                Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
-                if (submissionOpt.isEmpty()) {
-                    logger.debug("Submission not found for batch check: {}", submissionId);
-                    voteStatuses.put(submissionId.toString(), false);
-                    checkedCount++;
-                    continue;
-                }
-                
-                Submission submission = submissionOpt.get();
-                boolean voted;
-                
-                // Check vote status based on authentication type
-                if (currentUserId.isPresent()) {
-                    voted = voteService.hasVotedAsUser(currentUserId.get(), submission);
-                } else {
-                    voted = voteService.hasVoted(visitorId, submission);
-                }
-                
-                voteStatuses.put(submissionId.toString(), voted);
-                checkedCount++;
-                
-            } catch (Exception e) {
-                logger.warn("Error checking vote status for submission {}: {}", submissionId, e.getMessage());
-                // On error, assume not voted
-                voteStatuses.put(submissionId.toString(), false);
-                checkedCount++;
-            }
-        }
-        
-        logger.info("Batch vote status check completed: checked={}/{} submissions, userId={}, visitorId={}", 
-                   checkedCount, submissionIdList.size(), currentUserId.orElse(null), visitorId);
-        
-        // Return batch results
+        VoteService.BatchVoteStatusResult batchResult =
+                voteService.batchVoteStatuses(submissionIdList, currentUserId, Optional.ofNullable(visitorId));
+
+        logger.info("Batch vote status check completed: checked={}/{} submissions, userId={}, visitorId={}",
+                   batchResult.totalChecked(), submissionIdList.size(), currentUserId.orElse(null), visitorId);
+
         Map<String, Object> response = new HashMap<>();
-        response.put("statuses", voteStatuses);
-        response.put("totalChecked", checkedCount);
+        response.put("statuses", batchResult.statuses());
+        response.put("totalChecked", batchResult.totalChecked());
         
         return ResponseEntity.ok(response);
     }
@@ -253,8 +207,7 @@ public class VoteController {
             return ResponseEntity.badRequest().body("Authentication required: either login or enable cookies for visitorId.");
         }
 
-        Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
+        Submission submission = voteService.requireSubmissionForVote(submissionId);
 
         try {
             boolean success;
@@ -272,8 +225,7 @@ public class VoteController {
                          visitorId, submissionId, success);
             }
             
-            // Get updated vote count
-            int updatedVoteCount = voteRepository.findBySubmission(submission).size();
+            int updatedVoteCount = voteService.countVotesForSubmission(submission);
             
             // Create response with success status and updated count
             Map<String, Object> response = new HashMap<>();

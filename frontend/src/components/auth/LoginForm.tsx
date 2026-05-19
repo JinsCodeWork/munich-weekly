@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
 import Link from "next/link"
+import { loginWithEmail } from "@/api/auth"
 
 interface LoginFormProps {
   isOpen: boolean
@@ -55,27 +56,9 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
     setIsSubmitting(true)
 
     try {
-      const res = await fetch("/api/auth/login/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        // Handle specific error types and provide more user-friendly error messages
-        if (data.error === "Invalid Request" && data.message && data.message.includes("Invalid email or password")) {
-          throw new Error("Incorrect email or password")
-        } else if (data.error === "Invalid Request") {
-          throw new Error(data.message || "Login failed. Please check your credentials.")
-        } else {
-          throw new Error(data?.error || data?.message || "Login failed")
-        }
-      }
-
-      const { token } = await res.json()
+      const { token } = await loginWithEmail({ email, password })
       login(token)
-      
+
       // Set success state
       setSuccess(true)
     } catch (err: unknown) {

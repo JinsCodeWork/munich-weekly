@@ -2,6 +2,8 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.service.PromotionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +24,8 @@ import java.util.Optional;
 @RequestMapping("/api/promotion")
 public class PromotionController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PromotionController.class);
+
     private final PromotionService promotionService;
 
     @Autowired
@@ -39,21 +43,20 @@ public class PromotionController {
      */
     @GetMapping("/config")
     public ResponseEntity<PromotionConfigResponseDTO> getPromotionConfig() {
-        System.out.println("=== PromotionController.getPromotionConfig() called ===");
-        
+        logger.debug("PromotionController.getPromotionConfig() called");
+
         try {
             Optional<PromotionConfigResponseDTO> config = promotionService.getEnabledPromotionConfig();
-            
+
             if (config.isPresent()) {
-                System.out.println("Config found: " + config.get());
+                logger.debug("Enabled promotion config present: id={}", config.get().getId());
                 return ResponseEntity.ok(config.get());
             } else {
-                System.out.println("No enabled config found, returning 204");
+                logger.debug("No enabled promotion config, returning 204");
                 return ResponseEntity.noContent().build();
             }
         } catch (Exception e) {
-            System.err.println("Error in getPromotionConfig: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error in getPromotionConfig", e);
             throw e;
         }
     }
@@ -247,9 +250,7 @@ public class PromotionController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            // Log unexpected errors
-            System.err.println("Unexpected error in deletePromotionConfig: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Unexpected error in deletePromotionConfig", e);
             return ResponseEntity.internalServerError().build();
         }
     }

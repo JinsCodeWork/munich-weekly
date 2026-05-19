@@ -2,7 +2,7 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.service.ImageDimensionService;
-import com.munichweekly.backend.service.SubmissionService;
+import com.munichweekly.backend.service.SubmissionMigrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,8 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Admin-only controller for safe production data migration operations
@@ -25,9 +26,9 @@ import java.util.logging.Logger;
 @PreAuthorize("hasAuthority('admin')")
 public class AdminMigrationController {
 
-    private static final Logger logger = Logger.getLogger(AdminMigrationController.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(AdminMigrationController.class);
     
-    private final SubmissionService submissionService;
+    private final SubmissionMigrationService submissionMigrationService;
     private final ImageDimensionService imageDimensionService;
     
     // Migration state tracking
@@ -49,9 +50,9 @@ public class AdminMigrationController {
     private volatile Long currentRemigrationIssueId = null;
 
     @Autowired
-    public AdminMigrationController(SubmissionService submissionService, 
+    public AdminMigrationController(SubmissionMigrationService submissionMigrationService,
                                    ImageDimensionService imageDimensionService) {
-        this.submissionService = submissionService;
+        this.submissionMigrationService = submissionMigrationService;
         this.imageDimensionService = imageDimensionService;
     }
 
@@ -122,12 +123,10 @@ public class AdminMigrationController {
             List<Submission> allSubmissions;
             if (issueId != null) {
                 // Get submissions for specific issue
-                allSubmissions = submissionService.getSubmissionRepository()
-                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
-                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+                allSubmissions = submissionMigrationService.listSubmissionsByIssueId(issueId);
             } else {
                 // Get all submissions
-                allSubmissions = submissionService.getAllSubmissionEntities();
+                allSubmissions = submissionMigrationService.listAllSubmissions();
             }
             
             int totalSubmissions = allSubmissions.size();
@@ -160,7 +159,7 @@ public class AdminMigrationController {
             return ResponseEntity.ok(analysis);
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error analyzing submissions for migration", e);
+            logger.error("Error analyzing submissions for migration", e);
             return ResponseEntity.internalServerError()
                 .body(Map.of("error", "Failed to analyze submissions: " + e.getMessage()));
         }
@@ -211,7 +210,7 @@ public class AdminMigrationController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error starting migration", e);
+            logger.error("Error starting migration", e);
             return ResponseEntity.internalServerError()
                 .body(Map.of("error", "Failed to start migration: " + e.getMessage()));
         }
@@ -263,7 +262,7 @@ public class AdminMigrationController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error starting remigration", e);
+            logger.error("Error starting remigration", e);
             return ResponseEntity.internalServerError()
                 .body(Map.of("error", "Failed to start remigration: " + e.getMessage()));
         }
@@ -331,12 +330,10 @@ public class AdminMigrationController {
             List<Submission> allSubmissions;
             if (issueId != null) {
                 // Get submissions for specific issue
-                allSubmissions = submissionService.getSubmissionRepository()
-                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
-                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+                allSubmissions = submissionMigrationService.listSubmissionsByIssueId(issueId);
             } else {
                 // Get all submissions
-                allSubmissions = submissionService.getAllSubmissionEntities();
+                allSubmissions = submissionMigrationService.listAllSubmissions();
             }
             
             List<Submission> submissionsNeedingMigration = allSubmissions.stream()
@@ -380,7 +377,7 @@ public class AdminMigrationController {
                         Thread.sleep(delayMs);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        logger.warning("Migration interrupted during delay");
+                        logger.warn("Migration interrupted during delay");
                         break;
                     }
                 }
@@ -394,7 +391,7 @@ public class AdminMigrationController {
                        issueId != null ? " (issue " + issueId + ")" : ""));
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error during migration execution", e);
+            logger.error("Error during migration execution", e);
             migrationStatus = "error";
             migrationInProgress = false;
         } finally {
@@ -424,12 +421,10 @@ public class AdminMigrationController {
             List<Submission> allSubmissions;
             if (issueId != null) {
                 // Get submissions for specific issue
-                allSubmissions = submissionService.getSubmissionRepository()
-                    .findByIssue(submissionService.getIssueRepository().findById(issueId)
-                        .orElseThrow(() -> new IllegalArgumentException("Issue not found")));
+                allSubmissions = submissionMigrationService.listSubmissionsByIssueId(issueId);
             } else {
                 // Get ALL submissions for remigration
-                allSubmissions = submissionService.getAllSubmissionEntities();
+                allSubmissions = submissionMigrationService.listAllSubmissions();
             }
             
             remigrationTotalCount = allSubmissions.size();
@@ -469,7 +464,7 @@ public class AdminMigrationController {
                         Thread.sleep(delayMs);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        logger.warning("Remigration interrupted during delay");
+                        logger.warn("Remigration interrupted during delay");
                         break;
                     }
                 }
@@ -483,7 +478,7 @@ public class AdminMigrationController {
                        issueId != null ? " (issue " + issueId + ")" : ""));
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error occurred during remigration execution", e);
+            logger.error("Error occurred during remigration execution", e);
             remigrationStatus = "error";
             remigrationInProgress = false;
         } finally {
@@ -505,21 +500,20 @@ public class AdminMigrationController {
                 if (dimensions != null) {
                     // Update submission with dimensions
                     submission.setImageDimensions(dimensions.getWidth(), dimensions.getHeight());
-                    submissionService.updateSubmission(submission);
+                    submissionMigrationService.updateSubmission(submission);
                     
                     successCount.incrementAndGet();
-                    logger.fine(String.format("Updated dimensions for submission %d: %dx%d", 
+                    logger.debug(String.format("Updated dimensions for submission %d: %dx%d", 
                                submission.getId(), dimensions.getWidth(), dimensions.getHeight()));
                 } else {
                     errorCount.incrementAndGet();
-                    logger.warning(String.format("Could not get dimensions for submission %d: %s", 
+                    logger.warn(String.format("Could not get dimensions for submission %d: %s", 
                                   submission.getId(), submission.getImageUrl()));
                 }
                 
             } catch (Exception e) {
                 errorCount.incrementAndGet();
-                logger.log(Level.WARNING, 
-                          String.format("Error processing submission %d", submission.getId()), e);
+                logger.warn(String.format("Error processing submission %d", submission.getId()), e);
             }
         }
     }
@@ -539,7 +533,7 @@ public class AdminMigrationController {
                 if (dimensions != null) {
                     // Update submission with corrected dimensions
                     submission.setImageDimensions(dimensions.getWidth(), dimensions.getHeight());
-                    submissionService.updateSubmission(submission);
+                    submissionMigrationService.updateSubmission(submission);
                     
                     remigrationSuccessCount.incrementAndGet();
                     logger.info(String.format("Remigrated submission %d dimensions: %dx%d (ratio: %.4f)", 
@@ -547,14 +541,13 @@ public class AdminMigrationController {
                                (double) dimensions.getWidth() / dimensions.getHeight()));
                 } else {
                     remigrationErrorCount.incrementAndGet();
-                    logger.warning(String.format("Could not get dimensions for submission %d: %s", 
+                    logger.warn(String.format("Could not get dimensions for submission %d: %s", 
                                   submission.getId(), submission.getImageUrl()));
                 }
                 
             } catch (Exception e) {
                 remigrationErrorCount.incrementAndGet();
-                logger.log(Level.WARNING, 
-                          String.format("Error processing submission %d remigration", submission.getId()), e);
+                logger.warn(String.format("Error processing submission %d remigration", submission.getId()), e);
             }
         }
     }

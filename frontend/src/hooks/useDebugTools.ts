@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { getAllIssues } from "@/api/issues";
+import { getAllSubmissionsByIssue } from "@/api/submissions";
 
 interface DebugInfo {
   userLoggedIn: boolean;
@@ -47,42 +49,23 @@ export function useDebugTools(token: string | null, selectedIssue: number | null
   const testApiConnection = async () => {
     try {
       setApiTestResult("Testing API connection...");
-      
-      // Test direct API call
-      const response = await fetch("/api/issues", {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        }
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        setApiTestResult(`API test failed: ${response.status} ${response.statusText}\n${text}`);
-        return;
-      }
-      
-      const data = await response.json();
-      setApiTestResult(`API test successful! Received ${data.length} issues.`);
-      
-      // Test submissions API if an issue is selected
+
+      const issues = await getAllIssues();
+      setApiTestResult(`API test successful! Received ${issues.length} issues.`);
+
       if (selectedIssue) {
         try {
-          const submissionsResponse = await fetch(`/api/submissions/all?issueId=${selectedIssue}`, {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : "",
-            }
-          });
-          
-          if (!submissionsResponse.ok) {
-            setApiTestResult(prev => `${prev}\n\nSubmissions API test failed: ${submissionsResponse.status} ${submissionsResponse.statusText}`);
-            return;
-          }
-          
-          const submissionsData = await submissionsResponse.json();
-          setApiTestResult(prev => `${prev}\n\nSubmissions API test successful! Received ${submissionsData.length} submissions.`);
-          console.log("Raw submissions data:", submissionsData);
+          const submissions = await getAllSubmissionsByIssue(selectedIssue);
+          setApiTestResult(
+            (prev) =>
+              `${prev}\n\nSubmissions API test successful! Received ${submissions.length} submissions.`,
+          );
+          console.log("Raw submissions data:", submissions);
         } catch (err) {
-          setApiTestResult(prev => `${prev}\n\nSubmissions API test error: ${err instanceof Error ? err.message : String(err)}`);
+          setApiTestResult(
+            (prev) =>
+              `${prev}\n\nSubmissions API test error: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
     } catch (err) {

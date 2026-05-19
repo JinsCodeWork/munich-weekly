@@ -108,6 +108,39 @@ export const createAnonymousSubmission = async (
   });
 };
 
+function pickAnonymousUploadErrorField(parsed: unknown): string | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const o = parsed as Record<string, unknown>;
+  for (const key of ["error", "message", "detail"] as const) {
+    const v = o[key];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+function buildAnonymousUploadHttpErrorMessage(
+  status: number,
+  statusText: string,
+  responseText: string
+): string {
+  const base = `Upload failed: ${status} ${statusText}`;
+  const t = responseText.trim();
+  let fromJson: string | null = null;
+  if (t) {
+    try {
+      fromJson = pickAnonymousUploadErrorField(JSON.parse(t) as unknown);
+    } catch {
+      /* not JSON */
+    }
+  }
+  if (fromJson) return `${base} — ${fromJson}`;
+  if (t) {
+    const snippet = t.length > 300 ? `${t.slice(0, 300)}…` : t;
+    return `${base} — ${snippet}`;
+  }
+  return base;
+}
+
 /**
  * Upload anonymous submission image with short-lived upload token.
  * POST /api/submissions/{id}/anonymous-upload
@@ -116,7 +149,7 @@ export const uploadAnonymousSubmissionFile = async (
   uploadUrl: string,
   uploadToken: string,
   file: File
-): Promise<{ success: boolean; imageUrl?: string; error?: string }> => {
+): Promise<{ success: true; imageUrl: string }> => {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -129,24 +162,53 @@ export const uploadAnonymousSubmissionFile = async (
     credentials: "include"
   });
 
-  const responseText = await response.text();
-  let data: { success: boolean; imageUrl?: string; error?: string } = { success: response.ok };
-  if (responseText) {
-    try {
-      data = JSON.parse(responseText) as { success: boolean; imageUrl?: string; error?: string };
-    } catch {
-      data = {
-        success: response.ok,
-        error: response.ok ? undefined : responseText
-      };
-    }
+  let responseText = "";
+  try {
+    responseText = await response.text();
+  } catch {
+    /* ignore */
   }
 
-  if (!response.ok || data.error) {
-    throw new Error(data.error || `Upload failed: ${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(
+      buildAnonymousUploadHttpErrorMessage(response.status, response.statusText, responseText)
+    );
   }
 
-  return data;
+  if (!responseText.trim()) {
+    throw new Error(
+      "Upload failed: server returned an empty response and success could not be confirmed"
+    );
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(responseText) as unknown;
+  } catch {
+    throw new Error(
+      "Upload failed: server returned a non-JSON response so success could not be confirmed"
+    );
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error("Upload failed: invalid JSON response from server");
+  }
+
+  const body = parsed as Record<string, unknown>;
+  if (body.success !== true) {
+    throw new Error(
+      pickAnonymousUploadErrorField(parsed) ||
+        (typeof body.error === "string" && body.error.trim()) ||
+        "Upload failed: server did not report success"
+    );
+  }
+
+  const imageUrl = body.imageUrl;
+  if (typeof imageUrl !== "string" || !imageUrl.trim()) {
+    throw new Error("Upload failed: server response missing image URL");
+  }
+
+  return { success: true, imageUrl };
 };
 
 /**

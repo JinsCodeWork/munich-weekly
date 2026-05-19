@@ -9,6 +9,7 @@ import com.munichweekly.backend.service.AnonymousUploadTokenService;
 import com.munichweekly.backend.service.LocalStorageService;
 import com.munichweekly.backend.service.R2StorageService;
 import com.munichweekly.backend.service.StorageService;
+import com.munichweekly.backend.service.SubmissionUploadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class FileUploadControllerAnonymousTest {
         anonymousUploadTokenService = mock(AnonymousUploadTokenService.class);
         controller = new FileUploadController(
                 storageService,
-                submissionRepository,
+                new SubmissionUploadService(submissionRepository),
                 mock(R2StorageService.class),
                 mock(LocalStorageService.class),
                 anonymousUploadTokenService

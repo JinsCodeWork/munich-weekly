@@ -2,15 +2,18 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.IssueCreateRequestDTO;
+import com.munichweekly.backend.dto.IssueResponseDTO;
 import com.munichweekly.backend.dto.IssueUpdateRequestDTO;
 import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.repository.IssueRepository;
 import com.munichweekly.backend.service.IssueService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/issues")
@@ -29,8 +32,10 @@ public class IssueController {
      */
     @Description("Get all issues in the system")
     @GetMapping
-    public List<Issue> getAllIssues() {
-        return issueRepository.findAll();
+    public List<IssueResponseDTO> getAllIssues() {
+        return issueRepository.findAll().stream()
+                .map(IssueResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -39,9 +44,9 @@ public class IssueController {
     @Description("Get a specific issue by ID - Admin only")
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
-    public ResponseEntity<Issue> getIssueById(@PathVariable Long id) {
+    public ResponseEntity<IssueResponseDTO> getIssueById(@PathVariable Long id) {
         Issue issue = issueService.getIssueById(id);
-        return ResponseEntity.ok(issue);
+        return ResponseEntity.ok(IssueResponseDTO.fromEntity(issue));
     }
 
     /**
@@ -51,9 +56,9 @@ public class IssueController {
     @Description("Create a new issue. Admin only. Accepts title, description, and submission/voting periods")
     @PreAuthorize("hasAuthority('admin')")
     @PostMapping
-    public ResponseEntity<Issue> createIssue(@RequestBody IssueCreateRequestDTO dto) {
+    public ResponseEntity<IssueResponseDTO> createIssue(@RequestBody @Valid IssueCreateRequestDTO dto) {
         Issue created = issueService.createIssue(dto);
-        return ResponseEntity.ok(created);
+        return ResponseEntity.ok(IssueResponseDTO.fromEntity(created));
     }
 
     /**
@@ -63,8 +68,8 @@ public class IssueController {
     @Description("Update an existing issue. Admin only. Allows editing all issue fields including title, description, and time periods")
     @PreAuthorize("hasAuthority('admin')")
     @PutMapping("/{id}")
-    public ResponseEntity<Issue> updateIssue(@PathVariable Long id, @RequestBody IssueUpdateRequestDTO dto) {
+    public ResponseEntity<IssueResponseDTO> updateIssue(@PathVariable Long id, @RequestBody @Valid IssueUpdateRequestDTO dto) {
         Issue updated = issueService.updateIssue(id, dto);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(IssueResponseDTO.fromEntity(updated));
     }
 }

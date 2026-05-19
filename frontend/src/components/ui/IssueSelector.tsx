@@ -10,6 +10,10 @@ interface IssueSelectorProps {
   label?: string;
   placeholder?: string;
   showDetails?: boolean;
+  /** When false, the empty first option is omitted. Default true. */
+  includeEmptyOption?: boolean;
+  /** Customize the text shown per `<option>`; defaults to `issue.title`. */
+  formatOptionLabel?: (issue: Issue) => string;
 }
 
 /**
@@ -23,7 +27,9 @@ export function IssueSelector({
   className,
   label = "Select an Issue",
   placeholder = "-- Select an issue --",
-  showDetails = true
+  showDetails = true,
+  includeEmptyOption = true,
+  formatOptionLabel = (issue: Issue) => issue.title
 }: IssueSelectorProps) {
   
   // Sort issues by ID in descending order (newest first)
@@ -31,11 +37,23 @@ export function IssueSelector({
   
   // Handle selection change
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const issueId = parseInt(e.target.value);
+    const raw = e.target.value;
+    if (!raw) {
+      onSelectIssue(null);
+      return;
+    }
+    const issueId = parseInt(raw, 10);
     const selected = sortedIssues.find(issue => issue.id === issueId) || null;
     onSelectIssue(selected);
   };
   
+  const effectiveValue =
+    selectedIssue?.id != null
+      ? selectedIssue.id
+      : includeEmptyOption
+        ? ''
+        : (sortedIssues[0]?.id ?? '');
+
   return (
     <div className={`space-y-4 ${className || ''}`}>
       <div>
@@ -45,13 +63,13 @@ export function IssueSelector({
         <select
           id="issue-select"
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-          value={selectedIssue?.id || ''}
+          value={effectiveValue}
           onChange={handleSelectChange}
         >
-          <option value="">{placeholder}</option>
+          {includeEmptyOption && <option value="">{placeholder}</option>}
           {sortedIssues.map(issue => (
             <option key={issue.id} value={issue.id}>
-              {issue.title}
+              {formatOptionLabel(issue)}
             </option>
           ))}
         </select>

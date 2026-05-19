@@ -3,18 +3,26 @@ import fs from 'fs/promises';
 import path from 'path';
 import { homePageConfig } from '@/lib/config';
 
+const CONFIG_API_DEBUG = process.env.DEBUG_CONFIG_API === '1';
+
+function debugLog(...args: unknown[]) {
+  if (CONFIG_API_DEBUG) {
+    console.log(...args);
+  }
+}
+
 // Get homepage configuration - Public API, no authentication required
 export async function GET(request: NextRequest) {
   try {
-    // Print cookie and header information for debugging
-    console.log('Config API cookies:', [...request.cookies.getAll()].map(c => c.name));
-    console.log('Config API headers:', [...request.headers.entries()].map(([key, value]) => 
+    // Optional debug logging when DEBUG_CONFIG_API=1
+    debugLog('Config API cookies:', [...request.cookies.getAll()].map(c => c.name));
+    debugLog('Config API headers:', [...request.headers.entries()].map(([key, value]) => 
       `${key}: ${key.toLowerCase() === 'authorization' ? 'REDACTED' : value}`));
     
     // Check if force refresh is requested
     const url = new URL(request.url);
     const forceRefresh = url.searchParams.get('_force') === '1';
-    console.log('Force refresh requested:', forceRefresh);
+    debugLog('Force refresh requested:', forceRefresh);
     
     // Try to read configuration from file
     const configPath = path.join(process.cwd(), 'public', 'config', 'homepage.json');
@@ -31,7 +39,7 @@ export async function GET(request: NextRequest) {
     } catch {
       // If file doesn't exist or cannot be parsed, use default configuration
       config = { heroImage: homePageConfig.heroImage };
-      console.log('Configuration file not found, using default configuration');
+      debugLog('Configuration file not found, using default configuration');
     }
     
     // Generate ETag based on content and modification time
@@ -57,7 +65,7 @@ export async function GET(request: NextRequest) {
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       response.headers.set('Pragma', 'no-cache');
       response.headers.set('Expires', '0');
-      console.log('Set no-cache headers for force refresh');
+      debugLog('Set no-cache headers for force refresh');
     } else {
       // Set cache headers and ETag, cache will automatically expire when configuration is updated
       response.headers.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache

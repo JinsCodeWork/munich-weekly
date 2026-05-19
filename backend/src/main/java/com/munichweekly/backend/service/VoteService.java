@@ -3,13 +3,18 @@ package com.munichweekly.backend.service;
 import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.model.Submission;
 import com.munichweekly.backend.model.Vote;
-import com.munichweekly.backend.repository.IssueRepository;
+import com.munichweekly.backend.repository.SubmissionRepository;
 import com.munichweekly.backend.repository.VoteRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -21,12 +26,61 @@ public class VoteService {
     private static final Logger logger = LoggerFactory.getLogger(VoteService.class);
 
     private final VoteRepository voteRepository;
-    private final IssueRepository issueRepository;
+    private final SubmissionRepository submissionRepository;
 
     public VoteService(VoteRepository voteRepository,
-                       IssueRepository issueRepository) {
+                       SubmissionRepository submissionRepository) {
         this.voteRepository = voteRepository;
-        this.issueRepository = issueRepository;
+        this.submissionRepository = submissionRepository;
+    }
+
+    public Submission requireSubmissionForVote(Long submissionId) {
+        return submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
+    }
+
+    public int countVotesForSubmission(Submission submission) {
+        return (int) voteRepository.countBySubmission(submission);
+    }
+
+    /**
+     * Batch vote status check; missing submission yields false per legacy API behavior.
+     */
+    public BatchVoteStatusResult batchVoteStatuses(List<Long> submissionIds,
+                                                   Optional<Long> currentUserId,
+                                                   Optional<String> visitorIdOpt) {
+        Map<String, Boolean> voteStatuses = new HashMap<>();
+        int checkedCount = 0;
+        String visitorId = visitorIdOpt.orElse("");
+
+        for (Long submissionId : submissionIds) {
+            try {
+                Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
+                if (submissionOpt.isEmpty()) {
+                    logger.debug("Submission not found for batch check: {}", submissionId);
+                    voteStatuses.put(submissionId.toString(), false);
+                    checkedCount++;
+                    continue;
+                }
+
+                Submission submission = submissionOpt.get();
+                boolean voted;
+                if (currentUserId.isPresent()) {
+                    voted = hasVotedAsUser(currentUserId.get(), submission);
+                } else {
+                    voted = hasVoted(visitorId, submission);
+                }
+
+                voteStatuses.put(submissionId.toString(), voted);
+                checkedCount++;
+            } catch (Exception e) {
+                logger.warn("Error checking vote status for submission {}: {}", submissionId, e.getMessage());
+                voteStatuses.put(submissionId.toString(), false);
+                checkedCount++;
+            }
+        }
+
+        return new BatchVoteStatusResult(voteStatuses, checkedCount);
     }
 
     /**
@@ -141,13 +195,8 @@ public class VoteService {
 
         Optional<Vote> existingVote = voteRepository.findByVisitorIdAndSubmission(visitorId, submission);
         if (existingVote.isEmpty()) {
-            logger.warn("Cancel vote rejected: no matching vote found, visitorId={}, submissionId={}", 
+            logger.warn("Cancel vote rejected: no matching vote found, visitorId={}, submissionId={}",
                       visitorId, submission.getId());
-            
-            // Try to find if any vote records exist
-            int voteCount = voteRepository.findBySubmission(submission).size();
-            logger.info("Total votes for submission: {}", voteCount);
-            
             throw new IllegalStateException("You have not voted for this submission");
         }
 
@@ -211,7 +260,5 @@ public class VoteService {
         return voted;
     }
 
-    public IssueRepository getIssueRepository() {
-        return issueRepository;
-    }
+    public record BatchVoteStatusResult(Map<String, Boolean> statuses, int totalChecked) {}
 }

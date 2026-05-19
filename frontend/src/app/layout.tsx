@@ -50,8 +50,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable} ${playfair.variable}`}>
-      <body className="font-sans antialiased bg-gray-50 min-h-screen">
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${spaceGrotesk.variable} ${playfair.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased bg-gray-50 min-h-screen" suppressHydrationWarning>
         <DragDropProtection>
           <AuthProvider>
             <MainNav />

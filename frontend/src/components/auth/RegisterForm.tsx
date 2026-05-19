@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { register } from '@/api/auth';
 
 interface RegisterFormProps {
   isOpen: boolean;
@@ -73,26 +74,8 @@ export function RegisterForm({ isOpen, onClose, onLoginClick }: RegisterFormProp
 
     try {
       setIsSubmitting(true);
-      
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, nickname }),
-      });
 
-      if (!res.ok) {
-        const data = await res.json();
-        // Handle specific error types and provide more user-friendly error messages
-        if (data.error === "Invalid Request" && data.message && data.message.includes("Email already registered")) {
-          throw new Error("Email already registered. Please use a different email address.");
-        } else if (data.error === "Invalid Request") {
-          throw new Error(data.message || "Registration failed. Please try again.");
-        } else {
-          throw new Error(data?.error || data?.message || "Registration failed");
-        }
-      }
-
-      const { token } = await res.json();
+      const { token } = await register({ email, password, nickname });
       login(token); // Log in the user
       setSuccess(true); // Set success state
     } catch (err: unknown) {

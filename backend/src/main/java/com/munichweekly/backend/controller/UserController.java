@@ -2,6 +2,8 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.ChangePasswordRequestDTO;
+import com.munichweekly.backend.dto.UserProfileDTO;
+import com.munichweekly.backend.dto.UserSummaryDTO;
 import com.munichweekly.backend.dto.UserUpdateRequestDTO;
 import com.munichweekly.backend.model.User;
 import com.munichweekly.backend.repository.UserRepository;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,8 +34,10 @@ public class UserController {
     @Description("Get a list of all users. Admin only.")
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping
-    public List<User> getAllUsers() {
-        return userRepository.findVisibleAdminUsers();
+    public List<UserSummaryDTO> getAllUsers() {
+        return userRepository.findVisibleAdminUsers().stream()
+                .map(UserSummaryDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -53,12 +58,7 @@ public class UserController {
             return ResponseEntity.status(401).body(Map.of("error", "Not logged in"));
         }
 
-        return ResponseEntity.ok(Map.of(
-                "id", user.getId(),
-                "nickname", user.getNickname(),
-                "email", user.getEmail(),
-                "role", user.getRole()
-        ));
+        return ResponseEntity.ok(UserProfileDTO.fromEntity(user));
     }
 
     /**
@@ -68,9 +68,9 @@ public class UserController {
     @Description("Update the authenticated user's nickname and avatar.")
     @PatchMapping("/me")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public ResponseEntity<User> updateProfile(@RequestBody @Valid UserUpdateRequestDTO dto) {
+    public ResponseEntity<UserProfileDTO> updateProfile(@RequestBody @Valid UserUpdateRequestDTO dto) {
         User updated = userService.updateUserProfile(dto);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(UserProfileDTO.fromEntity(updated));
     }
 
     /**
