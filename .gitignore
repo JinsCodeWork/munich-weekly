@@ -9,6 +9,15 @@ node_modules/
 
 # PostgreSQL 数据库文件（本地挂载目录）
 pgdata/
+**/pgdata/
+pgdata.bak*/
+backend/pgdata.bak*/
+
+# Graphify 知识图谱产物与缓存（本地生成，勿提交）
+graphify-out/
+.graphify_*
+env.graphify.local
+__pycache__/
 
 # 上传文件（如果上传路径在项目里）
 uploads/
