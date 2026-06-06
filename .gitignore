@@ -2,6 +2,7 @@ frontend/node_modules/
 frontend/.next/
 
 # 本地配置文件（不同步到Git）
+.idea/
 frontend/public/config/homepage.json
 frontend/public/images/home/hero.jpg
 # Ignore Node.js dependencies
