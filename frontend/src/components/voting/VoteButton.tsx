@@ -161,7 +161,7 @@ export function VoteButton({
 
     // Otherwise, submit a new vote
     await handleSubmitVote();
-  }, [hasVoted, allowUnvote, isLoading, user, visitorId, handleCancelVote, handleSubmitVote]);
+  }, [hasVoted, allowUnvote, isLoading, handleCancelVote, handleSubmitVote]);
 
   // Determine button appearance based on mobile/desktop
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -238,4 +238,4 @@ export function VoteButton({
       {buttonContent}
     </Button>
   );
-} 
+}
