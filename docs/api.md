@@ -8,6 +8,7 @@
 - **GET** `/api/gallery/admin/issues/{issueId}/selected`
 
   > **Params**: `Long issueId`
+  > Returns selected submission candidates for the issue. Custom admin images are not returned here.
 - **GET** `/api/gallery/admin/issues/available`
 - **PUT** `/api/gallery/admin/issues/{issueId}`
 
@@ -18,12 +19,21 @@
 - **GET** `/api/gallery/admin/issues/{issueId}`
 
   > **Params**: `Long issueId`
+- **GET** `/api/gallery/admin/issues/{issueId}/items`
+
+  > **Params**: `Long issueId`
+  > Returns the ordered mixed gallery item list for admin management. Response includes both `items` and legacy `submissions` keys containing `GallerySubmissionOrderResponseDTO[]`.
 - **PUT** `/api/gallery/admin/issues/{issueId}/order`
 
   > **Params**: `Long issueId, List orderRequests`
+  > Each order request supports `galleryOrderId`, `submissionId`, `itemType`, and `displayOrder`. Submission rows use `itemType=SUBMISSION` and a `submissionId`; custom image rows use `itemType=CUSTOM_IMAGE` and the existing `galleryOrderId`.
 - **POST** `/api/gallery/admin/issues/{issueId}/cover`
 
   > **Params**: `Long issueId, MultipartFile file`
+- **POST** `/api/gallery/admin/issues/{issueId}/custom-images`
+
+  > **Params**: `Long issueId, MultipartFile file, String title, String description`
+  > Uploads an administrator-managed gallery image, extracts dimensions through the storage service, appends it to the issue gallery order, and returns the created `GallerySubmissionOrderResponseDTO` as `item`.
 - **GET** `/api/gallery/admin/configs`
 
 ## AdminMigrationController
@@ -299,5 +309,5 @@
 - **GET** `/api/gallery/issues/{id}/submissions`
 
   > **Params**: `Long id`
+  > Returns ordered gallery items for a published issue. Rows can be `SUBMISSION` items with `submission` details or `CUSTOM_IMAGE` items with `customImage` details.
 - **GET** `/api/gallery/issues/stats`
-

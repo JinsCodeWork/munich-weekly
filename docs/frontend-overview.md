@@ -168,6 +168,7 @@ A comprehensive issue management interface allows administrators to create, view
 - Quick edit buttons in issue lists with modern UI styling
 - Direct navigation to submission management for each issue
 - Comprehensive form validation with user-friendly error messages
+- Admin users access the admin area from the account menu via the **Admin Tool** entry
 
 #### 4.2. Public Voting Page (`/vote`)
 
@@ -241,19 +242,21 @@ Munich Weekly features a comprehensive gallery system with both featured carouse
 **Gallery Issue Management:**
 - **Issue-based Organization**: Display photography issues with automatic ordering by ID (newest first)
 - **Cover Image Management**: Upload and manage cover images for visual appeal with responsive sizing
-- **Submission Ordering**: Admin control over submission display order with hero image designation
+- **Mixed Item Ordering**: Admin control over selected submissions and administrator-managed custom images with hero image designation
+- **Custom Image Upload**: Admins can add non-submission gallery images that store through the same Local/R2 pipeline and display without author attribution
 - **Publication Control**: Draft/published status for controlled content release
 
 **Gallery Issue Display:**
 - **Clean Design**: Minimal interface focusing on photographic content presentation
 - **Hero Presentation**: Large featured images with optimal responsive sizing and minimal margins
-- **Vertical Layout**: Sequential submission display with title and author attribution
+- **Vertical Layout**: Sequential gallery item display with title, description, and submission-only author attribution
 - **Full-screen Viewing**: Advanced image viewer with zoom, pan, and touch gesture support
 
 **Admin Management Interface:**
 - **Issue Configuration**: Create, edit, and delete gallery issue configurations with visual feedback
 - **Cover Upload**: Drag-and-drop cover image management with instant preview and processing
-- **Order Management**: Visual drag-and-drop interface for submission ordering with live preview
+- **Order Management**: Visual drag-and-drop interface for mixed gallery item ordering with live preview
+- **Default Settings Route**: `/account/gallery-settings` opens Issue Management by default, with Featured Carousel available as a separate tab
 - **Publication Toggle**: Instant enable/disable of gallery issues with status indicators
 - **Bulk Operations**: Manage multiple configurations simultaneously with confirmation dialogs
 
@@ -277,10 +280,10 @@ Munich Weekly features a comprehensive gallery system with both featured carouse
 
 **Technical Architecture:**
 - `GalleryIssueCard` component for issue display with hover effects and action buttons
-- `GallerySubmissionCard` component with clean image presentation and attribution
+- `GallerySubmissionCard` component with clean image presentation and attribution for submission items
 - `FeaturedCarousel` component with state management for autoplay and navigation
 - `GalleryImageViewer` extending base `ImageViewer` with gallery-specific features
-- Integration with Gallery API for fetching featured submissions and issue management
+- Integration with Gallery API for fetching featured submissions, issue management, mixed gallery items, and admin custom image uploads
 - Responsive interaction patterns adapting to device capabilities
 
 ### 8. Enhanced Container System & Layout Optimization
@@ -325,6 +328,7 @@ This system provides consistent, professional layouts across all devices while m
 - Unified error handling
 - **Enhanced Issue API**: Full CRUD operations with `getAllIssues()`, `getIssueById()`, `createIssue()`, and `updateIssue()`
 - **Gallery API**: Featured submissions management with `getFeaturedSubmissions()`, `getGalleryStats()`, and admin configuration endpoints
+- **Gallery Issue API**: Issue gallery item management with selected submissions, `CUSTOM_IMAGE` rows, order updates, and custom image uploads
 - **Batch Vote Optimization**: `checkBatchVoteStatus()` reduces N individual requests to 1 batch request
 - **Performance improvements**: 95%+ reduction in vote status API calls
 - JWT authentication integration with automatic token management
@@ -499,4 +503,3 @@ const createNewIssue = async () => {
 3. Ensure code passes TypeScript type checking
 4. Maintain good code comments and documentation
 5. Follow modular API structure for API calls
-

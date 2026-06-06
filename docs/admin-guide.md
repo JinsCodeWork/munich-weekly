@@ -292,19 +292,21 @@ The Gallery system provides comprehensive management for both featured submissio
 ### Gallery Issue Management
 
 **Overview:**
-Admins can manage which issues appear in the public gallery, configure cover images, and control submission display order.
+Admins can manage which issues appear in the public gallery, configure cover images, and control the order of gallery items. Gallery items can be selected user submissions or administrator-managed custom images.
 
 **Key Features:**
 - Issue-based gallery organization with automatic display ordering
 - Cover image upload and management for visual appeal
-- Submission ordering controls for optimal presentation
+- Mixed gallery item ordering for selected submissions and admin custom images
+- Admin custom image upload for non-submission visual material
 - Publication status management for controlled release
 
 #### Accessing Gallery Issue Settings
 
 1. Log in as an admin user
-2. Navigate to "Account" → "Gallery Settings" → "Issues"
-3. View and manage all gallery-enabled issues
+2. Navigate to "Account" -> "Gallery Settings"
+3. The default Gallery Settings page opens Issue Management
+4. View and manage all gallery-enabled issues
 
 #### Creating Gallery Issue Configurations
 
@@ -328,34 +330,43 @@ Admins can manage which issues appear in the public gallery, configure cover ima
 - Fallback gradient design for issues without covers
 - Quick replacement with visual feedback
 
-#### Submission Order Management
+#### Gallery Item Order Management
 
 **Order Control Interface:**
 1. **Access ordering**: Click "Manage Submissions" on any issue
-2. **Drag-and-drop**: Reorder submissions by dragging cards
+2. **Drag-and-drop**: Reorder gallery item cards
 3. **Number input**: Set specific positions using order numbers
-4. **Hero designation**: First submission becomes the featured hero image
+4. **Hero designation**: First gallery item becomes the featured hero image
 5. **Save changes**: Apply new ordering with immediate effect
+
+**Custom Image Upload:**
+1. **Upload Custom Image**: Add an image directly from the ordering screen
+2. **Metadata**: Title and description are optional
+3. **Default title behavior**: Empty titles display as the gallery item's current order number
+4. **Storage**: Images use the same local/R2 storage pipeline as submissions
+5. **Attribution**: Custom images are not treated as photography submissions and do not show submitter or author credits
 
 **Ordering Features:**
 - Visual drag-and-drop interface with live preview
 - Automatic position recalculation for seamless ordering
-- Hero image highlighting for featured submission identification
+- Hero image highlighting for featured item identification
 - Real-time validation and conflict resolution
+- Removal of custom gallery images also removes their stored image file
 
 #### Gallery Issue Display
 
 **Public Gallery Features:**
 - Clean, minimal design focusing on image presentation
 - Hero image with large display and prominent positioning
-- Vertical layout for other submissions with title and author credits
+- Vertical layout for other gallery items with title/description metadata
+- Author attribution for submission items only; custom images display without submitter information
 - Full-screen image viewer with zoom and pan capabilities
 - Responsive design optimizing for both desktop and mobile
 
 **Display Characteristics:**
 - Issue-based organization with automatic navigation
 - Title and description presentation with submission/voting periods
-- Author attribution and copyright information
+- Author attribution and copyright information for submission-based items
 - Progressive image loading with quality optimization
 
 ### Gallery Featured Carousel Management
@@ -365,7 +376,7 @@ The Gallery system allows admins to curate and manage featured submissions that 
 #### Accessing Gallery Settings
 
 1. Log in as an admin user
-2. Navigate to "Account" → "Gallery Settings" → "Featured"
+2. Navigate to "Account" -> "Gallery Settings" -> "Featured"
 3. Configure carousel content and behavior
 
 #### Gallery Configuration Features
@@ -402,6 +413,7 @@ The Gallery system allows admins to curate and manage featured submissions that 
 - **Bulk Operations**: Manage multiple configurations simultaneously
 - **Delete Protection**: Confirmation dialogs for destructive operations
 - **Access Control**: Admin-only access with proper authentication
+- **Admin Entry Point**: Admin users see "Admin Tool" in the account menu; this opens the admin submission-management area
 
 ### Gallery Display Features
 
@@ -410,7 +422,8 @@ The gallery system provides comprehensive presentation features:
 **Gallery Issue Pages:**
 - **Clean Design**: Minimal interface highlighting photographic content
 - **Hero Presentation**: Large featured image with optimal sizing
-- **Metadata Display**: Issue information, submission periods, and author credits
+- **Metadata Display**: Issue information, submission periods, and item metadata
+- **Mixed Items**: Selected submissions and admin-managed custom images can appear in the same ordered gallery
 - **Full-screen Viewing**: Advanced image viewer with zoom and gesture support
 
 **Carousel Features:**
@@ -423,6 +436,7 @@ The gallery system provides comprehensive presentation features:
 - **Database Storage**: Gallery configurations stored in dedicated tables
 - **API Integration**: RESTful endpoints for configuration management
 - **Image Processing**: Automatic optimization and multiple format support
+- **Storage Integration**: Custom gallery images are stored through the same Local/R2 storage abstraction as submissions
 - **Caching Strategy**: Efficient content delivery with cache management
 
 ### Troubleshooting Gallery Issues
@@ -441,4 +455,4 @@ The gallery system provides comprehensive presentation features:
 
 The admin dashboard includes a powerful data migration tool.
 
-Admins can manage user roles, view user details, and manually verify or deactivate accounts. 
+Admins can manage user roles, view user details, and manually verify or deactivate accounts.

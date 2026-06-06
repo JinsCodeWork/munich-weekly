@@ -75,7 +75,7 @@ Welcome to the comprehensive documentation for the Munich Weekly photography pla
 
 ### Admin Features
 - **Data Migration Tools** - Safe batch processing for image dimension optimization
-- **Gallery Management** - Issue-based gallery organization and featured carousel curation
+- **Gallery Management** - Issue-based gallery organization with selected submissions, admin custom images, and featured carousel curation
 - **Performance Monitoring** - Real-time optimization metrics and statistics
 - **Migration Analytics** - Analysis mode to preview migration requirements
 - **Batch Configuration** - Configurable processing sizes and delays
@@ -150,7 +150,7 @@ When updating documentation, ensure:
 - **User Authentication**: Secure JWT-based authentication (login, registration, password reset).
 - **Submission System**: Users can submit photos to active issues.
 - **Voting System**: Users can vote on submissions.
-- **Gallery System** - Issue-based gallery organization with cover images and submission ordering
+- **Gallery System** - Issue-based gallery organization with cover images, selected submissions, and admin custom images
 - **Gallery Carousel System** - Featured submissions with auto-play and full-screen viewing
 - **Promotion Management System**: Admins can create and manage dedicated promotion pages.
 - **Admin Dashboard**: Comprehensive tools for managing users, issues, and submissions.
@@ -161,4 +161,4 @@ When updating documentation, ensure:
 
 ---
 
-*This documentation index provides navigation to all Munich Weekly platform documentation.* 
+*This documentation index provides navigation to all Munich Weekly platform documentation.*

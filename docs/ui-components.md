@@ -358,7 +358,13 @@ The `VoteButton` is a client-side component responsible for handling the user in
 
 ### Gallery Components ✨ **NEW** (`/components/gallery`)
 
-Munich Weekly's featured submissions carousel system for showcasing curated photography:
+Munich Weekly's gallery component system supports both featured submissions carousel content and issue-based galleries.
+
+**Issue Gallery Item Model:**
+- Issue gallery pages render a normalized gallery item shape that can represent a selected submission or an administrator-managed custom image.
+- `SUBMISSION` items include submission metadata and author attribution.
+- `CUSTOM_IMAGE` items include admin-provided image metadata and intentionally omit author attribution.
+- Admin ordering screens use the shared `Button`, `Modal`, and image upload components instead of redefining button behavior locally.
 
 #### `FeaturedCarousel.tsx`
 

@@ -47,6 +47,7 @@ Both storage implementations adhere to the `StorageService` interface:
 ```java
 public interface StorageService {
     String storeFile(MultipartFile file, String issueId, String userId, String submissionId) throws IOException;
+    StorageResult storeFileWithDimensions(MultipartFile file, String issueId, String userId, String submissionId) throws IOException;
     boolean deleteFile(String fileUrl);
     boolean fileExists(String fileUrl);
 }
@@ -241,6 +242,23 @@ POST /api/submissions/{submissionId}/upload
 - **Database storage** - Width, height, aspect ratio persisted permanently  
 - **API optimization** - Dimension data included in submission responses
 - **Frontend efficiency** - Eliminates client-side calculation overhead
+
+### Admin Gallery Custom Image Uploads
+
+Issue galleries can also contain administrator-managed custom images that are not user submissions:
+
+```typescript
+POST /api/gallery/admin/issues/{issueId}/custom-images
+```
+
+**Storage behavior:**
+1. The backend validates the uploaded image through the same storage rules as submissions.
+2. The image is stored with `issueId`, `userId=admin`, and a generated `submissionId` such as `custom-{uuid}`.
+3. `storeFileWithDimensions()` extracts width, height, and aspect ratio during upload.
+4. The resulting URL and dimensions are persisted on the `gallery_submission_order` row.
+5. When a custom image is removed from the gallery order, the associated storage file is deleted through `StorageService.deleteFile()`.
+
+Custom gallery images are admin-managed visual material. They appear in the public gallery without submitter attribution and do not participate in submission ownership or voting workflows.
 
 ### StorageService Enhancement ✨ **NEW**
 
@@ -459,6 +477,8 @@ URLs follow different patterns depending on the storage implementation:
 - **Local Storage**: `/uploads/issues/{issueId}/submissions/{fileName}`
 - **R2 Storage**: `{publicBaseUrl}/issues/{issueId}/submissions/{fileName}`
 
+Submission uploads, gallery cover images, and admin custom gallery images all use this issue-scoped path format. Cover images use `admin_cover` identifiers, while custom gallery images use `admin_custom-{uuid}` identifiers in the generated file name.
+
 ### Error Handling
 
 Both implementations provide robust error handling for common issues:
@@ -600,4 +620,4 @@ The service is primarily used through the admin interface:
 - Navigate to "Account" → "Manage Submissions"
 - Select an issue with submissions marked as "Selected"
 - Click "Download Selected Submissions"
-- ZIP file downloads automatically with original quality images 
+- ZIP file downloads automatically with original quality images

@@ -191,7 +191,8 @@ A comprehensive gallery system with both featured carousel and issue-based organ
 **Gallery Issue Management:**
 - **Issue-based Organization**: Display photography issues with automatic ordering by ID (newest first)
 - **Cover Image Management**: Upload and manage cover images for visual appeal
-- **Submission Ordering**: Admin control over submission display order with hero image designation
+- **Mixed Item Ordering**: Admin control over selected submissions and custom images with hero image designation
+- **Custom Image Upload**: Admin-managed gallery images can be uploaded without creating user submissions
 - **Publication Control**: Draft/published status for controlled content release
 
 **Featured Carousel System:**
@@ -202,20 +203,23 @@ A comprehensive gallery system with both featured carousel and issue-based organ
 
 **Gallery Display Components:**
 - `GalleryIssueCard`: Issue display with cover images and hover effects
-- `GallerySubmissionCard`: Clean image presentation with author attribution
+- `GallerySubmissionCard`: Clean image presentation with author attribution for submission items
 - `FeaturedCarousel`: Homepage carousel with autoplay and navigation
 - `GalleryImageViewer`: Full-screen viewer with gallery-specific metadata
+- Gallery item API utilities normalize `SUBMISSION` and `CUSTOM_IMAGE` rows into shared display data
 
 **Admin Management Features:**
 - **Issue Configuration**: Create, edit, and delete gallery issue configurations
 - **Cover Upload**: Drag-and-drop cover image management with instant preview
-- **Order Management**: Visual drag-and-drop interface for submission ordering
+- **Order Management**: Visual drag-and-drop interface for mixed gallery item ordering
+- **Gallery Settings Routing**: `/account/gallery-settings` redirects to Issue Management, with Featured Carousel available on the Featured tab
 - **Publication Toggle**: Instant enable/disable of gallery issues
 - **Bulk Operations**: Manage multiple configurations simultaneously
 
 **Public Gallery Features:**
 - **Clean Design**: Minimal interface highlighting photographic content
 - **Hero Presentation**: Large featured images with optimal responsive sizing
+- **Custom Image Display**: Admin custom images appear without author or submitter attribution
 - **Full-screen Viewing**: Advanced image viewer with zoom and gesture support
 - **Progressive Loading**: Optimized image loading with quality enhancement
 

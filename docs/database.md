@@ -93,6 +93,51 @@ Performance Features:
 
 ---
 
+### Gallery Tables
+
+Two tables support issue-based public galleries.
+
+#### `gallery_issue_config`
+
+Stores the gallery-level configuration for an issue.
+
+| Column              | Type        | Description                         | Remarks                                      |
+| ------------------- | ----------- | ----------------------------------- | -------------------------------------------- |
+| id                  | BIGINT      | Gallery config ID (Primary Key)     | Auto-generated                               |
+| issue_id            | BIGINT FK   | Issue configured for gallery display | Unique per issue                             |
+| cover_image_url     | VARCHAR(500)| Admin-uploaded cover image URL      | Optional                                     |
+| is_published        | BOOLEAN     | Public visibility flag              | Default: `false`                             |
+| display_order       | INTEGER     | Issue order in gallery lists        | Lower values appear first                    |
+| config_title        | VARCHAR(200)| Admin-facing configuration title    | Optional                                     |
+| config_description  | TEXT        | Admin-facing configuration notes    | Optional                                     |
+| created_by_user_id  | BIGINT FK   | Admin user who created the config   | Optional relation to `users`                 |
+| created_at          | TIMESTAMP   | Creation timestamp                  | Default current time                         |
+| updated_at          | TIMESTAMP   | Last update timestamp               | Updated by application lifecycle callbacks   |
+
+#### `gallery_submission_order`
+
+Stores the ordered items inside a gallery issue. Despite the historical table name, rows now represent gallery items. A row can point to a selected user submission or store administrator-managed custom image metadata directly.
+
+| Column                | Type           | Description                              | Remarks                                      |
+| --------------------- | -------------- | ---------------------------------------- | -------------------------------------------- |
+| id                    | BIGINT         | Gallery order row ID (Primary Key)       | Auto-generated                               |
+| gallery_config_id     | BIGINT FK      | Parent gallery issue configuration       | Required                                     |
+| submission_id         | BIGINT FK      | Selected submission for `SUBMISSION` rows | Nullable for `CUSTOM_IMAGE` rows             |
+| item_type             | VARCHAR(30)    | Gallery item type                        | `SUBMISSION` or `CUSTOM_IMAGE`; default `SUBMISSION` |
+| custom_image_url      | VARCHAR(500)   | Stored image URL for custom image rows   | Null for submission rows                     |
+| custom_title          | VARCHAR(200)   | Optional custom image title              | Empty titles are displayed as item order     |
+| custom_description    | TEXT           | Optional custom image description        | Null when not provided                       |
+| custom_image_width    | INTEGER        | Custom image width in pixels             | Captured during upload                       |
+| custom_image_height   | INTEGER        | Custom image height in pixels            | Captured during upload                       |
+| custom_aspect_ratio   | DECIMAL(10,6)  | Width/height ratio for layout            | Captured during upload                       |
+| display_order         | INTEGER        | 1-based item order within the issue      | Required and positive                        |
+| created_at            | TIMESTAMP      | Creation timestamp                       | Default current time                         |
+| updated_at            | TIMESTAMP      | Last update timestamp                    | Updated by application lifecycle callbacks   |
+
+Custom image rows are not submissions: they do not have submitter attribution, voting state, or ownership metadata. They still use the same image dimension fields for gallery layout performance.
+
+---
+
 ### Promotion Tables
 
 Two tables were added to support the promotion feature.
@@ -109,6 +154,9 @@ Two tables were added to support the promotion feature.
 * **Submission ↔️ Vote** *(one-to-many)*
 * **Issue ↔️ Vote** *(one-to-many)*
 * **User ↔️ UserAuthProvider** *(one-to-many)*
+* **Issue ↔️ GalleryIssueConfig** *(one-to-one logical relationship; each issue can have one gallery config)*
+* **GalleryIssueConfig ↔️ GallerySubmissionOrder** *(one-to-many ordered gallery items)*
+* **Submission ↔️ GallerySubmissionOrder** *(optional many-to-one for `SUBMISSION` gallery items)*
 * **PromotionConfig ↔️ PromotionImages** *(one-to-many)*
 
 > Note: Votes are no longer linked to `User`, but use `visitorId` from cookies for anonymous vote tracking.
