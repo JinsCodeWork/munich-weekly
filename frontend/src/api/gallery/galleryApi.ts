@@ -12,10 +12,12 @@ export {
   getGalleryConfigByIssueId,
   deleteGalleryConfigByIssueId,
   updateSubmissionOrderByIssueId,
+  getAdminIssueSubmissions,
   getSelectedSubmissions,
   getAvailableIssues,
   uploadCoverImage,
   uploadCoverImageByIssueId,
+  uploadCustomGalleryImageByIssueId,
 } from "./admin";
 export {
   getPublishedIssues,

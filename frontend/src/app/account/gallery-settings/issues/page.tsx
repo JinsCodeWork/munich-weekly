@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { useGalleryIssueAdmin } from '@/hooks/useGalleryIssueAdmin';
 import { CreateIssueConfigForm } from '@/components/gallery/admin/CreateIssueConfigForm';
 import { IssueConfigTable } from '@/components/gallery/admin/IssueConfigTable';
+import { GallerySettingsTabs } from '@/components/gallery/admin/GallerySettingsTabs';
 
 /**
  * Admin shell for gallery issue configuration CRUD.
@@ -29,6 +30,8 @@ export default function GalleryIssueManagementPage() {
 
   return (
     <div className="space-y-6">
+      <GallerySettingsTabs activeTab="issues" />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

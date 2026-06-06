@@ -208,7 +208,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                     Settings
                   </Link>
                   
-                  {/* Admin-only option for Manage Submission */}
+                  {/* Admin-only option for admin tools */}
                   {user && user.role === 'admin' && (
                     <>
                       <div className="w-full border-t border-gray-200 my-2"></div>
@@ -221,7 +221,7 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                        Manage Submission
+                        Admin Tool
                       </Link>
                     </>
                   )}
@@ -324,4 +324,4 @@ export default function MobileNav({ onLoginClick, onRegisterClick }: MobileNavPr
       )}
     </div>
   );
-} 
+}

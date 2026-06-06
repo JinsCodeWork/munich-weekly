@@ -1,5 +1,6 @@
 import { fetchAPI } from "../http";
-import { GalleryIssueConfig, GalleryIssueStats, GallerySubmission } from "./types";
+import { mapGalleryOrderResponse } from "./utils";
+import type { GalleryIssueConfig, GalleryIssueStats, GalleryOrderResponse, GallerySubmission } from "./types";
 
 const API_BASE = "/api/gallery";
 
@@ -26,25 +27,8 @@ export async function getIssueDetail(issueId: number): Promise<GalleryIssueConfi
   return data.issue;
 }
 
-interface SubmissionOrderResponse {
-  id: number;
-  displayOrder: number;
-  submission: {
-    id: number;
-    imageUrl: string;
-    description: string;
-    status: string;
-    submittedAt: string;
-    imageWidth?: number;
-    imageHeight?: number;
-    aspectRatio?: number;
-    authorNickname: string;
-    authorId: number;
-  };
-}
-
 export async function getIssueSubmissions(issueId: number): Promise<GallerySubmission[]> {
-  const data = await fetchAPI<{ submissions: SubmissionOrderResponse[]; total: number; success: boolean }>(
+  const data = await fetchAPI<{ submissions: GalleryOrderResponse[]; total: number; success: boolean }>(
     `${API_BASE}/issues/${issueId}/submissions`,
     {
       method: "GET",
@@ -52,21 +36,7 @@ export async function getIssueSubmissions(issueId: number): Promise<GallerySubmi
     }
   );
 
-  return data.submissions.map((item) => ({
-    id: item.submission.id,
-    imageUrl: item.submission.imageUrl,
-    thumbnailUrl: item.submission.imageUrl,
-    title: item.submission.description || "Untitled",
-    description: item.submission.description || "",
-    authorName: item.submission.authorNickname,
-    authorId: item.submission.authorId,
-    imageWidth: item.submission.imageWidth,
-    imageHeight: item.submission.imageHeight,
-    aspectRatio: item.submission.aspectRatio,
-    status: item.submission.status as "selected" | "cover",
-    submittedAt: item.submission.submittedAt,
-    displayOrder: item.displayOrder,
-  }));
+  return data.submissions.map(mapGalleryOrderResponse);
 }
 
 export async function getGalleryIssueStats(): Promise<GalleryIssueStats> {

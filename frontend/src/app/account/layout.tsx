@@ -53,7 +53,7 @@ const ADMIN_SIDEBAR_ITEMS = [
   },
   {
     label: "Gallery Settings",
-    href: "/account/gallery-settings"
+    href: "/account/gallery-settings/issues"
   },
   {
     label: "Home Settings",
@@ -168,7 +168,10 @@ export default function AccountLayout({
                         href={item.href}
                         className={cn(
                           "flex items-center justify-center py-2 px-4 text-sm font-medium rounded-md w-full",
-                          pathname === item.href
+                          pathname === item.href || (
+                            item.href === "/account/gallery-settings/issues" &&
+                            pathname.startsWith("/account/gallery-settings")
+                          )
                             ? "bg-purple-100 text-purple-900"
                             : "text-gray-600 hover:bg-purple-50 hover:text-purple-900",
                           "transition-colors duration-200"
@@ -208,4 +211,4 @@ export default function AccountLayout({
       </div>
     </>
   )
-} 
+}

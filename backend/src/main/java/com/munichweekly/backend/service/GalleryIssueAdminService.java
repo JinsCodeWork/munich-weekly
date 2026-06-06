@@ -210,6 +210,9 @@ public class GalleryIssueAdminService {
 
             logger.info("Successfully updated submission order for issue ID: " + issueId);
 
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid submission order update for issue ID " + issueId + ": " + e.getMessage());
+            throw e;
         } catch (Exception e) {
             logger.severe("Failed to update submission order for issue ID " + issueId + ": " + e.getMessage());
             throw new RuntimeException("Failed to update submission order", e);
@@ -246,13 +249,20 @@ public class GalleryIssueAdminService {
     /**
      * Get issues without gallery configuration.
      */
-    public List<Issue> getIssuesWithoutGalleryConfig() {
+    public List<AvailableGalleryIssueDTO> getIssuesWithoutGalleryConfig() {
         logger.info("Retrieving issues without gallery configuration");
 
         try {
             List<Issue> issues = galleryConfigRepository.findIssuesWithoutGalleryConfig();
-            logger.info("Successfully retrieved " + issues.size() + " issues without gallery config");
-            return issues;
+            List<AvailableGalleryIssueDTO> availableIssues = issues.stream()
+                    .map(issue -> new AvailableGalleryIssueDTO(
+                            issue,
+                            submissionRepository.countByIssueAndStatus(issue, "selected")
+                    ))
+                    .collect(Collectors.toList());
+
+            logger.info("Successfully retrieved " + availableIssues.size() + " issues without gallery config");
+            return availableIssues;
 
         } catch (Exception e) {
             logger.severe("Error retrieving issues without gallery config: " + e.getMessage());
@@ -288,64 +298,91 @@ public class GalleryIssueAdminService {
 
     private void updateSubmissionOrders(GalleryIssueConfig config, 
                                       List<GalleryIssueConfigRequestDTO.SubmissionOrderRequestDTO> orderRequests) {
-        logger.info("Atomically updating submission orders for config ID: " + config.getId() + " with " + orderRequests.size() + " orders");
+        logger.info("Replacing gallery item orders for config ID: " + config.getId() + " with " + orderRequests.size() + " orders");
 
-        // Step 1: Fetch existing orders and map them by submission ID for efficient lookup.
-        Map<Long, GallerySubmissionOrder> existingOrdersMap = submissionOrderRepository
-                .findByGalleryConfigIdOrderByDisplayOrderAsc(config.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                    order -> order.getSubmission().getId(),
-                    order -> order
-                ));
-        logger.info("Found " + existingOrdersMap.size() + " existing orders to update.");
+        List<GallerySubmissionOrder> existingOrders = submissionOrderRepository
+                .findByGalleryConfigIdOrderByDisplayOrderAsc(config.getId());
+        Map<Long, GallerySubmissionOrder> existingByOrderId = existingOrders.stream()
+                .collect(Collectors.toMap(GallerySubmissionOrder::getId, order -> order));
+        Map<Long, GallerySubmissionOrder> existingBySubmissionId = existingOrders.stream()
+                .filter(order -> order.getSubmission() != null)
+                .collect(Collectors.toMap(order -> order.getSubmission().getId(), order -> order));
 
         List<GallerySubmissionOrder> ordersToSave = new ArrayList<>();
+        Set<Long> retainedCustomOrderIds = new HashSet<>();
         Set<Long> processedSubmissionIds = new HashSet<>();
 
-        // Step 2: Iterate through the new order requests, update existing entities, or create new ones.
         for (GalleryIssueConfigRequestDTO.SubmissionOrderRequestDTO request : orderRequests) {
-            processedSubmissionIds.add(request.getSubmissionId());
-            GallerySubmissionOrder order = existingOrdersMap.get(request.getSubmissionId());
-
-            if (order != null) {
-                // This submission already has an order record; update its displayOrder.
-                if (order.getDisplayOrder() != request.getDisplayOrder()) {
-                    logger.info("Updating displayOrder for submission " + request.getSubmissionId() + " from " + order.getDisplayOrder() + " to " + request.getDisplayOrder());
-                    order.setDisplayOrder(request.getDisplayOrder());
-                    ordersToSave.add(order);
+            GallerySubmissionOrder existingOrder = null;
+            if (request.getGalleryOrderId() != null) {
+                existingOrder = existingByOrderId.get(request.getGalleryOrderId());
+                if (existingOrder == null) {
+                    throw new IllegalArgumentException("Gallery order item not found: " + request.getGalleryOrderId());
                 }
-            } else {
-                // This is a new submission being added to the gallery config.
-                logger.info("Creating new order for submission " + request.getSubmissionId() + " with displayOrder " + request.getDisplayOrder());
-                Submission submission = submissionRepository.findById(request.getSubmissionId())
-                        .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + request.getSubmissionId()));
-                
-                // Perform validation for the new submission
-                validateSubmissionForGallery(submission, config);
-
-                ordersToSave.add(new GallerySubmissionOrder(config, submission, request.getDisplayOrder()));
             }
-        }
-        
-        // Step 3: Identify and collect orders that need to be deleted.
-        List<GallerySubmissionOrder> ordersToDelete = existingOrdersMap.values().stream()
-            .filter(order -> !processedSubmissionIds.contains(order.getSubmission().getId()))
-            .collect(Collectors.toList());
 
-        // Step 4: Perform database operations.
-        if (!ordersToDelete.isEmpty()) {
-            logger.info("Deleting " + ordersToDelete.size() + " orders for submissions no longer in the list.");
-            submissionOrderRepository.deleteAll(ordersToDelete);
+            boolean customImageRequest = "CUSTOM_IMAGE".equals(request.getItemType())
+                    || (existingOrder != null && existingOrder.isCustomImage());
+
+            if (customImageRequest) {
+                if (existingOrder == null || !existingOrder.isCustomImage()) {
+                    throw new IllegalArgumentException("Custom gallery image order ID is required");
+                }
+                if (!retainedCustomOrderIds.add(existingOrder.getId())) {
+                    throw new IllegalArgumentException("Duplicate custom gallery image order: " + existingOrder.getId());
+                }
+
+                ordersToSave.add(new GallerySubmissionOrder(
+                        config,
+                        existingOrder.getCustomImageUrl(),
+                        existingOrder.getCustomTitle(),
+                        existingOrder.getCustomDescription(),
+                        existingOrder.getCustomImageWidth(),
+                        existingOrder.getCustomImageHeight(),
+                        request.getDisplayOrder()
+                ));
+                continue;
+            }
+
+            Long submissionId = request.getSubmissionId();
+            if (submissionId == null && existingOrder != null && existingOrder.getSubmission() != null) {
+                submissionId = existingOrder.getSubmission().getId();
+            }
+            if (submissionId == null) {
+                throw new IllegalArgumentException("Submission ID is required for submission gallery items");
+            }
+            if (!processedSubmissionIds.add(submissionId)) {
+                throw new IllegalArgumentException("Duplicate submission in gallery order: " + submissionId);
+            }
+
+            Long finalSubmissionId = submissionId;
+            Submission submission = Optional.ofNullable(existingBySubmissionId.get(finalSubmissionId))
+                    .map(GallerySubmissionOrder::getSubmission)
+                    .orElseGet(() -> submissionRepository.findById(finalSubmissionId)
+                            .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + finalSubmissionId)));
+
+            validateSubmissionForGallery(submission, config);
+            ordersToSave.add(new GallerySubmissionOrder(config, submission, request.getDisplayOrder()));
+        }
+
+        existingOrders.stream()
+                .filter(GallerySubmissionOrder::isCustomImage)
+                .filter(order -> !retainedCustomOrderIds.contains(order.getId()))
+                .forEach(order -> {
+                    if (order.getCustomImageUrl() != null) {
+                        storageService.deleteFile(order.getCustomImageUrl());
+                    }
+                });
+
+        if (!existingOrders.isEmpty()) {
+            submissionOrderRepository.deleteAll(existingOrders);
+            submissionOrderRepository.flush();
         }
 
         if (!ordersToSave.isEmpty()) {
-            logger.info("Saving " + ordersToSave.size() + " updated or new submission orders.");
             submissionOrderRepository.saveAll(ordersToSave);
-        } else {
-            logger.info("No changes in submission order detected.");
         }
-        
+
         logger.info("Submission orders processed successfully for config ID: " + config.getId());
     }
 
@@ -531,4 +568,79 @@ public class GalleryIssueAdminService {
             throw new RuntimeException("Failed to upload cover image", e);
         }
     }
-} 
+
+    /**
+     * Upload an administrator-managed image and append it to the issue gallery order.
+     */
+    @Transactional
+    public GallerySubmissionOrderResponseDTO uploadCustomGalleryImageByIssueId(
+            Long issueId,
+            MultipartFile file,
+            String title,
+            String description) throws IOException {
+        logger.info("Uploading custom gallery image for issue ID: " + issueId);
+
+        try {
+            issueRepository.findById(issueId)
+                    .orElseThrow(() -> new IllegalArgumentException("Issue not found: " + issueId));
+
+            GalleryIssueConfig config = galleryConfigRepository.findByIssueId(issueId)
+                    .orElseThrow(() -> new IllegalArgumentException("Gallery configuration not found for issue: " + issueId));
+
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException("File is required");
+            }
+
+            String customUploadId = "custom-" + UUID.randomUUID();
+            StorageService.StorageResult storageResult = storageService.storeFileWithDimensions(
+                    file,
+                    issueId.toString(),
+                    "admin",
+                    customUploadId
+            );
+
+            ImageDimensions dimensions = storageResult.getDimensions();
+            Integer imageWidth = dimensions != null ? dimensions.getWidth() : null;
+            Integer imageHeight = dimensions != null ? dimensions.getHeight() : null;
+            Integer displayOrder = submissionOrderRepository.findMaxDisplayOrderByGalleryConfigId(config.getId()) + 1;
+
+            GallerySubmissionOrder order = new GallerySubmissionOrder(
+                    config,
+                    storageResult.getUrl(),
+                    normalizeOptionalText(title, 200, "Title"),
+                    normalizeOptionalText(description, null, "Description"),
+                    imageWidth,
+                    imageHeight,
+                    displayOrder
+            );
+
+            GallerySubmissionOrder savedOrder = submissionOrderRepository.save(order);
+            logger.info("Successfully uploaded custom gallery image for issue ID: " + issueId + ", order ID: " + savedOrder.getId());
+            return new GallerySubmissionOrderResponseDTO(savedOrder);
+
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid custom gallery image upload for issue ID " + issueId + ": " + e.getMessage());
+            throw e;
+        } catch (IOException e) {
+            logger.severe("IO error uploading custom gallery image for issue ID " + issueId + ": " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.severe("Error uploading custom gallery image for issue ID " + issueId + ": " + e.getMessage());
+            throw new RuntimeException("Failed to upload custom gallery image", e);
+        }
+    }
+
+    private String normalizeOptionalText(String value, Integer maxLength, String fieldName) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (maxLength != null && trimmed.length() > maxLength) {
+            throw new IllegalArgumentException(fieldName + " must be at most " + maxLength + " characters");
+        }
+        return trimmed;
+    }
+}

@@ -17,9 +17,11 @@ public class GallerySubmissionOrderResponseDTO {
     private Integer displayOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String itemType;
 
     // Submission details
     private SubmissionDetailsDTO submission;
+    private CustomImageDetailsDTO customImage;
 
     // Constructors
 
@@ -31,10 +33,91 @@ public class GallerySubmissionOrderResponseDTO {
         this.displayOrder = order.getDisplayOrder();
         this.createdAt = order.getCreatedAt();
         this.updatedAt = order.getUpdatedAt();
+        this.itemType = order.getItemType();
 
-        // Include submission details
-        if (order.getSubmission() != null) {
+        if (order.isCustomImage()) {
+            this.customImage = new CustomImageDetailsDTO(order);
+        } else if (order.getSubmission() != null) {
             this.submission = new SubmissionDetailsDTO(order.getSubmission());
+        }
+    }
+
+    // Nested DTO for administrator-managed custom gallery images
+    public static class CustomImageDetailsDTO {
+        private Long id;
+        private String imageUrl;
+        private String title;
+        private String description;
+        private Integer imageWidth;
+        private Integer imageHeight;
+        private BigDecimal aspectRatio;
+
+        public CustomImageDetailsDTO() {}
+
+        public CustomImageDetailsDTO(GallerySubmissionOrder order) {
+            this.id = order.getId();
+            this.imageUrl = order.getCustomImageUrl();
+            this.title = order.getCustomTitle();
+            this.description = order.getCustomDescription();
+            this.imageWidth = order.getCustomImageWidth();
+            this.imageHeight = order.getCustomImageHeight();
+            this.aspectRatio = order.getCustomAspectRatio();
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getImageUrl() {
+            return imageUrl;
+        }
+
+        public void setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public Integer getImageWidth() {
+            return imageWidth;
+        }
+
+        public void setImageWidth(Integer imageWidth) {
+            this.imageWidth = imageWidth;
+        }
+
+        public Integer getImageHeight() {
+            return imageHeight;
+        }
+
+        public void setImageHeight(Integer imageHeight) {
+            this.imageHeight = imageHeight;
+        }
+
+        public BigDecimal getAspectRatio() {
+            return aspectRatio;
+        }
+
+        public void setAspectRatio(BigDecimal aspectRatio) {
+            this.aspectRatio = aspectRatio;
         }
     }
 
@@ -194,7 +277,7 @@ public class GallerySubmissionOrderResponseDTO {
 
     // Business methods
     public boolean isSubmissionValid() {
-        return submission != null && "selected".equals(submission.getStatus());
+        return "CUSTOM_IMAGE".equals(itemType) || (submission != null && "selected".equals(submission.getStatus()));
     }
 
     // Getters and setters
@@ -239,6 +322,14 @@ public class GallerySubmissionOrderResponseDTO {
         this.updatedAt = updatedAt;
     }
 
+    public String getItemType() {
+        return itemType;
+    }
+
+    public void setItemType(String itemType) {
+        this.itemType = itemType;
+    }
+
     public SubmissionDetailsDTO getSubmission() {
         return submission;
     }
@@ -246,4 +337,12 @@ public class GallerySubmissionOrderResponseDTO {
     public void setSubmission(SubmissionDetailsDTO submission) {
         this.submission = submission;
     }
-} 
+
+    public CustomImageDetailsDTO getCustomImage() {
+        return customImage;
+    }
+
+    public void setCustomImage(CustomImageDetailsDTO customImage) {
+        this.customImage = customImage;
+    }
+}

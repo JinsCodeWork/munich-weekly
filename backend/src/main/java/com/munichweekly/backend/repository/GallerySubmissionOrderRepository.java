@@ -106,8 +106,8 @@ public interface GallerySubmissionOrderRepository extends JpaRepository<GalleryS
      */
     @Query("""
         SELECT gso FROM GallerySubmissionOrder gso
-        JOIN FETCH gso.submission s
-        JOIN FETCH s.user u
+        LEFT JOIN FETCH gso.submission s
+        LEFT JOIN FETCH s.user u
         WHERE gso.galleryConfig.id = :galleryConfigId
         ORDER BY gso.displayOrder ASC
         """)
@@ -143,7 +143,7 @@ public interface GallerySubmissionOrderRepository extends JpaRepository<GalleryS
         WHERE gso.galleryConfig.id = :galleryConfigId
         AND gso.displayOrder >= :startOrder
         """)
-    int updateDisplayOrdersWithOffset(@Param("galleryConfigId") Long galleryConfigId, 
-                                     @Param("startOrder") Integer startOrder, 
+    int updateDisplayOrdersWithOffset(@Param("galleryConfigId") Long galleryConfigId,
+                                     @Param("startOrder") Integer startOrder,
                                      @Param("offset") Integer offset);
-} 
+}

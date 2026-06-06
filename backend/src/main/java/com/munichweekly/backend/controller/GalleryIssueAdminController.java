@@ -1,7 +1,6 @@
 package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.*;
-import com.munichweekly.backend.model.Issue;
 import com.munichweekly.backend.service.GalleryIssueService;
 import com.munichweekly.backend.service.GalleryIssueAdminService;
 import com.munichweekly.backend.security.CurrentUserUtil;
@@ -12,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -312,6 +312,48 @@ public class GalleryIssueAdminController {
     }
 
     /**
+     * Get all ordered gallery items for an issue.
+     * GET /api/gallery/admin/issues/{issueId}/items
+     * Admin access only - includes unpublished gallery configurations.
+     */
+    @GetMapping("/issues/{issueId}/items")
+    public ResponseEntity<Map<String, Object>> getGalleryItems(@PathVariable Long issueId) {
+        logger.info("Admin request to get gallery items for issue ID: " + issueId);
+
+        try {
+            List<GallerySubmissionOrderResponseDTO> items = galleryIssueService.getGalleryIssueSubmissions(issueId, true);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("submissions", items);
+            response.put("items", items);
+            response.put("total", items.size());
+            response.put("issueId", issueId);
+            response.put("success", true);
+
+            logger.info("Successfully returned " + items.size() + " gallery items for issue ID: " + issueId);
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid request for gallery items: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                        "error", "Invalid request",
+                        "message", e.getMessage(),
+                        "success", false
+                    ));
+
+        } catch (Exception e) {
+            logger.severe("Error retrieving gallery items: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                        "error", "Failed to retrieve gallery items",
+                        "message", e.getMessage(),
+                        "success", false
+                    ));
+        }
+    }
+
+    /**
      * Get issues without gallery configuration.
      * GET /api/gallery/admin/issues/available
      * Admin access only - returns issues that don't have gallery configurations yet.
@@ -321,7 +363,7 @@ public class GalleryIssueAdminController {
         logger.info("Admin request to get issues without gallery configuration");
 
         try {
-            List<Issue> issues = galleryIssueAdminService.getIssuesWithoutGalleryConfig();
+            List<AvailableGalleryIssueDTO> issues = galleryIssueAdminService.getIssuesWithoutGalleryConfig();
             
             Map<String, Object> response = new HashMap<>();
             response.put("issues", issues);
@@ -384,4 +426,62 @@ public class GalleryIssueAdminController {
                     ));
         }
     }
-} 
+
+    /**
+     * Upload a custom administrator-managed image for an issue gallery.
+     * POST /api/gallery/admin/issues/{issueId}/custom-images
+     */
+    @PostMapping("/issues/{issueId}/custom-images")
+    public ResponseEntity<Map<String, Object>> uploadCustomGalleryImage(
+            @PathVariable Long issueId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "description", required = false) String description) {
+        logger.info("Admin request to upload custom gallery image for issue ID: " + issueId);
+
+        try {
+            GallerySubmissionOrderResponseDTO item = galleryIssueAdminService.uploadCustomGalleryImageByIssueId(
+                    issueId,
+                    file,
+                    title,
+                    description
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("item", item);
+            response.put("message", "Custom gallery image uploaded successfully");
+            response.put("issueId", issueId);
+            response.put("success", true);
+
+            logger.info("Successfully uploaded custom gallery image for issue ID: " + issueId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            logger.warning("Invalid request for uploading custom gallery image: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                        "error", "Invalid request",
+                        "message", e.getMessage(),
+                        "success", false
+                    ));
+
+        } catch (IOException e) {
+            logger.severe("IO error uploading custom gallery image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                        "error", "Failed to upload custom gallery image",
+                        "message", e.getMessage(),
+                        "success", false
+                    ));
+
+        } catch (Exception e) {
+            logger.severe("Error uploading custom gallery image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                        "error", "Failed to upload custom gallery image",
+                        "message", e.getMessage(),
+                        "success", false
+                    ));
+        }
+    }
+}

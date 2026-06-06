@@ -1,6 +1,7 @@
 import React from "react";
 import { Issue, AdminSubmissionResponse } from "@/types/submission";
 import { IssueSelector } from "@/components/ui/IssueSelector";
+import { Button } from "@/components/ui/Button";
 
 export interface ManageSubmissionsToolbarProps {
   debugTools: React.ReactNode;
@@ -51,11 +52,10 @@ export function ManageSubmissionsToolbar({
 
       {showDownload && (
         <div className="mb-6">
-          <button
+          <Button
             type="button"
             onClick={onDownloadSelected}
             disabled={isDownloading}
-            className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
           >
             {isDownloading ? (
               <>
@@ -102,7 +102,7 @@ export function ManageSubmissionsToolbar({
                 Download Selected Photos
               </>
             )}
-          </button>
+          </Button>
           <p className="text-sm text-gray-600 mt-1">
             Download all selected submissions as a ZIP file ({selectedCount} photos)
           </p>

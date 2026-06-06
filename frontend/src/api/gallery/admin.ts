@@ -1,4 +1,4 @@
-import {
+import type {
   AvailableIssue,
   ConfigResponse,
   ConfigsResponse,
@@ -6,6 +6,7 @@ import {
   DeleteConfigResponse,
   FeaturedStatusResponse,
   GalleryIssueConfig,
+  GalleryOrderResponse,
   GallerySubmission,
   SaveConfigRequest,
   SaveConfigResponse,
@@ -14,8 +15,20 @@ import {
   UpdateGalleryConfigRequest,
 } from "./types";
 import { fetchAPI } from "../http";
+import { mapGalleryOrderResponse } from "./utils";
 
 const API_BASE = "/api/gallery";
+
+interface SelectedSubmissionResponse {
+  id: number;
+  imageUrl: string;
+  description: string;
+  nickname: string;
+  submittedAt: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  aspectRatio?: number;
+}
 
 export async function getActiveConfig(): Promise<ConfigResponse> {
   return fetchAPI<ConfigResponse>(`${API_BASE}/featured/config`, {
@@ -105,15 +118,43 @@ export async function updateSubmissionOrderByIssueId(
   });
 }
 
+export async function getAdminIssueSubmissions(issueId: number): Promise<GallerySubmission[]> {
+  const data = await fetchAPI<{ submissions: GalleryOrderResponse[]; total: number; success: boolean }>(
+    `${API_BASE}/admin/issues/${issueId}/items`,
+    {
+      method: "GET",
+    }
+  );
+
+  return data.submissions.map(mapGalleryOrderResponse);
+}
+
 export async function getSelectedSubmissions(issueId: number): Promise<GallerySubmission[]> {
   try {
-    const data = await fetchAPI<{ submissions: GallerySubmission[] }>(
+    const data = await fetchAPI<{ submissions: SelectedSubmissionResponse[] }>(
       `${API_BASE}/admin/issues/${issueId}/selected`,
       {
         method: "GET",
       }
     );
-    return data.submissions;
+    return data.submissions.map((submission, index) => ({
+      id: submission.id,
+      submissionId: submission.id,
+      itemType: "SUBMISSION",
+      isCustomImage: false,
+      imageUrl: submission.imageUrl,
+      thumbnailUrl: submission.imageUrl,
+      title: submission.description || "Untitled",
+      description: submission.description || "",
+      authorName: submission.nickname || "Anonymous",
+      authorId: null,
+      imageWidth: submission.imageWidth,
+      imageHeight: submission.imageHeight,
+      aspectRatio: submission.aspectRatio,
+      status: "selected",
+      submittedAt: submission.submittedAt,
+      displayOrder: index + 1,
+    }));
   } catch {
     return [];
   }
@@ -141,6 +182,32 @@ export async function uploadCoverImageByIssueId(
     method: "POST",
     body: formData,
   });
+}
+
+export async function uploadCustomGalleryImageByIssueId(
+  issueId: number,
+  file: File,
+  metadata?: { title?: string; description?: string }
+): Promise<GallerySubmission> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (metadata?.title) {
+    formData.append("title", metadata.title);
+  }
+  if (metadata?.description) {
+    formData.append("description", metadata.description);
+  }
+
+  const data = await fetchAPI<{ item: GalleryOrderResponse }>(
+    `${API_BASE}/admin/issues/${issueId}/custom-images`,
+    {
+      method: "POST",
+      body: formData,
+      timeoutMs: 30000,
+    }
+  );
+
+  return mapGalleryOrderResponse(data.item);
 }
 
 export async function uploadCoverImage(configId: number, file: File): Promise<{ imageUrl: string }> {

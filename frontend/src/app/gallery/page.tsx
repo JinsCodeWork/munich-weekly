@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
 import FeaturedCarousel from '@/components/gallery/FeaturedCarousel';
 import GalleryIssueCard from '@/components/gallery/GalleryIssueCard';
+import { Button } from '@/components/ui/Button';
 import { 
   getFeaturedSubmissions, 
   getPublishedIssues,
@@ -129,13 +130,10 @@ export default function GalleryPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {state.error}
             </p>
-            <button
-              onClick={handleRetry}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <Button onClick={handleRetry}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -155,13 +153,10 @@ export default function GalleryPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               No published issues found. Please check back later.
             </p>
-            <button
-              onClick={handleRetry}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <Button onClick={handleRetry}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -204,4 +199,4 @@ export default function GalleryPage() {
       </div>
     </div>
   );
-} 
+}

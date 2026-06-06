@@ -44,12 +44,12 @@ public class GalleryIssueService {
         try {
             // Use simple approach: first get configs with counts, then manually handle Issue loading
             List<Object[]> configsWithCount = galleryConfigRepository.findPublishedConfigsWithSubmissionCount();
-            
+
             List<GalleryIssueConfigResponseDTO> result = new ArrayList<>();
             for (Object[] row : configsWithCount) {
                 GalleryIssueConfig config = (GalleryIssueConfig) row[0];
                 Long submissionCount = (row[1] != null) ? ((Number) row[1]).longValue() : 0L;
-                
+
                 // Load the Issue association manually to avoid lazy loading issues
                 Issue issue = issueRepository.findById(config.getIssue().getId()).orElse(null);
                 if (issue != null) {
@@ -65,7 +65,7 @@ public class GalleryIssueService {
                     dto.setCreatedAt(config.getCreatedAt());
                     dto.setUpdatedAt(config.getUpdatedAt());
                     dto.setSubmissionCount((int) submissionCount.longValue());
-                    
+
                     // Create issue DTO manually
                     GalleryIssueConfigResponseDTO.IssueBasicDTO issueDTO = new GalleryIssueConfigResponseDTO.IssueBasicDTO();
                     issueDTO.setId(issue.getId());
@@ -76,7 +76,7 @@ public class GalleryIssueService {
                     issueDTO.setVotingStart(issue.getVotingStart());
                     issueDTO.setVotingEnd(issue.getVotingEnd());
                     dto.setIssue(issueDTO);
-                    
+
                     result.add(dto);
                 }
             }
@@ -131,7 +131,7 @@ public class GalleryIssueService {
         dto.setConfigDescription(config.getConfigDescription());
         dto.setCreatedAt(config.getCreatedAt());
         dto.setUpdatedAt(config.getUpdatedAt());
-        
+
         // Create issue DTO manually
         GalleryIssueConfigResponseDTO.IssueBasicDTO issueDTO = new GalleryIssueConfigResponseDTO.IssueBasicDTO();
         issueDTO.setId(issue.getId());
@@ -142,7 +142,7 @@ public class GalleryIssueService {
         issueDTO.setVotingStart(issue.getVotingStart());
         issueDTO.setVotingEnd(issue.getVotingEnd());
         dto.setIssue(issueDTO);
-        
+
         // Load submission orders with details
         List<GallerySubmissionOrder> orders = submissionOrderRepository
                 .findByGalleryConfigIdWithSubmissionDetails(config.getId());
@@ -157,17 +157,24 @@ public class GalleryIssueService {
      * Used for public display of submissions within an issue.
      */
     public List<GallerySubmissionOrderResponseDTO> getGalleryIssueSubmissions(Long issueId) {
+        return getGalleryIssueSubmissions(issueId, false);
+    }
+
+    /**
+     * Get ordered submissions for a gallery issue.
+     * Admin callers can include unpublished galleries for management screens.
+     */
+    public List<GallerySubmissionOrderResponseDTO> getGalleryIssueSubmissions(Long issueId, boolean includeUnpublished) {
         logger.info("Retrieving submissions for issue ID: " + issueId);
 
         try {
-            // Find gallery config by issue ID 
+            // Find gallery config by issue ID
             GalleryIssueConfig config = galleryConfigRepository.findByIssueId(issueId)
                     .orElseThrow(() -> new IllegalArgumentException("Gallery issue configuration not found for issue: " + issueId));
 
-            // Note: Removed published check to allow admin management of unpublished galleries
-            // if (!config.getIsPublished()) {
-            //     throw new IllegalArgumentException("Gallery issue is not published for issue: " + issueId);
-            // }
+            if (!includeUnpublished && !config.getIsPublished()) {
+                throw new IllegalArgumentException("Gallery issue is not published for issue: " + issueId);
+            }
 
             List<GallerySubmissionOrder> orders = submissionOrderRepository
                     .findByGalleryConfigIdWithSubmissionDetails(config.getId());
@@ -188,4 +195,4 @@ public class GalleryIssueService {
     // ========================================================================================
     // Note: Admin methods have been moved to GalleryIssueAdminService for better separation
     // ========================================================================================
-} 
+}

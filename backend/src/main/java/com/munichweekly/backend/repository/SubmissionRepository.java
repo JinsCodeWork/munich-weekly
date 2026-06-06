@@ -31,6 +31,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByIdAndUser(Long id, User user);
 
     long countByUserAndIssue(User user, Issue issue);
+
+    long countByIssueAndStatus(Issue issue, String status);
     
     // Query all submissions for a specific issue (regardless of status, for admin review)
     List<Submission> findByIssue(Issue issue);

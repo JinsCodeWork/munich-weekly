@@ -69,9 +69,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/gallery/admin/issues/*").hasAuthority("admin")          // Delete config by issue ID
                         .requestMatchers(HttpMethod.GET, "/api/gallery/admin/issues/*").hasAuthority("admin")             // Get config by issue ID
                         .requestMatchers(HttpMethod.PUT, "/api/gallery/admin/issues/*/order").hasAuthority("admin")       // Update submission order
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/admin/issues/*/items").hasAuthority("admin")       // Get ordered gallery items
                         .requestMatchers(HttpMethod.GET, "/api/gallery/admin/issues/*/selected").hasAuthority("admin")    // Get available submissions
                         .requestMatchers(HttpMethod.GET, "/api/gallery/admin/issues/available").hasAuthority("admin")     // Get available issues
                         .requestMatchers(HttpMethod.POST, "/api/gallery/admin/issues/*/cover").hasAuthority("admin")      // Upload cover image by issue ID
+                        .requestMatchers(HttpMethod.POST, "/api/gallery/admin/issues/*/custom-images").hasAuthority("admin") // Upload custom gallery image
                         .requestMatchers(HttpMethod.POST, "/api/gallery/admin/configs/*/cover").hasAuthority("admin")     // Upload cover image (legacy)
                         
                         // Gallery Featured - Legacy API

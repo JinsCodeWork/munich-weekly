@@ -174,6 +174,8 @@ export interface AdminFormState {
 
 // ========== NEW: Gallery Issue Types ==========
 
+export type GalleryItemType = 'SUBMISSION' | 'CUSTOM_IMAGE';
+
 /**
  * Gallery issue configuration for magazine-style display
  */
@@ -184,7 +186,7 @@ export interface GalleryIssueConfig {
     id: number;
     title: string;
     description: string;
-    submissionStart: string;  
+    submissionStart: string;
     submissionEnd: string;
     votingStart: string;
     votingEnd: string;
@@ -203,6 +205,10 @@ export interface GalleryIssueConfig {
  */
 export interface GallerySubmission {
   id: number;
+  orderId?: number;
+  submissionId?: number;
+  itemType?: GalleryItemType;
+  isCustomImage?: boolean;
   imageUrl: string;
   thumbnailUrl: string;
   title: string;
@@ -212,9 +218,39 @@ export interface GallerySubmission {
   imageWidth?: number;
   imageHeight?: number;
   aspectRatio?: number;
-  status: 'selected' | 'cover';
+  status: 'selected' | 'cover' | 'custom';
   submittedAt: string;
   displayOrder: number;
+}
+
+export interface GalleryOrderResponse {
+  id: number;
+  galleryConfigId?: number;
+  displayOrder: number;
+  itemType?: GalleryItemType;
+  createdAt?: string;
+  updatedAt?: string;
+  submission?: {
+    id: number;
+    imageUrl: string;
+    description: string;
+    status: string;
+    submittedAt: string;
+    imageWidth?: number;
+    imageHeight?: number;
+    aspectRatio?: number;
+    authorNickname?: string;
+    authorId?: number | null;
+  } | null;
+  customImage?: {
+    id: number;
+    imageUrl: string;
+    title?: string | null;
+    description?: string | null;
+    imageWidth?: number;
+    imageHeight?: number;
+    aspectRatio?: number;
+  } | null;
 }
 
 /**
@@ -248,7 +284,9 @@ export interface UpdateGalleryConfigRequest {
  * Submission order update item
  */
 export interface SubmissionOrderUpdate {
-  submissionId: number;
+  galleryOrderId?: number;
+  submissionId?: number;
+  itemType?: GalleryItemType;
   displayOrder: number;
 }
 
@@ -282,4 +320,4 @@ export interface GallerySubmissionCardProps {
   submission: GallerySubmission;
   isHero?: boolean;
   className?: string;
-} 
+}

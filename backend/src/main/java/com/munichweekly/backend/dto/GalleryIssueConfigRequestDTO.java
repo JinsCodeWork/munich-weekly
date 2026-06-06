@@ -65,8 +65,11 @@ public class GalleryIssueConfigRequestDTO {
 
     // Nested DTO for submission order requests
     public static class SubmissionOrderRequestDTO {
-        @NotNull(message = "Submission ID is required")
+        private Long galleryOrderId;
+
         private Long submissionId;
+
+        private String itemType = "SUBMISSION";
 
         @NotNull(message = "Display order is required")
         @Min(value = 1, message = "Display order must be positive")
@@ -80,12 +83,28 @@ public class GalleryIssueConfigRequestDTO {
         }
 
         // Getters and setters
+        public Long getGalleryOrderId() {
+            return galleryOrderId;
+        }
+
+        public void setGalleryOrderId(Long galleryOrderId) {
+            this.galleryOrderId = galleryOrderId;
+        }
+
         public Long getSubmissionId() {
             return submissionId;
         }
 
         public void setSubmissionId(Long submissionId) {
             this.submissionId = submissionId;
+        }
+
+        public String getItemType() {
+            return itemType;
+        }
+
+        public void setItemType(String itemType) {
+            this.itemType = itemType != null ? itemType : "SUBMISSION";
         }
 
         public Integer getDisplayOrder() {
@@ -148,4 +167,4 @@ public class GalleryIssueConfigRequestDTO {
     public void setSubmissionOrders(List<SubmissionOrderRequestDTO> submissionOrders) {
         this.submissionOrders = submissionOrders;
     }
-} 
+}

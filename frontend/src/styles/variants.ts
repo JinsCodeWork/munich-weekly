@@ -24,7 +24,7 @@ export const buttonVariants = {
     md: 'text-sm px-3 py-2',
     lg: 'text-base px-4 py-3',
   },
-  base: 'rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+  base: 'inline-flex items-center justify-center whitespace-nowrap rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 };
 
 /**
@@ -116,10 +116,10 @@ export function getCardClasses(
  * Get color class based on theme color and type
  */
 export function getColorClass(
-  color: ThemeColor, 
+  color: ThemeColor,
   type: 'bg' | 'text' | 'border' | 'hover' | 'focus' | 'lightest' = 'bg',
 ) {
   const colorBase = theme.colors[color];
   const intensity = theme.colors.intensities[type][color];
   return `${type === 'hover' ? 'hover:bg' : type}-${colorBase}-${intensity}`;
-} 
+}
