@@ -52,7 +52,7 @@ export function isWideImage(aspectRatio?: number): boolean {
 
 export function mapGalleryOrderResponse(item: GalleryOrderResponse): GallerySubmission {
   if (item.itemType === "CUSTOM_IMAGE" && item.customImage) {
-    const title = item.customImage.title || "Gallery image";
+    const title = item.customImage.title?.trim() || String(item.displayOrder);
     return {
       id: item.customImage.id || item.id,
       orderId: item.id,

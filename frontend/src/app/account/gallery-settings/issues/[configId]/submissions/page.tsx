@@ -249,8 +249,16 @@ export default function SubmissionOrderPage() {
     setState(prev => ({ ...prev, hasChanges: true }));
   };
 
+  const getDefaultCustomImageTitle = (displayOrder = orderedSubmissions.length + 1) => {
+    return String(displayOrder);
+  };
+
   const handleOpenCustomUpload = () => {
-    setCustomUpload({ ...initialCustomUploadState, isOpen: true });
+    setCustomUpload({
+      ...initialCustomUploadState,
+      isOpen: true,
+      title: getDefaultCustomImageTitle(),
+    });
   };
 
   const handleCloseCustomUpload = () => {
@@ -279,12 +287,17 @@ export default function SubmissionOrderPage() {
     try {
       setCustomUpload(prev => ({ ...prev, isUploading: true, error: null }));
 
+      const defaultTitle = getDefaultCustomImageTitle();
+      const trimmedTitle = customUpload.title.trim();
+      const title = trimmedTitle && trimmedTitle !== defaultTitle ? trimmedTitle : undefined;
+      const description = customUpload.description.trim() || undefined;
+
       const uploadedImage = await uploadCustomGalleryImageByIssueId(
         state.config.issueId,
         customUpload.file,
         {
-          title: customUpload.title,
-          description: customUpload.description,
+          title,
+          description,
         }
       );
 
@@ -367,7 +380,7 @@ export default function SubmissionOrderPage() {
   // Format submission info for display
   const formatSubmissionInfo = (submission: GallerySubmission) => {
     return {
-      title: submission.title || (submission.isCustomImage ? 'Gallery image' : 'Untitled'),
+      title: submission.title || (submission.isCustomImage ? String(submission.displayOrder) : 'Untitled'),
       author: submission.authorName,
       status: submission.status
     };
