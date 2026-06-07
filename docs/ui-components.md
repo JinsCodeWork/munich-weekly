@@ -4,141 +4,11 @@
 
 Munich Weekly utilizes a custom UI component library built with React, TypeScript, and Tailwind CSS. The component library provides consistent, reusable interface elements across the application with a focus on photography presentation and user interaction.
 
-## Style Management System
+## Style System
 
-The application implements a systematic approach to style management that combines Tailwind CSS with TypeScript for type safety and consistency.
-
-### Directory Structure
-
-```
-styles/
-├── components/           # Component-specific styles
-│   ├── badge.ts         # Badge component styles
-│   ├── button.ts        # Button component styles
-│   ├── card.ts          # Card component styles
-│   ├── container.ts     # Container component styles
-│   ├── form.ts          # Form component styles
-│   ├── loadingError.ts  # Loading/error state styles
-│   ├── modal.ts         # Modal component styles
-│   ├── navigation/      # Navigation-specific styles
-│   │   ├── header.ts    # Header component styles
-│   │   └── navBar.ts    # Navigation bar styles
-│   ├── table.ts         # Table component styles
-│   └── thumbnail.ts     # Thumbnail component styles
-├── index.ts             # Style exports
-├── theme.ts             # Theme configuration
-└── variants.ts          # Style variants and utilities
-```
-
-### Key Features
-
-- **Centralized Style Functions**: Replaces inline styles with reusable style functions
-- **Type-safe Style Variants**: TypeScript-powered style variants with proper type checking
-- **Theme Consistency**: Unified theme variables for colors, spacing, and animations
-- **Animation Support**: Integration with tailwindcss-animate for consistent animations
-- **Responsive Design**: Mobile-first responsive styles with consistent breakpoints
-- **Dark Mode Ready**: Structure supports future theme switching capabilities
-
-### Usage Examples
-
-#### Using Style Functions
-
-```tsx
-import { getButtonStyles } from '@/styles';
-
-export const Button = ({ 
-  variant = 'primary',
-  size = 'medium',
-  children,
-  ...props
-}) => {
-  return (
-    <button 
-      className={getButtonStyles({ variant, size })} 
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-```
-
-#### Header Component Styling
-
-```tsx
-import { getHeaderContainerStyles } from '@/styles';
-
-export default function Header() {
-  return (
-    <header className={getHeaderContainerStyles({ variant: 'default' })}>
-      {/* Header content */}
-    </header>
-  );
-}
-```
-
-#### Navigation Styling
-
-```tsx
-import { getNavLinkStyles } from '@/styles';
-
-export default function MainNav() {
-  return (
-    <nav>
-      <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Gallery</a>
-      <a href="#" className={getNavLinkStyles({ className: 'mr-6' })}>Submit</a>
-    </nav>
-  );
-}
-```
-
-## Component Styling Approach
-
-The application employs a systematic approach to styling components:
-
-1. **Image Optimization**
-   - Next.js Image component with proper configuration
-   - Configured `remotePatterns` for secure image loading
-   - Standardized aspect ratios and loading behaviors
-
-2. **Authentication UI**
-   - Glassmorphism effect for modern, depth-rich interfaces
-   - Semi-transparent backgrounds with backdrop blur
-   - Sequential animation effects for form elements
-   - Consistent text contrast on various backgrounds
-
-3. **Navigation Components**
-   - Responsive navigation system with desktop and mobile variants
-   - Centralized styling functions for consistency
-   - Context-aware navigation elements (showing different options based on auth state)
-
-4. **Modal System**
-   - Overlay variant system with appropriate opacity levels:
-     - `default`: Light overlay (20% opacity) for standard interactions
-     - `dark`: Higher contrast overlay (50% opacity) for critical actions
-     - `light`: White-based overlay (70% opacity) for light-themed content
-   - Content variants supporting different visual styles
-   - Consistent visual hierarchy between related modals
-   - Shadow effects that enhance depth perception
-
-5. **Button System**
-   - Standardized variants across the application:
-     - `primary`: High-emphasis actions
-     - `secondary`: Alternative or secondary actions
-     - `ghost`: Low-emphasis or subtle interactions
-   - Consistent shadow effects and visual styling
-   - Strong TypeScript typing with proper variant definitions
-
-6. **Component Optimizations**
-   - Clean dependency management in components
-   - Responsive text sizing that prevents unwanted wrapping
-   - Loading and error states for asynchronous operations
-
-7. **Form System**
-   - Standardized form container styles with multiple variants
-   - Consistent form field styling with state variations
-   - Type-safe style functions for all form elements
-   - Unified error message presentation
+Component styling uses Tailwind CSS plus shared TypeScript style helpers. Keep
+style token, helper, and variant details in [Style System](./style-system.md);
+this document focuses on component responsibilities and contracts.
 
 ## Core UI Components
 
@@ -170,7 +40,7 @@ The `Container` component implements Munich Weekly's flexible layout system with
 
 **Padding Configuration:**
 - **Mobile**: 20px (px-5) - Enhanced from previous 16px
-- **Tablet**: 32px (px-8) - New breakpoint support  
+- **Tablet**: 32px (px-8) - New breakpoint support
 - **Desktop**: 40px (px-10) - Professional spacing upgrade
 - **Ultra-wide**: 60px (px-15) - Modern display support
 
@@ -202,7 +72,7 @@ The `Container` component implements Munich Weekly's flexible layout system with
 
 - **Thumbnail**: Advanced image thumbnail component with intelligent aspect ratio control and responsive positioning
 - **ImageViewer**: Modal-based full-size image viewing component
-- **ImageUploader**: 
+- **ImageUploader**:
   - Interactive file upload component with drag-and-drop support
   - Preview functionality for selected images
   - Format restrictions (JPEG and PNG only)
@@ -247,7 +117,7 @@ Munich Weekly implements a hybrid masonry layout system with **progressive loadi
 
 - **MasonryGallery**: Main display component implementing hybrid masonry layout with **progressive loading**
   - Backend-provided optimal ordering for quality guarantee
-  - Frontend Skyline positioning for responsive coordinate calculation  
+  - Frontend Skyline positioning for responsive coordinate calculation
   - **Progressive display**: Content shows after 6 images (40% threshold) for 60-75% faster mobile loading
   - Dynamic column height tracking with absolute positioning
   - Responsive design: 2 columns mobile, 4 columns desktop

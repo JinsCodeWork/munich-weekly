@@ -1,5 +1,9 @@
 # 📚 Database Design
 
+> Class: Reference
+> Owner: Backend maintainer
+> Update when: JPA entities, relationships, or startup schema adjustments change.
+
 This document outlines the structure of the PostgreSQL database used by the **Munich Weekly** platform.
 
 ---

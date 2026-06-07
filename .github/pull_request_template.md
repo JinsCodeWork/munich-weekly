@@ -3,15 +3,17 @@
 
 ## 🎯 Changes Made
 <!-- List specific changes made in this PR -->
-- 
-- 
-- 
+-
+-
+-
 
 ## 🧪 Testing
 <!-- Check all that apply -->
 - [ ] Local testing completed
 - [ ] Backend tests pass (`./gradlew test`)
 - [ ] Frontend builds successfully (`npm run build`)
+- [ ] Documentation checks pass (`./scripts/check-docs.sh`)
+- [ ] OpenAPI drift check passes, if backend API changed
 - [ ] Manual testing on mobile/desktop
 - [ ] Admin functionality tested (if applicable)
 - [ ] Database migration tested (if applicable)
@@ -29,7 +31,7 @@ References #
 <!-- Check all that apply -->
 - [ ] Updated relevant documentation
 - [ ] Added code comments for complex logic
-- [ ] Updated API documentation (if applicable)
+- [ ] Regenerated `docs/api.json` for backend API changes (if applicable)
 - [ ] Updated UI component documentation (if applicable)
 
 ## 🔍 Review Checklist
@@ -46,4 +48,4 @@ References #
 None
 
 ## 📝 Additional Notes
-<!-- Any additional context or notes for reviewers --> 
+<!-- Any additional context or notes for reviewers -->

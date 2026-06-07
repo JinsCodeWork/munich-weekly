@@ -86,7 +86,7 @@ Upload → Dimension Calculation → Database Storage → API Response → Insta
 public StorageResult storeFileWithDimensions(MultipartFile file) {
     // Extract dimensions during upload process
     ImageDimensions dimensions = extractImageDimensions(file);
-    
+
     // Store file and return both URL and dimensions
     String url = storeFile(file);
     return new StorageResult(url, dimensions);
@@ -109,7 +109,7 @@ public void updateSubmissionWithImageUrl(Long submissionId, String imageUrl, Ima
   "imageUrl": "https://img.munichweekly.art/uploads/...",
   "description": "Photo description",
   "imageWidth": 3648,     // Stored width
-  "imageHeight": 5472,    // Stored height  
+  "imageHeight": 5472,    // Stored height
   "aspectRatio": 0.666667 // Precomputed ratio
 }
 ```
@@ -200,7 +200,7 @@ const CONTAINER_CONFIG = {
 
 ### After: Stored Dimension System
 - **60-80% faster** layout calculation
-- **Instant** aspect ratio availability  
+- **Instant** aspect ratio availability
 - **Zero redundant** API calls for dimensions
 - **Enhanced mobile** experience with immediate layout
 - **Backward compatible** with progressive loading fallback
@@ -246,4 +246,4 @@ const CONTAINER_CONFIG = {
 
 ---
 
-*This hybrid masonry system with stored dimension optimization provides optimal visual presentation with guaranteed performance across all devices, eliminating calculation overhead and delivering instant layout rendering.* 
+*This hybrid masonry system with stored dimension optimization provides optimal visual presentation with guaranteed performance across all devices, eliminating calculation overhead and delivering instant layout rendering.*

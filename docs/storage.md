@@ -16,27 +16,10 @@ The storage implementation is selected based on configuration, allowing seamless
 
 ## Storage Configuration
 
-Storage settings are defined in `application.properties`:
-
-```properties
-# Storage configuration - set to 'R2' for cloud storage, or 'LOCAL' for local storage
-storage.mode=R2
-
-# Upload directory configuration (for local storage)
-uploads.directory=${UPLOADS_DIR:./uploads}
-
-# Cloudflare R2 configuration (for cloud storage)
-cloudflare.r2.access-key=${CLOUDFLARE_R2_ACCESS_KEY:}
-cloudflare.r2.secret-key=${CLOUDFLARE_R2_SECRET_KEY:}
-cloudflare.r2.endpoint=${CLOUDFLARE_R2_ENDPOINT:}
-cloudflare.r2.bucket=${CLOUDFLARE_R2_BUCKET:munichweekly-photoupload}
-cloudflare.r2.public-url=${CLOUDFLARE_R2_PUBLIC_URL:}
-
-# Cloudflare Worker CDN
-cloudflare.worker.url=${CLOUDFLARE_WORKER_URL:https://img.munichweekly.art}
-```
-
-These settings can be overridden through environment variables in your Docker configuration.
+Storage mode is selected by the Spring `storage.mode` property, which can be
+overridden by environment variables. Keep the variable list and defaults in
+[Environment Variables](./environment.md); keep this document focused on storage
+behavior and operational consequences.
 
 ---
 
@@ -106,114 +89,11 @@ The `R2StorageService` class:
 
 ## Cloudflare Worker Image CDN
 
-To enhance image delivery performance and enable on-demand image transformations, Munich Weekly implements a Cloudflare Worker as a CDN layer between clients and the R2 storage.
-
-### Image Worker Architecture
-
-The Image Worker serves as a processing middleware that:
-
-1. Receives image requests from clients
-2. Retrieves original images from R2 private storage
-3. Applies real-time transformations based on URL parameters
-4. Delivers optimized images with appropriate caching headers
-
-### Key Features
-
-- **On-demand Image Resizing** - Dynamically resize images based on client requirements
-- **Format Optimization** - Convert images to modern formats like WebP and AVIF based on browser support
-- **Quality Control** - Adjust compression levels for different use cases
-- **Responsive Delivery** - Serve appropriately sized images for different devices
-- **Bandwidth Optimization** - Reduce data transfer by delivering optimized images
-- **Edge Caching** - Leverage Cloudflare's global CDN for faster delivery
-
-### URL Structure and Parameters
-
-Images are served from the worker domain (img.munichweekly.art) with the following pattern:
-
-```
-https://img.munichweekly.art/uploads/issues/{issueId}/submissions/{fileName}?width=300&height=200&quality=80&fit=cover
-```
-
-Supported transformation parameters include:
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| width     | Target width in pixels | `width=300` |
-| height    | Target height in pixels | `height=200` |
-| quality   | Compression quality (1-100) | `quality=80` |
-| fit       | Resizing strategy | `fit=cover`, `fit=contain`, `fit=scale-down` |
-| format    | Output format | `format=webp`, `format=auto` |
-| dpr       | Device pixel ratio | `dpr=2` |
-
-### Worker Configuration
-
-The Image Worker is configured using `wrangler.toml`:
-
-```toml
-name = "image-worker"
-main = "src/index.js"
-compatibility_date = "2025-05-19"
-
-# R2 bucket binding
-[[r2_buckets]]
-binding = "PHOTO_BUCKET"
-bucket_name = "munichweekly-photoupload"
-preview_bucket_name = "munichweekly-photoupload"
-```
-
-### Implementation Details
-
-The Worker code handles various aspects of image processing:
-
-- **Path Parsing** - Extracts object keys from request paths
-- **Parameter Extraction** - Parses transformation parameters from URL query
-- **Format Detection** - Identifies optimal image formats based on Accept headers
-- **Content-Type Handling** - Ensures correct MIME types for transformed images
-- **Error Handling** - Gracefully handles missing images or invalid parameters
-- **Caching Strategy** - Sets appropriate cache headers for optimized delivery
-
-### Frontend Integration
-
-The frontend uses utility functions to generate appropriate image URLs:
-
-1. `getImageUrl()` - Transforms raw storage URLs to CDN URLs
-2. `createImageUrl()` - Adds transformation parameters based on display context
-
-Implementation example:
-
-```tsx
-// For thumbnails in lists
-<Thumbnail 
-  src={getImageUrl(imageUrl)}
-  width={300}
-  height={200}
-  quality={80}
-  fit="cover"
-  useImageOptimization={true}
-/>
-
-// For full-size viewing
-<ImageViewer
-  imageUrl={getImageUrl(imageUrl)}
-  useHighQuality={true}
-/>
-```
-
-### On-Demand Loading Strategy
-
-The platform implements an on-demand image loading strategy:
-
-1. **Thumbnail View** - Small, optimized images are loaded in list views
-   - Lower resolution (e.g., 300×200)
-   - Medium quality (e.g., 80%)
-   - Cropped to fit display area
-
-2. **Full Image View** - High-quality images are loaded only when explicitly requested
-   - Higher resolution (up to original size)
-   - Higher quality (95%)
-   - Preserved aspect ratio
-
-This approach significantly reduces bandwidth usage while maintaining excellent user experience.
+Munich Weekly uses a Cloudflare Worker in front of stored images for optimized
+delivery and transformations. Keep worker URL formats, transformation
+parameters, cache behavior, deployment, and debugging details in
+[Image CDN System](./image-cdn.md). This storage document only records that
+stored image URLs may be transformed for delivery through that CDN layer.
 
 ## Frontend Integration
 
@@ -239,7 +119,7 @@ POST /api/submissions/{submissionId}/upload
 
 **Performance Benefits:**
 - **Single computation** - Dimensions calculated once during upload
-- **Database storage** - Width, height, aspect ratio persisted permanently  
+- **Database storage** - Width, height, aspect ratio persisted permanently
 - **API optimization** - Dimension data included in submission responses
 - **Frontend efficiency** - Eliminates client-side calculation overhead
 
@@ -267,10 +147,10 @@ Custom gallery images are admin-managed visual material. They appear in the publ
 public StorageResult storeFileWithDimensions(MultipartFile file) {
     // Extract dimensions from file stream before storage
     ImageDimensions dimensions = extractImageDimensions(file.getBytes());
-    
+
     // Store file using existing logic
     String url = storeFile(file);
-    
+
     // Return both URL and dimensions
     return new StorageResult(url, dimensions);
 }
@@ -279,7 +159,7 @@ public StorageResult storeFileWithDimensions(MultipartFile file) {
 public class StorageResult {
     private final String url;
     private final ImageDimensions dimensions;
-    
+
     // Constructor and getters...
 }
 ```
@@ -339,7 +219,7 @@ The `StorageConfig` class determines which storage implementation to use:
 public class StorageConfig {
     @Value("${storage.mode:R2}")
     private String storageMode;
-    
+
     @Bean
     @Primary
     public StorageService storageService() {
@@ -394,7 +274,7 @@ When a user requests account deletion, the system executes a comprehensive delet
 1. **Submission Cleanup** - Identifies and deletes all submissions by the user
    - For each submission, deletes associated votes
    - For each submission, removes the image file from cloud storage
-   
+
 2. **Personal Data Removal** - Removes all personal information:
    - Deletes all votes cast by the user
    - Removes third-party authentication bindings
@@ -415,28 +295,28 @@ public void deleteCurrentUser() {
     Long userId = CurrentUserUtil.getUserIdOrThrow();
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            
+
     // Delete user's submissions and associated cloud storage files
     List<Submission> userSubmissions = submissionRepository.findByUserId(userId);
     for (Submission submission : userSubmissions) {
         // Delete votes for this submission
         voteRepository.deleteBySubmission(submission);
-        
+
         // Delete image file from cloud storage
         if (submission.getImageUrl() != null && !submission.getImageUrl().isEmpty()) {
             storageService.deleteFile(submission.getImageUrl());
         }
     }
-    
+
     // Delete the submissions from database
     submissionRepository.deleteAll(userSubmissions);
-    
+
     // Delete votes cast by the user
     voteRepository.deleteByUserId(userId);
-    
+
     // Delete third-party auth bindings
     authProviderRepository.deleteByUser(user);
-    
+
     // Delete the user account
     userRepository.delete(user);
 }
@@ -491,24 +371,10 @@ Both implementations provide robust error handling for common issues:
 
 ## Configuring R2 Storage
 
-To configure Cloudflare R2 storage:
-
-1. Create a Cloudflare R2 account
-2. Create an API token with appropriate permissions
-3. Set the environment variables in your Docker deployment
-4. Set `storage.mode=R2` in your configuration
-
-Example Docker environment configuration:
-
-```yaml
-environment:
-  - CLOUDFLARE_R2_ACCESS_KEY=your-access-key
-  - CLOUDFLARE_R2_SECRET_KEY=your-secret-key
-  - CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
-  - CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
-  - CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
-  - STORAGE_MODE=R2
-```
+To configure Cloudflare R2 storage, create a Cloudflare R2 bucket, issue an API
+token with appropriate permissions, and set the R2 variables listed in
+[Environment Variables](./environment.md). Production deployment wiring belongs
+in [Deployment Guide](./deployment.md).
 
 ---
 
@@ -565,10 +431,10 @@ The service automatically detects the storage backend and uses the appropriate m
 public class FileDownloadService {
     @Autowired
     private StorageService storageService;
-    
+
     @Autowired(required = false)
     private R2StorageService r2StorageService;
-    
+
     // Downloads original images directly from storage
     private byte[] readOriginalFromStorage(String objectPath) throws IOException {
         // Try R2 storage first if available
@@ -578,7 +444,7 @@ public class FileDownloadService {
                 return r2Data;
             }
         }
-        
+
         // Fallback to local storage
         return readLocalFile(cleanPath);
     }

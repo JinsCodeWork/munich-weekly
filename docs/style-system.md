@@ -152,7 +152,7 @@ export const CONTAINER_CONFIG = {
     desktop: 40,    // px-10 (upgraded from 20px)
     ultrawide: 60,  // px-15 (ultra-wide display support)
   },
-  
+
   // Multiple container max-widths for different content types
   maxWidths: {
     default: 1400,  // Standard content layout
@@ -194,7 +194,7 @@ export const CONTAINER_CONFIG = {
     gap: { mobile: 4, tablet: 8, desktop: 12 },
     columns: { mobile: 2, tablet: 2, desktop: 4 }
   },
-  
+
   // Account page configuration - optimized for sidebar layout
   accountMasonry: {
     columnWidth: { mobile: 160, tablet: 180, desktop: 240 },
@@ -218,7 +218,7 @@ export const CONTAINER_CONFIG = {
 ```tsx
 import { getButtonStyles } from '@/styles';
 
-export const Button = ({ 
+export const Button = ({
   variant = 'primary',
   size = 'md',
   className,
@@ -226,8 +226,8 @@ export const Button = ({
   ...props
 }) => {
   return (
-    <button 
-      className={getButtonStyles({ variant, size, className })} 
+    <button
+      className={getButtonStyles({ variant, size, className })}
       {...props}
     >
       {children}
@@ -243,21 +243,21 @@ import { getNavLinkStyles } from '@/styles';
 
 export default function MainNav() {
   const isActive = (path) => path === currentPath;
-  
+
   return (
     <nav className="flex space-x-6">
-      <a 
-        href="/gallery" 
-        className={getNavLinkStyles({ 
-          variant: isActive('/gallery') ? 'active' : 'default' 
+      <a
+        href="/gallery"
+        className={getNavLinkStyles({
+          variant: isActive('/gallery') ? 'active' : 'default'
         })}
       >
         Gallery
       </a>
-      <a 
-        href="/submit" 
-        className={getNavLinkStyles({ 
-          variant: isActive('/submit') ? 'active' : 'default' 
+      <a
+        href="/submit"
+        className={getNavLinkStyles({
+          variant: isActive('/submit') ? 'active' : 'default'
         })}
       >
         Submit
@@ -282,50 +282,6 @@ export default function Header() {
   );
 }
 ```
-
-## Recent Refactoring Summary
-
-The style system was recently refactored to improve maintainability and consistency:
-
-1. **Typography System Enhancement**:
-   - Updated the font system from a single font to three specialized fonts
-   - Added DM Sans as the main text font, replacing the previous Inter font
-   - Introduced Space Grotesk as a dedicated heading font
-   - Retained Playfair Display as the brand logo specific font
-   - Unified font definitions in theme.ts to ensure consistency across the application
-   - Updated font class name mapping: font-sans (text), font-heading (headings), font-playfair (logo)
-
-2. **Next.js Image Configuration Update**:
-   - Changed from deprecated `images.domains` to recommended `images.remotePatterns` configuration
-
-3. **Authentication UI Improvements**:
-   - Fixed glassmorphism effect in modals
-   - Adjusted Modal component default styles to use dark semi-transparent background
-   - Added animation support through tailwindcss-animate plugin
-   - Fixed text color contrast issues
-   - Eliminated white screen flashing with global dark background
-
-4. **Navigation/Layout Refactoring**:
-   - Created dedicated navigation bar style system (navBar.ts and header.ts)
-   - Refactored MainNav and MobileNav to use style functions instead of inline styles
-   - Centralized Header and MainHeader components styling
-   - Ensured consistent responsive behavior
-
-5. **Bug Fixes and Optimizations**:
-   - Resolved TypeScript lint errors
-   - Fixed require() import issues by switching to ESM import style
-   - Optimized animations for form elements with sequential appearance
-
-6. **Advanced Image Display System**:
-   - Implemented intelligent aspect ratio detection with precision tolerances
-   - Enhanced thumbnail positioning logic with responsive behavior
-   - Added object-position support for precise image alignment control
-   - Optimized image display strategy for different aspect ratios:
-     * Landscape images prioritize complete display
-     * Portrait images use strategic cropping to prevent letterboxing
-     * 16:9 images receive special treatment for optimal balance
-   - Introduced responsive positioning rules (desktop vs mobile)
-   - Enhanced debugging capabilities with detailed parameter logging
 
 ## Best Practices
 
@@ -373,4 +329,4 @@ The style system is designed to support future enhancements:
 
 4. **Accessibility Improvements**:
    - Focus state enhancements
-   - High contrast mode support 
+   - High contrast mode support

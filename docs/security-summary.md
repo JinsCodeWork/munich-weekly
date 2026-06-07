@@ -1,20 +1,16 @@
 # 🔒 Security Summary - Munich Weekly
 
+> Class: Reference snapshot
+> Owner: Security/platform maintainer
+> Update when: security posture, known risks, or mitigation status changes.
+
 This document provides a concise overview of the current security implementation in the Munich Weekly platform.
 
 ## 📚 Related Documentation
 
-For comprehensive information about the Munich Weekly platform, please refer to:
-
-**Security & Privacy:**
-- 📋 [Complete Authentication & Security Guide](./auth.md) - Detailed technical implementation
-- 🛡️ [Privacy Policy](./privacy.md) - GDPR compliance and data handling
-
-**Architecture & Infrastructure:**
-- 🚀 [Deployment Guide](./deployment.md) - Production deployment and server security
-- 📦 [API Reference](./api.md) - Generated OpenAPI schema and API workflow
-- 🗃️ [Database Design](./database.md) - Data model and constraints
-- 💾 [Storage System](./storage.md) - File storage security and architecture
+Use [Authentication & Security](./auth.md) for implementation details,
+[Privacy Policy](./privacy.md) for user-facing data handling, and
+[Deployment Guide](./deployment.md) for production security operations.
 
 **Development:**
 - 📱 [Frontend Overview](./frontend-overview.md) - Client-side security implementation
@@ -27,7 +23,7 @@ For comprehensive information about the Munich Weekly platform, please refer to:
 - **Primary**: JWT-based authentication with 1-hour expiration
 - **Storage**: localStorage (primary) + sessionStorage (fallback)
 - **Algorithm**: HS256 (HMAC SHA-256)
-- **Secret**: Configurable via environment variable `JWT_SECRET`
+- **Secret**: Managed through the JWT settings in [Environment Variables](./environment.md)
 
 ### Anonymous User Support
 - **Mechanism**: UUID-based `visitorId` cookies
@@ -166,26 +162,14 @@ Currently **missing** but recommended:
 
 ---
 
-## 🔗 Quick Navigation
-
-- 🏠 [Project Overview](../README.md) - Main project documentation
-- 🔐 [Detailed Security Guide](./auth.md) - Complete authentication implementation
-- 🚀 [Deployment Security](./deployment.md) - Production security setup
-- 🛡️ [Privacy Compliance](./privacy.md) - GDPR and data protection
-
----
-
-*This document reflects the current security implementation of the Munich Weekly platform*  
+*This document reflects the current security implementation of the Munich Weekly platform*
 *For detailed implementation guidance, refer to the complete [Authentication & Security documentation](./auth.md)*
 
 ## Protected API Endpoints
 
-- **/api/admin/****: All endpoints under this path are protected and require `admin` authority. This includes user management, issue management, and submission data access.
-- **/api/promotion/admin/****: All promotion management endpoints require `admin` authority.
-- **/api/users/me**: Requires an authenticated user to fetch their own profile.
-- **/api/submissions/my-submissions**: Requires an authenticated user to fetch their submissions.
-
----
+Protected route facts are maintained in [API Reference](./api.md),
+[api.json](./api.json), and the backend security configuration. This summary
+does not keep a hand-written endpoint inventory.
 
 ## 🔐 Security Audit History
 

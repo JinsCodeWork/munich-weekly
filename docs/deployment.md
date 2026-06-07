@@ -1,5 +1,9 @@
 # 🚀 Deployment Guide for Munich Weekly
 
+> Class: Operational guide
+> Owner: Backend/platform maintainer
+> Update when: production ports, Nginx, PM2, Docker, profiles, SSL, or deployment process changes.
+
 This guide explains how to deploy the **Munich Weekly** photography platform to a production server on **Hetzner Cloud**. It covers backend configuration, database setup, and reverse proxy (Nginx + SSL), as well as frontend deployment with PM2.
 
 ## 📚 Related Documentation
@@ -108,44 +112,12 @@ munich-weekly/
 
 ## 4. Environment Configuration
 
-Create a `.env` file inside the `backend/` directory:
+Create `backend/.env` on the server. The variable inventory, defaults, and
+profile meanings are maintained in [Environment Variables](./environment.md);
+do not duplicate the full list here.
 
-```env
-# Database config
-POSTGRES_DB=mydatabase
-POSTGRES_USER=myuser
-POSTGRES_PASSWORD=secret
-
-# JWT config
-JWT_SECRET=your-very-secure-secret
-JWT_EXPIRATION_MS=3600000
-
-# Cloudflare R2 storage (if using cloud storage)
-CLOUDFLARE_R2_ACCESS_KEY=your-access-key
-CLOUDFLARE_R2_SECRET_KEY=your-secret-key
-CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
-CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
-CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
-
-# Spring profiles
-SPRING_PROFILES_ACTIVE=prod
-
-# Mailjet password reset email
-MAILJET_API_KEY=your-mailjet-api-key
-MAILJET_API_SECRET=your-mailjet-secret
-APP_FRONTEND_URL=https://munichweekly.art
-
-# Cloudflare Turnstile for anonymous submissions
-TURNSTILE_SECRET_KEY=your-turnstile-secret-key
-TURNSTILE_VERIFY_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify
-ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS=900000
-```
-
-These values are used by:
-* `compose.yaml` for launching PostgreSQL and the backend container
-* Spring Boot via `${...}` variables in `application.properties`
-
-> ✅ Make sure `.env` is excluded from Git with `.gitignore`
+These values are consumed by `backend/compose.yaml` and Spring Boot property
+binding. Make sure `.env` is excluded from Git with `.gitignore`.
 
 > Production must not use `SPRING_PROFILES_ACTIVE=dev`. The current `dev`
 > profile clears core data on startup and reseeds test users.
@@ -165,54 +137,8 @@ This command starts two containers:
 1. **PostgreSQL database** (`mw-postgres`)
 2. **Spring Boot backend** (`mw-backend`)
 
-The `compose.yaml` file configures both services:
-
-```yaml
-services:
-  postgres:
-    image: postgres:15
-    container_name: mw-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - '127.0.0.1:5432:5432'
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
-
-  backend:
-    build: .
-    container_name: mw-backend
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8080:8080"
-    environment:
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
-      - CLOUDFLARE_R2_ACCESS_KEY=${CLOUDFLARE_R2_ACCESS_KEY}
-      - CLOUDFLARE_R2_SECRET_KEY=${CLOUDFLARE_R2_SECRET_KEY}
-      - CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT}
-      - CLOUDFLARE_R2_BUCKET=${CLOUDFLARE_R2_BUCKET}
-      - CLOUDFLARE_R2_PUBLIC_URL=${CLOUDFLARE_R2_PUBLIC_URL}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
-      - UPLOADS_DIR=/uploads
-      - MAILJET_API_KEY=${MAILJET_API_KEY}
-      - MAILJET_API_SECRET=${MAILJET_API_SECRET}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
-      - TURNSTILE_VERIFY_URL=${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
-      - ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS=${ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS:-900000}
-    volumes:
-      - ./uploads:/uploads
-      - ../docs:/app/docs
-
-volumes:
-  pgdata:
-```
+The service definitions live in `backend/compose.yaml`; treat that file as the
+source of truth for container names, ports, volumes, and environment wiring.
 
 ### Building and Deploying Backend Changes
 
@@ -229,44 +155,13 @@ docker compose up -d --build backend
 
 ### Configuring Storage
 
-The platform offers two storage options for image uploads:
+Production deployments should use Cloudflare R2. Storage modes and required
+variables are documented in [Environment Variables](./environment.md); storage
+behavior is documented in [Storage System](./storage.md).
 
-1. **Local Storage** - Stores files on the server's filesystem
-2. **Cloudflare R2 Cloud Storage** - Stores files in Cloudflare's object storage service
-
-#### Using Local Storage
-
-For development or testing environments, use local storage when the backend
-process receives `STORAGE_MODE=LOCAL`:
-
-```env
-STORAGE_MODE=LOCAL
-UPLOADS_DIR=/uploads
-```
-
-The current `compose.yaml` does not explicitly pass `STORAGE_MODE` into the
-backend container. Production deployments should use R2. For local upload testing,
-prefer the host-run backend flow in [Local Development](./local-development.md),
-or add an explicit compose override before relying on local container storage.
-
-#### Using Cloud Storage (Recommended for Production)
-
-For production environments, using Cloudflare R2 is recommended:
-
-```env
-CLOUDFLARE_R2_ACCESS_KEY=your-access-key
-CLOUDFLARE_R2_SECRET_KEY=your-secret-key
-CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
-CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
-CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
-```
-
-The R2 storage service will automatically:
-- Create the bucket if it doesn't exist
-- Generate public URLs for uploaded images
-- Optimize storage structure for efficient retrieval
-
-For detailed information on the storage system, see the [Storage Documentation](./storage.md).
+For local upload testing, prefer the host-run backend flow in
+[Local Development](./local-development.md), or use an explicit compose override
+before relying on local container storage.
 
 ### Checking Backend Container Logs
 
@@ -462,19 +357,8 @@ If the backend container is having issues:
 
 ### SSH Access Issues
 
-If SSH key authentication fails:
-
-1. Use Hetzner Rescue Mode
-2. Mount the system disk:
-   ```bash
-   mount /dev/sda1 /mnt
-   ```
-3. Fix SSH permissions:
-   ```bash
-   chmod 700 /mnt/root/.ssh
-   chmod 600 /mnt/root/.ssh/authorized_keys
-   ```
-4. Reboot the server
+If SSH key authentication fails, follow the [Emergency Recovery](#emergency-recovery)
+steps above.
 
 ---
 

@@ -1,5 +1,9 @@
 # Refactor Baseline and Non-Breaking Contracts
 
+> Class: Historical/reference
+> Owner: Frontend maintainer
+> Update when: frontend refactor guardrails or preserved contracts change.
+
 This document defines the baseline we verified before and during the Graphify-driven refactor.
 It is intended to prevent accidental behavior regressions while reducing coupling.
 

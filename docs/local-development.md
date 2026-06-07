@@ -1,5 +1,9 @@
 # Local Development
 
+> Class: Operational guide
+> Owner: Backend/platform maintainer
+> Update when: local startup commands, profiles, ports, or smoke checks change.
+
 This guide is the source of truth for running Munich Weekly on a developer machine.
 It follows the current codebase behavior; it does not require code changes.
 

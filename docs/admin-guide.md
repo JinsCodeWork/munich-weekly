@@ -1,5 +1,9 @@
 # Munich Weekly Admin Guide
 
+> Class: Product guide
+> Owner: Product/admin maintainer
+> Update when: admin issue, submission, gallery, promotion, moderation, or migration workflows change.
+
 ## Image Dimension Data Migration ✨ **NEW**
 
 ### Overview
@@ -101,7 +105,7 @@ The large hero image on the home page can be changed as follows:
 
 The Home Settings interface provides the following capabilities:
 
-- **Image Upload**: 
+- **Image Upload**:
   - Click "Select New Image" to choose a new hero image
   - Supported formats: JPG and PNG
   - Maximum file size: 30MB
@@ -203,7 +207,7 @@ If updates don't appear immediately:
 
 - **Backend sync**: Images uploaded to `/backend/uploads/hero.jpg`
 - **Frontend sync**: Automatically copied to `/frontend/public/images/home/hero.jpg`
-- **API endpoints**: `/frontend-api/config` for public access, `/frontend-api/admin/config` for admin operations
+- **Frontend route handlers**: See [Frontend API Route Handlers](./frontend-api.md) for public config, admin config, and hero sync routes.
 - **Event system**: Uses `configUpdated` events and localStorage for cross-tab communication
 
 ### More Resources
@@ -219,7 +223,7 @@ If updates don't appear immediately:
 When reviewing submissions, you have three action options:
 
 - **Approve**: Mark the submission as approved for public viewing
-- **Reject**: Mark the submission as rejected 
+- **Reject**: Mark the submission as rejected
 - **Select**: Mark the submission as selected/featured for the issue
 
 #### Multiple Selection Support
@@ -268,7 +272,7 @@ If downloads fail:
 - The system supports both local storage and Cloudflare R2 storage
 - Original image quality is preserved by bypassing CDN optimization
 - Download functionality requires admin authentication
-- Large downloads may take time depending on the number and size of selected images 
+- Large downloads may take time depending on the number and size of selected images
 
 ## Promotion Management
 

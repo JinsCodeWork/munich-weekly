@@ -1,5 +1,9 @@
 # Munich Weekly - Frontend Architecture
 
+> Class: Reference
+> Owner: Frontend maintainer
+> Update when: App Router structure, auth client behavior, API layer, state management, or shared frontend patterns change.
+
 ## Overview
 
 Munich Weekly is a photography-based weekly publication platform where users can submit, view, and vote on photographs. The frontend is built with a modern tech stack, featuring a responsive design that works across all devices.
@@ -280,12 +284,12 @@ const DEFAULT_CONFIG: ImageDimensionConfig = {
 const loadBatch = async (urls: string[], startIndex: number = 0) => {
   const isMobile = window.innerWidth < 768;
   const isFirstBatch = startIndex === 0;
-  
+
   // Reduce first batch to 2 images on mobile to prevent connection limit issues
   if (isMobile && isFirstBatch) {
     effectiveBatch = batch.slice(0, 2);
   }
-  
+
   // Staggered loading with mobile-specific delays
   const delay = isMobile ? 300 : 100;
 };
@@ -331,7 +335,7 @@ export const CONTAINER_CONFIG = {
 
 **Key Features**:
 - Dynamic column width calculations with responsive gaps
-- Automatic wide image detection and spanning (≥16:9 aspect ratio)  
+- Automatic wide image detection and spanning (≥16:9 aspect ratio)
 - **Progressive loading with optimized thresholds** for mobile performance
 - Real-time responsive adaptation without backend re-requests
 - **Visual loading states** with opacity transitions and progress indicators
@@ -414,8 +418,8 @@ The real-time update system uses multiple layers of communication:
 1. **Event-Driven Updates** (Primary):
    ```typescript
    // Triggered on successful configuration save
-   const event = new CustomEvent('configUpdated', { 
-     detail: { config: configData, timestamp: Date.now() } 
+   const event = new CustomEvent('configUpdated', {
+     detail: { config: configData, timestamp: Date.now() }
    });
    window.dispatchEvent(event);
    ```
@@ -442,17 +446,10 @@ The real-time update system uses multiple layers of communication:
 
 #### Configuration API
 
-The system uses dedicated API endpoints for configuration management:
-
-- **Public API** (`/frontend-api/config`):
-  - No authentication required
-  - Supports ETag caching
-  - Force refresh with `_force=1` parameter
-
-- **Admin API** (`/frontend-api/admin/config`):
-  - Requires admin authentication
-  - Handles configuration updates
-  - Stores data in `/frontend/public/config/homepage.json`
+Homepage configuration is served by Next.js route handlers under
+`/frontend-api/*`. Keep the route inventory and auth behavior in
+[Frontend API Route Handlers](./frontend-api.md); this architecture document
+only records how the home page consumes that configuration.
 
 #### Performance Optimizations
 
@@ -480,7 +477,7 @@ The system uses dedicated API endpoints for configuration management:
 The system includes comprehensive error handling:
 
 - **Authentication Errors**: Automatic token refresh attempts
-- **Network Failures**: Graceful degradation with retry mechanisms  
+- **Network Failures**: Graceful degradation with retry mechanisms
 - **Upload Failures**: Clear error messages with retry options
 - **Sync Failures**: Fallback to polling mechanism
 
@@ -513,7 +510,7 @@ Components and hooks for development and debugging:
 
 The home page provides an engaging entry point to the platform with the following components:
 
-1. **HeroImage Component**: 
+1. **HeroImage Component**:
    - Located at `/components/home/HeroImage.tsx`
    - Displays a large, visually engaging image with hover/tap interaction effects
    - Handles responsive behavior automatically (hover for desktop, tap for mobile)
@@ -542,9 +539,7 @@ The home page provides an engaging entry point to the platform with the followin
 4. **Configuration Management**:
    - Default configuration defined in `/lib/config.ts`
    - Dynamic configuration stored in `/public/config/homepage.json`
-   - API endpoints:
-     - `GET /frontend-api/config` - Retrieves current configuration
-     - `POST /frontend-api/admin/config` - Updates configuration (admin only)
+   - Route handler details live in [Frontend API Route Handlers](./frontend-api.md)
 
 ## Recent Architecture Enhancements
 
@@ -561,7 +556,7 @@ Significant improvements were made to the image rendering and display logic thro
 - Real-time aspect ratio calculation and logging for debugging
 
 **Responsive Display Strategy**:
-- **Desktop (≥768px)**: 
+- **Desktop (≥768px)**:
   - 16:9 images: Center-aligned for visual balance
   - Other landscape ratios (4:3, 5:4): Top-aligned to eliminate whitespace
   - Portrait images: Strategic cropping with `object-fit: cover`
@@ -579,7 +574,7 @@ Significant improvements were made to the image rendering and display logic thro
 **Component Architecture**:
 ```typescript
 // Enhanced Thumbnail component with intelligent positioning
-<Thumbnail 
+<Thumbnail
   src={imageUrl}
   autoDetectAspectRatio={true}
   preserveAspectRatio={true}
@@ -641,7 +636,7 @@ Enhanced public voting interface with optimized user experience:
 
 **Stored Dimension Strategy:**
 - **Upload-time calculation** - Image dimensions computed once during file upload
-- **Database persistence** - Width, height, aspect ratio stored in submissions table  
+- **Database persistence** - Width, height, aspect ratio stored in submissions table
 - **API integration** - Dimension data included in all submission endpoints
 - **Frontend efficiency** - Direct usage of stored ratios, no calculation needed
 
@@ -661,7 +656,7 @@ submission.setImageDimensions(result.getDimensions());
 {
   "imageUrl": "...",
   "imageWidth": 3648,      // ✨ Stored dimension
-  "imageHeight": 5472,     // ✨ Stored dimension  
+  "imageHeight": 5472,     // ✨ Stored dimension
   "aspectRatio": 0.666667  // ✨ Precomputed ratio
 }
 
@@ -702,7 +697,7 @@ const dimensionResult = useSubmissionDimensions(submissions, {
 // Performance metrics for admin users
 const optimizationStats = {
   storedDimensionsCount: 15,     // Submissions with stored data
-  dynamicFetchCount: 0,          // Legacy submissions requiring calculation  
+  dynamicFetchCount: 0,          // Legacy submissions requiring calculation
   optimizationPercentage: 100.0  // Percentage using stored dimensions
 };
 ```

@@ -1,17 +1,15 @@
 # 🔐 Authentication & Security
 
+> Class: Reference
+> Owner: Security/platform maintainer
+> Update when: auth flow, JWT behavior, roles, CORS, protected routes, or token storage behavior changes.
+
 This document provides a comprehensive overview of the authentication and security mechanisms implemented in the **Munich Weekly** platform, based on the current codebase implementation.
 
 ## 📚 Documentation Navigation
 
-**Quick Overview:** For an executive summary, see [Security Summary](./security-summary.md)
-
-**Related Documentation:**
-- 🏠 [Project Overview](../README.md) - Main project documentation and feature overview
-- 🚀 [Deployment Guide](./deployment.md) - Production security configuration and SSL setup
-- 🛡️ [Privacy Policy](./privacy.md) - GDPR compliance and user data protection
-- 📦 [API Reference](./api.md) - Generated OpenAPI schema and API workflow
-- 📱 [Frontend Overview](./frontend-overview.md) - Client-side authentication implementation
+For a risk summary, see [Security Summary](./security-summary.md). For endpoint
+contracts, use [API Reference](./api.md).
 
 ---
 
@@ -32,7 +30,7 @@ The Munich Weekly platform implements a multi-layered security architecture that
 
 - **Signing Algorithm**: HS256 (HMAC SHA-256)
 - **Default Expiration**: 1 hour (3600000ms)
-- **Secret Key**: Configurable via `JWT_SECRET` environment variable
+- **Secret Key**: Configured through the JWT environment settings in [Environment Variables](./environment.md)
 - **Library**: `io.jsonwebtoken:jjwt` (version 0.11.5)
 
 ### 2.2. Token Structure
@@ -107,7 +105,7 @@ sequenceDiagram
 5. Sets Spring Security context with user authentication
 6. Continues to controller with authenticated context
 
-**Protected Endpoints**:
+**Protected Handler Pattern**:
 ```java
 @PreAuthorize("hasAnyAuthority('user', 'admin')")
 public ResponseEntity<?> protectedEndpoint() {
@@ -176,24 +174,12 @@ API details: [API reference](./api.md).
 
 ### 5.1. Spring Security Setup
 
-**Public Endpoints** (excerpt; see `SecurityConfig` for the full list):
-```java
-.requestMatchers("/api/auth/**").permitAll()          // Authentication endpoints
-.requestMatchers(HttpMethod.GET, "/api/issues").permitAll()         // Public issue listing
-.requestMatchers(HttpMethod.GET, "/api/submissions").permitAll()    // Public submissions
-.requestMatchers(HttpMethod.POST, "/api/submissions/anonymous").permitAll()
-.requestMatchers(HttpMethod.POST, "/api/submissions/*/anonymous-upload").permitAll()
-.requestMatchers(HttpMethod.GET, "/api/votes/check").permitAll()    // Vote status checking
-.requestMatchers(HttpMethod.POST, "/api/votes").permitAll()         // Anonymous voting
-.requestMatchers(HttpMethod.DELETE, "/api/votes").permitAll()       // Vote cancellation
-.requestMatchers("/uploads/**").permitAll()           // Public file access
-```
-
-**Protected Endpoints**:
-```java
-.requestMatchers("/api/users/me").hasAnyAuthority("user", "admin")
-.anyRequest().authenticated()                         // Default protection
-```
+Security rules are enforced in
+`backend/src/main/java/com/munichweekly/backend/security/SecurityConfig.java`
+and method-level `@PreAuthorize` annotations. Do not maintain public/protected
+endpoint inventories by hand in Markdown; use [API Reference](./api.md), the
+generated [api.json](./api.json), and the backend security config as the current
+facts.
 
 ### 5.2. Error Handling
 
@@ -331,34 +317,9 @@ fetch(url, {
 
 ## 10. API Security Reference
 
-### 10.1. Authentication Endpoints
-
-| Endpoint | Method | Access | Purpose |
-|----------|--------|--------|---------|
-| `/api/auth/login/email` | POST | Public | Email/password login |
-| `/api/auth/register` | POST | Public | User registration |
-| `/api/auth/login/provider` | POST | Public | Third-party provider login |
-| `/api/auth/bind` | POST | Authenticated | Bind third-party account |
-| `/api/auth/forgot-password` | POST | Public | Request password reset |
-| `/api/auth/reset-password` | POST | Public | Complete password reset |
-
-### 10.2. User Management Endpoints
-
-| Endpoint | Method | Access | Purpose |
-|----------|--------|--------|---------|
-| `/api/users/me` | GET | Authenticated | Get current user profile |
-| `/api/users/me` | PATCH | Authenticated | Update user profile |
-| `/api/users/change-password` | POST | Authenticated | Change password |
-| `/api/users/me` | DELETE | Authenticated | Delete user account |
-| `/api/users` | GET | Admin Only | List all users |
-
-### 10.3. Anonymous Voting Endpoints
-
-| Endpoint | Method | Access | Purpose |
-|----------|--------|--------|---------|
-| `/api/votes/check` | GET | Public | Check vote status (uses visitorId cookie) |
-| `/api/votes` | POST | Public | Submit vote (requires visitorId cookie) |
-| `/api/votes` | DELETE | Public | Cancel vote (uses visitorId cookie) |
+Endpoint paths, request/response schemas, and security metadata belong in
+[API Reference](./api.md) and [api.json](./api.json). This document explains
+authentication behavior and security design, not the route inventory.
 
 ---
 

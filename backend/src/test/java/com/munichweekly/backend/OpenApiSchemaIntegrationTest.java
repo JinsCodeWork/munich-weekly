@@ -7,6 +7,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "cloudflare.r2.access-key=",
         "cloudflare.r2.secret-key=",
         "cloudflare.r2.endpoint=",
+        "uploads.directory=${java.io.tmpdir}/munich-weekly-openapi-integration-test",
         "spring.docker.compose.enabled=false"
 })
 class OpenApiSchemaIntegrationTest {
@@ -57,5 +59,67 @@ class OpenApiSchemaIntegrationTest {
                 .containsKey("/api/auth/login/email")
                 .containsKey("/api/gallery/admin/issues/{issueId}/items")
                 .containsKey("/api/gallery/admin/issues/{issueId}/custom-images");
+    }
+
+    @Test
+    void authAndIssueOperationsExposeCuratedOpenApiMetadata() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.getForObject(
+                "http://localhost:" + port + "/v3/api-docs",
+                Map.class
+        );
+
+        assertThat(response).isNotNull();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> paths = (Map<String, Object>) response.get("paths");
+
+        assertOperationMetadata(paths, "/api/auth/login/email", "post",
+                "Authentication", "Login with email and password");
+        assertOperationMetadata(paths, "/api/auth/register", "post",
+                "Authentication", "Register a new user");
+        assertOperationMetadata(paths, "/api/auth/bind", "post",
+                "Authentication", "Bind a third-party provider");
+        assertRequiresBearerAuth(operation(paths, "/api/auth/bind", "post"));
+
+        assertOperationMetadata(paths, "/api/issues", "get",
+                "Issues", "List issues");
+        assertOperationMetadata(paths, "/api/issues", "post",
+                "Issues", "Create issue");
+        assertRequiresBearerAuth(operation(paths, "/api/issues", "post"));
+        assertOperationMetadata(paths, "/api/issues/{id}", "delete",
+                "Issues", "Delete issue");
+        assertRequiresBearerAuth(operation(paths, "/api/issues/{id}", "delete"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> deleteResponses = (Map<String, Object>) operation(paths, "/api/issues/{id}", "delete").get("responses");
+        assertThat(deleteResponses).containsKey("204");
+    }
+
+    private static void assertOperationMetadata(
+            Map<String, Object> paths,
+            String path,
+            String method,
+            String tag,
+            String summary
+    ) {
+        Map<String, Object> operation = operation(paths, path, method);
+
+        assertThat(operation.get("tags")).isEqualTo(List.of(tag));
+        assertThat(operation.get("summary")).isEqualTo(summary);
+    }
+
+    private static void assertRequiresBearerAuth(Map<String, Object> operation) {
+        assertThat(operation.get("security")).isEqualTo(List.of(Map.of("bearerAuth", List.of())));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> operation(Map<String, Object> paths, String path, String method) {
+        Map<String, Object> pathItem = (Map<String, Object>) paths.get(path);
+        assertThat(pathItem).as("OpenAPI path %s", path).isNotNull();
+
+        Map<String, Object> operation = (Map<String, Object>) pathItem.get(method);
+        assertThat(operation).as("OpenAPI operation %s %s", method.toUpperCase(), path).isNotNull();
+        return operation;
     }
 }

@@ -1,7 +1,27 @@
 # Environment Variables
 
+> Class: Source of truth
+> Owner: Backend/platform maintainer
+> Update when: code reads a new environment variable or changes a default.
+
 This document maps environment variables to the current codebase. Code is the
 source of truth; when this document conflicts with code, update this document.
+
+## Local Agent Secrets
+
+The repository root `.env.local` file is a local-only agent secret file. It is
+ignored by git and is not part of application runtime configuration. Do not
+commit it, print its values, copy its values into documentation, or paste its
+values into shell commands.
+
+| Variable | Used by | Required for | Notes |
+|---|---|---|---|
+| `SSH_PASSWORD` | Agent-operated SSH sessions | Remote maintenance through the configured SSH host alias | Use `ssh munichweekly`; do not place the password in the command line. |
+| `LOCAL_ADMIN_EMAIL` | Agent browser/API tests | Local admin login flows | Use from environment at runtime; do not hard-code in tests or docs. |
+| `LOCAL_ADMIN_PW` | Agent browser/API tests | Local admin login flows | Use from environment at runtime; do not hard-code in tests or docs. |
+
+Agents may load this file for local work, for example by sourcing it in the
+current shell, but must not echo or persist the values.
 
 ## Backend
 

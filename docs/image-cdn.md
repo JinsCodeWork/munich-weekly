@@ -127,14 +127,14 @@ export function getImageUrl(url: string): string {
     const objectKey = extractObjectKey(url);
     return `https://img.munichweekly.art/uploads/${objectKey}`;
   }
-  
+
   // For local paths, add CDN domain in production
   if (url.startsWith('/uploads/')) {
     return isProduction
       ? `https://img.munichweekly.art${url}`
       : url;
   }
-  
+
   return url;
 }
 ```
@@ -143,16 +143,16 @@ export function getImageUrl(url: string): string {
 ```typescript
 export function createImageUrl(url: string, options: ImageOptions = {}): string {
   const baseUrl = getImageUrl(url);
-  
+
   if (Object.keys(options).length === 0) {
     return baseUrl;
   }
-  
+
   const params = new URLSearchParams();
   if (options.width) params.append('width', options.width.toString());
   if (options.height) params.append('height', options.height.toString());
   // ... other parameters
-  
+
   return `${baseUrl}?${params.toString()}`;
 }
 ```
@@ -162,7 +162,7 @@ export function createImageUrl(url: string, options: ImageOptions = {}): string 
 **Thumbnail Component**
 Advanced thumbnail component with intelligent aspect ratio handling and responsive positioning:
 ```tsx
-<Thumbnail 
+<Thumbnail
   src={imageUrl}
   width={300}
   height={200}
@@ -349,4 +349,4 @@ Planned improvements to the image processing pipeline:
 4. **Image effects** - Filters and adjustments for creative purposes
 5. **Advanced caching** - More granular control of cache behaviors
 
-These enhancements will further improve the platform's image handling capabilities. 
+These enhancements will further improve the platform's image handling capabilities.

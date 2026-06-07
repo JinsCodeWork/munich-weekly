@@ -1264,6 +1264,7 @@
     },
     "/api/auth/bind": {
       "post": {
+        "description": "Links a supported third-party identity provider to the authenticated user.",
         "operationId": "bindProvider",
         "requestBody": {
           "content": {
@@ -1287,13 +1288,20 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Bind a third-party provider",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
     "/api/auth/bind/{provider}": {
       "delete": {
+        "description": "Removes a linked third-party identity provider from the authenticated user.",
         "operationId": "unbindProvider",
         "parameters": [
           {
@@ -1317,8 +1325,14 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Unbind a third-party provider",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
@@ -1354,6 +1368,7 @@
     },
     "/api/auth/login/email": {
       "post": {
+        "description": "Authenticates a registered user and returns a JWT token with user profile details.",
         "operationId": "loginWithEmail",
         "requestBody": {
           "content": {
@@ -1377,13 +1392,15 @@
             "description": "OK"
           }
         },
+        "summary": "Login with email and password",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
     "/api/auth/login/provider": {
       "post": {
+        "description": "Authenticates with a supported third-party provider and creates the user on first login.",
         "operationId": "loginWithProvider",
         "requestBody": {
           "content": {
@@ -1407,13 +1424,15 @@
             "description": "OK"
           }
         },
+        "summary": "Login with provider",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
     "/api/auth/providers": {
       "get": {
+        "description": "Returns the third-party identity providers linked to the authenticated user.",
         "operationId": "getLinkedProviders",
         "responses": {
           "200": {
@@ -1430,13 +1449,20 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List linked providers",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
     "/api/auth/register": {
       "post": {
+        "description": "Creates an email/password account and returns a JWT token.",
         "operationId": "register",
         "requestBody": {
           "content": {
@@ -1460,8 +1486,9 @@
             "description": "OK"
           }
         },
+        "summary": "Register a new user",
         "tags": [
-          "auth-controller"
+          "Authentication"
         ]
       }
     },
@@ -2233,6 +2260,7 @@
     },
     "/api/issues": {
       "get": {
+        "description": "Returns all weekly issues in the system.",
         "operationId": "getAllIssues",
         "responses": {
           "200": {
@@ -2249,11 +2277,13 @@
             "description": "OK"
           }
         },
+        "summary": "List issues",
         "tags": [
-          "issue-controller"
+          "Issues"
         ]
       },
       "post": {
+        "description": "Creates a weekly issue with submission and voting windows. Admin access is required.",
         "operationId": "createIssue",
         "requestBody": {
           "content": {
@@ -2277,13 +2307,49 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create issue",
         "tags": [
-          "issue-controller"
+          "Issues"
         ]
       }
     },
     "/api/issues/{id}": {
+      "delete": {
+        "description": "Deletes an issue when dependency rules allow it. Admin access is required.",
+        "operationId": "deleteIssue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Issue deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete issue",
+        "tags": [
+          "Issues"
+        ]
+      },
       "get": {
+        "description": "Returns one issue by ID. Admin access is required.",
         "operationId": "getIssueById",
         "parameters": [
           {
@@ -2308,11 +2374,18 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get issue by ID",
         "tags": [
-          "issue-controller"
+          "Issues"
         ]
       },
       "put": {
+        "description": "Updates an existing weekly issue. Admin access is required.",
         "operationId": "updateIssue",
         "parameters": [
           {
@@ -2347,8 +2420,14 @@
             "description": "OK"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update issue",
         "tags": [
-          "issue-controller"
+          "Issues"
         ]
       }
     },
@@ -3626,6 +3705,16 @@
     {
       "description": "Current deployment origin",
       "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Login, registration, and linked provider account management",
+      "name": "Authentication"
+    },
+    {
+      "description": "Weekly photo issue scheduling and admin management",
+      "name": "Issues"
     }
   ]
 }

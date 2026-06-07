@@ -1,5 +1,9 @@
 # Lessons Learned
 
+> Class: Historical
+> Owner: Project maintainer
+> Update when: a lesson is still useful for future decisions; move current rules into live docs.
+
 This document captures key lessons and important technical decisions made during the development of the Munich Weekly platform. It should be consulted by developers before starting new feature work to avoid common pitfalls.
 
 ---
@@ -81,4 +85,4 @@ int deactivateOtherConfigs(@Param("excludeId") Long excludeId);
 @Modifying
 @Query("UPDATE GalleryFeaturedConfig gfc SET gfc.isActive = false WHERE gfc.id != :excludeId")
 int deactivateOtherConfigs(@Param("excludeId") Long excludeId);
-``` 
+```
