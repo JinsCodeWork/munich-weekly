@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dev") // Only run in development profile
+@Profile("legacy-api-docs")
 public class ApiDocGeneratorRunner implements CommandLineRunner {
 
     private final ApiScanner apiScanner;

@@ -10,7 +10,7 @@ This document provides a comprehensive overview of the authentication and securi
 - 🏠 [Project Overview](../README.md) - Main project documentation and feature overview
 - 🚀 [Deployment Guide](./deployment.md) - Production security configuration and SSL setup
 - 🛡️ [Privacy Policy](./privacy.md) - GDPR compliance and user data protection
-- 📦 [API Reference](./api.md) - Complete endpoint documentation with security requirements
+- 📦 [API Reference](./api.md) - Generated OpenAPI schema and API workflow
 - 📱 [Frontend Overview](./frontend-overview.md) - Client-side authentication implementation
 
 ---
@@ -408,4 +408,3 @@ This document reflects the current implementation as of the latest codebase anal
 ### Security Resources
 - 🛡️ [Privacy Policy](./privacy.md) - Data protection and GDPR compliance
 - 🚀 [Deployment Guide](./deployment.md) - Production security configuration
-- 💪 [Robustness Improvements](./robustness-improvements.md) - System reliability and security enhancements

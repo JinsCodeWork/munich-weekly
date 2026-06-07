@@ -51,6 +51,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Static resources - FIRST
                         .requestMatchers("/uploads/**").permitAll()
+
+                        // Generated API documentation
+                        .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         
                         // Authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed

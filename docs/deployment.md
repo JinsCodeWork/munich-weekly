@@ -8,6 +8,7 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 - 🔐 [Authentication & Security](./auth.md) - JWT configuration and security implementation
 - 🔒 [Security Summary](./security-summary.md) - Production security considerations
 - 🛡️ [Privacy Policy](./privacy.md) - Data protection and GDPR compliance
+- ⚙️ [Environment Variables](./environment.md) - Runtime configuration reference
 
 **Architecture & Development:**
 - 🏠 [Project Overview](../README.md) - Platform overview and tech stack
@@ -126,11 +127,18 @@ CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
 CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
 CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
 
-# Storage configuration (R2 for cloud storage, LOCAL for local storage)
-STORAGE_MODE=R2
-
 # Spring profiles
-SPRING_PROFILES_ACTIVE=dev
+SPRING_PROFILES_ACTIVE=prod
+
+# Mailjet password reset email
+MAILJET_API_KEY=your-mailjet-api-key
+MAILJET_API_SECRET=your-mailjet-secret
+APP_FRONTEND_URL=https://munichweekly.art
+
+# Cloudflare Turnstile for anonymous submissions
+TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+TURNSTILE_VERIFY_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify
+ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS=900000
 ```
 
 These values are used by:
@@ -138,6 +146,9 @@ These values are used by:
 * Spring Boot via `${...}` variables in `application.properties`
 
 > ✅ Make sure `.env` is excluded from Git with `.gitignore`
+
+> Production must not use `SPRING_PROFILES_ACTIVE=dev`. The current `dev`
+> profile clears core data on startup and reseeds test users.
 
 ---
 
@@ -163,11 +174,11 @@ services:
     container_name: mw-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - ./pgdata:/var/lib/postgresql/data
 
@@ -176,7 +187,7 @@ services:
     container_name: mw-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
@@ -185,8 +196,16 @@ services:
       - CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT}
       - CLOUDFLARE_R2_BUCKET=${CLOUDFLARE_R2_BUCKET}
       - CLOUDFLARE_R2_PUBLIC_URL=${CLOUDFLARE_R2_PUBLIC_URL}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
       - UPLOADS_DIR=/uploads
+      - MAILJET_API_KEY=${MAILJET_API_KEY}
+      - MAILJET_API_SECRET=${MAILJET_API_SECRET}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      - TURNSTILE_VERIFY_URL=${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      - ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS=${ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS:-900000}
     volumes:
       - ./uploads:/uploads
       - ../docs:/app/docs
@@ -217,23 +236,24 @@ The platform offers two storage options for image uploads:
 
 #### Using Local Storage
 
-For development or testing environments, you can use local storage:
+For development or testing environments, use local storage when the backend
+process receives `STORAGE_MODE=LOCAL`:
 
 ```env
-# Set in .env file
 STORAGE_MODE=LOCAL
 UPLOADS_DIR=/uploads
 ```
 
-This will store uploaded files in the `/uploads` directory inside the container, which is mapped to `./uploads` on the host via Docker volume.
+The current `compose.yaml` does not explicitly pass `STORAGE_MODE` into the
+backend container. Production deployments should use R2. For local upload testing,
+prefer the host-run backend flow in [Local Development](./local-development.md),
+or add an explicit compose override before relying on local container storage.
 
 #### Using Cloud Storage (Recommended for Production)
 
 For production environments, using Cloudflare R2 is recommended:
 
 ```env
-# Set in .env file
-STORAGE_MODE=R2
 CLOUDFLARE_R2_ACCESS_KEY=your-access-key
 CLOUDFLARE_R2_SECRET_KEY=your-secret-key
 CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
@@ -258,7 +278,7 @@ docker logs -f mw-backend
 
 ---
 
-## 7. Frontend Deployment
+## 6. Frontend Deployment
 
 ### Installing Dependencies
 
@@ -285,7 +305,8 @@ Start the Next.js application with PM2:
 
 ```bash
 cd /opt/munich-weekly/frontend
-pm2 start npm --name munich-frontend -- run dev
+npm run build
+pm2 start npm --name munich-frontend -- start
 ```
 
 Configure PM2 to start on system boot:
@@ -314,7 +335,7 @@ pm2 stop munich-frontend
 
 ---
 
-## 8. Reverse Proxy with Nginx + SSL
+## 7. Reverse Proxy with Nginx + SSL
 
 File: `/etc/nginx/sites-available/10-munichweekly.conf`
 
@@ -340,7 +361,8 @@ server {
 
     # API reverse proxy to Spring Boot
     location /api/ {
-        proxy_pass         http://127.0.0.1:8080/;
+        # Keep the /api prefix. Do not add a trailing slash to proxy_pass here.
+        proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
@@ -374,7 +396,7 @@ sudo systemctl reload nginx
 
 ---
 
-## 9. SSL with Let's Encrypt
+## 8. SSL with Let's Encrypt
 
 Install and enable HTTPS certificate:
 
@@ -391,7 +413,7 @@ sudo certbot certificates
 
 ---
 
-## 10. Troubleshooting
+## 9. Troubleshooting
 
 ### 502 Bad Gateway
 
@@ -468,9 +490,9 @@ If SSH key authentication fails:
 * Ports:
 
   * 80/443 → Nginx
-  * 8080 → Spring Boot backend (Docker container)
+  * 127.0.0.1:8080 → Spring Boot backend (Docker container)
   * 3000 → Next.js frontend
-  * 5432 → PostgreSQL (Docker container)
+  * 127.0.0.1:5432 → PostgreSQL (Docker container)
 
 ---
 

@@ -9,9 +9,9 @@ Munich Weekly is a photography-based weekly publication platform where users can
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Authentication**: JWT-based authentication with secure HTTP-only cookies
+- **Authentication**: JWT-based authentication using client-side token storage and `Authorization: Bearer` headers
 - **State Management**: React Context API + Custom Hooks
-- **Icons**: Font Awesome
+- **Icons**: lucide-react
 - **UI Components**: Custom components with glassmorphism effects
 
 ## Core Components Structure
@@ -543,8 +543,8 @@ The home page provides an engaging entry point to the platform with the followin
    - Default configuration defined in `/lib/config.ts`
    - Dynamic configuration stored in `/public/config/homepage.json`
    - API endpoints:
-     - `GET /api/config` - Retrieves current configuration
-     - `POST /api/admin/config` - Updates configuration (admin only)
+     - `GET /frontend-api/config` - Retrieves current configuration
+     - `POST /frontend-api/admin/config` - Updates configuration (admin only)
 
 ## Recent Architecture Enhancements
 

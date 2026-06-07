@@ -22,7 +22,6 @@ This guide provides information on how to use the Munich Weekly photography plat
 1. Click the "Log In" button in the top navigation bar
 2. Select "Register" to create a new account
 3. Fill in your email address and password
-4. Optionally, use Google login for faster account creation
 
 ### Managing Your Profile
 

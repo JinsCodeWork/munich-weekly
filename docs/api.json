@@ -1,0 +1,3631 @@
+{
+  "components": {
+    "schemas": {
+      "AdminSubmissionResponseDTO": {
+        "properties": {
+          "anonymousContactEmail": {
+            "type": "string"
+          },
+          "anonymousSubmission": {
+            "type": "boolean"
+          },
+          "cover": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAccountType": {
+            "type": "string"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userNickname": {
+            "type": "string"
+          },
+          "voteCount": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AnonymousSubmissionRequestDTO": {
+        "properties": {
+          "captchaToken": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "contactEmail": {
+            "format": "email",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "issueId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "captchaToken",
+          "description",
+          "issueId"
+        ],
+        "type": "object"
+      },
+      "AnonymousSubmissionResponseDTO": {
+        "properties": {
+          "submissionId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uploadToken": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BindRequestDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "provider": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "providerUserId": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "providerUserId"
+        ],
+        "type": "object"
+      },
+      "ChangePasswordRequestDTO": {
+        "properties": {
+          "newPassword": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "oldPassword": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword",
+          "oldPassword"
+        ],
+        "type": "object"
+      },
+      "EmailLoginRequestDTO": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 2147483647,
+            "minLength": 6,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "FeaturedSubmissionDto": {
+        "properties": {
+          "aspectRatio": {
+            "type": "number"
+          },
+          "authorId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dimensionDescription": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageHeight": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "imageWidth": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "isCover": {
+            "type": "boolean"
+          },
+          "issueId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "issueTitle": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "wideImage": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "FileUploadResponseDTO": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ForgotPasswordRequestDTO": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "GalleryFeaturedConfigDto": {
+        "properties": {
+          "arrayLengthValid": {
+            "type": "boolean"
+          },
+          "autoplayInterval": {
+            "format": "int32",
+            "maximum": 30000,
+            "minimum": 1000,
+            "type": "integer"
+          },
+          "configDescription": {
+            "type": "string"
+          },
+          "configTitle": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdByUserId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "displayOrder": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "featuredCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "submissionIds": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "autoplayInterval",
+          "displayOrder",
+          "isActive",
+          "submissionIds"
+        ],
+        "type": "object"
+      },
+      "GalleryIssueConfigRequestDTO": {
+        "properties": {
+          "configDescription": {
+            "type": "string"
+          },
+          "configTitle": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "issueId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "submissionOrders": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionOrderRequestDTO"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "issueId"
+        ],
+        "type": "object"
+      },
+      "Issue": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "submissionEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submissionStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "votingEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingStart": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "IssueCreateRequestDTO": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "submissionEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submissionStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "votingEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingStart": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "IssueResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "submissionEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submissionStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "votingEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingStart": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "IssueUpdateRequestDTO": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "submissionEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submissionStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "votingEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingStart": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "LoginResponseDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MasonryOrderApiResponse": {
+        "properties": {
+          "cacheInfo": {
+            "$ref": "#/components/schemas/OrderCacheInfo"
+          },
+          "order": {
+            "$ref": "#/components/schemas/MasonryOrderResult"
+          }
+        },
+        "type": "object"
+      },
+      "MasonryOrderResult": {
+        "properties": {
+          "avgAspectRatio": {
+            "format": "double",
+            "type": "number"
+          },
+          "orderedIds2col": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "orderedIds4col": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "totalItems": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "wideImageCount": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "MySubmissionResponseDTO": {
+        "properties": {
+          "cover": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "voteCount": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrderCacheInfo": {
+        "properties": {
+          "calculationTimeMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataVersionHash": {
+            "type": "string"
+          },
+          "fromCache": {
+            "type": "boolean"
+          },
+          "issueId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromotionConfigRequestDTO": {
+        "properties": {
+          "description": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "navTitle": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageUrl": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "navTitle",
+          "pageUrl"
+        ],
+        "type": "object"
+      },
+      "PromotionConfigResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "navTitle": {
+            "type": "string"
+          },
+          "pageUrl": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromotionImageRequestDTO": {
+        "properties": {
+          "displayOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "imageDescription": {
+            "type": "string"
+          },
+          "imageTitle": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "promotionConfigId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "promotionConfigId"
+        ],
+        "type": "object"
+      },
+      "PromotionImageResponseDTO": {
+        "properties": {
+          "aspectRatio": {
+            "format": "double",
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageDescription": {
+            "type": "string"
+          },
+          "imageHeight": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "imageTitle": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "imageWidth": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromotionPageResponseDTO": {
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/PromotionImageResponseDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ResetPasswordRequestDTO": {
+        "properties": {
+          "newPassword": {
+            "maxLength": 2147483647,
+            "minLength": 6,
+            "type": "string"
+          },
+          "token": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword",
+          "token"
+        ],
+        "type": "object"
+      },
+      "Submission": {
+        "properties": {
+          "anonymousContactEmail": {
+            "type": "string"
+          },
+          "aspectRatio": {
+            "maximum": 10.0,
+            "minimum": 0.1,
+            "type": "number"
+          },
+          "aspectRatioAsDouble": {
+            "format": "double",
+            "type": "number"
+          },
+          "cover": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageHeight": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "imageWidth": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "issue": {
+            "$ref": "#/components/schemas/Issue"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "wideImage": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "SubmissionOrderRequestDTO": {
+        "properties": {
+          "displayOrder": {
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "galleryOrderId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "itemType": {
+            "type": "string"
+          },
+          "submissionId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "displayOrder"
+        ],
+        "type": "object"
+      },
+      "SubmissionRequestDTO": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "issueId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SubmissionResponseDTO": {
+        "properties": {
+          "aspectRatio": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "imageHeight": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "imageWidth": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "voteCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "User": {
+        "properties": {
+          "accountType": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isBanned": {
+            "type": "boolean"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "registeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserAuthProviderLoginRequestDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "provider": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "providerUserId": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "providerUserId"
+        ],
+        "type": "object"
+      },
+      "UserAuthProviderResponseDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserProfileDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserRegisterRequestDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "minLength": 1,
+            "type": "string"
+          },
+          "nickname": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 100,
+            "minLength": 6,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "nickname"
+        ],
+        "type": "object"
+      },
+      "UserSummaryDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserUpdateRequestDTO": {
+        "properties": {
+          "avatarUrl": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Generated from the Spring Boot controllers and DTOs.",
+    "title": "Munich Weekly API",
+    "version": "0.0.1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/admin/migration/analyze": {
+      "get": {
+        "operationId": "analyzeSubmissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/remigration/start": {
+      "post": {
+        "operationId": "startRemigration",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "batchSize",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delayMs",
+            "required": false,
+            "schema": {
+              "default": 3000,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/remigration/status": {
+      "get": {
+        "operationId": "getRemigrationStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/remigration/stop": {
+      "post": {
+        "operationId": "stopRemigration",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/start": {
+      "post": {
+        "operationId": "startMigration",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "batchSize",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delayMs",
+            "required": false,
+            "schema": {
+              "default": 2000,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/status": {
+      "get": {
+        "operationId": "getMigrationStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/admin/migration/stop": {
+      "post": {
+        "operationId": "stopMigration",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admin-migration-controller"
+        ]
+      }
+    },
+    "/api/auth/bind": {
+      "post": {
+        "operationId": "bindProvider",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/bind/{provider}": {
+      "delete": {
+        "operationId": "unbindProvider",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "password-reset-controller"
+        ]
+      }
+    },
+    "/api/auth/login/email": {
+      "post": {
+        "operationId": "loginWithEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLoginRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/login/provider": {
+      "post": {
+        "operationId": "loginWithProvider",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAuthProviderLoginRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/providers": {
+      "get": {
+        "operationId": "getLinkedProviders",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserAuthProviderResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegisterRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "password-reset-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/configs": {
+      "get": {
+        "operationId": "getAllGalleryConfigurations",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      },
+      "post": {
+        "operationId": "createGalleryConfiguration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryIssueConfigRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/available": {
+      "get": {
+        "operationId": "getIssuesWithoutGalleryConfig",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}": {
+      "delete": {
+        "operationId": "deleteGalleryConfiguration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      },
+      "get": {
+        "operationId": "getGalleryConfigurationByIssueId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updateGalleryConfiguration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryIssueConfigRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}/cover": {
+      "post": {
+        "operationId": "uploadCoverImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}/custom-images": {
+      "post": {
+        "operationId": "uploadCustomGalleryImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}/items": {
+      "get": {
+        "operationId": "getGalleryItems",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}/order": {
+      "put": {
+        "operationId": "updateSubmissionOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/SubmissionOrderRequestDTO"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/admin/issues/{issueId}/selected": {
+      "get": {
+        "operationId": "getAvailableSelectedSubmissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-admin-controller"
+        ]
+      }
+    },
+    "/api/gallery/debug/auth": {
+      "get": {
+        "operationId": "debugAuth",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/featured": {
+      "get": {
+        "operationId": "getFeaturedSubmissions",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeaturedSubmissionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/featured/config": {
+      "get": {
+        "operationId": "getActiveConfig",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      },
+      "post": {
+        "operationId": "saveConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryFeaturedConfigDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/featured/config/{id}": {
+      "delete": {
+        "operationId": "deleteConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/featured/configs": {
+      "get": {
+        "operationId": "getAllConfigs",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/issues": {
+      "get": {
+        "operationId": "getPublishedGalleryIssues",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-controller"
+        ]
+      }
+    },
+    "/api/gallery/issues/stats": {
+      "get": {
+        "operationId": "getGalleryStats",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-controller"
+        ]
+      }
+    },
+    "/api/gallery/issues/{id}": {
+      "get": {
+        "operationId": "getGalleryIssueByIssueId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-controller"
+        ]
+      }
+    },
+    "/api/gallery/issues/{id}/submissions": {
+      "get": {
+        "operationId": "getGalleryIssueSubmissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-issue-controller"
+        ]
+      }
+    },
+    "/api/gallery/stats": {
+      "get": {
+        "operationId": "getFeaturedStats",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/submissions/{id}/featured-status": {
+      "get": {
+        "operationId": "checkFeaturedStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/gallery/submissions/{id}/preview": {
+      "get": {
+        "operationId": "previewSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "gallery-controller"
+        ]
+      }
+    },
+    "/api/issues": {
+      "get": {
+        "operationId": "getAllIssues",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IssueResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "issue-controller"
+        ]
+      },
+      "post": {
+        "operationId": "createIssue",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueCreateRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "issue-controller"
+        ]
+      }
+    },
+    "/api/issues/{id}": {
+      "get": {
+        "operationId": "getIssueById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "issue-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updateIssue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueUpdateRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "issue-controller"
+        ]
+      }
+    },
+    "/api/layout/debug": {
+      "get": {
+        "operationId": "debugOrdering",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "layout-controller"
+        ]
+      }
+    },
+    "/api/layout/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "layout-controller"
+        ]
+      }
+    },
+    "/api/layout/order": {
+      "get": {
+        "operationId": "getMasonryOrdering",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasonryOrderApiResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "layout-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/config": {
+      "get": {
+        "operationId": "getPromotionConfigForAdmin",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updatePromotionConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionConfigRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/config/{id}": {
+      "delete": {
+        "operationId": "deletePromotionConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      },
+      "get": {
+        "operationId": "getPromotionConfigByIdForAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/configs": {
+      "get": {
+        "operationId": "getAllPromotionConfigsForAdmin",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/images": {
+      "get": {
+        "operationId": "getPromotionImages",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "configId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionImageResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      },
+      "post": {
+        "operationId": "addPromotionImage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionImageRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionImageResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/images/{imageId}": {
+      "delete": {
+        "operationId": "deletePromotionImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "imageId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/admin/images/{imageId}/upload": {
+      "post": {
+        "operationId": "uploadPromotionImageFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "imageId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/config": {
+      "get": {
+        "operationId": "getPromotionConfig",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionConfigResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/promotion/page/{pageUrl}": {
+      "get": {
+        "operationId": "getPromotionPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pageUrl",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionPageResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "promotion-controller"
+        ]
+      }
+    },
+    "/api/submissions": {
+      "get": {
+        "operationId": "getApprovedSubmissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubmissionResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      },
+      "post": {
+        "operationId": "submit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/admin/upload": {
+      "post": {
+        "operationId": "adminUploadFile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/submissions/admin/upload-hero": {
+      "post": {
+        "operationId": "uploadHeroImage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/submissions/all": {
+      "get": {
+        "operationId": "getAllSubmissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminSubmissionResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/anonymous": {
+      "post": {
+        "operationId": "submitAnonymous",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonymousSubmissionRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSubmissionResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/download-selected/{issueId}": {
+      "get": {
+        "operationId": "downloadSelectedSubmissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/mine": {
+      "get": {
+        "operationId": "getMySubmissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "issueId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MySubmissionResponseDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/{id}": {
+      "delete": {
+        "operationId": "deleteSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/{id}/approve": {
+      "patch": {
+        "operationId": "approveSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/{id}/reject": {
+      "patch": {
+        "operationId": "rejectSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/{id}/select": {
+      "patch": {
+        "operationId": "selectSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "submission-controller"
+        ]
+      }
+    },
+    "/api/submissions/{submissionId}/anonymous-upload": {
+      "post": {
+        "operationId": "uploadImageToAnonymousSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Anonymous-Upload-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/submissions/{submissionId}/check-image": {
+      "get": {
+        "operationId": "checkImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/submissions/{submissionId}/direct-image": {
+      "get": {
+        "operationId": "getImageDirectly",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/submissions/{submissionId}/upload": {
+      "post": {
+        "operationId": "uploadImageToSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "file-upload-controller"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "getAllUsers",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummaryDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/api/users/change-password": {
+      "post": {
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/api/users/me": {
+      "delete": {
+        "operationId": "deleteCurrentUser",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "get": {
+        "operationId": "getCurrentUser",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "patch": {
+        "operationId": "updateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/api/votes": {
+      "delete": {
+        "operationId": "cancelVote",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "vote-controller"
+        ]
+      },
+      "post": {
+        "operationId": "vote",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "vote-controller"
+        ]
+      }
+    },
+    "/api/votes/check": {
+      "get": {
+        "operationId": "hasVoted",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "vote-controller"
+        ]
+      }
+    },
+    "/api/votes/check-batch": {
+      "get": {
+        "operationId": "hasBatchVoted",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionIds",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "vote-controller"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ping-controller"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Current deployment origin",
+      "url": "/"
+    }
+  ]
+}

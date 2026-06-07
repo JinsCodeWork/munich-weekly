@@ -46,7 +46,16 @@ docker compose up -d --build backend
 docker logs -f mw-backend
 ```
 
-**Important:** When running `bootRun`, you must be in the `backend/` directory (see `.cursor/rules/bootrunrule.mdc`).
+**Important:** When running `bootRun`, you must be in the `backend/` directory (see `.cursor/rules/bootrunrule.mdc`). If Spring Boot runs on the host while PostgreSQL runs via Docker Compose, override the datasource URL to `jdbc:postgresql://localhost:5432/<db>`; the default `postgres` hostname is only valid inside the Docker network. See `docs/local-development.md`.
+
+### API Documentation
+
+```bash
+# Run from the repository root while the backend is running
+API_BASE_URL=http://localhost:8080 ./scripts/generate-openapi.sh
+```
+
+This regenerates `docs/api.json` from the backend's `/v3/api-docs` endpoint. Do not hand-edit endpoint lists in Markdown.
 
 ### Frontend (Next.js)
 
@@ -123,9 +132,11 @@ com.munichweekly.backend/
 - Local: Development storage in `./uploads` directory
 - Image dimensions extracted during upload for performance optimization
 
-**Database Migrations:**
-- Uses Flyway (Spring Boot default)
-- Migration files in `src/main/resources/db/migration/`
+**Database Schema Management:**
+- Current runtime uses Hibernate `spring.jpa.hibernate.ddl-auto=update`
+- Targeted startup schema adjustments also exist, e.g. `GalleryOrderSchemaMigration`
+- SQL files exist in `src/main/resources/db/migration/`, but Flyway is not currently configured as an active Gradle dependency
+- Do not assume Flyway is running unless the build/config is changed to enable it
 
 ### Frontend Architecture (Next.js + TypeScript)
 
@@ -232,7 +243,7 @@ POSTGRES_PASSWORD=secret
 JWT_SECRET=your-very-secure-secret
 JWT_EXPIRATION_MS=3600000
 
-# Storage (choose R2 or LOCAL)
+# Storage (choose R2 or LOCAL when the backend process receives this env var)
 STORAGE_MODE=R2
 
 # Cloudflare R2 (if STORAGE_MODE=R2)
@@ -242,8 +253,8 @@ CLOUDFLARE_R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
 CLOUDFLARE_R2_BUCKET=munichweekly-photoupload
 CLOUDFLARE_R2_PUBLIC_URL=https://pub-your-account.r2.dev
 
-# Spring profile
-SPRING_PROFILES_ACTIVE=dev
+# Spring profile (do not use dev in production; dev clears and reseeds data)
+SPRING_PROFILES_ACTIVE=prod
 ```
 
 **Security:** Never commit `.env` files - they are in `.gitignore`
@@ -287,9 +298,9 @@ Frontend:
 
 Backend:
 - Upload: `StorageService.storeFileWithDimensions()` returns URL + dimensions
-- Storage mode configured in `.env` (R2 or LOCAL)
+- Storage mode is controlled by the backend process environment/Spring property `storage.mode` (`STORAGE_MODE` can override it when passed to the process)
 - Dimensions extracted during upload for masonry optimization
-- Max file size: 20MB
+- File size limits are implementation-specific: R2 storage enforces 20MB, local storage and Spring multipart currently allow 30MB
 
 Frontend:
 - Image dimensions: `useImageDimensions()` hook
@@ -340,7 +351,7 @@ npm run build
 ## Documentation
 
 Comprehensive documentation is available in `/docs`:
-- `docs/api.md` - Complete API reference
+- `docs/api.md` - OpenAPI schema entry point and generation workflow
 - `docs/auth.md` - Authentication & security implementation
 - `docs/deployment.md` - Production deployment guide
 - `docs/contributing.md` - Development workflow
@@ -386,7 +397,7 @@ See `docs/deployment.md` for complete deployment instructions.
 
 **Database issues:**
 - Reset database: `docker compose down -v && docker compose up -d`
-- Check migrations: Look for Flyway logs in backend startup
+- Check schema updates: look for Hibernate DDL and startup schema-adjustment logs
 
 ## Contact
 

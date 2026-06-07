@@ -6,12 +6,14 @@ Welcome to the Munich Weekly photography platform! We appreciate your interest i
 
 **Getting Started:**
 - 🏠 [Project Overview](../README.md) - Platform features and architecture overview
-- 🚀 [Deployment Guide](./deployment.md) - Local development setup and production deployment
+- 🧪 [Local Development](./local-development.md) - Local setup and smoke checks
+- ⚙️ [Environment Variables](./environment.md) - Current runtime configuration reference
+- 🚀 [Deployment Guide](./deployment.md) - Production deployment
 - 📱 [Frontend Overview](./frontend-overview.md) - Frontend architecture and development guide
 
 **Technical Documentation:**
 - 🏗️ [Frontend Architecture](./frontend-architecture.md) - Detailed technical architecture
-- 📦 [API Reference](./api.md) - Complete endpoint documentation
+- 📦 [API Reference](./api.md) - OpenAPI schema and regeneration workflow
 - 🗃️ [Database Design](./database.md) - Database schema and design decisions
 
 **Security & Best Practices:**
@@ -43,24 +45,17 @@ Before contributing, ensure you have the following installed:
 2. **Backend setup:**
    ```bash
    cd backend
-   # Copy environment template
-   cp .env.example .env
-   # Edit .env with your local configuration
-   
-   # Start PostgreSQL with Docker
    docker compose up -d postgres
-   
-   # Run Spring Boot application
-   ./gradlew bootRun
    ```
+
+   When running Spring Boot on the host, override the datasource URL to
+   `localhost`; the default `postgres` hostname is for Docker networking.
+   See [Local Development](./local-development.md) for the current command.
 
 3. **Frontend setup:**
    ```bash
    cd frontend
-   # Install dependencies
    npm install
-   
-   # Start development server
    npm run dev
    ```
 
@@ -273,7 +268,7 @@ References #456
 ## 📚 Documentation
 - [ ] Updated relevant documentation
 - [ ] Added code comments for complex logic
-- [ ] Updated API documentation (if applicable)
+- [ ] Regenerated `docs/api.json` for backend API changes (if applicable)
 
 ## ⚠️ Breaking Changes
 None / List any breaking changes and migration steps.
@@ -363,7 +358,7 @@ npm run dev
 npm run build
 
 # Type checking
-npm run type-check
+npx tsc --noEmit
 
 # Linting
 npm run lint
@@ -383,14 +378,16 @@ Before submitting a PR, manually test:
 
 ## 🚀 Deployment and CI/CD
 
-### Automated Deployment
+### Deployment Status
 
-The project uses automated deployment when changes are merged to `main`:
+This repository currently contains a pull request template, but no checked-in
+GitHub Actions workflow. Treat production deployment as a manual or externally
+managed process unless a separate deployment system is configured outside this
+repository.
 
-1. **GitHub Actions** trigger on merge to main
-2. **Backend** is built and deployed to Hetzner Cloud
-3. **Frontend** is built and deployed via PM2
-4. **Database migrations** run automatically if needed
+Database schema management currently uses Hibernate `ddl-auto=update` plus
+targeted startup schema adjustments. Flyway SQL files exist in the tree, but
+Flyway is not currently configured as an active Gradle dependency.
 
 ### Manual Deployment
 
@@ -404,7 +401,7 @@ docker compose up -d --build
 # Frontend deployment
 cd frontend
 npm run build
-pm2 restart munich-weekly-frontend
+pm2 restart munich-frontend
 ```
 
 ---
@@ -478,10 +475,10 @@ For new features, provide:
 
 | Task | Command | Documentation |
 |------|---------|---------------|
-| **Start local development** | `./gradlew bootRun` + `npm run dev` | [Deployment Guide](./deployment.md) |
-| **Add new API endpoint** | Create controller + service + tests | [API Reference](./api.md) |
+| **Start local development** | PostgreSQL + `./gradlew bootRun` + `npm run dev` | [Local Development](./local-development.md) |
+| **Add new API endpoint** | Create controller + service + tests, then regenerate OpenAPI | [API Reference](./api.md) |
 | **Create UI component** | Add to `/components` with TypeScript | [UI Components](./ui-components.md) |
-| **Modify database schema** | Create Flyway migration | [Database Design](./database.md) |
+| **Modify database schema** | Update JPA model and current schema-management docs | [Database Design](./database.md) |
 | **Update authentication** | Modify security configuration | [Authentication & Security](./auth.md) |
 
 ---
@@ -523,4 +520,4 @@ Thank you for contributing to Munich Weekly! Your efforts help create a better p
 - 🔐 [Security Guide](./auth.md)
 - 📝 [Lessons Learned](./lessons-learned.md)
 
-*For the latest updates, see the [Documentation Index](./index.md)* 
+*For the latest updates, see the [Documentation Index](./index.md)*

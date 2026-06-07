@@ -23,7 +23,7 @@ This document serves as the entry point to the frontend development documentatio
 ### Infrastructure & API
 - [**Storage System**](./storage.md) - Image storage architecture and implementation details
 - [**Image CDN System**](./image-cdn.md) - Advanced image optimization and delivery architecture
-- [**API Reference**](./api.md) - Complete API endpoint documentation
+- [**API Reference**](./api.md) - Generated OpenAPI schema and API workflow
 - [**Deployment Guide**](./deployment.md) - Production deployment and configuration
 
 ### Project Overview

@@ -68,7 +68,7 @@ export default function ManageIssuesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Manage Issues</h1>
         <Link href="/account/manage-issues/create">
           <Button>Create New Issue</Button>
@@ -98,23 +98,30 @@ export default function ManageIssuesPage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-white shadow overflow-hidden rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto rounded-lg bg-white shadow">
+              <table className="w-full min-w-[1120px] table-fixed divide-y divide-gray-200">
+                <colgroup>
+                  <col className="w-[26%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[22%]" />
+                </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Title
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Submission Period
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Voting Period
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Created
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                       Actions
                     </th>
                   </tr>
@@ -122,37 +129,41 @@ export default function ManageIssuesPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {issues.map((issue) => (
                     <tr key={issue.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{issue.title}</div>
+                      <td className="px-4 py-4">
+                        <div className="truncate text-sm font-medium text-gray-900" title={issue.title}>
+                          {issue.title}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                      <td className="px-4 py-4">
+                        <div className="truncate text-sm text-gray-500">
                           {formatDate(issue.submissionStart, { month: 'short', day: 'numeric' })} - {formatDate(issue.submissionEnd, { month: 'short', day: 'numeric' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                      <td className="px-4 py-4">
+                        <div className="truncate text-sm text-gray-500">
                           {formatDate(issue.votingStart, { month: 'short', day: 'numeric' })} - {formatDate(issue.votingEnd, { month: 'short', day: 'numeric' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                      <td className="px-4 py-4">
+                        <div className="truncate text-sm text-gray-500">
                           {formatDate(issue.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <Link
-                          href={`/account/manage-issues/${issue.id}/edit`}
-                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
-                        >
-                          Edit
-                        </Link>
-                        <Link
-                          href={`/account/manage-submissions?issueId=${issue.id}`}
-                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-md transition-colors"
-                        >
-                          View Submissions
-                        </Link>
+                      <td className="px-4 py-4 text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                          <Link
+                            href={`/account/manage-issues/${issue.id}/edit`}
+                            className="inline-flex items-center justify-center rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-900"
+                          >
+                            Edit
+                          </Link>
+                          <Link
+                            href={`/account/manage-submissions?issueId=${issue.id}`}
+                            className="inline-flex items-center justify-center rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-100 hover:text-green-900"
+                          >
+                            View Submissions
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -164,4 +175,4 @@ export default function ManageIssuesPage() {
       )}
     </div>
   );
-} 
+}

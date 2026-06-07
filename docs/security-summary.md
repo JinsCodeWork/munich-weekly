@@ -12,7 +12,7 @@ For comprehensive information about the Munich Weekly platform, please refer to:
 
 **Architecture & Infrastructure:**
 - 🚀 [Deployment Guide](./deployment.md) - Production deployment and server security
-- 📦 [API Reference](./api.md) - Complete endpoint documentation and security requirements
+- 📦 [API Reference](./api.md) - Generated OpenAPI schema and API workflow
 - 🗃️ [Database Design](./database.md) - Data model and constraints
 - 💾 [Storage System](./storage.md) - File storage security and architecture
 
@@ -218,4 +218,4 @@ Currently **missing** but recommended:
 
 **Security Score Improvement:** 6/10 → 9.5/10
 
-**Verification:** All services operational post-deployment, full functionality confirmed. 
+**Verification:** All services operational post-deployment, full functionality confirmed.

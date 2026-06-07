@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Profile("dev")
+@Profile("legacy-api-docs")
 public class ApiScanner {
 
     // List of all controller classes to scan
@@ -86,12 +86,12 @@ public class ApiScanner {
 
             markdown.append("\n");
         }
-        Path output = Paths.get("docs/api.md"); // ⬅️ Note: no longer ../docs
+        Path output = Paths.get("docs/legacy-api.md");
         output.toFile().getParentFile().mkdirs(); // Ensure directory exists
         // Save to file
         try (FileWriter writer = new FileWriter(String.valueOf(output))) {
             writer.write(markdown.toString());
-            System.out.println("✅ API documentation generated at docs/api.md");
+            System.out.println("Legacy API documentation generated at docs/legacy-api.md");
         } catch (IOException e) {
             System.err.println("❌ Failed to write API doc: " + e.getMessage());
         }

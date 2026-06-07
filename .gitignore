@@ -48,3 +48,6 @@ CLAUDE.md
 
 # 本地凭据导出（不得上传）
 .credentials/
+
+# Generated API schema is a committed project artifact.
+!docs/api.json

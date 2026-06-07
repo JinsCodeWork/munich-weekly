@@ -23,7 +23,7 @@ A web-based platform for weekly photography submission and voting, built for stu
 | Frontend | Next.js + TypeScript       |
 | Backend  | Java 21 + Spring Boot 3    |
 | Database | PostgreSQL (via Docker)    |
-| Auth     | Email & Google login       |
+| Auth     | Email login + provider auth APIs |
 | Storage  | Local & Cloudflare R2      |
 | CDN      | Cloudflare Workers + Images |
 | Hosting  | Hetzner Cloud (Germany)    |
@@ -49,7 +49,9 @@ munich-weekly/
 **📑 [Complete Documentation Index](./docs/index.md)** - Navigate all documentation from one place
 
 ### 🚀 Getting Started
-- 🧭 [Deployment Guide](./docs/deployment.md) - Complete deployment instructions for Hetzner Cloud
+- 🧪 [Local Development](./docs/local-development.md) - Run PostgreSQL, backend, and frontend locally
+- 🧭 [Deployment Guide](./docs/deployment.md) - Production deployment instructions for Hetzner Cloud
+- ⚙️ [Environment Variables](./docs/environment.md) - Current backend/frontend environment variable reference
 - 🤝 [Contributing Guide](./docs/contributing.md) - GitHub Flow workflow for developers
 - 👤 [User Guide](./docs/user-guide.md) - End-user documentation
 
@@ -59,7 +61,7 @@ munich-weekly/
 - 🛡️ [Privacy Policy](./docs/privacy.md) - GDPR-compliant privacy documentation
 
 ### 🏗️ Architecture & API
-- 📦 [API Reference](./docs/api.md) - Complete API endpoint documentation
+- 📦 [API Reference](./docs/api.md) - OpenAPI schema and generation workflow
 - 🗃️ [Database Design](./docs/database.md) - Database schema and design decisions
 - 💾 [Storage System](./docs/storage.md) - File storage architecture (Local + Cloudflare R2)
 - 🖼️ [Image CDN System](./docs/image-cdn.md) - Advanced image optimization pipeline
