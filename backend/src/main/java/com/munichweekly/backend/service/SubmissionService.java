@@ -271,15 +271,66 @@ public class SubmissionService {
             throw new SecurityException("Not authorized to delete this submission");
         }
         
-        // Get image URL
+        deleteSubmissionRecordAndImage(submission);
+    }
+
+    /**
+     * Delete an anonymous submission that has not been selected for publication.
+     * Also deletes received votes, the stored image, and the synthetic anonymous user
+     * when that user has no remaining submissions.
+     */
+    @Transactional
+    public void deleteAnonymousSubmissionIfNotSelected(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+
+        deleteAnonymousSubmissionIfNotSelected(submission);
+    }
+
+    void deleteAnonymousSubmissionIfNotSelected(Submission submission) {
+        if (!isAnonymousSubmission(submission)) {
+            throw new IllegalArgumentException("Only anonymous submissions can be deleted by this operation");
+        }
+
+        if ("selected".equals(submission.getStatus())) {
+            throw new IllegalStateException("Cannot delete selected anonymous submission");
+        }
+
+        User anonymousUser = submission.getUser();
+        deleteSubmissionRecordAndImage(submission);
+        deleteSyntheticAnonymousUserIfUnused(anonymousUser);
+    }
+
+    private boolean isAnonymousSubmission(Submission submission) {
+        return submission != null
+                && submission.getUser() != null
+                && User.ACCOUNT_TYPE_ANONYMOUS_SUBMISSION.equals(submission.getUser().getAccountType());
+    }
+
+    private void deleteSyntheticAnonymousUserIfUnused(User anonymousUser) {
+        if (anonymousUser == null || anonymousUser.getId() == null) {
+            return;
+        }
+
+        if (submissionRepository.findByUserId(anonymousUser.getId()).isEmpty()) {
+            voteRepository.deleteByUserId(anonymousUser.getId());
+            userRepository.delete(anonymousUser);
+        }
+    }
+
+    void deleteSubmissionRecordAndImage(Submission submission) {
+        if (submission == null) {
+            throw new IllegalArgumentException("Submission cannot be null");
+        }
+
         String imageUrl = submission.getImageUrl();
-        
+
         // Delete any votes associated with this submission
         voteRepository.deleteBySubmission(submission);
-        
+
         // Delete the submission from database
         submissionRepository.delete(submission);
-        
+
         // Delete image file stored in cloud
         if (imageUrl != null && !imageUrl.isEmpty()) {
             logger.info("Deleting image file: " + imageUrl);
@@ -290,7 +341,7 @@ public class SubmissionService {
                 logger.warning("Failed to delete image file: " + imageUrl);
             }
         } else {
-            logger.warning("No image URL found for submission " + submissionId);
+            logger.warning("No image URL found for submission " + submission.getId());
         }
     }
 

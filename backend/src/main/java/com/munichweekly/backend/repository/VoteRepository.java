@@ -23,6 +23,8 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
 
     long countBySubmission(Submission submission);
 
+    long countByIssueId(Long issueId);
+
     // Query all votes cast by a user
     List<Vote> findByUserId(Long userId);
     

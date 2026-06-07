@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
-import { getAllIssues } from '@/api/issues';
+import { deleteIssue, getAllIssues } from '@/api/issues';
 import { Issue } from '@/types/submission';
 import { formatDate } from '@/lib/utils';
 
@@ -21,6 +23,10 @@ export default function ManageIssuesPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [issuePendingDelete, setIssuePendingDelete] = useState<Issue | null>(null);
+  const [deletingIssueId, setDeletingIssueId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Redirect non-admin users
   useEffect(() => {
@@ -52,6 +58,44 @@ export default function ManageIssuesPage() {
     }
   }, [user, hasRole]);
 
+  const handleRequestDelete = (issue: Issue) => {
+    setError(null);
+    setSuccessMessage(null);
+    setDeleteError(null);
+    setIssuePendingDelete(issue);
+  };
+
+  const handleCancelDelete = () => {
+    if (deletingIssueId !== null) return;
+    setDeleteError(null);
+    setIssuePendingDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!issuePendingDelete) return;
+
+    setError(null);
+    setSuccessMessage(null);
+    setDeleteError(null);
+    setDeletingIssueId(issuePendingDelete.id);
+
+    try {
+      await deleteIssue(issuePendingDelete.id);
+      setIssues((currentIssues) =>
+        currentIssues.filter((issue) => issue.id !== issuePendingDelete.id)
+      );
+      setSuccessMessage(`Issue "${issuePendingDelete.title}" deleted successfully.`);
+      setIssuePendingDelete(null);
+    } catch (err) {
+      console.error('Failed to delete issue:', err);
+      const message = err instanceof Error ? err.message : 'Failed to delete issue. Please try again.';
+      setDeleteError(message);
+      setError(message);
+    } finally {
+      setDeletingIssueId(null);
+    }
+  };
+
   // Show loading state while checking permissions
   if (loading) {
     return (
@@ -81,6 +125,12 @@ export default function ManageIssuesPage() {
           {error}
         </div>
       )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
+          {successMessage}
+        </div>
+      )}
       
       {/* Loading state */}
       {isLoading ? (
@@ -99,13 +149,13 @@ export default function ManageIssuesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg bg-white shadow">
-              <table className="w-full min-w-[1120px] table-fixed divide-y divide-gray-200">
+              <table className="w-full min-w-[1260px] table-fixed divide-y divide-gray-200">
                 <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[20%]" />
-                  <col className="w-[20%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[22%]" />
+                  <col className="w-[23%]" />
+                  <col className="w-[19%]" />
+                  <col className="w-[19%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[28%]" />
                 </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
@@ -163,6 +213,17 @@ export default function ManageIssuesPage() {
                           >
                             View Submissions
                           </Link>
+                          <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            disabled={deletingIssueId === issue.id}
+                            onClick={() => handleRequestDelete(issue)}
+                            className="min-w-[92px] px-3 py-2"
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" />
+                            {deletingIssueId === issue.id ? 'Deleting...' : 'Delete'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -173,6 +234,49 @@ export default function ManageIssuesPage() {
           )}
         </>
       )}
+
+      <Modal
+        isOpen={issuePendingDelete !== null}
+        onClose={handleCancelDelete}
+        contentVariant="dark-glass"
+      >
+        <div className="max-w-lg p-6 text-center">
+          <h2 className="mb-4 text-2xl font-bold text-white font-heading">Delete Issue</h2>
+          <p className="mb-4 text-white">
+            Are you sure you want to delete &ldquo;{issuePendingDelete?.title}&rdquo;?
+            This action cannot be undone.
+          </p>
+          <p className="text-sm text-white/80">
+            Issues with registered submissions or gallery configuration cannot be deleted.
+            Selected anonymous submissions are protected. Anonymous-only issues will also remove
+            their anonymous submissions and images.
+          </p>
+          {deleteError && (
+            <div className="mt-4 rounded border border-red-300/40 bg-red-900/40 px-4 py-3 text-sm text-red-100">
+              {deleteError}
+            </div>
+          )}
+          <div className="mt-6 flex justify-center gap-4">
+            <Button
+              type="button"
+              variant="danger"
+              disabled={deletingIssueId !== null}
+              onClick={handleConfirmDelete}
+              className="px-6 py-2"
+            >
+              {deletingIssueId !== null ? 'Deleting...' : 'Yes, Delete Issue'}
+            </Button>
+            <button
+              type="button"
+              disabled={deletingIssueId !== null}
+              onClick={handleCancelDelete}
+              className="rounded bg-gray-600 px-6 py-2 text-white hover:bg-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

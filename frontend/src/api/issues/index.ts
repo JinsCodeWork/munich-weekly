@@ -1,8 +1,8 @@
 /**
  * Issue-related API module
- * Provides issue retrieval, creation, update and other functionality
+ * Provides issue retrieval, creation, update and delete functionality
  */
-import { fetchAPI } from "../http";
+import { fetchAPI, parseApiErrorMessage } from "../http";
 import { Issue } from "@/types/submission";
 
 interface IssueCreateRequest {
@@ -21,6 +21,19 @@ interface IssueUpdateRequest {
   submissionEnd: string;
   votingStart: string;
   votingEnd: string;
+}
+
+function parseIssueDeleteError(responseText: string, response: Response): string {
+  try {
+    const errorData = JSON.parse(responseText) as Record<string, unknown>;
+    if (typeof errorData.message === "string" && errorData.message) {
+      return errorData.message;
+    }
+  } catch {
+    // Fall back to the shared parser for non-JSON responses.
+  }
+
+  return parseApiErrorMessage(responseText, response);
 }
 
 /**
@@ -59,4 +72,18 @@ export const updateIssue = async (id: number, data: IssueUpdateRequest): Promise
     method: "PUT",
     body: JSON.stringify(data),
   });
-}; 
+};
+
+/**
+ * Delete existing issue (admin only)
+ * DELETE /api/issues/{id}
+ */
+export const deleteIssue = async (id: number): Promise<void> => {
+  await fetchAPI<void>(`/api/issues/${id}`, {
+    method: "DELETE",
+    parseResponseJson: false,
+    onHttpError: (response, responseText) => {
+      throw new Error(parseIssueDeleteError(responseText, response));
+    },
+  });
+};
