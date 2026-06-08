@@ -2,7 +2,10 @@
 const nextConfig = {
   experimental: {
     // Allow proxied multipart uploads (> default 10MB) to reach backend
-    middlewareClientMaxBodySize: '30mb'
+    proxyClientMaxBodySize: '30mb'
+  },
+  turbopack: {
+    root: __dirname
   },
   // 配置API代理
   async rewrites() {
@@ -67,4 +70,4 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig; 
+module.exports = nextConfig;

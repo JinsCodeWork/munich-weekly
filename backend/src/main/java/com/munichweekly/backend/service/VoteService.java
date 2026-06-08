@@ -12,13 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Service layer for handling voting logic using anonymous visitorId or userId.
+ * Service layer for handling voting logic using an anonymous server-issued subject or userId.
  * Ensures voting constraints and saves vote entries.
  */
 @Service
@@ -48,50 +49,45 @@ public class VoteService {
      */
     public BatchVoteStatusResult batchVoteStatuses(List<Long> submissionIds,
                                                    Optional<Long> currentUserId,
-                                                   Optional<String> visitorIdOpt) {
-        Map<String, Boolean> voteStatuses = new HashMap<>();
-        int checkedCount = 0;
-        String visitorId = visitorIdOpt.orElse("");
-
+                                                   Optional<String> anonymousSubjectOpt) {
+        Map<String, Boolean> voteStatuses = new LinkedHashMap<>();
         for (Long submissionId : submissionIds) {
-            try {
-                Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
-                if (submissionOpt.isEmpty()) {
-                    logger.debug("Submission not found for batch check: {}", submissionId);
-                    voteStatuses.put(submissionId.toString(), false);
-                    checkedCount++;
-                    continue;
-                }
+            voteStatuses.put(submissionId.toString(), false);
+        }
 
-                Submission submission = submissionOpt.get();
-                boolean voted;
-                if (currentUserId.isPresent()) {
-                    voted = hasVotedAsUser(currentUserId.get(), submission);
-                } else {
-                    voted = hasVoted(visitorId, submission);
-                }
+        if (submissionIds.isEmpty()) {
+            return new BatchVoteStatusResult(voteStatuses, 0);
+        }
 
-                voteStatuses.put(submissionId.toString(), voted);
-                checkedCount++;
-            } catch (Exception e) {
-                logger.warn("Error checking vote status for submission {}: {}", submissionId, e.getMessage());
-                voteStatuses.put(submissionId.toString(), false);
-                checkedCount++;
+        String anonymousSubject = anonymousSubjectOpt.orElse("");
+        List<Vote> votes;
+
+        if (currentUserId.isPresent()) {
+            votes = voteRepository.findByUserIdAndSubmissionIdIn(currentUserId.get(), submissionIds);
+        } else if (!anonymousSubject.isEmpty()) {
+            votes = voteRepository.findByVisitorIdAndSubmissionIdIn(anonymousSubject, submissionIds);
+        } else {
+            return new BatchVoteStatusResult(voteStatuses, submissionIds.size());
+        }
+
+        for (Vote vote : votes) {
+            if (vote.getSubmission() != null && vote.getSubmission().getId() != null) {
+                voteStatuses.put(vote.getSubmission().getId().toString(), true);
             }
         }
 
-        return new BatchVoteStatusResult(voteStatuses, checkedCount);
+        return new BatchVoteStatusResult(voteStatuses, submissionIds.size());
     }
 
     /**
-     * Cast a vote for a submission using visitorId (for anonymous users).
+     * Cast a vote for a submission using the server-managed anonymous subject.
      * Checks for duplicate votes and voting window.
      */
-    public Vote vote(String visitorId, Submission submission, String ipAddress) {
+    public Vote vote(String anonymousSubject, Submission submission, String ipAddress) {
         Issue issue = submission.getIssue();
         
-        logger.info("Anonymous vote attempt: visitorId={}, submissionId={}, ip={}", 
-                  visitorId, submission.getId(), ipAddress);
+        logger.info("Anonymous vote attempt: anonymousIdentity={}, submissionId={}, ip={}",
+                  identityForLog(anonymousSubject), submission.getId(), ipAddress);
 
         if (!"approved".equals(submission.getStatus())) {
             logger.warn("Vote rejected: submission not approved, submissionId={}", submission.getId());
@@ -104,23 +100,23 @@ public class VoteService {
             throw new IllegalStateException("Voting is not open at this time");
         }
 
-        boolean alreadyVoted = voteRepository.existsByVisitorIdAndSubmission(visitorId, submission);
+        boolean alreadyVoted = voteRepository.existsByVisitorIdAndSubmission(anonymousSubject, submission);
         if (alreadyVoted) {
-            logger.warn("Vote rejected: already voted, visitorId={}, submissionId={}", 
-                      visitorId, submission.getId());
+            logger.warn("Vote rejected: already voted, anonymousIdentity={}, submissionId={}",
+                      identityForLog(anonymousSubject), submission.getId());
             throw new IllegalStateException("You have already voted for this submission");
         }
 
         Vote vote = new Vote();
         vote.setSubmission(submission);
         vote.setIssue(issue);
-        vote.setVisitorId(visitorId);
+        vote.setVisitorId(anonymousSubject);
         vote.setIpAddress(ipAddress);
         vote.setVotedAt(now);
 
         Vote savedVote = voteRepository.save(vote);
-        logger.info("Anonymous vote successful: visitorId={}, submissionId={}, voteId={}", 
-                  visitorId, submission.getId(), savedVote.getId());
+        logger.info("Anonymous vote successful: anonymousIdentity={}, submissionId={}, voteId={}",
+                  identityForLog(anonymousSubject), submission.getId(), savedVote.getId());
         return savedVote;
     }
 
@@ -167,14 +163,14 @@ public class VoteService {
     }
 
     /**
-     * Cancel a vote for a submission using visitorId (for anonymous users).
+     * Cancel a vote for a submission using the server-managed anonymous subject.
      * Checks if the vote exists and the voting window is still open.
      */
-    public boolean cancelVote(String visitorId, Submission submission) {
+    public boolean cancelVote(String anonymousSubject, Submission submission) {
         Issue issue = submission.getIssue();
         
-        logger.info("Anonymous cancel vote attempt: visitorId={}, submissionId={}", 
-                  visitorId, submission.getId());
+        logger.info("Anonymous cancel vote attempt: anonymousIdentity={}, submissionId={}",
+                  identityForLog(anonymousSubject), submission.getId());
 
         if (!"approved".equals(submission.getStatus())) {
             logger.warn("Cancel vote rejected: submission not approved, submissionId={}", submission.getId());
@@ -187,22 +183,21 @@ public class VoteService {
             throw new IllegalStateException("Voting window is closed");
         }
 
-        // Detailed check for visitorId parameter
-        if (visitorId == null || visitorId.isEmpty()) {
-            logger.error("Cancel vote rejected: missing visitorId for submissionId={}", submission.getId());
-            throw new IllegalStateException("Visitor ID is required to cancel a vote");
+        if (anonymousSubject == null || anonymousSubject.isEmpty()) {
+            logger.error("Cancel vote rejected: missing anonymous identity for submissionId={}", submission.getId());
+            throw new IllegalStateException("Anonymous vote identity is required to cancel a vote");
         }
 
-        Optional<Vote> existingVote = voteRepository.findByVisitorIdAndSubmission(visitorId, submission);
+        Optional<Vote> existingVote = voteRepository.findByVisitorIdAndSubmission(anonymousSubject, submission);
         if (existingVote.isEmpty()) {
-            logger.warn("Cancel vote rejected: no matching vote found, visitorId={}, submissionId={}",
-                      visitorId, submission.getId());
+            logger.warn("Cancel vote rejected: no matching vote found, anonymousIdentity={}, submissionId={}",
+                      identityForLog(anonymousSubject), submission.getId());
             throw new IllegalStateException("You have not voted for this submission");
         }
 
         voteRepository.delete(existingVote.get());
-        logger.info("Anonymous vote cancelled successfully: visitorId={}, submissionId={}, voteId={}", 
-                  visitorId, submission.getId(), existingVote.get().getId());
+        logger.info("Anonymous vote cancelled successfully: anonymousIdentity={}, submissionId={}, voteId={}",
+                  identityForLog(anonymousSubject), submission.getId(), existingVote.get().getId());
         return true;
     }
 
@@ -241,12 +236,12 @@ public class VoteService {
     }
 
     /**
-     * Check if a visitor has already voted for a submission.
+     * Check if an anonymous subject has already voted for a submission.
      */
-    public boolean hasVoted(String visitorId, Submission submission) {
-        boolean voted = voteRepository.existsByVisitorIdAndSubmission(visitorId, submission);
-        logger.debug("Check if visitor voted: visitorId={}, submissionId={}, result={}", 
-                   visitorId, submission.getId(), voted);
+    public boolean hasVoted(String anonymousSubject, Submission submission) {
+        boolean voted = voteRepository.existsByVisitorIdAndSubmission(anonymousSubject, submission);
+        logger.debug("Check if anonymous identity voted: anonymousIdentity={}, submissionId={}, result={}",
+                   identityForLog(anonymousSubject), submission.getId(), voted);
         return voted;
     }
 
@@ -261,4 +256,11 @@ public class VoteService {
     }
 
     public record BatchVoteStatusResult(Map<String, Boolean> statuses, int totalChecked) {}
+
+    private static String identityForLog(String identity) {
+        if (identity == null || identity.isBlank()) {
+            return "none";
+        }
+        return "len=" + identity.length() + ",hash=" + Integer.toHexString(Objects.hashCode(identity));
+    }
 }

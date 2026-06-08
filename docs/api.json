@@ -98,29 +98,6 @@
         },
         "type": "object"
       },
-      "BindRequestDTO": {
-        "properties": {
-          "avatarUrl": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "provider": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "providerUserId": {
-            "minLength": 1,
-            "type": "string"
-          }
-        },
-        "required": [
-          "provider",
-          "providerUserId"
-        ],
-        "type": "object"
-      },
       "ChangePasswordRequestDTO": {
         "properties": {
           "newPassword": {
@@ -903,29 +880,6 @@
         },
         "type": "object"
       },
-      "UserAuthProviderLoginRequestDTO": {
-        "properties": {
-          "avatarUrl": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "provider": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "providerUserId": {
-            "minLength": 1,
-            "type": "string"
-          }
-        },
-        "required": [
-          "provider",
-          "providerUserId"
-        ],
-        "type": "object"
-      },
       "UserAuthProviderResponseDTO": {
         "properties": {
           "avatarUrl": {
@@ -1264,20 +1218,10 @@
     },
     "/api/auth/bind": {
       "post": {
-        "description": "Links a supported third-party identity provider to the authenticated user.",
+        "description": "Third-party authentication is currently disabled.",
         "operationId": "bindProvider",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BindRequestDTO"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "200": {
+          "501": {
             "content": {
               "*/*": {
                 "schema": {
@@ -1285,7 +1229,7 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Third-party authentication is not enabled"
           }
         },
         "security": [
@@ -1338,6 +1282,7 @@
     },
     "/api/auth/forgot-password": {
       "post": {
+        "description": "Accepts a password reset request and returns a generic response regardless of account existence.",
         "operationId": "forgotPassword",
         "requestBody": {
           "content": {
@@ -1358,11 +1303,32 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Password reset request accepted"
+          },
+          "400": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "429": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Too many password reset requests"
           }
         },
+        "summary": "Request password reset",
         "tags": [
-          "password-reset-controller"
+          "Authentication"
         ]
       }
     },
@@ -1389,7 +1355,27 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Authenticated"
+          },
+          "400": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            },
+            "description": "Invalid request or invalid email/password"
+          },
+          "429": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            },
+            "description": "Too many login attempts"
           }
         },
         "summary": "Login with email and password",
@@ -1400,20 +1386,10 @@
     },
     "/api/auth/login/provider": {
       "post": {
-        "description": "Authenticates with a supported third-party provider and creates the user on first login.",
+        "description": "Third-party authentication is currently disabled.",
         "operationId": "loginWithProvider",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserAuthProviderLoginRequestDTO"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "200": {
+          "501": {
             "content": {
               "*/*": {
                 "schema": {
@@ -1421,7 +1397,7 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Third-party authentication is not enabled"
           }
         },
         "summary": "Login with provider",
@@ -1494,6 +1470,7 @@
     },
     "/api/auth/reset-password": {
       "post": {
+        "description": "Resets an account password using a valid password reset token.",
         "operationId": "resetPassword",
         "requestBody": {
           "content": {
@@ -1517,8 +1494,9 @@
             "description": "OK"
           }
         },
+        "summary": "Reset password",
         "tags": [
-          "password-reset-controller"
+          "Authentication"
         ]
       }
     },
@@ -3294,6 +3272,7 @@
     },
     "/api/submissions/{submissionId}/check-image": {
       "get": {
+        "description": "Returns image storage status for a submission. Only the submission owner or an admin may inspect it.",
         "operationId": "checkImage",
         "parameters": [
           {
@@ -3315,9 +3294,26 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Image status returned"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Current user is neither the submission owner nor an admin"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Check submission image storage status",
         "tags": [
           "file-upload-controller"
         ]
@@ -3325,6 +3321,7 @@
     },
     "/api/submissions/{submissionId}/direct-image": {
       "get": {
+        "description": "Returns raw image bytes for a submission. Only the submission owner or an admin may read it.",
         "operationId": "getImageDirectly",
         "parameters": [
           {
@@ -3352,9 +3349,49 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Image bytes returned"
+          },
+          "403": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Current user is neither the submission owner nor an admin"
+          },
+          "404": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Submission image is missing or unavailable"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Read submission image bytes directly",
         "tags": [
           "file-upload-controller"
         ]
@@ -3542,39 +3579,10 @@
           },
           {
             "in": "cookie",
-            "name": "visitorId",
+            "name": "mw_vote_anon",
             "required": false,
             "schema": {
               "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "vote-controller"
-        ]
-      },
-      "post": {
-        "operationId": "vote",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "submissionId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
             }
           },
           {
@@ -3599,7 +3607,52 @@
           }
         },
         "tags": [
-          "vote-controller"
+          "Votes"
+        ]
+      },
+      "post": {
+        "operationId": "vote",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "mw_vote_anon",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Votes"
         ]
       }
     },
@@ -3618,38 +3671,8 @@
           },
           {
             "in": "cookie",
-            "name": "visitorId",
+            "name": "mw_vote_anon",
             "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "vote-controller"
-        ]
-      }
-    },
-    "/api/votes/check-batch": {
-      "get": {
-        "operationId": "hasBatchVoted",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "submissionIds",
-            "required": true,
             "schema": {
               "type": "string"
             }
@@ -3676,7 +3699,65 @@
           }
         },
         "tags": [
-          "vote-controller"
+          "Votes"
+        ]
+      }
+    },
+    "/api/votes/check-batch": {
+      "get": {
+        "description": "Checks whether the current authenticated user or anonymous visitor has voted for a capped list of submissions.",
+        "operationId": "hasBatchVoted",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "submissionIds",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "mw_vote_anon",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "visitorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Vote status check completed"
+          },
+          "400": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Invalid or too many submission IDs"
+          }
+        },
+        "summary": "Batch check vote status",
+        "tags": [
+          "Votes"
         ]
       }
     },
@@ -3715,6 +3796,14 @@
     {
       "description": "Weekly photo issue scheduling and admin management",
       "name": "Issues"
+    },
+    {
+      "description": "Login, registration, and password reset",
+      "name": "Authentication"
+    },
+    {
+      "description": "Vote submission and vote status endpoints",
+      "name": "Votes"
     }
   ]
 }

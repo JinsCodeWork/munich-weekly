@@ -98,8 +98,8 @@ The voting system allows all users to participate in the selection process for t
 ### Anonymous Voting
 
 - No account registration is required to vote
-- Your votes are tracked using browser cookies
-- Each person can vote once per submission
+- Your votes are tracked using a backend-signed HttpOnly browser cookie
+- Each signed anonymous voting identity can vote once per submission
 - Voting is anonymous and privacy-focused
 
 ### Viewing Previous Results

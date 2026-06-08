@@ -18,7 +18,7 @@ contracts, use [API Reference](./api.md).
 The Munich Weekly platform implements a multi-layered security architecture that supports both authenticated and anonymous users:
 
 - **Authenticated Users**: Full access using JWT-based authentication
-- **Anonymous Users**: Limited access with anonymous voting capabilities using cookie-based visitor tracking
+- **Anonymous Users**: Limited access with anonymous voting capabilities using a backend-signed HttpOnly cookie
 - **Role-Based Access Control**: User and admin roles with different permission levels
 - **Secure Password Management**: BCrypt hashing with secure password reset functionality
 
@@ -118,30 +118,23 @@ public ResponseEntity<?> protectedEndpoint() {
 
 ## 4. Anonymous Voting System
 
-### 4.1. Visitor ID Mechanism
+### 4.1. Anonymous Vote Identity
 
-**Cookie-Based Tracking**:
-- **Cookie Name**: `visitorId`
-- **Value**: UUID v4 (e.g., `123e4567-e89b-12d3-a456-426614174000`)
-- **Expiration**: 365 days
-- **Scope**: Site-wide (`path: /`)
-- **SameSite**: `Lax` for security
+**Backend-Signed Cookie**:
+- **Cookie Name**: `mw_vote_anon`
+- **Value**: server-signed token containing version, anonymous subject, and issued-at timestamp
+- **Attributes**: `HttpOnly`, `SameSite=Lax`, `Path=/`, and `Secure` in production
+- **Signing Secret**: `ANONYMOUS_VOTE_SECRET`
 
-**Implementation**:
-```typescript
-export const getOrGenerateVisitorId = (): string => {
-  let visitorId = Cookies.get('visitorId');
-  if (!visitorId) {
-    visitorId = uuidv4();
-    Cookies.set('visitorId', visitorId, {
-      expires: 365,
-      path: '/',
-      sameSite: 'Lax'
-    });
-  }
-  return visitorId;
-};
-```
+The frontend no longer creates the authoritative anonymous voting identity.
+Voting requests include cookies, and the backend either verifies the signed
+cookie, migrates an existing legacy `visitorId` once, or issues a new random
+anonymous subject.
+
+Legacy compatibility is intentionally narrow: if a valid `mw_vote_anon` cookie
+exists, the backend ignores any changed `visitorId` cookie. If `mw_vote_anon` is
+missing and a legacy `visitorId` exists, the backend signs that value into
+`mw_vote_anon` for migration.
 
 ### 4.2. Vote Constraint Enforcement
 
@@ -152,9 +145,9 @@ UNIQUE (visitor_id, submission_id);
 ```
 
 **Backend Validation**:
-- Checks for existing vote by `visitorId` + `submissionId` combination
-- Returns 400 Bad Request if `visitorId` cookie is missing for vote submission
-- Gracefully handles missing `visitorId` for vote checking (returns `{voted: false}`)
+- Checks for existing anonymous vote by signed anonymous subject + `submissionId`
+- Issues `mw_vote_anon` when an anonymous browser votes, cancels, or migrates a legacy `visitorId`; cookie-less status checks return not-voted without creating a new identity
+- Applies broad in-memory throttles to excessive anonymous token issuance and repeated anonymous vote attempts per client address and submission; these controls are not a one-IP-one-vote rule
 
 ### 4.3. Anonymous photo submissions (distinct from cookie-based voting)
 
@@ -302,7 +295,7 @@ fetch(url, {
 - ✅ Secure password reset with time-limited tokens
 
 ### 9.3. Anonymous User Privacy
-- ✅ UUID-based visitor identification
+- ✅ Backend-signed HttpOnly anonymous vote identity
 - ✅ No personal data collection for anonymous users
 - ✅ Cookie-based state management with appropriate security settings
 - ✅ Transparent data handling as documented in privacy policy
@@ -329,12 +322,12 @@ authentication behavior and security design, not the route inventory.
 - JWT tokens are stored in localStorage (vulnerable to XSS attacks)
 - No refresh token mechanism implemented
 - Single secret key for all token signing
-- Limited rate limiting implementation
+- Anonymous vote throttling uses in-memory counters per backend JVM
 
 ### 11.2. Recommended Improvements
 1. **Implement refresh token rotation** for enhanced security
 2. **Move JWT to httpOnly cookies** to prevent XSS attacks
-3. **Add rate limiting** for authentication endpoints
+3. **Move in-memory throttles to shared storage** if the backend runs multiple JVMs
 4. **Implement CSP headers** for additional XSS protection
 5. **Add request signing** for critical operations
 6. **Implement session management** for better token lifecycle control
@@ -357,7 +350,7 @@ This document reflects the current implementation as of the latest codebase anal
 ### Implementation References
 - **Backend Security Code**: `/backend/src/main/java/com/munichweekly/backend/security/`
 - **Frontend Auth Context**: `/frontend/src/context/AuthContext.tsx`
-- **Anonymous Voting**: `/frontend/src/lib/visitorId.ts`
+- **Anonymous Voting**: `/backend/src/main/java/com/munichweekly/backend/service/AnonymousVoteIdentityService.java`
 - **Route Protection**: `/frontend/src/components/ProtectedRoute.tsx`
 
 ### Related Documentation

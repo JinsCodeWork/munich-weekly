@@ -17,6 +17,7 @@ import org.springframework.test.context.TestPropertySource;
         "cloudflare.r2.access-key=",
         "cloudflare.r2.secret-key=",
         "cloudflare.r2.endpoint=",
+        "jwt.secret=test-jwt-secret-32-bytes-minimum!!",
         "uploads.directory=${java.io.tmpdir}/munich-weekly-context-loads-test",
         "spring.docker.compose.enabled=false"
 })

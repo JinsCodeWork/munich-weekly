@@ -26,10 +26,10 @@ Use [Authentication & Security](./auth.md) for implementation details,
 - **Secret**: Managed through the JWT settings in [Environment Variables](./environment.md)
 
 ### Anonymous User Support
-- **Mechanism**: UUID-based `visitorId` cookies
+- **Mechanism**: Backend-signed HttpOnly `mw_vote_anon` cookie
 - **Purpose**: Enable anonymous voting without user registration
 - **Privacy**: No personal data collection for anonymous users
-- **Constraint**: One vote per visitor per submission
+- **Constraint**: One vote per signed anonymous subject per submission, with broad IP-based throttles for excessive token issuance or repeated anonymous vote attempts
 
 ### User Roles & Permissions
 - **User Role**: Basic functionality (vote, submit, manage own content)
@@ -50,7 +50,7 @@ Use [Authentication & Security](./auth.md) for implementation details,
 
 ✅ **Privacy-Compliant Anonymous Voting**
 - GDPR-compliant visitor tracking
-- UUID-based identification (no personal data)
+- Backend-signed HttpOnly anonymous vote identity
 - Transparent data handling policies
 
 ✅ **Comprehensive Role-Based Access Control**

@@ -3,15 +3,21 @@ package com.munichweekly.backend.controller;
 import com.munichweekly.backend.devtools.annotation.Description;
 import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.security.CurrentUserUtil;
+import com.munichweekly.backend.service.AuthRateLimitService;
 import com.munichweekly.backend.service.UserService;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -24,10 +30,14 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Login, registration, and linked provider account management")
 public class AuthController {
 
-    private final UserService userService;
+    private static final String THIRD_PARTY_AUTH_DISABLED = "Third-party authentication is not enabled.";
 
-    public AuthController(UserService userService) {
+    private final UserService userService;
+    private final AuthRateLimitService authRateLimitService;
+
+    public AuthController(UserService userService, AuthRateLimitService authRateLimitService) {
         this.userService = userService;
+        this.authRateLimitService = authRateLimitService;
     }
 
     /**
@@ -39,10 +49,25 @@ public class AuthController {
             summary = "Login with email and password",
             description = "Authenticates a registered user and returns a JWT token with user profile details."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authenticated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or invalid email/password"),
+            @ApiResponse(responseCode = "429", description = "Too many login attempts")
+    })
     @PostMapping("/login/email")
-    public ResponseEntity<LoginResponseDTO> loginWithEmail(@Valid @RequestBody EmailLoginRequestDTO dto) {
-        LoginResponseDTO response = userService.loginWithEmail(dto);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<LoginResponseDTO> loginWithEmail(
+            @Valid @RequestBody EmailLoginRequestDTO dto,
+            HttpServletRequest request
+    ) {
+        authRateLimitService.checkLoginAllowed(dto.getEmail(), request);
+        try {
+            LoginResponseDTO response = userService.loginWithEmail(dto);
+            authRateLimitService.clearLoginFailures(dto.getEmail(), request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            authRateLimitService.recordLoginFailure(dto.getEmail(), request);
+            throw ex;
+        }
     }
 
     /**
@@ -52,12 +77,14 @@ public class AuthController {
     @Description("Login with a third-party provider (e.g. Google). Auto-creates user on first login")
     @Operation(
             summary = "Login with provider",
-            description = "Authenticates with a supported third-party provider and creates the user on first login."
+            description = "Third-party authentication is currently disabled."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "501", description = "Third-party authentication is not enabled")
+    })
     @PostMapping("/login/provider")
-    public ResponseEntity<LoginResponseDTO> loginWithProvider(@Valid @RequestBody UserAuthProviderLoginRequestDTO dto) {
-        LoginResponseDTO response = userService.loginWithThirdParty(dto);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<LoginResponseDTO> loginWithProvider() {
+        throw thirdPartyAuthDisabled();
     }
 
 
@@ -84,17 +111,16 @@ public class AuthController {
     @Description("Bind a third-party provider (e.g. Google or WeChat) to the currently logged-in user")
     @Operation(
             summary = "Bind a third-party provider",
-            description = "Links a supported third-party identity provider to the authenticated user."
+            description = "Third-party authentication is currently disabled."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "501", description = "Third-party authentication is not enabled")
+    })
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/bind")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
-    public ResponseEntity<?> bindProvider(@Valid @RequestBody BindRequestDTO dto) {
-        Long userId = CurrentUserUtil.getUserIdOrThrow(); // ← Get current logged-in user ID directly
-        userService.bindThirdPartyAccount(userId, dto);
-        return ResponseEntity.ok().body(
-                java.util.Map.of("message", "Binding successful")
-        );
+    public ResponseEntity<?> bindProvider() {
+        throw thirdPartyAuthDisabled();
     }
 
     /**
@@ -132,5 +158,9 @@ public class AuthController {
         return ResponseEntity.ok().body(
                 Map.of("message", "Successfully unbound " + provider)
         );
+    }
+
+    private static ResponseStatusException thirdPartyAuthDisabled() {
+        return new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, THIRD_PARTY_AUTH_DISABLED);
     }
 }

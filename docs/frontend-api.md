@@ -40,7 +40,7 @@ frontend process.
 | `GET` | `/frontend-api/config` | `frontend/src/app/frontend-api/config/route.ts` | Public | Reads homepage configuration from `frontend/public/config/homepage.json`, falling back to `frontend/src/lib/config.ts`. Supports ETag caching and `_force=1`. |
 | `GET` | `/frontend-api/admin/config` | `frontend/src/app/frontend-api/admin/config/route.ts` | JWT plus backend admin check | Reads homepage configuration for the admin UI. Token is accepted from the `jwt` cookie or `Authorization: Bearer` header, then verified through backend `/api/users/me`. |
 | `POST` | `/frontend-api/admin/config` | `frontend/src/app/frontend-api/admin/config/route.ts` | JWT plus backend admin check | Merges posted homepage configuration into `frontend/public/config/homepage.json` and sets `lastUpdated`. |
-| `POST` | `/frontend-api/admin/sync-hero` | `frontend/src/app/frontend-api/admin/sync-hero/route.ts` | JWT token required | Copies a hero image from a provided remote URL or from `backend/uploads/hero.jpg` into `frontend/public/images/home/hero.jpg`. Current code checks token presence in this handler; it does not call the backend admin role check. |
+| `POST` | `/frontend-api/admin/sync-hero` | `frontend/src/app/frontend-api/admin/sync-hero/route.ts` | JWT plus backend admin check | Copies a hero image from an allowlisted remote HTTPS JPEG/PNG origin or from `backend/uploads/hero.jpg` into `frontend/public/images/home/hero.jpg`. |
 | `POST` | `/frontend-api/admin/upload` | `frontend/src/app/frontend-api/admin/upload/route.ts` | Not applicable | Disabled legacy upload endpoint. Always returns `410 Gone` with backend upload alternatives. |
 
 ## Operational Notes
@@ -51,6 +51,14 @@ frontend process.
 - Admin config routes that call the backend use `NEXT_PUBLIC_API_URL` as their
   backend base. For those server-side route handlers, use the backend origin
   expected by the code, not a frontend path.
+- `POST /frontend-api/admin/sync-hero` verifies the token through backend
+  `/api/users/me` before parsing the request body, reading local files, fetching
+  remote images, or writing the frontend hero image. Remote sync only accepts
+  JPEG/PNG responses from exact HTTPS origins in the built-in image CDN allowlist
+  or `HERO_IMAGE_ALLOWED_ORIGINS`, and rejects redirects and images over 30 MB.
+  Missing `imageUrl` falls back to `backend/uploads/hero.jpg`; upload results
+  `/uploads/hero.jpg`, `/uploads/hero.jpeg`, and `/uploads/hero.png` are treated
+  as local backend files instead of remote fetch targets.
 - Homepage image upload itself uses backend endpoints such as
   `/api/submissions/admin/upload-hero`; the frontend sync route only copies the
   resulting image into the frontend public asset location.

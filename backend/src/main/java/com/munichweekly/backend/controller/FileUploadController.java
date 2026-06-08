@@ -6,6 +6,9 @@ import com.munichweekly.backend.service.StorageService;
 import com.munichweekly.backend.service.R2StorageService;
 import com.munichweekly.backend.service.LocalStorageService;
 import com.munichweekly.backend.service.SubmissionUploadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -324,6 +327,13 @@ public class FileUploadController {
      */
     @GetMapping("/{submissionId}/check-image")
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @Operation(
+            summary = "Check submission image storage status",
+            description = "Returns image storage status for a submission. Only the submission owner or an admin may inspect it."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Image status returned")
+    @ApiResponse(responseCode = "403", description = "Current user is neither the submission owner nor an admin")
     public ResponseEntity<Map<String, Object>> checkImage(@PathVariable("submissionId") String submissionId) {
         logger.info("Starting image verification for submission ID: " + submissionId);
         Map<String, Object> response = new HashMap<>();
@@ -331,6 +341,11 @@ public class FileUploadController {
         try {
             Long subId = Long.valueOf(submissionId);
             Submission submission = submissionUploadService.requireSubmission(subId);
+
+            if (!submissionUploadService.currentUserMayReadSubmissionImage(submission)) {
+                response.put("error", "You do not have permission to inspect this submission image");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
             
             String imageUrl = submission.getImageUrl();
             response.put("submissionId", submissionId);
@@ -389,12 +404,24 @@ public class FileUploadController {
      */
     @GetMapping(value = "/{submissionId}/direct-image", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
     @PreAuthorize("hasAnyAuthority('user', 'admin')")
+    @Operation(
+            summary = "Read submission image bytes directly",
+            description = "Returns raw image bytes for a submission. Only the submission owner or an admin may read it."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Image bytes returned")
+    @ApiResponse(responseCode = "403", description = "Current user is neither the submission owner nor an admin")
+    @ApiResponse(responseCode = "404", description = "Submission image is missing or unavailable")
     public ResponseEntity<byte[]> getImageDirectly(@PathVariable("submissionId") String submissionId) {
         logger.info("Direct image retrieval request for submission ID: " + submissionId);
         
         try {
             Long subId = Long.valueOf(submissionId);
             Submission submission = submissionUploadService.requireSubmission(subId);
+
+            if (!submissionUploadService.currentUserMayReadSubmissionImage(submission)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
             
             String imageUrl = submission.getImageUrl();
             if (imageUrl == null || imageUrl.isEmpty()) {

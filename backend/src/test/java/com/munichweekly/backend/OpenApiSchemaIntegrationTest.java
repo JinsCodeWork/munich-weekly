@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "cloudflare.r2.access-key=",
         "cloudflare.r2.secret-key=",
         "cloudflare.r2.endpoint=",
+        "jwt.secret=test-jwt-secret-32-bytes-minimum!!",
         "uploads.directory=${java.io.tmpdir}/munich-weekly-openapi-integration-test",
         "spring.docker.compose.enabled=false"
 })
@@ -76,10 +77,18 @@ class OpenApiSchemaIntegrationTest {
 
         assertOperationMetadata(paths, "/api/auth/login/email", "post",
                 "Authentication", "Login with email and password");
+        assertOperationResponsesInclude(operation(paths, "/api/auth/login/email", "post"), "429");
+        assertOperationMetadata(paths, "/api/auth/forgot-password", "post",
+                "Authentication", "Request password reset");
+        assertOperationResponsesInclude(operation(paths, "/api/auth/forgot-password", "post"), "429");
         assertOperationMetadata(paths, "/api/auth/register", "post",
                 "Authentication", "Register a new user");
+        assertOperationMetadata(paths, "/api/auth/login/provider", "post",
+                "Authentication", "Login with provider");
+        assertOperationResponsesInclude(operation(paths, "/api/auth/login/provider", "post"), "501");
         assertOperationMetadata(paths, "/api/auth/bind", "post",
                 "Authentication", "Bind a third-party provider");
+        assertOperationResponsesInclude(operation(paths, "/api/auth/bind", "post"), "501");
         assertRequiresBearerAuth(operation(paths, "/api/auth/bind", "post"));
 
         assertOperationMetadata(paths, "/api/issues", "get",
@@ -90,6 +99,9 @@ class OpenApiSchemaIntegrationTest {
         assertOperationMetadata(paths, "/api/issues/{id}", "delete",
                 "Issues", "Delete issue");
         assertRequiresBearerAuth(operation(paths, "/api/issues/{id}", "delete"));
+        assertOperationMetadata(paths, "/api/votes/check-batch", "get",
+                "Votes", "Batch check vote status");
+        assertOperationResponsesInclude(operation(paths, "/api/votes/check-batch", "get"), "400");
 
         @SuppressWarnings("unchecked")
         Map<String, Object> deleteResponses = (Map<String, Object>) operation(paths, "/api/issues/{id}", "delete").get("responses");
@@ -111,6 +123,12 @@ class OpenApiSchemaIntegrationTest {
 
     private static void assertRequiresBearerAuth(Map<String, Object> operation) {
         assertThat(operation.get("security")).isEqualTo(List.of(Map.of("bearerAuth", List.of())));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void assertOperationResponsesInclude(Map<String, Object> operation, String responseCode) {
+        Map<String, Object> responses = (Map<String, Object>) operation.get("responses");
+        assertThat(responses).containsKey(responseCode);
     }
 
     @SuppressWarnings("unchecked")

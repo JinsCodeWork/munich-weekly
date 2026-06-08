@@ -254,6 +254,11 @@ preview_bucket_name = "munichweekly-photoupload"
 BUCKET_NAME = "munichweekly-photoupload"
 ```
 
+Debug routes are disabled by default. For local diagnostics only, set
+`DEBUG_ROUTES_ENABLED=true` and configure a `DEBUG_AUTH_SECRET` of at least 32
+characters in the Worker environment, then send it as the `x-debug-secret`
+request header. Do not put debug secrets in query strings.
+
 ### Custom Domain Configuration
 
 To use a custom domain (e.g., img.munichweekly.art):
@@ -316,12 +321,14 @@ The Worker provides a `/health` endpoint that returns status information:
 
 ### Debug Endpoints
 
-For administrative purposes, the Worker includes debug endpoints:
+`/debug-params`, `/debug-auth`, and `/debug-request` return `404` unless debug
+mode is deliberately enabled with `DEBUG_ROUTES_ENABLED=true` and
+`DEBUG_AUTH_SECRET` is configured. When enabled, requests without the correct
+`x-debug-secret` header return `403`.
 
-- `/debug-auth` - Tests R2 connectivity
-- `/debug-request` - Displays request information
-
-These endpoints should be disabled or authentication-protected in production.
+Debug responses are intentionally bounded. They do not list R2 object keys,
+reflect all request headers, return authorization or cookie headers, or expose
+stack traces. Use Worker logs for detailed operational errors.
 
 ---
 

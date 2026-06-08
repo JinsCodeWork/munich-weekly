@@ -34,6 +34,10 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     // Find votes by a specific user for a specific submission
     Optional<Vote> findByUserIdAndSubmission(Long userId, Submission submission);
 
+    List<Vote> findByUserIdAndSubmissionIdIn(Long userId, List<Long> submissionIds);
+
+    List<Vote> findByVisitorIdAndSubmissionIdIn(String visitorId, List<Long> submissionIds);
+
     // Delete all votes cast by a user
     void deleteByUserId(Long userId);
     

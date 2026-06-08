@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
-import { getOrGenerateVisitorId } from '@/lib/visitorId';
 import { votesApi } from '@/api';
 import { ThumbsUp, Loader2, CheckCircle } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 import { useVoteStatus } from '@/context/VoteStatusContext';
 
 interface VoteButtonProps {
@@ -38,7 +36,6 @@ export function VoteButton({
   className,
   allowUnvote = true // By default, allow users to cancel votes
 }: VoteButtonProps) {
-  const { user } = useAuth();
   const { 
     getVoteStatus, 
     isCheckingStatus, 
@@ -49,15 +46,6 @@ export function VoteButton({
   // Local state for voting actions (not for status checking)
   const [isVoting, setIsVoting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [visitorId, setVisitorId] = useState<string | null>(null);
-
-  // Initialize visitorId for anonymous users
-  useEffect(() => {
-    if (!user) {
-      const id = getOrGenerateVisitorId();
-      setVisitorId(id);
-    }
-  }, [user]);
 
   // Get vote status from context (no individual API calls)
   const hasVoted = getVoteStatus(submissionId);
@@ -74,12 +62,6 @@ export function VoteButton({
     setError(null);
     
     try {
-      // Ensure we have visitorId for anonymous users
-      if (!user && !visitorId) {
-        const newVisitorId = getOrGenerateVisitorId();
-        setVisitorId(newVisitorId);
-      }
-      
       const response = await votesApi.submitVote(submissionId);
       
       // Update vote status in context immediately
@@ -104,7 +86,7 @@ export function VoteButton({
     } finally {
       setIsVoting(false);
     }
-  }, [submissionId, user, visitorId, onVoteSuccess, updateVoteStatus, resetVoteStatus]);
+  }, [submissionId, onVoteSuccess, updateVoteStatus, resetVoteStatus]);
 
   /**
    * Cancel an existing vote
@@ -114,12 +96,6 @@ export function VoteButton({
     setError(null);
     
     try {
-      // Ensure we have visitorId for anonymous users
-      if (!user && !visitorId) {
-        const newVisitorId = getOrGenerateVisitorId();
-        setVisitorId(newVisitorId);
-      }
-      
       const response = await votesApi.cancelVote(submissionId);
       
       if (response.success) {
@@ -141,7 +117,7 @@ export function VoteButton({
     } finally {
       setIsVoting(false);
     }
-  }, [submissionId, user, visitorId, onVoteCancelled, updateVoteStatus, resetVoteStatus]);
+  }, [submissionId, onVoteCancelled, updateVoteStatus, resetVoteStatus]);
 
   /**
    * Handle vote click - submit or cancel vote

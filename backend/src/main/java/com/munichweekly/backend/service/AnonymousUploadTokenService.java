@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import com.munichweekly.backend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,7 @@ public class AnonymousUploadTokenService {
     public AnonymousUploadTokenService(
             @Value("${jwt.secret}") String secret,
             @Value("${anonymous.upload-token.expiration-ms:900000}") long expirationMs) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.key = Keys.hmacShaKeyFor(JwtUtil.validateSigningSecret(secret));
         this.expirationMs = expirationMs;
     }
 

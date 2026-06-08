@@ -1,25 +1,6 @@
-import Cookies from 'js-cookie';
-import { v4 as uuidv4 } from 'uuid';
-
-const VISITOR_ID_COOKIE_NAME = 'visitorId';
-const VISITOR_ID_COOKIE_EXPIRES_DAYS = 365;
-
 /**
- * Retrieves the visitor ID from cookies. If not found, generates a new one,
- * stores it in cookies, and returns it.
- * 
- * @returns The visitor ID string.
+ * Anonymous voting identity is issued and verified by the backend through the
+ * signed HttpOnly mw_vote_anon cookie. Frontend code must not generate or
+ * persist a JS-writable visitor ID as an authoritative voting identity.
  */
-export const getOrGenerateVisitorId = (): string => {
-  let visitorId = Cookies.get(VISITOR_ID_COOKIE_NAME);
-
-  if (!visitorId) {
-    visitorId = uuidv4();
-    Cookies.set(VISITOR_ID_COOKIE_NAME, visitorId, { 
-      expires: VISITOR_ID_COOKIE_EXPIRES_DAYS,
-      path: '/', // Make it available site-wide
-      sameSite: 'Lax' // Recommended for most cases
-    });
-  }
-  return visitorId;
-}; 
+export const AUTHORITATIVE_VOTE_ANON_COOKIE = "mw_vote_anon";

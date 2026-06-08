@@ -17,11 +17,11 @@ For technical implementation details and security architecture:
 
 ## 1. Use of Cookies
 
-We use a single technical cookie named `visitorId` for anonymous weekly voting: it ties votes to a browser and is **not** a logged-in user session. The cookie is:
+We use a single technical cookie named `mw_vote_anon` for anonymous weekly voting: it helps enforce voting limits for a browser and is **not** a logged-in user session. The cookie is:
 
-* Named `visitorId`
-* A randomly generated identifier (UUID)
-* Stored in your browser
+* Named `mw_vote_anon`
+* A backend-signed anonymous identifier
+* Stored in your browser as an HttpOnly cookie
 * Not linked to your personal identity
 
 We do **not** use cookies for analytics, advertising, or tracking.
@@ -34,10 +34,10 @@ This cookie is necessary for core functionality (to prevent repeated voting from
 
 When you vote, we may temporarily store:
 
-* Your `visitorId` (from the cookie)
+* The anonymous vote subject verified from the `mw_vote_anon` cookie
 * The submission you voted for
 * Timestamp of the vote
-* (Optionally) Your IP address and browser metadata, only for abuse prevention
+* Your IP address for broad abuse prevention, such as excessive token issuance or repeated vote attempts
 
 We do not collect your name, email, or any other personal identifiers unless you explicitly log in (e.g. via email or Google, if available), create an account, or choose to provide optional contact details with an anonymous submission.
 
@@ -81,7 +81,7 @@ If you submit anonymously, public attribution may be shown as "Anonymous". If yo
 
 If you are an EU resident, you have the right to:
 
-* Request access to data related to your visitorId
+* Request access to data related to your anonymous vote cookie
 * Request deletion of your voting record
 * Request deletion of submitted photos and optional contact details where applicable
 * Ask for clarification on how your data is processed
@@ -97,7 +97,7 @@ To make a request, contact: contact@munichweekly.art
 We are fully committed to compliance with the European General Data Protection Regulation (GDPR) and implement the "right to be forgotten" as follows:
 
 ### For Non-Registered Users and Anonymous Submissions
-* Voting data associated with your `visitorId` can be deleted upon request
+* Voting data associated with your anonymous vote cookie can be deleted upon request
 * Anonymous submission contact emails can be deleted upon request where we can identify the submission
 * Anonymous submitters cannot view a submission history because no login account is created
 

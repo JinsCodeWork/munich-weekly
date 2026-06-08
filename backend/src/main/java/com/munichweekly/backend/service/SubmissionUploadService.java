@@ -39,6 +39,23 @@ public class SubmissionUploadService {
         return isOwner || isAdmin;
     }
 
+    /**
+     * Whether the current security principal may inspect or read this submission image.
+     */
+    public boolean currentUserMayReadSubmissionImage(Submission submission) {
+        User currentUser = CurrentUserUtil.getUser();
+        if (currentUser == null) {
+            return false;
+        }
+
+        if ("admin".equals(currentUser.getRole())) {
+            return true;
+        }
+
+        return submission.getUser() != null
+                && submission.getUser().getId().equals(currentUser.getId());
+    }
+
     public void applyStoredImageAndSave(Submission submission, StorageService.StorageResult storageResult) {
         submission.setImageUrl(storageResult.getUrl());
         if (storageResult.hasDimensions()) {

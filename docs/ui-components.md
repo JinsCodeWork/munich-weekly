@@ -211,10 +211,10 @@ The `VoteButton` is a client-side component responsible for handling the user in
     *   `className?: string`: Optional CSS classes.
 *   **State Management**:
     *   Manages `isLoading`, `hasVoted`, and `error` states internally.
-    *   On mount, it ensures a `visitorId` cookie is present (generating one if not) using `getOrGenerateVisitorId()` from `lib/visitorId.ts`.
-    *   It then calls `votesApi.checkVoteStatus()` to determine if the current user (identified by `visitorId`) has already voted for the given submission.
+    *   Vote status is supplied by `VoteStatusContext`, which batches status checks through the vote API.
+    *   The backend manages anonymous identity with the signed HttpOnly `mw_vote_anon` cookie.
 *   **Voting Logic**:
-    *   `handleVoteClick` calls `votesApi.submitVote()`. The `visitorId` is sent implicitly via cookie.
+    *   `handleVoteClick` calls `votesApi.submitVote()`. Cookies are included so the backend can verify the signed anonymous vote identity.
     *   It prevents click event propagation to avoid unintended parent element interactions.
     *   Upon successful vote submission, it updates its internal `hasVoted` state and calls the `onVoteSuccess` callback.
 *   **UI**:

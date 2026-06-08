@@ -234,8 +234,8 @@ A comprehensive anonymous voting system with performance optimization:
 - **VotePage**: Public voting interface with current and historical result viewing
 - **VoteButton**: Interactive voting component with real-time feedback
 - **VoteStatusContext**: Centralized vote state management with batch optimization ✨ **NEW**
-- **Batch Vote Checking**: Reduces N individual API requests to 1 batch request (95%+ API call reduction)
-- **Anonymous Voting**: Cookie-based visitor identification for anonymous participation
+- **Batch Vote Checking**: Reduces N individual API requests to 1 batch request (95%+ API call reduction); backend caps each normalized batch at `VOTES_BATCH_STATUS_MAX_SUBMISSION_IDS` (default `200`)
+- **Anonymous Voting**: Backend-signed HttpOnly `mw_vote_anon` cookie for anonymous participation; frontend code does not generate the authoritative vote identity
 - **Previous Results Access**: Graceful fallback to historical voting results when no current voting period is active
 - **State Management**: Smart view switching between current voting and previous results
 - **Read-only Historical View**: Past voting results displayed in non-interactive format

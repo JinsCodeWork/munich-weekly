@@ -122,6 +122,16 @@ binding. Make sure `.env` is excluded from Git with `.gitignore`.
 > Production must not use `SPRING_PROFILES_ACTIVE=dev`. The current `dev`
 > profile clears core data on startup and reseeds test users.
 
+Set `JWT_SECRET` to a strong random value before starting the backend. The
+backend has no default for this secret and refuses blank values, the removed
+development fallback, and values shorter than 32 UTF-8 bytes. Rotating
+`JWT_SECRET` invalidates existing JWTs.
+
+Set `ANONYMOUS_VOTE_SECRET` to a separate strong random value before starting
+the backend in `prod` or `prod-init`. It signs the anonymous voting
+`mw_vote_anon` HttpOnly cookie. Rotating it invalidates existing anonymous vote
+cookies, but stored votes remain in the database.
+
 ---
 
 ## 5. Backend Deployment with Docker

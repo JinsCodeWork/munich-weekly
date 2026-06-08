@@ -88,12 +88,12 @@ Performance Features:
 | id                 | BIGINT    | Vote ID (Primary Key)             | Auto-generated                        |
 | submission\_id     | BIGINT FK | Submission ID (submissions table) | Many-to-one                           |
 | issue\_id          | BIGINT FK | Issue ID (issues table)           | Many-to-one                           |
-| visitorId          | VARCHAR   | Anonymous visitor identifier      | From browser cookie; required         |
+| visitorId          | VARCHAR   | Anonymous vote subject            | From backend-verified `mw_vote_anon`; legacy `visitorId` values may remain from migration |
 | browserFingerprint | VARCHAR   | Optional fingerprint string       | Used for abuse detection              |
 | ipAddress          | VARCHAR   | IP address at vote time           | Stored for auditing / abuse detection |
 | votedAt            | TIMESTAMP | Voting timestamp                  | Default current time                  |
 
-**Unique Constraint:** Each visitorId can vote only once per submission.
+**Unique Constraint:** Each anonymous vote subject can vote only once per submission. The column name remains `visitorId` for compatibility with the existing schema; the authoritative value is now the backend-managed signed-cookie subject, not a JavaScript-writable cookie.
 
 ---
 
@@ -163,7 +163,7 @@ Two tables were added to support the promotion feature.
 * **Submission ↔️ GallerySubmissionOrder** *(optional many-to-one for `SUBMISSION` gallery items)*
 * **PromotionConfig ↔️ PromotionImages** *(one-to-many)*
 
-> Note: Votes are no longer linked to `User`, but use `visitorId` from cookies for anonymous vote tracking.
+> Note: Anonymous votes are not linked to `User`; they use the signed `mw_vote_anon` cookie subject stored in the existing `visitorId` column for compatibility.
 
 ---
 

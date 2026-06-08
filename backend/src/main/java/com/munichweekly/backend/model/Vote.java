@@ -5,8 +5,9 @@ import java.time.LocalDateTime;
 
 /**
  * Entity representing a single vote by a user on a submission in a specific issue.
- * Each user can vote once per submission.
- * User can be identified either by visitorId (for anonymous) or userId (for authenticated).
+ * Each user or anonymous vote subject can vote once per submission.
+ * Authenticated voters are identified by userId; anonymous voters use the
+ * backend-managed vote subject stored in visitorId for schema compatibility.
  */
 @Entity
 @Table(name = "votes", 

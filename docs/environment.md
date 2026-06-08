@@ -37,8 +37,13 @@ binding, for example `STORAGE_MODE` overrides `storage.mode`.
 | `SPRING_DATASOURCE_URL` | Spring Boot override | Host-run backend | Use `jdbc:postgresql://localhost:5432/<db>` when Spring Boot runs outside Docker. |
 | `SPRING_DATASOURCE_USERNAME` | Spring Boot override | Host-run backend | Usually matches `POSTGRES_USER`. |
 | `SPRING_DATASOURCE_PASSWORD` | Spring Boot override | Host-run backend | Usually matches `POSTGRES_PASSWORD`. |
-| `JWT_SECRET` | `jwt.secret` | All backend runs | Secret used to sign JWTs. Do not use the fallback value outside disposable local runs. |
+| `JWT_SECRET` | `jwt.secret` | All backend runs | Required secret used to sign JWTs. Backend startup rejects blank values, the removed fallback value, and values shorter than 32 UTF-8 bytes. Rotating this value invalidates existing JWTs. |
 | `JWT_EXPIRATION_MS` | `jwt.expirationMs` | Optional | Defaults to `3600000` in code. |
+| `AUTH_RATE_LIMIT_LOGIN_MAX_ATTEMPTS` | `auth.rate-limit.login.max-attempts` | Optional auth throttling | Defaults to `10` failed email/password login attempts per remote address and normalized email. In-memory per backend JVM; restart clears counters. |
+| `AUTH_RATE_LIMIT_LOGIN_WINDOW_SECONDS` | `auth.rate-limit.login.window-seconds` | Optional auth throttling | Defaults to `900` seconds. |
+| `AUTH_RATE_LIMIT_PASSWORD_RESET_MAX_ATTEMPTS` | `auth.rate-limit.password-reset.max-attempts` | Optional password reset throttling | Defaults to `3` forgot-password requests per remote address and normalized email. In-memory per backend JVM; restart clears counters. |
+| `AUTH_RATE_LIMIT_PASSWORD_RESET_WINDOW_SECONDS` | `auth.rate-limit.password-reset.window-seconds` | Optional password reset throttling | Defaults to `3600` seconds. |
+| `AUTH_RATE_LIMIT_PASSWORD_RESET_COOLDOWN_SECONDS` | `auth.rate-limit.password-reset.cooldown-seconds` | Optional password reset throttling | Defaults to `300` seconds between accepted forgot-password requests for the same remote address and normalized email. |
 | `STORAGE_MODE` | `storage.mode` | Local upload mode or explicit production mode | Supported values are `LOCAL` and `R2`. The code default is `R2`. |
 | `UPLOADS_DIR` | `uploads.directory` | Local storage mode | Defaults to `./uploads` when not set. Compose mounts `/uploads`. |
 | `CLOUDFLARE_R2_ACCESS_KEY` | R2 storage service | R2 uploads | Secret. |
@@ -52,16 +57,48 @@ binding, for example `STORAGE_MODE` overrides `storage.mode`.
 | `TURNSTILE_SECRET_KEY` | Anonymous submission CAPTCHA | Anonymous submissions | Secret used by backend verification. |
 | `TURNSTILE_VERIFY_URL` | Anonymous submission CAPTCHA | Optional | Defaults to Cloudflare siteverify URL. |
 | `ANONYMOUS_UPLOAD_TOKEN_EXPIRATION_MS` | Anonymous upload token service | Optional | Defaults to `900000`. |
+| `VOTES_BATCH_STATUS_MAX_SUBMISSION_IDS` | `votes.batch-status.max-submission-ids` | Optional vote status throttling | Defaults to `200` normalized unique submission IDs per `/api/votes/check-batch` request. |
+| `ANONYMOUS_VOTE_SECRET` | `anonymous.vote.secret` | Anonymous voting in production | Secret used to sign the HttpOnly `mw_vote_anon` cookie. Required for `prod*` profiles and must be at least 32 characters. Rotating this value invalidates existing anonymous vote cookies. |
+| `ANONYMOUS_VOTE_COOKIE_SECURE` | `anonymous.vote.cookie-secure` | Optional anonymous vote cookie setting | Defaults to `false`; `prod*` profiles force `Secure` regardless of this value. |
+| `ANONYMOUS_VOTE_COOKIE_MAX_AGE_SECONDS` | `anonymous.vote.cookie-max-age-seconds` | Optional anonymous vote cookie setting | Defaults to `31536000` seconds. |
+| `ANONYMOUS_VOTE_TOKEN_ISSUANCE_MAX_ATTEMPTS` | `anonymous.vote.token-issuance-max-attempts` | Optional anonymous vote abuse throttling | Defaults to `50` new anonymous vote tokens per client address per window. In-memory per backend JVM; restart clears counters. |
+| `ANONYMOUS_VOTE_TOKEN_ISSUANCE_WINDOW_SECONDS` | `anonymous.vote.token-issuance-window-seconds` | Optional anonymous vote abuse throttling | Defaults to `600` seconds. |
+| `ANONYMOUS_VOTE_ATTEMPT_MAX_ATTEMPTS` | `anonymous.vote.vote-attempt-max-attempts` | Optional anonymous vote abuse throttling | Defaults to `200` anonymous vote attempts per client address and submission per window. This is not a one-IP-one-vote rule. |
+| `ANONYMOUS_VOTE_ATTEMPT_WINDOW_SECONDS` | `anonymous.vote.vote-attempt-window-seconds` | Optional anonymous vote abuse throttling | Defaults to `600` seconds. |
 | `SPRING_PROFILES_ACTIVE` | Spring profiles | Optional | `prod` is compose default. `dev` clears and reseeds data on startup. `prod-init` seeds initial users without clearing existing data. |
+
+Auth throttling uses in-memory counters per backend JVM. It keys attempts by
+normalized email and client address. When the direct peer is a local/private
+reverse proxy, the backend uses the proxy-provided `X-Real-IP` value or the
+last usable `X-Forwarded-For` entry; direct public peers cannot override their
+`remoteAddr` with forwarded headers.
+
+Anonymous vote abuse throttling also uses in-memory counters per backend JVM.
+The backend treats the signed HttpOnly `mw_vote_anon` cookie as the anonymous
+vote identity; client address limits are broad controls for excessive token
+issuance or repeated anonymous vote attempts and are not used as the voter
+identity.
 
 ## Frontend
 
 | Variable | Used by | Required for | Notes |
 |---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | `frontend/next.config.js`, frontend API routes | Optional | Defaults to `http://localhost:8080/api` for rewrites. If set for frontend API routes, use the backend base expected by that route. |
+| `NEXT_PUBLIC_API_URL` | `frontend/next.config.js`, frontend API routes | Optional | Defaults to `http://localhost:8080/api` for rewrites. `sync-hero` normalizes a trailing `/api` before appending `/api/users/me`; check each frontend API route before changing this value globally. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `src/app/submit/page.tsx` | Anonymous submission CAPTCHA | Public site key for the Turnstile widget. |
 | `DEBUG_CONFIG_API` | `src/app/frontend-api/config/route.ts` | Optional debugging | Set to `1` for config API debug logging. |
+| `HERO_IMAGE_ALLOWED_ORIGINS` | `src/app/frontend-api/admin/sync-hero/route.ts` | Optional remote homepage hero sync origins | Comma-separated exact HTTPS origins allowed for admin hero image sync, in addition to the current built-in image CDN origins. Do not include path segments, credentials, or wildcards. |
 | `NODE_ENV` | Next.js and image utilities | Managed by Next.js | `development` changes image optimization and upload rewrite behavior. |
+
+## Image Worker
+
+The Cloudflare Image Worker reads bindings and variables from
+`image-worker/wrangler.toml` and the Cloudflare Worker environment.
+
+| Variable | Used by | Required for | Notes |
+|---|---|---|---|
+| `BUCKET_NAME` | `image-worker/wrangler.toml` | Optional metadata | Name of the R2 bucket bound as `PHOTO_BUCKET`. |
+| `DEBUG_ROUTES_ENABLED` | `image-worker/src/index.js` | Optional local diagnostics | Set to `true` only for deliberate diagnostics. `/debug-*` routes return `404` unless this is true and `DEBUG_AUTH_SECRET` is configured. |
+| `DEBUG_AUTH_SECRET` | `image-worker/src/index.js` | Optional local diagnostics | Secret for debug routes, sent as the `x-debug-secret` header. Must be at least 32 characters. Do not put this value in URLs. |
 
 ## Profiles
 

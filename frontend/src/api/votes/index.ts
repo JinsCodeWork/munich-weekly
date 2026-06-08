@@ -3,10 +3,9 @@
  * Provides voting functionality and vote status checking
  */
 import { fetchAPI } from "../http";
-import { getOrGenerateVisitorId } from "@/lib/visitorId";
 
 interface VoteResponse {
-  vote: { id: number; submissionId: number; visitorId: string };
+  vote: { id: number; submissionId: number };
   voteCount: number;
 }
 
@@ -23,40 +22,38 @@ interface BatchVoteStatusResponse {
 /**
  * 提交投票
  * POST /api/votes?submissionId={submissionId}
- * Backend reads visitorId from cookie.
+ * Backend manages anonymous identity through the signed HttpOnly cookie.
  * Returns the vote object and current vote count.
  */
 export const submitVote = async (submissionId: number): Promise<VoteResponse> => {
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
-  // 确保已设置visitorId cookie
-  getOrGenerateVisitorId();
-  
   return fetchAPI<VoteResponse>(url.toString(), {
     method: "POST",
+    credentials: "include",
   });
 };
 
 /**
  * 检查当前访问者是否已为某投稿投票
  * GET /api/votes/check?submissionId={submissionId}
- * Backend reads visitorId from cookie.
+ * Backend manages anonymous identity through the signed HttpOnly cookie.
  */
 export const checkVoteStatus = async (submissionId: number): Promise<{ voted: boolean }> => {
   const url = new URL("/api/votes/check", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
-  // 确保已设置visitorId cookie
-  getOrGenerateVisitorId();
-  
-  return fetchAPI<{ voted: boolean }>(url.toString(), { method: "GET" });
+  return fetchAPI<{ voted: boolean }>(url.toString(), {
+    method: "GET",
+    credentials: "include",
+  });
 };
 
 /**
  * Batch check vote status for multiple submissions
  * GET /api/votes/check-batch?submissionIds={id1,id2,id3}
- * Backend reads visitorId from cookie.
+ * Backend manages anonymous identity through the signed HttpOnly cookie.
  * 
  * This is a performance optimization to reduce API calls when checking
  * vote status for multiple submissions simultaneously (e.g., on vote page load).
@@ -72,28 +69,24 @@ export const checkBatchVoteStatus = async (submissionIds: number[]): Promise<Bat
   const url = new URL("/api/votes/check-batch", window.location.origin);
   url.searchParams.append("submissionIds", submissionIds.join(","));
   
-  // 确保已设置visitorId cookie
-  getOrGenerateVisitorId();
-  
-  return fetchAPI<BatchVoteStatusResponse>(url.toString(), { method: "GET" });
+  return fetchAPI<BatchVoteStatusResponse>(url.toString(), {
+    method: "GET",
+    credentials: "include",
+  });
 };
 
 /**
  * 取消投票
  * DELETE /api/votes?submissionId={submissionId}
- * Backend reads visitorId from cookie.
+ * Backend manages anonymous identity through the signed HttpOnly cookie.
  * Returns success status and updated vote count.
  */
 export const cancelVote = async (submissionId: number): Promise<CancelVoteResponse> => {
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
   
-  // 确保已设置visitorId cookie
-  const visitorId = getOrGenerateVisitorId();
-  console.log("Cancelling vote with visitorId:", visitorId);
-  
   return fetchAPI<CancelVoteResponse>(url.toString(), {
     method: "DELETE",
-    credentials: 'include', // 确保包含cookie
+    credentials: "include",
   });
-}; 
+};

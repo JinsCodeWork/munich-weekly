@@ -36,9 +36,9 @@ export default function PrivacyPolicyPage() {
             This cookie is:
           </p>
           <ul>
-            <li>Named <code>visitorId</code></li>
-            <li>A randomly generated identifier (UUID)</li>
-            <li>Stored in your browser</li>
+            <li>Named <code>mw_vote_anon</code></li>
+            <li>A backend-signed anonymous identifier</li>
+            <li>Stored in your browser as an HttpOnly cookie</li>
             <li>Not linked to your personal identity</li>
           </ul>
           <p>
@@ -56,10 +56,10 @@ export default function PrivacyPolicyPage() {
           </h2>
           <p>When you vote, we may temporarily store:</p>
           <ul>
-            <li>Your <code>visitorId</code> (from the cookie)</li>
+            <li>The anonymous vote subject verified from the <code>mw_vote_anon</code> cookie</li>
             <li>The submission you voted for</li>
             <li>Timestamp of the vote</li>
-            <li>(Optionally) Your IP address and browser metadata, only for abuse prevention</li>
+            <li>Your IP address for broad abuse prevention, such as excessive token issuance or repeated vote attempts</li>
           </ul>
           <p>
             We do not collect your name, email, or any other personal identifiers unless you explicitly
@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
           </h2>
           <p>If you are an EU resident, you have the right to:</p>
           <ul>
-            <li>Request access to data related to your visitorId</li>
+            <li>Request access to data related to your anonymous vote cookie</li>
             <li>Request deletion of your voting record</li>
             <li>Request deletion of submitted photos and optional contact details where applicable</li>
             <li>Ask for clarification on how your data is processed</li>
@@ -155,7 +155,7 @@ export default function PrivacyPolicyPage() {
             For Non-Registered Users and Anonymous Submissions
           </h3>
           <ul>
-            <li>Voting data associated with your <code>visitorId</code> can be deleted upon request</li>
+            <li>Voting data associated with your anonymous vote cookie can be deleted upon request</li>
             <li>Anonymous submission contact emails can be deleted upon request where we can identify the submission</li>
             <li>Anonymous submitters cannot view a submission history because no login account is created</li>
           </ul>

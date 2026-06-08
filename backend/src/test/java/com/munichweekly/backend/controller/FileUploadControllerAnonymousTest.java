@@ -23,10 +23,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.when;
 class FileUploadControllerAnonymousTest {
 
     private StorageService storageService;
+    private R2StorageService r2StorageService;
     private SubmissionRepository submissionRepository;
     private AnonymousUploadTokenService anonymousUploadTokenService;
     private FileUploadController controller;
@@ -42,12 +45,13 @@ class FileUploadControllerAnonymousTest {
     @BeforeEach
     void setUp() {
         storageService = mock(StorageService.class);
+        r2StorageService = mock(R2StorageService.class);
         submissionRepository = mock(SubmissionRepository.class);
         anonymousUploadTokenService = mock(AnonymousUploadTokenService.class);
         controller = new FileUploadController(
                 storageService,
                 new SubmissionUploadService(submissionRepository),
-                mock(R2StorageService.class),
+                r2StorageService,
                 mock(LocalStorageService.class),
                 anonymousUploadTokenService
         );
@@ -119,6 +123,91 @@ class FileUploadControllerAnonymousTest {
     }
 
     @Test
+    void ownerCanCheckOwnSubmissionImage() {
+        Submission submission = submissionWithImage();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        when(r2StorageService.fileExists("/uploads/owner.jpg")).thenReturn(false);
+        authenticateUser(42L, "user");
+
+        ResponseEntity<Map<String, Object>> response = controller.checkImage("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("imageUrl", "/uploads/owner.jpg");
+        verify(r2StorageService).fileExists("/uploads/owner.jpg");
+    }
+
+    @Test
+    void adminCanCheckAnySubmissionImage() {
+        Submission submission = submissionWithImage();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        when(r2StorageService.fileExists("/uploads/owner.jpg")).thenReturn(false);
+        authenticateUser(100L, "admin");
+
+        ResponseEntity<Map<String, Object>> response = controller.checkImage("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("imageUrl", "/uploads/owner.jpg");
+        verify(r2StorageService).fileExists("/uploads/owner.jpg");
+    }
+
+    @Test
+    void rejectsNonOwnerCheckImageBeforeInspectingStorage() {
+        Submission submission = submissionWithImage();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        authenticateUser(100L, "user");
+
+        ResponseEntity<Map<String, Object>> response = controller.checkImage("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).doesNotContainKey("imageUrl");
+        verify(r2StorageService, never()).fileExists(anyString());
+        verify(r2StorageService, never()).extractObjectKeyFromUrl(anyString());
+        verify(r2StorageService, never()).getS3Client();
+    }
+
+    @Test
+    void ownerCanReadOwnSubmissionImageDirectly() {
+        Submission submission = submissionWithImage();
+        byte[] imageBytes = "image".getBytes();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        when(r2StorageService.getObjectBytes("/uploads/owner.jpg")).thenReturn(imageBytes);
+        authenticateUser(42L, "user");
+
+        ResponseEntity<byte[]> response = controller.getImageDirectly("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(imageBytes);
+        verify(r2StorageService).getObjectBytes("/uploads/owner.jpg");
+    }
+
+    @Test
+    void adminCanReadAnySubmissionImageDirectly() {
+        Submission submission = submissionWithImage();
+        byte[] imageBytes = "image".getBytes();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        when(r2StorageService.getObjectBytes("/uploads/owner.jpg")).thenReturn(imageBytes);
+        authenticateUser(100L, "admin");
+
+        ResponseEntity<byte[]> response = controller.getImageDirectly("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(imageBytes);
+        verify(r2StorageService).getObjectBytes("/uploads/owner.jpg");
+    }
+
+    @Test
+    void rejectsNonOwnerDirectImageBeforeReadingStorage() {
+        Submission submission = submissionWithImage();
+        when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
+        authenticateUser(100L, "user");
+
+        ResponseEntity<byte[]> response = controller.getImageDirectly("99");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(r2StorageService, never()).getObjectBytes(anyString());
+    }
+
+    @Test
     void rejectsNormalUploadWhenAuthenticatedUserDoesNotOwnSubmission() throws Exception {
         Submission submission = anonymousSubmission();
         when(submissionRepository.findById(99L)).thenReturn(Optional.of(submission));
@@ -152,6 +241,12 @@ class FileUploadControllerAnonymousTest {
 
         Submission submission = new Submission(user, issue, null, "Description");
         ReflectionTestUtils.setField(submission, "id", 99L);
+        return submission;
+    }
+
+    private Submission submissionWithImage() {
+        Submission submission = anonymousSubmission();
+        submission.setImageUrl("/uploads/owner.jpg");
         return submission;
     }
 

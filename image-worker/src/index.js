@@ -419,82 +419,115 @@ function handleHealthCheck() {
 	});
 }
 
+function isDebugPath(pathname) {
+	return pathname === '/debug-params' || pathname === '/debug-auth' || pathname === '/debug-request';
+}
+
+function isDebugEnabled(env) {
+	return env.DEBUG_ROUTES_ENABLED === 'true' &&
+		typeof env.DEBUG_AUTH_SECRET === 'string' &&
+		env.DEBUG_AUTH_SECRET.length >= 32;
+}
+
+function isDebugAuthorized(request, env) {
+	return request.headers.get('x-debug-secret') === env.DEBUG_AUTH_SECRET;
+}
+
+function debugNotFoundResponse() {
+	return new Response('Not found', {
+		status: 404,
+		headers: {
+			'Content-Type': 'text/plain',
+			'Cache-Control': 'no-store'
+		}
+	});
+}
+
+function debugForbiddenResponse() {
+	return new Response('Forbidden', {
+		status: 403,
+		headers: {
+			'Content-Type': 'text/plain',
+			'Cache-Control': 'no-store'
+		}
+	});
+}
+
+function debugJsonResponse(body) {
+	return new Response(JSON.stringify(body), {
+		headers: {
+			'Content-Type': 'application/json',
+			'Cache-Control': 'no-store'
+		}
+	});
+}
+
+async function handleDebugRequest(request, env) {
+	if (!isDebugEnabled(env)) {
+		return debugNotFoundResponse();
+	}
+
+	if (!isDebugAuthorized(request, env)) {
+		return debugForbiddenResponse();
+	}
+
+	const url = new URL(request.url);
+	if (url.pathname === '/debug-params') {
+		const imageParams = extractImageParams(url);
+		const detectedFormat = detectBestImageFormat(request);
+		const processedParams = setDefaultImageParams(imageParams, detectedFormat);
+
+		return debugJsonResponse({
+			pathname: url.pathname,
+			originalParams: imageParams,
+			detectedFormat,
+			processedParams
+		});
+	}
+
+	if (url.pathname === '/debug-auth') {
+		const bucketBindingPresent = Boolean(env.PHOTO_BUCKET);
+		let testObjectAccessible = false;
+
+		try {
+			if (bucketBindingPresent) {
+				const testPath = 'uploads/issues/1/submissions/2_5_20250519-223537.jpg';
+				testObjectAccessible = Boolean(await env.PHOTO_BUCKET.get(testPath));
+			}
+		} catch {
+			testObjectAccessible = false;
+		}
+
+		return debugJsonResponse({
+			bucketBindingPresent,
+			testObjectAccessible
+		});
+	}
+
+	if (url.pathname === '/debug-request') {
+		return debugJsonResponse({
+			pathname: url.pathname,
+			method: request.method,
+			hasAcceptHeader: request.headers.has('accept'),
+			hasUserAgentHeader: request.headers.has('user-agent')
+		});
+	}
+
+	return debugNotFoundResponse();
+}
+
 export default {
 	async fetch(request, env, ctx) {
 		try {
+			const url = new URL(request.url);
+
 			// 健康检查端点
-			if (new URL(request.url).pathname === '/health') {
+			if (url.pathname === '/health') {
 				return handleHealthCheck();
 			}
-			
-			// 调试图片参数端点
-			if (new URL(request.url).pathname === '/debug-params') {
-				const url = new URL(request.url);
-				const imageParams = extractImageParams(url);
-				const detectedFormat = detectBestImageFormat(request);
-				const processedParams = setDefaultImageParams(imageParams, detectedFormat);
-				
-				return new Response(JSON.stringify({
-					originalParams: imageParams,
-					detectedFormat: detectedFormat,
-					processedParams: processedParams,
-					userAgent: request.headers.get('user-agent'),
-					accept: request.headers.get('accept'),
-					url: request.url
-				}, null, 2), {
-					headers: { 'Content-Type': 'application/json' }
-				});
-			}
-			
-			// 调试端点，测试R2访问权限
-			if (new URL(request.url).pathname === '/debug-auth') {
-				try {
-					// 尝试获取一个测试对象，并返回结果
-					const testPath = 'uploads/issues/1/submissions/2_5_20250519-223537.jpg';
-					const testObject = await env.PHOTO_BUCKET.get(testPath);
-					
-					if (testObject) {
-						return new Response(`✅ 成功访问R2存储: ${testPath}`, {
-							headers: { 'Content-Type': 'text/plain' }
-						});
-					} else {
-						// 尝试列出存储桶中的对象
-						const listed = await env.PHOTO_BUCKET.list({ prefix: 'uploads/', limit: 10 });
-						
-						if (listed && listed.objects && listed.objects.length > 0) {
-							return new Response(`✅ 成功访问R2存储，但找不到测试文件。存储桶中的其他文件：\n${listed.objects.map(obj => obj.key).join('\n')}`, {
-								headers: { 'Content-Type': 'text/plain' }
-							});
-						} else {
-							return new Response(`❌ 访问权限正常，但找不到任何文件。请检查存储桶中是否有文件，以及路径格式是否正确。`, {
-								headers: { 'Content-Type': 'text/plain' }
-							});
-						}
-					}
-				} catch (error) {
-					return new Response(`❌ R2访问错误: ${error.message}\n\n详细错误:\n${error.stack || '无堆栈信息'}`, {
-						status: 500,
-						headers: { 'Content-Type': 'text/plain' }
-					});
-				}
-			}
-			
-			// 打印请求信息，帮助调试
-			if (new URL(request.url).pathname === '/debug-request') {
-				const url = new URL(request.url);
-				const headers = {};
-				for (const [key, value] of request.headers.entries()) {
-					headers[key] = value;
-				}
-				
-				return new Response(JSON.stringify({
-					url: request.url,
-					pathname: url.pathname,
-					method: request.method,
-					headers: headers
-				}, null, 2), {
-					headers: { 'Content-Type': 'application/json' }
-				});
+
+			if (isDebugPath(url.pathname)) {
+				return handleDebugRequest(request, env);
 			}
 			
 			// 检查是否是有效的图片请求

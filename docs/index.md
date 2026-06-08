@@ -62,6 +62,7 @@ live source-of-truth document links back to them for a specific decision.
 | [Lessons Learned](./lessons-learned.md) | Historical | Project maintainer | Keep concise; extract current rules into live docs. |
 | [Refactor Baseline](./refactor-baseline.md) | Historical/reference | Frontend maintainer | Guardrail record for frontend refactor contracts. |
 | [Frontend Refactor Plan](./plans/2026-05-frontend-refactor-plan.md) | Historical | Project maintainer | Summary only; detailed execution belongs in commits/PRs. |
+| [Security Remediation Plan](./plans/2026-06-08-security-remediation-plan.md) | Implementation plan | Security/platform maintainer | Execute and then retire into PRs/issues once the scan findings are resolved. |
 
 ## Maintenance
 
