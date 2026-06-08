@@ -93,8 +93,8 @@ If SSH key authentication fails:
 On the server:
 
 ```bash
-mkdir -p /opt/munich-weekly
-cd /opt/munich-weekly
+mkdir -p /home/deploy/munich-weekly
+cd /home/deploy/munich-weekly
 git clone https://github.com/JinsCodeWork/munich-weekly.git .
 ```
 
@@ -139,7 +139,7 @@ cookies, but stored votes remain in the database.
 The backend now uses Docker for deployment, incorporating both PostgreSQL and the Spring Boot application.
 
 ```bash
-cd /opt/munich-weekly/backend
+cd /home/deploy/munich-weekly/backend
 docker compose up -d
 ```
 
@@ -155,7 +155,7 @@ source of truth for container names, ports, volumes, and environment wiring.
 When updating the backend code:
 
 ```bash
-cd /opt/munich-weekly
+cd /home/deploy/munich-weekly
 git pull  # Get latest changes
 
 # Rebuild and restart the backend container
@@ -188,7 +188,7 @@ docker logs -f mw-backend
 ### Installing Dependencies
 
 ```bash
-cd /opt/munich-weekly/frontend
+cd /home/deploy/munich-weekly/frontend
 npm install
 ```
 
@@ -209,7 +209,7 @@ npm install -g pm2
 Start the Next.js application with PM2:
 
 ```bash
-cd /opt/munich-weekly/frontend
+cd /home/deploy/munich-weekly/frontend
 npm run build
 pm2 start npm --name munich-frontend -- start
 ```
@@ -331,7 +331,7 @@ If you encounter a 502 Bad Gateway error:
 
 2. If the service is down, restart it:
    ```bash
-   cd /opt/munich-weekly/frontend
+   cd /home/deploy/munich-weekly/frontend
    pm2 restart munich-frontend
    ```
 
@@ -361,7 +361,7 @@ If the backend container is having issues:
 
 4. If problems persist, rebuild the container:
    ```bash
-   cd /opt/munich-weekly/backend
+   cd /home/deploy/munich-weekly/backend
    docker compose up -d --build backend
    ```
 
