@@ -717,6 +717,21 @@ ssl_verify_client on;
 Create `ops/nginx/munichweekly.art.conf`:
 
 ```nginx
+map $http_cf_connecting_ip $munichweekly_client_ip {
+    default $http_cf_connecting_ip;
+    ""      $remote_addr;
+}
+
+map $http_cf_connecting_ip $munichweekly_forwarded_for {
+    default "$http_cf_connecting_ip, $remote_addr";
+    ""      $proxy_add_x_forwarded_for;
+}
+
+map $http_upgrade $munichweekly_connection_upgrade {
+    default upgrade;
+    ""      close;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -760,8 +775,8 @@ server {
         proxy_pass         http://127.0.0.1:8080/api/;
         proxy_http_version 1.1;
         proxy_set_header   Host                    $host;
-        proxy_set_header   X-Real-IP               $remote_addr;
-        proxy_set_header   X-Forwarded-For         $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Real-IP               $munichweekly_client_ip;
+        proxy_set_header   X-Forwarded-For         $munichweekly_forwarded_for;
         proxy_set_header   X-Forwarded-Proto       $scheme;
         proxy_set_header   x-middleware-subrequest "";
         proxy_cache_bypass $http_upgrade;
@@ -772,21 +787,15 @@ server {
         proxy_pass         http://127.0.0.1:3000/;
         proxy_http_version 1.1;
         proxy_set_header   Host                    $host;
-        proxy_set_header   X-Real-IP               $remote_addr;
-        proxy_set_header   X-Forwarded-For         $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Real-IP               $munichweekly_client_ip;
+        proxy_set_header   X-Forwarded-For         $munichweekly_forwarded_for;
         proxy_set_header   X-Forwarded-Proto       $scheme;
         proxy_set_header   Upgrade                 $http_upgrade;
-        proxy_set_header   Connection              "upgrade";
+        proxy_set_header   Connection              $munichweekly_connection_upgrade;
         proxy_set_header   x-middleware-subrequest "";
     }
 
     location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
-
-    location ~ /\.env {
         deny all;
         access_log off;
         log_not_found off;
@@ -797,14 +806,20 @@ server {
 }
 ```
 
+The maps forward Cloudflare's original visitor IP to upstream services without
+rewriting `$remote_addr`; do not add `real_ip_header`, because Nginx allow/deny
+checks must still evaluate the Cloudflare socket IP.
+
 - [ ] **Step 6: Add CSP report route**
 
 Use TDD to create `frontend/test/csp-report-route.test.ts` first, verify it
 fails because `frontend/src/app/frontend-api/csp-report/route.ts` is missing,
 then create the route. The route exports `POST` only, accepts unauthenticated
-CSP report posts, parses JSON when possible, logs a bounded parsed report or raw
-body preview, and returns `204 No Content` for valid, empty, or malformed bodies
-without persistence or external calls.
+CSP report posts, reads at most 16 KB, parses JSON only for bodies within that
+cap, logs bounded parsed field summaries or bounded raw previews, and returns
+`204 No Content` for valid, empty, malformed, or oversized bodies without
+persistence or external calls. Include tests for oversized bodies rejected by
+`Content-Length` and oversized streamed bodies that exceed the cap while reading.
 
 - [ ] **Step 7: Document CSP report route**
 
