@@ -149,15 +149,20 @@ APP_DIR=/home/deploy/munich-weekly
 BRANCH=main
 LOCK_FILE=/tmp/munich-weekly-deploy.lock
 BACKUP_SERVICE=munich-weekly-backup.service
+SMOKE_TIMEOUT_SECONDS=120
+SMOKE_INTERVAL_SECONDS=3
 ```
 
 The script:
 
 * Acquires an exclusive deployment lock with `flock`.
 * Refuses to run if the production working tree is dirty.
+* Validates `BRANCH` as a plain branch name and fetches it through an explicit
+  `refs/heads/...` refspec.
 * Records the current commit and ref before fetching.
 * Fetches `origin/main` and computes the target commit.
-* Starts the production backup service before changing code.
+* Starts the production backup service with non-interactive `sudo -n` before
+  changing code.
 * Checks out `origin/main` in detached HEAD state. This matches the current
   production deployment style and avoids moving a branch pointer on the server.
 * Runs `npm ci`, `npm audit --omit=dev --audit-level=high`, and
@@ -165,8 +170,8 @@ The script:
 * Rebuilds and restarts the backend with `docker compose up -d --build backend`
   from `backend/`.
 * Reloads the PM2 frontend process and runs `pm2 save`.
-* Runs smoke checks against the local backend health endpoint, local frontend,
-  and public site.
+* Runs bounded retry smoke checks against the local backend health endpoint,
+  local frontend, and public site.
 * Fails if the public site exposes an `X-Powered-By` response header.
 * Attempts a best-effort rollback to the previous commit if any post-checkout
   deploy step fails. The original deployment failure still exits nonzero.
@@ -181,6 +186,10 @@ git fetch origin main
 git checkout --detach origin/main
 sudo install -m 0755 ops/scripts/deploy-production.sh /usr/local/sbin/munich-weekly-deploy.sh
 ```
+
+The deploy command starts `munich-weekly-backup.service` with `sudo -n`, so the
+`deploy` user needs either an active sudo credential cache or a narrow sudoers
+rule for that service start command before running unattended deployments.
 
 Run a deployment:
 

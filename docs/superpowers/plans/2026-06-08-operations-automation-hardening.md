@@ -1616,6 +1616,24 @@ The script:
 - Runs backend and frontend smoke checks.
 - Attempts rollback to the previous commit if any post-checkout deployment step fails.
 
+Review hardening applied during Task 8:
+
+- Final script validates `BRANCH`, fetches through an explicit
+  `refs/heads/<branch>:refs/remotes/origin/<branch>` refspec, and checks out the
+  resolved target commit.
+- Final script starts the backup service with `sudo -n` so deploys do not hang
+  on an interactive sudo prompt; production sudoers or an active sudo session
+  must support this.
+- Final script retries smoke checks within a bounded timeout instead of using a
+  single immediate curl.
+- Final script restores the prior branch when it can prove the branch still
+  points to the original commit; otherwise it falls back to the original
+  detached commit without forcing a branch reset.
+- Final script cleans temporary public-header files on success and failure.
+- Final script prefers `frontend/ecosystem.config.cjs` when present and falls
+  back to the existing `munich-frontend` PM2 process until Task 9 creates the
+  versioned PM2 config.
+
 Run on the production server:
 
 ```bash

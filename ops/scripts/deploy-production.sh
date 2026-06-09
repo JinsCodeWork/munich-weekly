@@ -5,6 +5,8 @@ APP_DIR="${APP_DIR:-/home/deploy/munich-weekly}"
 BRANCH="${BRANCH:-main}"
 LOCK_FILE="${LOCK_FILE:-/tmp/munich-weekly-deploy.lock}"
 BACKUP_SERVICE="${BACKUP_SERVICE:-munich-weekly-backup.service}"
+SMOKE_TIMEOUT_SECONDS="${SMOKE_TIMEOUT_SECONDS:-120}"
+SMOKE_INTERVAL_SECONDS="${SMOKE_INTERVAL_SECONDS:-3}"
 
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8080/api/layout/health}"
 FRONTEND_LOCAL_URL="${FRONTEND_LOCAL_URL:-http://127.0.0.1:3000/}"
@@ -14,6 +16,7 @@ PM2_PROCESS_NAME="${PM2_PROCESS_NAME:-munich-frontend}"
 CURRENT_COMMIT=""
 CURRENT_COMMIT_SHORT=""
 CURRENT_REF=""
+CURRENT_WAS_BRANCH=false
 TARGET_COMMIT=""
 TARGET_COMMIT_SHORT=""
 ROLLBACK_ENABLED=false
@@ -46,6 +49,24 @@ require_app_layout() {
   [ -d "$APP_DIR/frontend" ] || die "Frontend directory missing: $APP_DIR/frontend"
 }
 
+validate_config() {
+  case "$BRANCH" in
+    ""|-*|*:*|*..*|*~*|*^*|*\\*)
+      die "Invalid deploy branch: $BRANCH"
+      ;;
+  esac
+  git check-ref-format --branch "$BRANCH" >/dev/null 2>&1 || die "Invalid deploy branch: $BRANCH"
+
+  case "$SMOKE_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*) die "SMOKE_TIMEOUT_SECONDS must be a positive integer" ;;
+  esac
+  case "$SMOKE_INTERVAL_SECONDS" in
+    ''|*[!0-9]*) die "SMOKE_INTERVAL_SECONDS must be a positive integer" ;;
+  esac
+  [ "$SMOKE_TIMEOUT_SECONDS" -gt 0 ] || die "SMOKE_TIMEOUT_SECONDS must be greater than 0"
+  [ "$SMOKE_INTERVAL_SECONDS" -gt 0 ] || die "SMOKE_INTERVAL_SECONDS must be greater than 0"
+}
+
 acquire_lock() {
   local lock_dir
   lock_dir="$(dirname "$LOCK_FILE")"
@@ -68,7 +89,9 @@ record_current_revision() {
   CURRENT_COMMIT="$(git rev-parse HEAD)"
   CURRENT_COMMIT_SHORT="$(git rev-parse --short HEAD)"
   CURRENT_REF="$(git symbolic-ref --quiet --short HEAD || true)"
-  if [ -z "$CURRENT_REF" ]; then
+  if [ -n "$CURRENT_REF" ]; then
+    CURRENT_WAS_BRANCH=true
+  else
     CURRENT_REF="detached:${CURRENT_COMMIT}"
   fi
 
@@ -77,19 +100,19 @@ record_current_revision() {
 }
 
 fetch_target_revision() {
-  git fetch origin "$BRANCH"
-  TARGET_COMMIT="$(git rev-parse "origin/${BRANCH}^{commit}")"
+  git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+  TARGET_COMMIT="$(git rev-parse --verify "refs/remotes/origin/${BRANCH}^{commit}")"
   TARGET_COMMIT_SHORT="$(git rev-parse --short "$TARGET_COMMIT")"
   info "Target ref: origin/${BRANCH}"
   info "Target commit: ${TARGET_COMMIT_SHORT}"
 }
 
 run_backup() {
-  sudo systemctl start "$BACKUP_SERVICE"
+  sudo -n systemctl start "$BACKUP_SERVICE"
 }
 
 checkout_target() {
-  git checkout --detach "origin/${BRANCH}"
+  git checkout --detach "$TARGET_COMMIT"
 }
 
 frontend_install_audit_build() {
@@ -124,16 +147,35 @@ pm2_reload_frontend() {
 
 smoke_url() {
   local url="$1"
-  curl -fsS --max-time 10 "$url" >/dev/null
+  local start now
+  start="$(date +%s)"
+
+  info "Waiting for ${url}"
+  while true; do
+    if curl -fsS --max-time 10 "$url" >/dev/null; then
+      return 0
+    fi
+
+    now="$(date +%s)"
+    if [ $((now - start)) -ge "$SMOKE_TIMEOUT_SECONDS" ]; then
+      printf '%s\n' "Smoke check timed out for ${url}" >&2
+      return 1
+    fi
+
+    sleep "$SMOKE_INTERVAL_SECONDS"
+  done
 }
 
 smoke_public_headers() {
   local headers_file
   headers_file="$(mktemp)"
-  curl -fsSI --max-time 10 "$PUBLIC_URL" -o "$headers_file"
-  if grep -iq '^x-powered-by:' "$headers_file"; then
+  if ! curl -fsSI --max-time 10 "$PUBLIC_URL" -o "$headers_file"; then
     rm -f "$headers_file"
+    return 1
+  fi
+  if grep -iq '^x-powered-by:' "$headers_file"; then
     printf '%s\n' "X-Powered-By header is present on ${PUBLIC_URL}" >&2
+    rm -f "$headers_file"
     return 1
   fi
   rm -f "$headers_file"
@@ -144,6 +186,18 @@ smoke_checks() {
   smoke_url "$FRONTEND_LOCAL_URL"
   smoke_url "$PUBLIC_URL"
   smoke_public_headers
+}
+
+restore_git_revision() {
+  if [ "$CURRENT_WAS_BRANCH" = "true" ]; then
+    git checkout "$CURRENT_REF" || git checkout --detach "$CURRENT_COMMIT"
+    if [ "$(git rev-parse HEAD)" != "$CURRENT_COMMIT" ]; then
+      printf '%s\n' "Original branch ${CURRENT_REF} no longer points at ${CURRENT_COMMIT_SHORT}; using detached rollback commit." >&2
+      git checkout --detach "$CURRENT_COMMIT"
+    fi
+  else
+    git checkout --detach "$CURRENT_COMMIT"
+  fi
 }
 
 rollback() {
@@ -160,7 +214,7 @@ rollback() {
     set +e
     printf '%s\n' "Deployment failed; attempting rollback to ${CURRENT_COMMIT_SHORT}" >&2
 
-    cd "$APP_DIR" && git checkout --detach "$CURRENT_COMMIT"
+    cd "$APP_DIR" && restore_git_revision
     rollback_exit=$((rollback_exit || $?))
 
     backend_rebuild_restart
@@ -197,8 +251,11 @@ main() {
   require_cmd pm2
   require_cmd mktemp
   require_cmd grep
+  require_cmd date
+  require_cmd sleep
   require_docker_compose
   require_app_layout
+  validate_config
   acquire_lock
 
   cd "$APP_DIR"
