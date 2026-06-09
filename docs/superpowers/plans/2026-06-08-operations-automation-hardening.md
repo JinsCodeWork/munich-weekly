@@ -602,6 +602,9 @@ Expected: commit succeeds.
 **Files:**
 - Modify: `frontend/next.config.js`
 - Delete: `frontend/next.config.ts`
+- Create: `frontend/src/app/frontend-api/csp-report/route.ts`
+- Create: `frontend/test/csp-report-route.test.ts`
+- Modify: `docs/frontend-api.md`
 - Create: `ops/nginx/snippets/security-headers.conf`
 - Create: `ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf`
 - Create: `ops/nginx/munichweekly.art.conf`
@@ -718,6 +721,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name munichweekly.art www.munichweekly.art;
+    server_tokens off;
 
     location /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -733,6 +737,7 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name munichweekly.art www.munichweekly.art;
+    server_tokens off;
 
     client_max_body_size 30M;
     client_body_buffer_size 10M;
@@ -792,7 +797,21 @@ server {
 }
 ```
 
-- [ ] **Step 6: Verify frontend build**
+- [ ] **Step 6: Add CSP report route**
+
+Use TDD to create `frontend/test/csp-report-route.test.ts` first, verify it
+fails because `frontend/src/app/frontend-api/csp-report/route.ts` is missing,
+then create the route. The route exports `POST` only, accepts unauthenticated
+CSP report posts, parses JSON when possible, logs a bounded parsed report or raw
+body preview, and returns `204 No Content` for valid, empty, or malformed bodies
+without persistence or external calls.
+
+- [ ] **Step 7: Document CSP report route**
+
+Update `docs/frontend-api.md` with route inventory and operational notes for
+`POST /frontend-api/csp-report`.
+
+- [ ] **Step 8: Verify frontend build**
 
 Run:
 
@@ -803,7 +822,7 @@ npm run build
 
 Expected: build exits 0.
 
-- [ ] **Step 7: Verify powered-by header after local or production deployment**
+- [ ] **Step 9: Verify powered-by header after local or production deployment**
 
 After deployment, run:
 
@@ -816,14 +835,14 @@ fi
 
 Expected: command exits 0. Do not use `--resolve munichweekly.art:443:127.0.0.1` for this check after Authenticated Origin Pull is enabled, because local curl will not present Cloudflare's client certificate.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 10: Commit**
 
 Run:
 
 ```bash
-git add frontend/next.config.js ops/nginx/snippets/security-headers.conf ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf ops/nginx/munichweekly.art.conf
+git add frontend/next.config.js frontend/src/app/frontend-api/csp-report/route.ts frontend/test/csp-report-route.test.ts docs/frontend-api.md docs/superpowers/plans/2026-06-08-operations-automation-hardening.md ops/nginx/snippets/security-headers.conf ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf ops/nginx/munichweekly.art.conf
 git add -u frontend/next.config.ts
-git commit -m "fix: harden frontend and nginx edge config"
+git commit -m "fix: accept CSP reports at frontend edge"
 ```
 
 Expected: commit succeeds.

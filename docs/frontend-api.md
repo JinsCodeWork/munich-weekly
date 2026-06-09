@@ -38,6 +38,7 @@ frontend process.
 | Method | Route | Source file | Auth | Purpose |
 | --- | --- | --- | --- | --- |
 | `GET` | `/frontend-api/config` | `frontend/src/app/frontend-api/config/route.ts` | Public | Reads homepage configuration from `frontend/public/config/homepage.json`, falling back to `frontend/src/lib/config.ts`. Supports ETag caching and `_force=1`. |
+| `POST` | `/frontend-api/csp-report` | `frontend/src/app/frontend-api/csp-report/route.ts` | Public | Accepts browser CSP violation reports from the Nginx report-only policy and returns `204 No Content`. |
 | `GET` | `/frontend-api/admin/config` | `frontend/src/app/frontend-api/admin/config/route.ts` | JWT plus backend admin check | Reads homepage configuration for the admin UI. Token is accepted from the `jwt` cookie or `Authorization: Bearer` header, then verified through backend `/api/users/me`. |
 | `POST` | `/frontend-api/admin/config` | `frontend/src/app/frontend-api/admin/config/route.ts` | JWT plus backend admin check | Merges posted homepage configuration into `frontend/public/config/homepage.json` and sets `lastUpdated`. |
 | `POST` | `/frontend-api/admin/sync-hero` | `frontend/src/app/frontend-api/admin/sync-hero/route.ts` | JWT plus backend admin check | Copies a hero image from an allowlisted remote HTTPS JPEG/PNG origin or from `backend/uploads/hero.jpg` into `frontend/public/images/home/hero.jpg`. |
@@ -47,6 +48,10 @@ frontend process.
 
 - `GET /frontend-api/config` may return `304 Not Modified` when the client ETag
   matches the current config.
+- `POST /frontend-api/csp-report` is unauthenticated by design because browsers
+  send CSP reports automatically. It logs a bounded preview or parsed report and
+  always returns `204 No Content`; it does not persist reports or call external
+  services.
 - Set `DEBUG_CONFIG_API=1` to enable debug logging in the public config route.
 - Admin config routes that call the backend use `NEXT_PUBLIC_API_URL` as their
   backend base. For those server-side route handlers, use the backend origin
