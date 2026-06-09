@@ -78,6 +78,19 @@ updates:
       - "dependencies"
       - "docker"
 
+  - package-ecosystem: "docker-compose"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:10"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+      - "backend"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
