@@ -1434,8 +1434,9 @@ echo "Restore drill succeeded from snapshot ${LATEST_SNAPSHOT}"
 
 Review hardening applied during Task 7:
 
-- Final script filters latest restic snapshots with both `munich-weekly` and
-  `production` tags.
+- Final script filters latest restic snapshots with `--tag
+  munich-weekly,production` and defensively validates both tags in the returned
+  JSON.
 - Final script requires `SHA256SUMS`, `uploads.tar.gz`, R2 manifests, and
   `r2-backup-path.txt`, and rejects dry-run or incomplete-R2 backup artifacts.
 - Final script fails by default when R2 object manifests are empty; use

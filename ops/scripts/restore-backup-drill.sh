@@ -55,7 +55,7 @@ cleanup() {
 }
 
 find_latest_snapshot() {
-  restic snapshots --tag munich-weekly --tag production --json | python3 -c '
+  restic snapshots --tag munich-weekly,production --json | python3 -c '
 import json
 import sys
 
@@ -63,8 +63,17 @@ snapshots = json.load(sys.stdin)
 if not snapshots:
     sys.exit(1)
 
-snapshots.sort(key=lambda item: item.get("time", ""))
-latest = snapshots[-1].get("short_id") or snapshots[-1].get("id")
+required_tags = {"munich-weekly", "production"}
+matching = [
+    snapshot
+    for snapshot in snapshots
+    if required_tags.issubset(set(snapshot.get("tags") or []))
+]
+if not matching:
+    sys.exit(1)
+
+matching.sort(key=lambda item: item.get("time", ""))
+latest = matching[-1].get("short_id") or matching[-1].get("id")
 if not latest:
     sys.exit(1)
 print(latest)
@@ -90,6 +99,21 @@ file_prefix_contains() {
 
 count_files() {
   find "$1" -type f -print | wc -l | tr -d '[:space:]'
+}
+
+write_object_list_from_manifest() {
+  local manifest_file="$1"
+  local output_file="$2"
+
+  awk -F ';' '
+    NF >= 3 {
+      path = $0
+      sub(/^[^;]*;[^;]*;/, "", path)
+      if ($2 != "" && path != "") {
+        print $2 ";" path
+      }
+    }
+  ' "$manifest_file" | sort > "$output_file"
 }
 
 write_restored_object_list() {
@@ -155,31 +179,26 @@ validate_snapshot_artifacts() {
   verify_checksum "$RESTORED_SNAPSHOT_DIR/uploads.tar.gz"
 }
 
-r2_source_has_objects() {
-  if [ -f "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" ]; then
-    file_has_content "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt"
-    return
-  fi
-
-  if [ -f "$RESTORED_SNAPSHOT_DIR/r2-source-manifest.txt" ]; then
-    file_has_content "$RESTORED_SNAPSHOT_DIR/r2-source-manifest.txt"
-    return
-  fi
-
-  false
-}
-
 validate_and_restore_r2_backup() {
   local r2_backup_path
-  local expected_objects_file=""
+  local expected_objects_file
   local restored_objects_file
+  local source_objects_file="$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt"
+  local backup_objects_file="$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt"
 
-  if [ -f "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" ] && [ -f "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ]; then
-    cmp -s "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ||
-      die "R2 source and backup object lists differ"
+  if [ ! -f "$source_objects_file" ]; then
+    source_objects_file="$RESTORE_WORK_DIR/r2-source-objects-from-manifest.txt"
+    write_object_list_from_manifest "$RESTORED_SNAPSHOT_DIR/r2-source-manifest.txt" "$source_objects_file"
+  fi
+  if [ ! -f "$backup_objects_file" ]; then
+    backup_objects_file="$RESTORE_WORK_DIR/r2-backup-objects-from-manifest.txt"
+    write_object_list_from_manifest "$RESTORED_SNAPSHOT_DIR/r2-backup-manifest.txt" "$backup_objects_file"
   fi
 
-  if ! r2_source_has_objects; then
+  if [ ! -s "$source_objects_file" ]; then
+    if [ -s "$backup_objects_file" ]; then
+      die "R2 backup object list is non-empty but source object list is empty"
+    fi
     if [ "$ALLOW_EMPTY_R2_RESTORE" = "true" ]; then
       echo "R2 source object list is empty; continuing because ALLOW_EMPTY_R2_RESTORE=true" >&2
       return 0
@@ -187,11 +206,14 @@ validate_and_restore_r2_backup() {
     die "R2 source object list is empty; set ALLOW_EMPTY_R2_RESTORE=true only after confirming production has no upload objects"
   fi
 
-  if [ -s "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ]; then
-    expected_objects_file="$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt"
-  elif [ -s "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" ]; then
-    expected_objects_file="$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt"
+  if [ ! -s "$backup_objects_file" ]; then
+    die "R2 backup object list is empty but source object list is non-empty"
   fi
+
+  cmp -s "$source_objects_file" "$backup_objects_file" ||
+    die "R2 source and backup object lists differ"
+
+  expected_objects_file="$backup_objects_file"
 
   r2_backup_path="$(head -n 1 "$RESTORED_SNAPSHOT_DIR/r2-backup-path.txt")"
   if [ -z "$r2_backup_path" ]; then
@@ -210,16 +232,10 @@ validate_and_restore_r2_backup() {
     die "R2 backup restore produced no files"
   fi
 
-  if [ -n "$expected_objects_file" ]; then
-    restored_objects_file="$RESTORE_WORK_DIR/r2-restored-objects.txt"
-    write_restored_object_list "$R2_RESTORE_DIR" "$restored_objects_file"
-    cmp -s "$expected_objects_file" "$restored_objects_file" ||
-      die "Restored R2 object list does not match expected backup object list"
-  fi
-
-  if [ -z "$expected_objects_file" ]; then
-    return 0
-  fi
+  restored_objects_file="$RESTORE_WORK_DIR/r2-restored-objects.txt"
+  write_restored_object_list "$R2_RESTORE_DIR" "$restored_objects_file"
+  cmp -s "$expected_objects_file" "$restored_objects_file" ||
+    die "Restored R2 object list does not match expected backup object list"
 }
 
 wait_for_postgres() {
@@ -272,6 +288,7 @@ main() {
   require_cmd grep
   require_cmd cmp
   require_cmd wc
+  require_cmd sort
   require_cmd seq
   require_cmd sleep
   require_cmd mktemp
@@ -291,7 +308,7 @@ main() {
 
   require_cmd restic
 
-  LATEST_SNAPSHOT="$(find_latest_snapshot)" || die "No restic snapshot tagged munich-weekly was found"
+  LATEST_SNAPSHOT="$(find_latest_snapshot)" || die "No restic snapshot tagged munich-weekly and production was found"
   restic restore "$LATEST_SNAPSHOT" --target "$RESTORE_WORK_DIR"
 
   RESTORED_SNAPSHOT_DIR="$(find_restored_snapshot_dir)"
