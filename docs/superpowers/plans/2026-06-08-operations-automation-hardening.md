@@ -300,6 +300,15 @@ Expected: commit succeeds.
 - Create: `.github/workflows/ci.yml`
 - Modify: `.github/workflows/docs-quality.yml`
 
+**Task 2 review amendment:** The repository root also has tracked
+`package.json` and `package-lock.json`, so CI must include a root npm security
+validation job. Run local verification from the repository root with:
+
+```bash
+npm ci
+npm audit --omit=dev --audit-level=high
+```
+
 - [ ] **Step 1: Create `.github/workflows/ci.yml`**
 
 Create `.github/workflows/ci.yml` with this content:
@@ -331,6 +340,26 @@ jobs:
         with:
           fail-on-severity: high
           deny-licenses: GPL-3.0, AGPL-3.0
+
+  root-npm:
+    name: Root npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
   frontend:
     name: Frontend
@@ -509,6 +538,14 @@ resolve_action_tag gradle/actions v4
 resolve_action_tag google/osv-scanner-action v2
 resolve_action_tag aquasecurity/trivy-action 0.32.0
 ```
+
+If a listed movable ref is unavailable, pin the nearest valid ref that preserves
+the intended action behavior, keep the resolved valid ref as a trailing comment,
+and verify the final SHA through the repository commits API. During
+implementation on 2026-06-09, `actions/dependency-review-action` exposed `v4`
+as a branch, not a tag; `google/osv-scanner-action` exposed versioned `v2.x`
+tags but no `v2` ref; and `aquasecurity/trivy-action` exposed `v0.32.0`, not
+`0.32.0`.
 
 Then replace workflow references like:
 
