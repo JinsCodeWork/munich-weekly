@@ -278,12 +278,30 @@ Expected: commit succeeds.
 
 **Files:**
 - Create: `.github/workflows/ci.yml`
+- Modify: `.github/dependabot.yml`
 - Modify: `.github/workflows/docs-quality.yml`
+- Delete: `package.json`
+- Delete: `package-lock.json`
 
 **Task 3 concern resolution:** Stale root `package.json` and
 `package-lock.json` manifests were removed because the repository root has no
 npm runtime or tooling responsibility. Frontend and image worker remain the npm
 dependency surfaces for Dependabot and CI.
+
+- [ ] **Step 0: Remove the stale root npm dependency surface**
+
+The repository root previously contained `package.json` and
+`package-lock.json` with `js-cookie` and `uuid`, but the root has no npm
+runtime or tooling responsibility. Code search showed no business imports from
+those root dependencies. Delete both files and keep npm automation limited to
+the real npm projects:
+
+```bash
+git rm package.json package-lock.json
+```
+
+Expected: root `npm audit --omit=dev --audit-level=high` is no longer part of
+CI because no root npm project remains.
 
 - [ ] **Step 1: Create `.github/workflows/ci.yml`**
 
@@ -568,7 +586,8 @@ Expected: all commands exit 0.
 Run:
 
 ```bash
-git add .github/workflows/ci.yml .github/workflows/docs-quality.yml
+git add .github/dependabot.yml .github/workflows/ci.yml .github/workflows/docs-quality.yml docs/superpowers/plans/2026-06-08-operations-automation-hardening.md
+git add -u package.json package-lock.json
 git commit -m "ci: add application validation workflow"
 ```
 
