@@ -151,25 +151,6 @@ updates:
           - "*"
 
   - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:10"
-      timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "root"
-    groups:
-      root-npm-minor-patch:
-        update-types:
-          - "minor"
-          - "patch"
-        patterns:
-          - "*"
-
-  - package-ecosystem: "npm"
     directory: "/image-worker"
     schedule:
       interval: "weekly"
@@ -265,7 +246,6 @@ dependabot yaml ok
 Run:
 
 ```bash
-test -f package-lock.json
 test -f frontend/package-lock.json
 test -f image-worker/package-lock.json
 test -f backend/build.gradle
@@ -300,14 +280,10 @@ Expected: commit succeeds.
 - Create: `.github/workflows/ci.yml`
 - Modify: `.github/workflows/docs-quality.yml`
 
-**Task 2 review amendment:** The repository root also has tracked
-`package.json` and `package-lock.json`, so CI must include a root npm security
-validation job. Run local verification from the repository root with:
-
-```bash
-npm ci
-npm audit --omit=dev --audit-level=high
-```
+**Task 3 concern resolution:** Stale root `package.json` and
+`package-lock.json` manifests were removed because the repository root has no
+npm runtime or tooling responsibility. Frontend and image worker remain the npm
+dependency surfaces for Dependabot and CI.
 
 - [ ] **Step 1: Create `.github/workflows/ci.yml`**
 
@@ -340,26 +316,6 @@ jobs:
         with:
           fail-on-severity: high
           deny-licenses: GPL-3.0, AGPL-3.0
-
-  root-npm:
-    name: Root npm
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
 
   frontend:
     name: Frontend
