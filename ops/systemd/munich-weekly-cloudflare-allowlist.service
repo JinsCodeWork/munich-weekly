@@ -1,0 +1,9 @@
+[Unit]
+Description=Update Munich Weekly Cloudflare origin allowlist
+After=network-online.target
+Wants=network-online.target
+OnFailure=munich-weekly-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/update-cloudflare-origin-allowlist.sh
