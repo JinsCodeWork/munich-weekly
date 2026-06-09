@@ -51,10 +51,11 @@ require_app_layout() {
 
 validate_config() {
   case "$BRANCH" in
-    ""|-*|*:*|*..*|*~*|*^*|*\\*)
+    ""|-*|+*|@*|refs/*|*:*|*..*|*~*|*^*|*\\*|*//*|*/.|*.|*/*.|*.lock)
       die "Invalid deploy branch: $BRANCH"
       ;;
   esac
+  [[ "$BRANCH" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || die "Invalid deploy branch: $BRANCH"
   git check-ref-format --branch "$BRANCH" >/dev/null 2>&1 || die "Invalid deploy branch: $BRANCH"
 
   case "$SMOKE_TIMEOUT_SECONDS" in
@@ -168,17 +169,31 @@ smoke_url() {
 
 smoke_public_headers() {
   local headers_file
+  local start now
+  start="$(date +%s)"
   headers_file="$(mktemp)"
-  if ! curl -fsSI --max-time 10 "$PUBLIC_URL" -o "$headers_file"; then
-    rm -f "$headers_file"
-    return 1
-  fi
-  if grep -iq '^x-powered-by:' "$headers_file"; then
-    printf '%s\n' "X-Powered-By header is present on ${PUBLIC_URL}" >&2
-    rm -f "$headers_file"
-    return 1
-  fi
-  rm -f "$headers_file"
+
+  info "Waiting for response headers from ${PUBLIC_URL}"
+  while true; do
+    if curl -fsSI --max-time 10 "$PUBLIC_URL" -o "$headers_file"; then
+      if grep -iq '^x-powered-by:' "$headers_file"; then
+        printf '%s\n' "X-Powered-By header is present on ${PUBLIC_URL}" >&2
+        rm -f "$headers_file"
+        return 1
+      fi
+      rm -f "$headers_file"
+      return 0
+    fi
+
+    now="$(date +%s)"
+    if [ $((now - start)) -ge "$SMOKE_TIMEOUT_SECONDS" ]; then
+      printf '%s\n' "Public header check timed out for ${PUBLIC_URL}" >&2
+      rm -f "$headers_file"
+      return 1
+    fi
+
+    sleep "$SMOKE_INTERVAL_SECONDS"
+  done
 }
 
 smoke_checks() {

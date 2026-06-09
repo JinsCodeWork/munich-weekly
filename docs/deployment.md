@@ -157,8 +157,8 @@ The script:
 
 * Acquires an exclusive deployment lock with `flock`.
 * Refuses to run if the production working tree is dirty.
-* Validates `BRANCH` as a plain branch name and fetches it through an explicit
-  `refs/heads/...` refspec.
+* Validates `BRANCH` as a plain branch name using common branch-name characters
+  and fetches it through an explicit `refs/heads/...` refspec.
 * Records the current commit and ref before fetching.
 * Fetches `origin/main` and computes the target commit.
 * Starts the production backup service with non-interactive `sudo -n` before
