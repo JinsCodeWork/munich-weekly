@@ -92,28 +92,11 @@ count_files() {
   find "$1" -type f -print | wc -l | tr -d '[:space:]'
 }
 
-write_local_object_list() {
+write_restored_object_list() {
   local source_dir="$1"
   local output_file="$2"
 
-  python3 - "$source_dir" "$output_file" <<'PY'
-import os
-import sys
-
-source_dir, output_file = sys.argv[1:3]
-rows = []
-
-for root, dirs, files in os.walk(source_dir):
-    dirs.sort()
-    for filename in sorted(files):
-        path = os.path.join(root, filename)
-        rel_path = os.path.relpath(path, source_dir).replace(os.sep, "/")
-        rows.append(f"{os.path.getsize(path)} {rel_path}")
-
-with open(output_file, "w", encoding="utf-8") as handle:
-    for row in sorted(rows):
-        handle.write(row + "\n")
-PY
+  rclone lsf -R "$source_dir" --files-only --format "sp" | sort > "$output_file"
 }
 
 sha256_file() {
@@ -229,7 +212,7 @@ validate_and_restore_r2_backup() {
 
   if [ -n "$expected_objects_file" ]; then
     restored_objects_file="$RESTORE_WORK_DIR/r2-restored-objects.txt"
-    write_local_object_list "$R2_RESTORE_DIR" "$restored_objects_file"
+    write_restored_object_list "$R2_RESTORE_DIR" "$restored_objects_file"
     cmp -s "$expected_objects_file" "$restored_objects_file" ||
       die "Restored R2 object list does not match expected backup object list"
   fi
