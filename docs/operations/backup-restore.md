@@ -103,13 +103,14 @@ Run the drill manually:
 sudo /usr/local/sbin/munich-weekly-restore-drill.sh
 ```
 
-The script restores the latest restic snapshot tagged `munich-weekly` into a
-temporary private directory, rejects dry-run or incomplete R2 snapshots,
-verifies `postgres.dump`, `uploads.tar.gz`, checksums, and R2 object metadata,
-then loads the dump into an isolated `postgres:15` container. The container
-name uses the `mw-restore-drill-postgres` prefix plus a unique run suffix and
-restore-drill labels, so cleanup only removes the container created by that
-run. It cleans up the temporary directory and container on exit.
+The script restores the latest restic snapshot tagged with both
+`munich-weekly` and `production` into a temporary private directory, rejects
+dry-run or incomplete R2 snapshots, verifies `postgres.dump`, `uploads.tar.gz`,
+checksums, and R2 object metadata, then loads the dump into an isolated
+`postgres:15` container. The container name uses the
+`mw-restore-drill-postgres` prefix plus a unique run suffix and restore-drill
+labels, so cleanup only removes the container created by that run. It cleans up
+the temporary directory and container on exit.
 
 Expected result:
 
