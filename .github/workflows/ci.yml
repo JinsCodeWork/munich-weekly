@@ -50,6 +50,9 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Route handler tests
+        run: npm run test:routes
+
       - name: Lint
         run: npm run lint
 

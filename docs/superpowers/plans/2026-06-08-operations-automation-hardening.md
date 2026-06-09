@@ -360,6 +360,9 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Route handler tests
+        run: npm run test:routes
+
       - name: Lint
         run: npm run lint
 
@@ -551,6 +554,7 @@ Run:
 cd frontend
 npm ci
 npx tsc --noEmit
+npm run test:routes
 npm run lint
 npm run build
 npm audit --omit=dev --audit-level=high
@@ -604,6 +608,8 @@ Expected: commit succeeds.
 - Delete: `frontend/next.config.ts`
 - Create: `frontend/src/app/frontend-api/csp-report/route.ts`
 - Create: `frontend/test/csp-report-route.test.ts`
+- Modify: `frontend/package.json`
+- Modify: `.github/workflows/ci.yml`
 - Modify: `docs/frontend-api.md`
 - Create: `ops/nginx/snippets/security-headers.conf`
 - Create: `ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf`
@@ -717,6 +723,8 @@ ssl_verify_client on;
 Create `ops/nginx/munichweekly.art.conf`:
 
 ```nginx
+# This site config is intended to be included from Nginx's http context,
+# matching normal sites-enabled includes on Ubuntu/Debian.
 map $http_cf_connecting_ip $munichweekly_client_ip {
     default $http_cf_connecting_ip;
     ""      $remote_addr;
@@ -783,6 +791,17 @@ server {
         proxy_no_cache     1;
     }
 
+    location = /frontend-api/csp-report {
+        client_max_body_size 32K;
+        proxy_pass         http://127.0.0.1:3000/frontend-api/csp-report;
+        proxy_http_version 1.1;
+        proxy_set_header   Host                    $host;
+        proxy_set_header   X-Real-IP               $munichweekly_client_ip;
+        proxy_set_header   X-Forwarded-For         $munichweekly_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto       $scheme;
+        proxy_set_header   x-middleware-subrequest "";
+    }
+
     location / {
         proxy_pass         http://127.0.0.1:3000/;
         proxy_http_version 1.1;
@@ -819,7 +838,9 @@ CSP report posts, reads at most 16 KB, parses JSON only for bodies within that
 cap, logs bounded parsed field summaries or bounded raw previews, and returns
 `204 No Content` for valid, empty, malformed, or oversized bodies without
 persistence or external calls. Include tests for oversized bodies rejected by
-`Content-Length` and oversized streamed bodies that exceed the cap while reading.
+`Content-Length`, oversized streamed bodies that exceed the cap while reading,
+and malformed/raw report previews with control characters normalized before
+logging.
 
 - [ ] **Step 7: Document CSP report route**
 
@@ -832,10 +853,11 @@ Run:
 
 ```bash
 cd frontend
+npm run test:routes
 npm run build
 ```
 
-Expected: build exits 0.
+Expected: route tests and build exit 0.
 
 - [ ] **Step 9: Verify powered-by header after local or production deployment**
 
@@ -855,9 +877,9 @@ Expected: command exits 0. Do not use `--resolve munichweekly.art:443:127.0.0.1`
 Run:
 
 ```bash
-git add frontend/next.config.js frontend/src/app/frontend-api/csp-report/route.ts frontend/test/csp-report-route.test.ts docs/frontend-api.md docs/superpowers/plans/2026-06-08-operations-automation-hardening.md ops/nginx/snippets/security-headers.conf ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf ops/nginx/munichweekly.art.conf
+git add .github/workflows/ci.yml frontend/package.json frontend/next.config.js frontend/src/app/frontend-api/csp-report/route.ts frontend/test/csp-report-route.test.ts docs/frontend-api.md docs/superpowers/plans/2026-06-08-operations-automation-hardening.md ops/nginx/snippets/security-headers.conf ops/nginx/snippets/cloudflare-authenticated-origin-pull.conf ops/nginx/munichweekly.art.conf
 git add -u frontend/next.config.ts
-git commit -m "fix: accept CSP reports at frontend edge"
+git commit -m "test: run frontend route security tests in CI"
 ```
 
 Expected: commit succeeds.

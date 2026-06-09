@@ -91,6 +91,18 @@ async function acceptsMalformedJsonWithoutThrowing() {
   });
 }
 
+async function normalizesControlCharactersInMalformedReportLogs() {
+  await withWarnStub(async (calls) => {
+    const response = await POST(makeRequest('{"bad": "line one\nline two\u0001"}'));
+
+    assert.equal(response.status, 204);
+    assert.equal(calls.length, 1);
+    assert.match(String(calls[0][0]), /CSP report/i);
+    assert.equal(typeof calls[0][1], 'string');
+    assert.equal(/[\x00-\x1f\x7f]/.test(String(calls[0][1])), false);
+  });
+}
+
 async function boundsValidJsonReportLogging() {
   await withWarnStub(async (calls) => {
     const response = await POST(makeRequest(JSON.stringify({
@@ -153,6 +165,7 @@ async function stopsReadingOversizedStreamWithoutParsingTruncatedBody() {
 async function main() {
   await acceptsJsonReportsAndLogsOnce();
   await acceptsMalformedJsonWithoutThrowing();
+  await normalizesControlCharactersInMalformedReportLogs();
   await boundsValidJsonReportLogging();
   await skipsOversizedContentLengthWithoutParsingBody();
   await stopsReadingOversizedStreamWithoutParsingTruncatedBody();

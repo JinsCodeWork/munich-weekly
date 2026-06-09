@@ -3,7 +3,11 @@ const MAX_REPORT_PREVIEW_LENGTH = 500;
 const MAX_REPORT_FIELD_LENGTH = 200;
 
 function previewBody(body: string) {
-  return body.slice(0, MAX_REPORT_PREVIEW_LENGTH);
+  return sanitizeLogString(body).slice(0, MAX_REPORT_PREVIEW_LENGTH);
+}
+
+function sanitizeLogString(value: string) {
+  return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ');
 }
 
 function previewField(value: unknown) {
@@ -11,7 +15,7 @@ function previewField(value: unknown) {
     return typeof value === 'number' || typeof value === 'boolean' ? value : undefined;
   }
 
-  return value.slice(0, MAX_REPORT_FIELD_LENGTH);
+  return sanitizeLogString(value).slice(0, MAX_REPORT_FIELD_LENGTH);
 }
 
 function getReportPayload(parsedBody: unknown) {

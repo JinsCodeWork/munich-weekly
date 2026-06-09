@@ -50,8 +50,9 @@ frontend process.
   matches the current config.
 - `POST /frontend-api/csp-report` is unauthenticated by design because browsers
   send CSP reports automatically. It reads at most 16 KB, logs only bounded
-  previews or bounded parsed field summaries, and always returns
-  `204 No Content`; it does not persist reports or call external services.
+  previews or bounded parsed field summaries with control characters normalized,
+  and always returns `204 No Content`; it does not persist reports or call
+  external services.
 - Set `DEBUG_CONFIG_API=1` to enable debug logging in the public config route.
 - Admin config routes that call the backend use `NEXT_PUBLIC_API_URL` as their
   backend base. For those server-side route handlers, use the backend origin
