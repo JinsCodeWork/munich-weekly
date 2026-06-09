@@ -1498,6 +1498,12 @@ Expected: commit succeeds.
 - Create: `ops/scripts/deploy-production.sh`
 - Modify: `docs/deployment.md`
 
+Implementation note: Task 8 was made usable before Task 9 by preferring
+`frontend/ecosystem.config.cjs` when it exists, then falling back to the current
+production PM2 process `munich-frontend`, and finally starting
+`npm -- start` under that process name if needed. Task 9 still owns adding the
+versioned PM2 ecosystem file.
+
 - [ ] **Step 1: Create deploy script**
 
 Create `ops/scripts/deploy-production.sh`:

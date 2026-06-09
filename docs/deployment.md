@@ -29,6 +29,7 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 * Nginx installed and running
 * Docker + Docker Compose installed (v28.0.4 and v2.34.0 confirmed)
 * Git installed
+* Node.js, npm, PM2, curl, flock, sudo, and systemd available for production deploys
 
 ---
 
@@ -134,34 +135,108 @@ cookies, but stored votes remain in the database.
 
 ---
 
-## 5. Backend Deployment with Docker
+## 5. Production Deployment
 
-The backend now uses Docker for deployment, incorporating both PostgreSQL and the Spring Boot application.
+Production deployment is controlled by
+[`ops/scripts/deploy-production.sh`](../ops/scripts/deploy-production.sh).
+Run that script on the production server instead of manually pulling code and
+restarting individual services.
+
+The script defaults to:
 
 ```bash
-cd /home/deploy/munich-weekly/backend
-docker compose up -d
+APP_DIR=/home/deploy/munich-weekly
+BRANCH=main
+LOCK_FILE=/tmp/munich-weekly-deploy.lock
+BACKUP_SERVICE=munich-weekly-backup.service
 ```
 
-This command starts two containers:
-1. **PostgreSQL database** (`mw-postgres`)
-2. **Spring Boot backend** (`mw-backend`)
+The script:
 
-The service definitions live in `backend/compose.yaml`; treat that file as the
-source of truth for container names, ports, volumes, and environment wiring.
+* Acquires an exclusive deployment lock with `flock`.
+* Refuses to run if the production working tree is dirty.
+* Records the current commit and ref before fetching.
+* Fetches `origin/main` and computes the target commit.
+* Starts the production backup service before changing code.
+* Checks out `origin/main` in detached HEAD state. This matches the current
+  production deployment style and avoids moving a branch pointer on the server.
+* Runs `npm ci`, `npm audit --omit=dev --audit-level=high`, and
+  `npm run build` for the frontend.
+* Rebuilds and restarts the backend with `docker compose up -d --build backend`
+  from `backend/`.
+* Reloads the PM2 frontend process and runs `pm2 save`.
+* Runs smoke checks against the local backend health endpoint, local frontend,
+  and public site.
+* Fails if the public site exposes an `X-Powered-By` response header.
+* Attempts a best-effort rollback to the previous commit if any post-checkout
+  deploy step fails. The original deployment failure still exits nonzero.
 
-### Building and Deploying Backend Changes
+### Install or Update the Deploy Command
 
-When updating the backend code:
+On the production server:
 
 ```bash
 cd /home/deploy/munich-weekly
-git pull  # Get latest changes
+git fetch origin main
+git checkout --detach origin/main
+sudo install -m 0755 ops/scripts/deploy-production.sh /usr/local/sbin/munich-weekly-deploy.sh
+```
 
-# Rebuild and restart the backend container
-cd backend
+Run a deployment:
+
+```bash
+/usr/local/sbin/munich-weekly-deploy.sh
+```
+
+For non-default deployments, pass environment overrides explicitly:
+
+```bash
+BRANCH=release-candidate /usr/local/sbin/munich-weekly-deploy.sh
+```
+
+### PM2 Frontend Reload Behavior
+
+The production PM2 process is named `munich-frontend`. Task 9 adds the
+versioned `frontend/ecosystem.config.cjs` file. The deploy script already
+prefers that file when it exists:
+
+```bash
+pm2 startOrReload ecosystem.config.cjs --only munich-frontend
+```
+
+Until that file is present on production, the script falls back to the current
+process:
+
+```bash
+pm2 restart munich-frontend
+```
+
+If the process does not exist, it starts the app with:
+
+```bash
+pm2 start npm --name munich-frontend -- start
+```
+
+After the reload or start, the script runs `pm2 save`.
+
+### Backend Runtime
+
+The backend uses Docker for deployment, incorporating both PostgreSQL and the
+Spring Boot application. The service definitions live in `backend/compose.yaml`;
+treat that file as the source of truth for container names, ports, volumes, and
+environment wiring.
+
+The deploy script rebuilds only the backend application service:
+
+```bash
+cd /home/deploy/munich-weekly/backend
 docker compose up -d --build backend
 ```
+
+The compose project runs:
+
+1. **PostgreSQL database** (`mw-postgres`)
+2. **Spring Boot backend** (`mw-backend`)
 
 ### Configuring Storage
 
@@ -183,22 +258,10 @@ docker logs -f mw-backend
 
 ---
 
-## 6. Frontend Deployment
+## 6. Frontend PM2 Setup
 
-### Installing Dependencies
-
-```bash
-cd /home/deploy/munich-weekly/frontend
-npm install
-```
-
-### Development Mode (Not Recommended for Production)
-
-```bash
-npm run dev
-```
-
-### Production Deployment with PM2
+The deploy script builds and reloads the frontend. These commands are only for
+initial PM2 installation and manual process inspection.
 
 Install PM2 globally:
 
