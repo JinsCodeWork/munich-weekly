@@ -86,3 +86,35 @@ non-restorable until a later run succeeds.
 ## Restore Drill
 
 Run a restore drill monthly and after changing backup logic. A restore is considered valid only when `pg_restore --list` succeeds and the restored database can answer basic count queries.
+
+Install the drill script on the server:
+
+```bash
+sudo install -m 0755 ops/scripts/restore-backup-drill.sh /usr/local/sbin/munich-weekly-restore-drill.sh
+```
+
+Run the drill manually:
+
+```bash
+sudo /usr/local/sbin/munich-weekly-restore-drill.sh
+```
+
+The script restores the latest restic snapshot tagged `munich-weekly` into a
+temporary private directory, rejects dry-run or incomplete R2 snapshots,
+verifies `postgres.dump`, `uploads.tar.gz`, checksums, and R2 object metadata,
+then loads the dump into an isolated `postgres:15` container named
+`mw-restore-drill-postgres`. It cleans up the temporary directory and container
+on exit.
+
+Expected result:
+
+```text
+Restore drill succeeded from snapshot <snapshot-id>
+```
+
+If the production backup env lives outside `/etc/munich-weekly/backup.env`, pass
+it without printing secrets:
+
+```bash
+sudo BACKUP_ENV=/path/to/backup.env /usr/local/sbin/munich-weekly-restore-drill.sh
+```
