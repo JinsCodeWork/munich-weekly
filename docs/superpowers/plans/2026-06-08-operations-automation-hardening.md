@@ -792,7 +792,7 @@ server {
     }
 
     location = /frontend-api/csp-report {
-        client_max_body_size 32K;
+        client_max_body_size 16K;
         proxy_pass         http://127.0.0.1:3000/frontend-api/csp-report;
         proxy_http_version 1.1;
         proxy_set_header   Host                    $host;
