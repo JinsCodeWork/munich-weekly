@@ -16,11 +16,14 @@ NORMALIZED_IPV4_FILE="${TMP_DIR}/ips-v4.normalized"
 NORMALIZED_IPV6_FILE="${TMP_DIR}/ips-v6.normalized"
 GENERATED_SNIPPET="${TMP_DIR}/cloudflare-origin-allow.conf"
 CANDIDATE_NGINX_CONFIG="${TMP_DIR}/nginx-candidate.conf"
+ALLOW_SNIPPET_DIR="$(dirname "${ALLOW_SNIPPET}")"
 SNIPPET_BASENAME="$(basename "${ALLOW_SNIPPET}")"
 INSTALL_TMP=""
 BACKUP_SNIPPET=""
+ALLOW_SNIPPET_EXISTED=false
 
 mkdir -p "${SNIPPET_DIR}"
+mkdir -p "${ALLOW_SNIPPET_DIR}"
 
 curl -fsSL --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 60 "${IPV4_URL}" -o "${IPV4_FILE}"
 curl -fsSL --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 60 "${IPV6_URL}" -o "${IPV6_FILE}"
@@ -104,10 +107,11 @@ EOF
 
 "${NGINX_BIN}" -t -c "${CANDIDATE_NGINX_CONFIG}" -g "pid ${TMP_DIR}/nginx.pid;"
 
-INSTALL_TMP="$(mktemp "${SNIPPET_DIR}/.${SNIPPET_BASENAME}.tmp.XXXXXX")"
+INSTALL_TMP="$(mktemp "${ALLOW_SNIPPET_DIR}/.${SNIPPET_BASENAME}.tmp.XXXXXX")"
 install -m 0644 "${GENERATED_SNIPPET}" "${INSTALL_TMP}"
 
 if [ -e "${ALLOW_SNIPPET}" ]; then
+  ALLOW_SNIPPET_EXISTED=true
   BACKUP_SNIPPET="${TMP_DIR}/${SNIPPET_BASENAME}.backup"
   cp -p "${ALLOW_SNIPPET}" "${BACKUP_SNIPPET}"
 fi
@@ -115,9 +119,11 @@ fi
 mv "${INSTALL_TMP}" "${ALLOW_SNIPPET}"
 
 if ! "${NGINX_BIN}" -t; then
-  if [ -n "${BACKUP_SNIPPET}" ] && [ -e "${BACKUP_SNIPPET}" ]; then
-    install -m 0644 "${BACKUP_SNIPPET}" "${ALLOW_SNIPPET}"
+  if [ "${ALLOW_SNIPPET_EXISTED}" = true ] && [ -n "${BACKUP_SNIPPET}" ] && [ -e "${BACKUP_SNIPPET}" ]; then
+    cp -p "${BACKUP_SNIPPET}" "${ALLOW_SNIPPET}"
     "${NGINX_BIN}" -t || true
+  else
+    rm -f "${ALLOW_SNIPPET}"
   fi
   exit 1
 fi

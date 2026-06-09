@@ -919,11 +919,13 @@ Implementation requirements:
   temporary Nginx config with `events {}` and an `http { server { location / {
   include <candidate>; } } }` context, then running:
   `nginx -t -c <temp-config> -g 'pid <tmp>/nginx.pid;'`.
-- Install the candidate to a same-directory temporary file under
-  `${SNIPPET_DIR}`, then atomically replace `${ALLOW_SNIPPET}` with `mv`.
+- Install the candidate to a temporary file in the parent directory of
+  `${ALLOW_SNIPPET}`, then atomically replace `${ALLOW_SNIPPET}` with `mv`.
 - If an existing live snippet is present, back it up before replacement. Run the
-  full `nginx -t` after replacement; if it fails, restore the previous snippet,
-  re-run `nginx -t` for operator visibility, and exit nonzero.
+  full `nginx -t` after replacement; if it fails, restore the previous snippet
+  with metadata preserved, re-run `nginx -t` for operator visibility, and exit
+  nonzero. If no previous snippet existed, remove the newly installed snippet
+  before exiting nonzero.
 - After a successful full `nginx -t`, run `systemctl reload nginx`.
 
 The generated snippet must have this shape:
@@ -987,6 +989,10 @@ sudo systemctl start munich-weekly-cloudflare-allowlist.service
 ```
 
 Expected: `nginx -t` succeeds and Nginx reloads.
+
+Note: `OnFailure=munich-weekly-alert@%n.service` depends on the alert template
+created in Task 10. If Task 5 is installed before Task 10, failures are visible
+in journald until `munich-weekly-alert@.service` is installed.
 
 - [ ] **Step 5: Install Cloudflare authenticated origin pull CA**
 
@@ -2152,6 +2158,11 @@ sudo install -m 0644 ops/systemd/*.service /etc/systemd/system/
 sudo install -m 0644 ops/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
+
+Alerting note: install `munich-weekly-alert@.service` before enabling timers or
+services that reference `OnFailure=munich-weekly-alert@%n.service`. If doing an
+early install pass, install units now and enable timers after the Task 10 alert
+template is installed.
 
 - [ ] **Step 4: Configure backup secrets without printing them**
 
