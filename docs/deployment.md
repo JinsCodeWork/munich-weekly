@@ -205,16 +205,18 @@ BRANCH=release-candidate /usr/local/sbin/munich-weekly-deploy.sh
 
 ### PM2 Frontend Reload Behavior
 
-The production PM2 process is named `munich-frontend`. Task 9 adds the
-versioned `frontend/ecosystem.config.cjs` file. The deploy script already
-prefers that file when it exists:
+The production PM2 process is named `munich-frontend`. The versioned process
+definition lives in
+[`frontend/ecosystem.config.cjs`](../frontend/ecosystem.config.cjs) and is the
+preferred production path:
 
 ```bash
 pm2 startOrReload ecosystem.config.cjs --only munich-frontend
 ```
 
-Until that file is present on production, the script falls back to the current
-process:
+The deploy script runs that command from `frontend/` after building the app.
+The old unversioned fallback exists only for bootstrapping hosts that have not
+received the PM2 definition yet:
 
 ```bash
 pm2 restart munich-frontend
@@ -227,6 +229,27 @@ pm2 start npm --name munich-frontend -- start
 ```
 
 After the reload or start, the script runs `pm2 save`.
+
+### PM2 Logs
+
+Install `pm2-logrotate` on production so PM2 logs are bounded:
+
+```bash
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 5
+pm2 set pm2-logrotate:compress true
+pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss
+pm2 save
+```
+
+Use the versioned ecosystem file for normal frontend process changes:
+
+```bash
+cd /home/deploy/munich-weekly/frontend
+pm2 startOrReload ecosystem.config.cjs --only munich-frontend
+pm2 save
+```
 
 ### Backend Runtime
 
@@ -278,12 +301,12 @@ Install PM2 globally:
 npm install -g pm2
 ```
 
-Start the Next.js application with PM2:
+Start or reload the Next.js application with the versioned PM2 definition:
 
 ```bash
 cd /home/deploy/munich-weekly/frontend
 npm run build
-pm2 start npm --name munich-frontend -- start
+pm2 startOrReload ecosystem.config.cjs --only munich-frontend
 ```
 
 Configure PM2 to start on system boot:
