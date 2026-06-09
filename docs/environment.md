@@ -47,6 +47,13 @@ application runtime variables and must not be committed.
 | `RCLONE_CONFIG` | `rclone` | R2 object backup | Defaults to `/etc/munich-weekly/rclone.conf`. |
 | `RCLONE_R2_SOURCE` | `ops/scripts/backup-production.sh` | R2 object backup | Source remote/path for production upload objects, for example an rclone remote pointing to the production R2 bucket prefix. |
 | `RCLONE_R2_BACKUP` | `ops/scripts/backup-production.sh` | R2 object backup | Destination remote/path for independent private object backups. Use a separate private backup bucket, preferably via `rclone crypt` or an equivalent encrypted private destination. |
+| `RESTORE_PARENT_DIR` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `/var/tmp`. The script creates a private temporary drill directory under this path and removes it on exit. |
+| `CONTAINER_NAME` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `mw-restore-drill-postgres` as the container name prefix. The script appends a unique run suffix and labels the container before cleanup. |
+| `RESTORE_RUN_ID` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a UTC timestamp plus process ID. Used in the temporary Docker container name and cleanup label. |
+| `DB_NAME` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `munich_weekly_restore_drill` for the isolated restore database. |
+| `DB_USER` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `restore_drill` for the isolated restore database user. |
+| `DB_PASSWORD` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a local restore-drill password. It is only passed to the isolated Docker container. |
+| `ALLOW_EMPTY_R2_RESTORE` | `ops/scripts/restore-backup-drill.sh` | Explicit empty-object restore exception | Defaults to `false`. Set to `true` only when production is intentionally expected to have no uploaded R2 objects. |
 | `OPS_ALERT_WEBHOOK_URL` | `ops/scripts/notify-ops.sh` | Optional failure alerting | Webhook endpoint for systemd `OnFailure` alerts. Store in `/etc/munich-weekly/alerts.env`, not in Git. |
 
 ## Backend

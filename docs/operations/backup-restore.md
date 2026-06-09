@@ -23,8 +23,12 @@ Install packages:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y restic rclone
+sudo apt-get install -y restic rclone docker.io
 ```
+
+The restore drill starts an isolated `postgres:15` Docker container on the
+server. Confirm Docker can pull or already has the `postgres:15` image before
+the first scheduled drill window.
 
 Create the private env directory:
 
@@ -102,9 +106,10 @@ sudo /usr/local/sbin/munich-weekly-restore-drill.sh
 The script restores the latest restic snapshot tagged `munich-weekly` into a
 temporary private directory, rejects dry-run or incomplete R2 snapshots,
 verifies `postgres.dump`, `uploads.tar.gz`, checksums, and R2 object metadata,
-then loads the dump into an isolated `postgres:15` container named
-`mw-restore-drill-postgres`. It cleans up the temporary directory and container
-on exit.
+then loads the dump into an isolated `postgres:15` container. The container
+name uses the `mw-restore-drill-postgres` prefix plus a unique run suffix and
+restore-drill labels, so cleanup only removes the container created by that
+run. It cleans up the temporary directory and container on exit.
 
 Expected result:
 
@@ -118,3 +123,12 @@ it without printing secrets:
 ```bash
 sudo BACKUP_ENV=/path/to/backup.env /usr/local/sbin/munich-weekly-restore-drill.sh
 ```
+
+If production intentionally has no uploaded R2 objects, run the drill with an
+explicit one-off exception:
+
+```bash
+sudo ALLOW_EMPTY_R2_RESTORE=true /usr/local/sbin/munich-weekly-restore-drill.sh
+```
+
+Do not use this exception when the source bucket should contain upload objects.

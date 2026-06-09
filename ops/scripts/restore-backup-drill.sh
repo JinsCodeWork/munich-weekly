@@ -6,6 +6,8 @@ umask 077
 BACKUP_ENV="${BACKUP_ENV:-/etc/munich-weekly/backup.env}"
 RESTORE_PARENT_DIR="${RESTORE_PARENT_DIR:-/var/tmp}"
 CONTAINER_NAME="${CONTAINER_NAME:-mw-restore-drill-postgres}"
+RESTORE_RUN_ID="${RESTORE_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+ALLOW_EMPTY_R2_RESTORE="${ALLOW_EMPTY_R2_RESTORE:-false}"
 DB_NAME="${DB_NAME:-munich_weekly_restore_drill}"
 DB_USER="${DB_USER:-restore_drill}"
 DB_PASSWORD="${DB_PASSWORD:-restore_drill_password}"
@@ -14,6 +16,7 @@ RESTORE_WORK_DIR=""
 RESTORED_SNAPSHOT_DIR=""
 LATEST_SNAPSHOT=""
 R2_RESTORE_DIR=""
+DRILL_CONTAINER_NAME=""
 
 die() {
   echo "$*" >&2
@@ -24,9 +27,24 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
 }
 
+require_bool() {
+  case "$2" in
+    true|false) ;;
+    *) die "$1 must be true or false" ;;
+  esac
+}
+
 cleanup() {
-  if command -v docker >/dev/null 2>&1; then
-    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+  if command -v docker >/dev/null 2>&1 && [ -n "${DRILL_CONTAINER_NAME:-}" ]; then
+    local container_id
+    container_id="$(docker ps -aq \
+      --filter "name=^/${DRILL_CONTAINER_NAME}$" \
+      --filter "label=com.munichweekly.role=restore-drill" \
+      --filter "label=com.munichweekly.restore-run=${RESTORE_RUN_ID}" \
+      | head -n 1 || true)"
+    if [ -n "$container_id" ]; then
+      docker rm -f "$container_id" >/dev/null 2>&1 || true
+    fi
   fi
 
   if [ -n "${RESTORE_WORK_DIR:-}" ] && [ "$RESTORE_WORK_DIR" != "/" ] && [ -d "$RESTORE_WORK_DIR" ]; then
@@ -37,7 +55,7 @@ cleanup() {
 }
 
 find_latest_snapshot() {
-  restic snapshots --tag munich-weekly --json | python3 -c '
+  restic snapshots --tag munich-weekly --tag production --json | python3 -c '
 import json
 import sys
 
@@ -74,6 +92,30 @@ count_files() {
   find "$1" -type f -print | wc -l | tr -d '[:space:]'
 }
 
+write_local_object_list() {
+  local source_dir="$1"
+  local output_file="$2"
+
+  python3 - "$source_dir" "$output_file" <<'PY'
+import os
+import sys
+
+source_dir, output_file = sys.argv[1:3]
+rows = []
+
+for root, dirs, files in os.walk(source_dir):
+    dirs.sort()
+    for filename in sorted(files):
+        path = os.path.join(root, filename)
+        rel_path = os.path.relpath(path, source_dir).replace(os.sep, "/")
+        rows.append(f"{os.path.getsize(path)} {rel_path}")
+
+with open(output_file, "w", encoding="utf-8") as handle:
+    for row in sorted(rows):
+        handle.write(row + "\n")
+PY
+}
+
 sha256_file() {
   local file="$1"
   if command -v sha256sum >/dev/null 2>&1; then
@@ -99,7 +141,7 @@ verify_checksum() {
   local checksum_file="$RESTORED_SNAPSHOT_DIR/SHA256SUMS"
   local basename expected actual
 
-  [ -f "$checksum_file" ] || return 0
+  [ -f "$checksum_file" ] || die "Restored snapshot does not contain SHA256SUMS"
 
   basename="$(basename "$file")"
   expected="$(expected_sha256_for "$checksum_file" "$basename")" || die "SHA256SUMS does not contain $basename"
@@ -110,7 +152,10 @@ verify_checksum() {
 
 validate_snapshot_artifacts() {
   [ -f "$RESTORED_SNAPSHOT_DIR/postgres.dump" ] || die "Restored snapshot does not contain postgres.dump"
+  [ -f "$RESTORED_SNAPSHOT_DIR/SHA256SUMS" ] || die "Restored snapshot does not contain SHA256SUMS"
+  [ -f "$RESTORED_SNAPSHOT_DIR/r2-source-manifest.txt" ] || die "Restored snapshot does not contain r2-source-manifest.txt"
   [ -f "$RESTORED_SNAPSHOT_DIR/r2-backup-manifest.txt" ] || die "Restored snapshot does not contain r2-backup-manifest.txt"
+  [ -f "$RESTORED_SNAPSHOT_DIR/r2-backup-path.txt" ] || die "Restored snapshot does not contain r2-backup-path.txt"
   [ -f "$RESTORED_SNAPSHOT_DIR/uploads.tar.gz" ] || die "Restored snapshot does not contain uploads.tar.gz"
   [ ! -e "$RESTORED_SNAPSHOT_DIR/INCOMPLETE_R2_BACKUP.txt" ] || die "Restored snapshot was marked as an incomplete R2 backup"
 
@@ -142,30 +187,62 @@ r2_source_has_objects() {
 }
 
 validate_and_restore_r2_backup() {
+  local r2_backup_path
+  local expected_objects_file=""
+  local restored_objects_file
+
   if [ -f "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" ] && [ -f "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ]; then
     cmp -s "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ||
       die "R2 source and backup object lists differ"
   fi
 
   if ! r2_source_has_objects; then
-    return 0
+    if [ "$ALLOW_EMPTY_R2_RESTORE" = "true" ]; then
+      echo "R2 source object list is empty; continuing because ALLOW_EMPTY_R2_RESTORE=true" >&2
+      return 0
+    fi
+    die "R2 source object list is empty; set ALLOW_EMPTY_R2_RESTORE=true only after confirming production has no upload objects"
   fi
 
-  [ -f "$RESTORED_SNAPSHOT_DIR/r2-backup-path.txt" ] || die "R2 source objects exist but r2-backup-path.txt is missing"
+  if [ -s "$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt" ]; then
+    expected_objects_file="$RESTORED_SNAPSHOT_DIR/r2-backup-objects.txt"
+  elif [ -s "$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt" ]; then
+    expected_objects_file="$RESTORED_SNAPSHOT_DIR/r2-source-objects.txt"
+  fi
+
+  r2_backup_path="$(head -n 1 "$RESTORED_SNAPSHOT_DIR/r2-backup-path.txt")"
+  if [ -z "$r2_backup_path" ]; then
+    die "r2-backup-path.txt is empty"
+  fi
+
   require_cmd rclone
 
   R2_RESTORE_DIR="$RESTORE_WORK_DIR/r2-restore"
   mkdir -p "$R2_RESTORE_DIR"
   chmod 0700 "$R2_RESTORE_DIR"
 
-  rclone copy "$(cat "$RESTORED_SNAPSHOT_DIR/r2-backup-path.txt")" "$R2_RESTORE_DIR" --fast-list
-  [ "$(count_files "$R2_RESTORE_DIR")" -gt 0 ] || die "R2 backup restore produced no files"
+  rclone copy "$r2_backup_path" "$R2_RESTORE_DIR" --checksum --metadata --fast-list
+
+  if [ "$(count_files "$R2_RESTORE_DIR")" -eq 0 ]; then
+    die "R2 backup restore produced no files"
+  fi
+
+  if [ -n "$expected_objects_file" ]; then
+    restored_objects_file="$RESTORE_WORK_DIR/r2-restored-objects.txt"
+    write_local_object_list "$R2_RESTORE_DIR" "$restored_objects_file"
+    cmp -s "$expected_objects_file" "$restored_objects_file" ||
+      die "Restored R2 object list does not match expected backup object list"
+  fi
+
+  if [ -z "$expected_objects_file" ]; then
+    return 0
+  fi
 }
 
 wait_for_postgres() {
   local attempt
   for attempt in $(seq 1 30); do
-    if docker exec "$CONTAINER_NAME" pg_isready -U "$DB_USER" -d "$DB_NAME" >/dev/null 2>&1; then
+    if docker exec "$DRILL_CONTAINER_NAME" pg_isready -U "$DB_USER" -d "$DB_NAME" >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
@@ -176,19 +253,22 @@ wait_for_postgres() {
 run_postgres_restore_drill() {
   require_cmd docker
 
-  docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+  DRILL_CONTAINER_NAME="${CONTAINER_NAME}-${RESTORE_RUN_ID}"
+
   docker run -d \
-    --name "$CONTAINER_NAME" \
+    --name "$DRILL_CONTAINER_NAME" \
     --network none \
+    --label com.munichweekly.role=restore-drill \
+    --label "com.munichweekly.restore-run=${RESTORE_RUN_ID}" \
     -e POSTGRES_DB="$DB_NAME" \
     -e POSTGRES_USER="$DB_USER" \
     -e POSTGRES_PASSWORD="$DB_PASSWORD" \
     postgres:15 >/dev/null
 
   wait_for_postgres
-  docker cp "$RESTORED_SNAPSHOT_DIR/postgres.dump" "$CONTAINER_NAME:/tmp/postgres.dump"
-  docker exec "$CONTAINER_NAME" pg_restore --list /tmp/postgres.dump >/dev/null
-  docker exec "$CONTAINER_NAME" pg_restore \
+  docker cp "$RESTORED_SNAPSHOT_DIR/postgres.dump" "$DRILL_CONTAINER_NAME:/tmp/postgres.dump"
+  docker exec "$DRILL_CONTAINER_NAME" pg_restore --list /tmp/postgres.dump >/dev/null
+  docker exec "$DRILL_CONTAINER_NAME" pg_restore \
     --username "$DB_USER" \
     --dbname "$DB_NAME" \
     --no-owner \
@@ -196,8 +276,8 @@ run_postgres_restore_drill() {
     --clean \
     --if-exists \
     /tmp/postgres.dump >/dev/null
-  docker exec "$CONTAINER_NAME" psql --username "$DB_USER" --dbname "$DB_NAME" --tuples-only --no-align --command 'select count(*) from users;' >/dev/null
-  docker exec "$CONTAINER_NAME" psql --username "$DB_USER" --dbname "$DB_NAME" --tuples-only --no-align --command 'select count(*) from issues;' >/dev/null
+  docker exec "$DRILL_CONTAINER_NAME" psql --username "$DB_USER" --dbname "$DB_NAME" --tuples-only --no-align --command 'select count(*) from users;' >/dev/null
+  docker exec "$DRILL_CONTAINER_NAME" psql --username "$DB_USER" --dbname "$DB_NAME" --tuples-only --no-align --command 'select count(*) from issues;' >/dev/null
 }
 
 main() {
@@ -205,11 +285,15 @@ main() {
   require_cmd find
   require_cmd tar
   require_cmd awk
+  require_cmd head
   require_cmd grep
   require_cmd cmp
   require_cmd wc
   require_cmd seq
-  require_cmd restic
+  require_cmd sleep
+  require_cmd mktemp
+
+  require_bool ALLOW_EMPTY_R2_RESTORE "$ALLOW_EMPTY_R2_RESTORE"
 
   [ -r "$BACKUP_ENV" ] || die "Backup env file is missing or unreadable: $BACKUP_ENV"
 
@@ -221,6 +305,8 @@ main() {
   RESTORE_WORK_DIR="$(mktemp -d "$RESTORE_PARENT_DIR/mw-restore-drill.XXXXXXXX")"
   chmod 0700 "$RESTORE_WORK_DIR"
   trap cleanup EXIT
+
+  require_cmd restic
 
   LATEST_SNAPSHOT="$(find_latest_snapshot)" || die "No restic snapshot tagged munich-weekly was found"
   restic restore "$LATEST_SNAPSHOT" --target "$RESTORE_WORK_DIR"
