@@ -29,6 +29,9 @@ The status check is read-only. It reports host uptime, disk usage, memory,
 reboot-required state, apt upgrade count, Docker containers, PM2 status as the
 `deploy` user, backend health, local and public frontend headers, repository
 revision/status, backup timer state, and recent backup journal entries.
+Individual non-HTTP probes are bounded by `STATUS_PROBE_TIMEOUT`, which defaults
+to 20 seconds. The systemd service also has a five-minute total start timeout so
+a stuck status run fails and triggers `OnFailure`.
 
 PM2 status uses non-interactive sudo:
 
@@ -74,6 +77,7 @@ Create the alert environment file on the server:
 ```bash
 sudo install -d -m 0700 /etc/munich-weekly
 sudoedit /etc/munich-weekly/alerts.env
+sudo chown root:root /etc/munich-weekly/alerts.env
 sudo chmod 0600 /etc/munich-weekly/alerts.env
 ```
 
@@ -87,12 +91,31 @@ Do not commit webhook URLs or other alerting secrets. If
 `OPS_ALERT_WEBHOOK_URL` is unset, the notification script writes the alert
 message to stderr so the failure remains visible in journald. If the webhook is
 configured and delivery fails, the alert service exits nonzero and systemd logs
-the delivery failure.
+the delivery failure. The script refuses to source `alerts.env` unless the file
+has no group/other permissions; when loaded as root, it must also be owned by
+root.
 
 Test the local alert path without sending a webhook by using an empty env file:
 
 ```bash
 sudo ALERT_ENV=/dev/null /usr/local/sbin/munich-weekly-notify-ops.sh manual-test.service
+```
+
+Test the systemd template path without sending a webhook by temporarily setting
+the manager environment for the test instance, then immediately clearing it:
+
+```bash
+sudo systemctl set-environment ALERT_ENV=/dev/null
+sudo systemctl start 'munich-weekly-alert@manual-test.service'
+sudo systemctl unset-environment ALERT_ENV
+sudo journalctl -u 'munich-weekly-alert@manual-test.service' -n 40 --no-pager
+```
+
+To test the live alert destination, start the template without the temporary
+`ALERT_ENV` override. That sends to the configured webhook:
+
+```bash
+sudo systemctl start 'munich-weekly-alert@manual-test.service'
 ```
 
 ## Weekly Maintenance Review

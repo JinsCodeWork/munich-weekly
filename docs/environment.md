@@ -55,12 +55,15 @@ application runtime variables and must not be committed.
 | `DB_PASSWORD` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a local restore-drill password. It is only passed to the isolated Docker container. |
 | `ALLOW_EMPTY_R2_RESTORE` | `ops/scripts/restore-backup-drill.sh` | Explicit empty-object restore exception | Defaults to `false`. Set to `true` only when production is intentionally expected to have no uploaded R2 objects. |
 | `OPS_ALERT_WEBHOOK_URL` | `ops/scripts/notify-ops.sh` | Optional failure alerting | Webhook endpoint for systemd `OnFailure` alerts. Store in `/etc/munich-weekly/alerts.env`, not in Git. |
+| `OPS_ALERT_CONNECT_TIMEOUT` | `ops/scripts/notify-ops.sh` | Optional alert delivery override | Defaults to `10` seconds for webhook connection setup. |
+| `OPS_ALERT_MAX_TIME` | `ops/scripts/notify-ops.sh` | Optional alert delivery override | Defaults to `20` seconds for total webhook delivery time. |
 | `ALERT_ENV` | `ops/scripts/notify-ops.sh` | Optional alert env override | Defaults to `/etc/munich-weekly/alerts.env`. Use only for local validation or if production alert config intentionally moves. |
 | `BACKUP_UNIT` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.service` for recent backup journal output. |
 | `BACKUP_TIMER` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.timer` for timer status output. |
 | `BACKEND_HEALTH_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:8080/api/layout/health`. |
 | `LOCAL_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:3000/`. |
 | `PUBLIC_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `https://munichweekly.art`. |
+| `STATUS_PROBE_TIMEOUT` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `20s` for each non-HTTP probe. Increase only for one-off diagnostics on a slow host. |
 
 ## Backend
 

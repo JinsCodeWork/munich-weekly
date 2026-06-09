@@ -7,6 +7,7 @@ BACKUP_TIMER="${BACKUP_TIMER:-munich-weekly-backup.timer}"
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8080/api/layout/health}"
 LOCAL_FRONTEND_URL="${LOCAL_FRONTEND_URL:-http://127.0.0.1:3000/}"
 PUBLIC_FRONTEND_URL="${PUBLIC_FRONTEND_URL:-https://munichweekly.art}"
+STATUS_PROBE_TIMEOUT="${STATUS_PROBE_TIMEOUT:-20s}"
 STATUS_FAILED=0
 
 iso_date() {
@@ -22,6 +23,23 @@ mark_failed() {
   printf 'STATUS CHECK FAILED: %s\n' "$*" >&2
 }
 
+run_with_timeout() {
+  local label="$1"
+  shift
+
+  if ! command -v timeout >/dev/null 2>&1; then
+    printf 'Required command not found: timeout\n' >&2
+    return 127
+  fi
+
+  timeout --foreground "$STATUS_PROBE_TIMEOUT" "$@"
+  local status=$?
+  if [ "$status" -eq 124 ]; then
+    printf 'Check timed out after %s: %s\n' "$STATUS_PROBE_TIMEOUT" "$label" >&2
+  fi
+  return "$status"
+}
+
 run_required() {
   local label="$1"
   shift
@@ -31,7 +49,7 @@ run_required() {
     mark_failed "required command not found: $1"
     return 1
   fi
-  if ! "$@"; then
+  if ! run_with_timeout "$label" "$@"; then
     mark_failed "$label failed"
     return 1
   fi
@@ -46,7 +64,7 @@ run_optional() {
     printf 'Optional command not found: %s\n' "$1"
     return 0
   fi
-  if ! "$@"; then
+  if ! run_with_timeout "$label" "$@"; then
     printf 'Optional check failed: %s\n' "$label"
     return 0
   fi
@@ -57,7 +75,11 @@ run_optional_shell() {
   shift
 
   section "$label"
-  if ! "$@"; then
+  if ! command -v "$1" >/dev/null 2>&1; then
+    printf 'Optional command not found: %s\n' "$1"
+    return 0
+  fi
+  if ! run_with_timeout "$label" "$@"; then
     printf 'Optional check failed: %s\n' "$label"
   fi
 }
@@ -75,8 +97,8 @@ run_required "Uptime" uptime
 
 section "Disk"
 if command -v df >/dev/null 2>&1; then
-  if ! df -hT / /var /home 2>/dev/null; then
-    df -hT || mark_failed "disk usage check failed"
+  if ! run_with_timeout "Disk" df -hT / /var /home 2>/dev/null; then
+    run_with_timeout "Disk fallback" df -hT || mark_failed "disk usage check failed"
   fi
 else
   mark_failed "required command not found: df"
@@ -96,7 +118,9 @@ fi
 
 section "Apt Upgradable Count"
 if command -v apt >/dev/null 2>&1; then
-  apt list --upgradable 2>/dev/null | awk 'NR > 1 { count++ } END { print count + 0 }'
+  if ! run_with_timeout "Apt Upgradable Count" apt list --upgradable 2>/dev/null | awk 'NR > 1 { count++ } END { print count + 0 }'; then
+    printf 'Optional check failed: Apt Upgradable Count\n'
+  fi
 else
   printf 'Optional command not found: apt\n'
 fi
@@ -133,8 +157,17 @@ fi
 section "Git"
 if command -v git >/dev/null 2>&1; then
   if [ -d "$APP_DIR/.git" ]; then
-    git -C "$APP_DIR" rev-parse --short HEAD || mark_failed "git revision check failed"
-    git -C "$APP_DIR" status --short || mark_failed "git status check failed"
+    run_with_timeout "Git revision" git -C "$APP_DIR" rev-parse --short HEAD || mark_failed "git revision check failed"
+    git_status_output="$(run_with_timeout "Git status" git -C "$APP_DIR" status --short)"
+    git_status_code=$?
+    if [ "$git_status_code" -ne 0 ]; then
+      mark_failed "git status check failed"
+    elif [ -n "$git_status_output" ]; then
+      printf '%s\n' "$git_status_output"
+      mark_failed "git working tree has uncommitted or untracked changes"
+    else
+      printf 'Working tree clean\n'
+    fi
   else
     mark_failed "APP_DIR is not a git checkout: $APP_DIR"
   fi

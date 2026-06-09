@@ -8,4 +8,5 @@ OnFailure=munich-weekly-alert@%n.service
 Type=oneshot
 User=root
 Group=root
+TimeoutStartSec=5min
 ExecStart=/usr/local/sbin/munich-weekly-status.sh
