@@ -151,6 +151,25 @@ updates:
           - "*"
 
   - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:10"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "root"
+    groups:
+      root-npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
     directory: "/image-worker"
     schedule:
       interval: "weekly"
@@ -246,6 +265,7 @@ dependabot yaml ok
 Run:
 
 ```bash
+test -f package-lock.json
 test -f frontend/package-lock.json
 test -f image-worker/package-lock.json
 test -f backend/build.gradle
