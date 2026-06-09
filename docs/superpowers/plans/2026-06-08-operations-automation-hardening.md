@@ -318,13 +318,15 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
