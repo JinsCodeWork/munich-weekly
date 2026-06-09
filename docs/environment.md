@@ -23,6 +23,29 @@ values into shell commands.
 Agents may load this file for local work, for example by sourcing it in the
 current shell, but must not echo or persist the values.
 
+## Operations
+
+These variables are used by production operations scripts. They are not
+application runtime variables and must not be committed.
+
+| Variable | Used by | Required for | Notes |
+|---|---|---|---|
+| `RESTIC_REPOSITORY` | `ops/scripts/backup-production.sh` | Production backups | Encrypted restic repository URL. Use a private backup bucket such as `munichweekly-ops-backups`. |
+| `RESTIC_PASSWORD` | `ops/scripts/backup-production.sh` | Production backups | Secret used to encrypt/decrypt restic backups. Store in `/etc/munich-weekly/backup.env` on the server and in the password manager. |
+| `AWS_ACCESS_KEY_ID` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
+| `AWS_SECRET_ACCESS_KEY` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
+| `APP_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
+| `BACKUP_WORK_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/var/backups/munich-weekly`. |
+| `BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Set to `true` only for local syntax and filesystem checks that must not contact Docker, R2, or restic. |
+| `RETENTION_DAILY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `14`. |
+| `RETENTION_WEEKLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `8`. |
+| `RETENTION_MONTHLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `12`. |
+| `REQUIRE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Production media backup gate | Defaults to `true`; production backups fail if R2 backup remotes are not configured. |
+| `RCLONE_CONFIG` | `rclone` | R2 object backup | Defaults to `/etc/munich-weekly/rclone.conf`. |
+| `RCLONE_R2_SOURCE` | `ops/scripts/backup-production.sh` | R2 object backup | Source remote/path for production upload objects, for example an rclone remote pointing to the production R2 bucket prefix. |
+| `RCLONE_R2_BACKUP` | `ops/scripts/backup-production.sh` | R2 object backup | Destination remote/path for independent private object backups. Use a separate private backup bucket, preferably via `rclone crypt` or an equivalent encrypted private destination. |
+| `OPS_ALERT_WEBHOOK_URL` | `ops/scripts/notify-ops.sh` | Optional failure alerting | Webhook endpoint for systemd `OnFailure` alerts. Store in `/etc/munich-weekly/alerts.env`, not in Git. |
+
 ## Backend
 
 The backend reads defaults from `backend/src/main/resources/application.properties`.
