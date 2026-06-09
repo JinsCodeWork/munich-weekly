@@ -1,0 +1,8 @@
+[Unit]
+Description=Send Munich Weekly operations alert for %i
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/sbin/munich-weekly-notify-ops.sh %i

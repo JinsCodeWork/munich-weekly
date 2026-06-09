@@ -1,0 +1,11 @@
+[Unit]
+Description=Munich Weekly production status check
+After=docker.service network-online.target
+Wants=network-online.target
+OnFailure=munich-weekly-alert@%n.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/sbin/munich-weekly-status.sh

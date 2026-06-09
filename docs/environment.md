@@ -34,7 +34,7 @@ application runtime variables and must not be committed.
 | `RESTIC_PASSWORD` | `ops/scripts/backup-production.sh` | Production backups | Secret used to encrypt/decrypt restic backups. Store in `/etc/munich-weekly/backup.env` on the server and in the password manager. |
 | `AWS_ACCESS_KEY_ID` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
 | `AWS_SECRET_ACCESS_KEY` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
-| `APP_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
+| `APP_DIR` | `ops/scripts/backup-production.sh`, `ops/scripts/production-status.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
 | `BACKUP_WORK_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/var/backups/munich-weekly`. |
 | `BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Set to `true` only for local syntax and filesystem checks that must not contact Docker, R2, or restic. |
 | `ALLOW_BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Must be set to `true` with a non-production `BACKUP_ENV` before `BACKUP_DRY_RUN=true` is accepted. Never set this in `/etc/munich-weekly/backup.env`. |
@@ -55,6 +55,12 @@ application runtime variables and must not be committed.
 | `DB_PASSWORD` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a local restore-drill password. It is only passed to the isolated Docker container. |
 | `ALLOW_EMPTY_R2_RESTORE` | `ops/scripts/restore-backup-drill.sh` | Explicit empty-object restore exception | Defaults to `false`. Set to `true` only when production is intentionally expected to have no uploaded R2 objects. |
 | `OPS_ALERT_WEBHOOK_URL` | `ops/scripts/notify-ops.sh` | Optional failure alerting | Webhook endpoint for systemd `OnFailure` alerts. Store in `/etc/munich-weekly/alerts.env`, not in Git. |
+| `ALERT_ENV` | `ops/scripts/notify-ops.sh` | Optional alert env override | Defaults to `/etc/munich-weekly/alerts.env`. Use only for local validation or if production alert config intentionally moves. |
+| `BACKUP_UNIT` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.service` for recent backup journal output. |
+| `BACKUP_TIMER` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.timer` for timer status output. |
+| `BACKEND_HEALTH_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:8080/api/layout/health`. |
+| `LOCAL_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:3000/`. |
+| `PUBLIC_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `https://munichweekly.art`. |
 
 ## Backend
 
