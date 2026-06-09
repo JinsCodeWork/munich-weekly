@@ -37,6 +37,9 @@ application runtime variables and must not be committed.
 | `APP_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
 | `BACKUP_WORK_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/var/backups/munich-weekly`. |
 | `BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Set to `true` only for local syntax and filesystem checks that must not contact Docker, R2, or restic. |
+| `ALLOW_BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Must be set to `true` with a non-production `BACKUP_ENV` before `BACKUP_DRY_RUN=true` is accepted. Never set this in `/etc/munich-weekly/backup.env`. |
+| `ALLOW_INCOMPLETE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Local validation or exceptional maintenance only | Defaults to `false`. Required before `REQUIRE_R2_BACKUP=false` is accepted outside production; production backups reject `REQUIRE_R2_BACKUP=false`. |
+| `ENFORCE_BACKUP_ENV_PERMISSIONS` | `ops/scripts/backup-production.sh` | Optional local permission check | Defaults to `false`. Production `/etc/munich-weekly/backup.env` is always checked for root ownership and no group/other permissions. |
 | `RETENTION_DAILY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `14`. |
 | `RETENTION_WEEKLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `8`. |
 | `RETENTION_MONTHLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `12`. |

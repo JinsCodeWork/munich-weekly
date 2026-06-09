@@ -1145,9 +1145,17 @@ Type=oneshot
 User=root
 Group=root
 ExecStart=/usr/local/sbin/munich-weekly-backup.sh
+Environment=RESTIC_CACHE_DIR=/var/cache/munich-weekly-restic
+CacheDirectory=munich-weekly-restic
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/etc/munich-weekly /home/deploy/munich-weekly
+ReadWritePaths=/var/backups/munich-weekly /var/cache/munich-weekly-restic /run/docker.sock /var/run/docker.sock
 ```
 
 - [ ] **Step 3: Create the backup timer**
@@ -1184,6 +1192,10 @@ These variables are used by production operations scripts. They are not applicat
 | `AWS_SECRET_ACCESS_KEY` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
 | `APP_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
 | `BACKUP_WORK_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/var/backups/munich-weekly`. |
+| `BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Set to `true` only for local syntax and filesystem checks that must not contact Docker, R2, or restic. |
+| `ALLOW_BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Must be set to `true` with a non-production `BACKUP_ENV` before `BACKUP_DRY_RUN=true` is accepted. Never set this in `/etc/munich-weekly/backup.env`. |
+| `ALLOW_INCOMPLETE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Local validation or exceptional maintenance only | Defaults to `false`. Required before `REQUIRE_R2_BACKUP=false` is accepted outside production; production backups reject `REQUIRE_R2_BACKUP=false`. |
+| `ENFORCE_BACKUP_ENV_PERMISSIONS` | `ops/scripts/backup-production.sh` | Optional local permission check | Defaults to `false`. Production `/etc/munich-weekly/backup.env` is always checked for root ownership and no group/other permissions. |
 | `RETENTION_DAILY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `14`. |
 | `RETENTION_WEEKLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `8`. |
 | `RETENTION_MONTHLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `12`. |
@@ -1237,15 +1249,32 @@ sudo chmod 0600 /etc/munich-weekly/backup.env
 
 The file `/etc/munich-weekly/backup.env` must define `RESTIC_REPOSITORY`, `RESTIC_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `RCLONE_CONFIG`, `RCLONE_R2_SOURCE`, and `RCLONE_R2_BACKUP`.
 
+Do not set `BACKUP_DRY_RUN=true`, `ALLOW_BACKUP_DRY_RUN=true`, or
+`REQUIRE_R2_BACKUP=false` in the production env file. The production script
+rejects dry-run mode and requires R2 object backups so a successful service run
+means both database data and upload objects were captured.
+
 Install scripts and timers:
 
 ```bash
+sudo install -d -m 0700 /var/backups/munich-weekly
 sudo install -m 0755 ops/scripts/backup-production.sh /usr/local/sbin/munich-weekly-backup.sh
 sudo install -m 0644 ops/systemd/munich-weekly-backup.service /etc/systemd/system/munich-weekly-backup.service
 sudo install -m 0644 ops/systemd/munich-weekly-backup.timer /etc/systemd/system/munich-weekly-backup.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now munich-weekly-backup.timer
 ```
+
+The service references `OnFailure=munich-weekly-alert@%n.service`. Full
+production rollout installs the alert template and `notify-ops.sh` before
+timers are enabled. If installing only this backup task early, verify failures
+through journald until the alert template from the operations status task is
+installed.
+
+The systemd unit hardens the root service with read-only system paths and
+allows writes only to `/var/backups/munich-weekly`, the restic cache directory,
+and the Docker socket. If `APP_DIR` or `BACKUP_WORK_DIR` is changed, update the
+unit's `ReadOnlyPaths=` and `ReadWritePaths=` before enabling the timer.
 
 Initialize the encrypted backup repository once:
 
@@ -1261,6 +1290,11 @@ sudo journalctl -u munich-weekly-backup.service -n 120 --no-pager
 ```
 
 Expected result: restic prints the latest snapshots and the service exits successfully.
+
+If the service fails with `R2 backup manifest mismatch`, upload objects changed
+during the copy or the destination did not receive the same object set. Rerun
+the backup after upload activity settles and treat the failed run as
+non-restorable until a later run succeeds.
 
 ## Restore Drill
 
