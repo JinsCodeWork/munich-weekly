@@ -21,7 +21,10 @@ Document classes, ownership, and historical document policy are defined in
 | Document | Class | Owner | Update when |
 | --- | --- | --- | --- |
 | [Deployment Guide](./deployment.md) | Operational guide | Backend/platform maintainer | Production ports, Nginx, PM2, Docker, profiles, or SSL flow changes. |
+| [Operations Quickstart](./operations/README.md) | Operational guide | Platform maintainer | Production workflow, deployment gates, alerting, or handoff state changes. |
+| [Production State](./operations/production-state.md) | Operational handoff | Platform maintainer | PRs are merged, production is deployed, timers are installed, secrets rotate, or Cloudflare settings change. |
 | [Operations Runbook](./operations/runbook.md) | Operational runbook | Platform maintainer | Daily checks, alerting, maintenance cadence, or production service operations change. |
+| [Dependency Maintenance](./operations/dependency-maintenance.md) | Operational runbook | Platform maintainer | Dependabot grouping, CI gates, package managers, or security policy changes. |
 | [Backup and Restore Runbook](./operations/backup-restore.md) | Operational runbook | Platform maintainer | Database container names, backup storage, retention, or restore commands change. |
 | [Incident Response Runbook](./operations/incident-response.md) | Operational runbook | Platform maintainer | Alerting, secrets, hosting, backup, or recovery procedures change. |
 | [Cloudflare Operations Roadmap](./operations/cloudflare-operations-roadmap.md) | Future operations plan | Platform maintainer | Cloudflare products, pricing assumptions, DNS/proxy topology, image delivery, or edge security plans change. |
