@@ -23,6 +23,7 @@ Document classes, ownership, and historical document policy are defined in
 | [Deployment Guide](./deployment.md) | Operational guide | Backend/platform maintainer | Production ports, Nginx, PM2, Docker, profiles, or SSL flow changes. |
 | [Operations Runbook](./operations/runbook.md) | Operational runbook | Platform maintainer | Daily checks, alerting, maintenance cadence, or production service operations change. |
 | [Backup and Restore Runbook](./operations/backup-restore.md) | Operational runbook | Platform maintainer | Database container names, backup storage, retention, or restore commands change. |
+| [Incident Response Runbook](./operations/incident-response.md) | Operational runbook | Platform maintainer | Alerting, secrets, hosting, backup, or recovery procedures change. |
 | [Cloudflare Operations Roadmap](./operations/cloudflare-operations-roadmap.md) | Future operations plan | Platform maintainer | Cloudflare products, pricing assumptions, DNS/proxy topology, image delivery, or edge security plans change. |
 | [Storage System](./storage.md) | Reference | Backend/platform maintainer | Storage modes, upload limits, R2/local behavior, or file paths change. |
 | [Image CDN System](./image-cdn.md) | Reference | Backend/platform maintainer | Cloudflare Worker image delivery or transformation behavior changes. |
