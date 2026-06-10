@@ -11,6 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:routes": "npx --no-install sucrase-node test/sync-hero-route.test.ts && npx --no-install sucrase-node test/csp-report-route.test.ts",
     "lint": "eslint src"
   },
   "dependencies": {

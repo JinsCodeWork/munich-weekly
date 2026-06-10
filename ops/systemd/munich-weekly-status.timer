@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Munich Weekly production status check daily
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

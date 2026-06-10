@@ -23,6 +23,48 @@ values into shell commands.
 Agents may load this file for local work, for example by sourcing it in the
 current shell, but must not echo or persist the values.
 
+## Operations
+
+These variables are used by production operations scripts. They are not
+application runtime variables and must not be committed.
+
+| Variable | Used by | Required for | Notes |
+|---|---|---|---|
+| `RESTIC_REPOSITORY` | `ops/scripts/backup-production.sh` | Production backups | Encrypted restic repository URL. Use a private backup bucket such as `munichweekly-ops-backups`. |
+| `RESTIC_PASSWORD` | `ops/scripts/backup-production.sh` | Production backups | Secret used to encrypt/decrypt restic backups. Store in `/etc/munich-weekly/backup.env` on the server and in the password manager. |
+| `AWS_ACCESS_KEY_ID` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
+| `AWS_SECRET_ACCESS_KEY` | restic S3 backend | R2/S3 backup repository | Secret for the private backup bucket, not the public uploads bucket. |
+| `APP_DIR` | `ops/scripts/backup-production.sh`, `ops/scripts/production-status.sh` | Optional override | Defaults to `/home/deploy/munich-weekly`. |
+| `BACKUP_WORK_DIR` | `ops/scripts/backup-production.sh` | Optional override | Defaults to `/var/backups/munich-weekly`. |
+| `BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Set to `true` only for local syntax and filesystem checks that must not contact Docker, R2, or restic. |
+| `ALLOW_BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Must be set to `true` with a non-production `BACKUP_ENV` before `BACKUP_DRY_RUN=true` is accepted. Never set this in `/etc/munich-weekly/backup.env`. |
+| `ALLOW_INCOMPLETE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Local validation or exceptional maintenance only | Defaults to `false`. Required before `REQUIRE_R2_BACKUP=false` is accepted outside production; production backups reject `REQUIRE_R2_BACKUP=false`. |
+| `ENFORCE_BACKUP_ENV_PERMISSIONS` | `ops/scripts/backup-production.sh` | Optional local permission check | Defaults to `false`. Production `/etc/munich-weekly/backup.env` is always checked for root ownership and no group/other permissions. |
+| `RETENTION_DAILY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `14`. |
+| `RETENTION_WEEKLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `8`. |
+| `RETENTION_MONTHLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `12`. |
+| `REQUIRE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Production media backup gate | Defaults to `true`; production backups fail if R2 backup remotes are not configured. |
+| `RCLONE_CONFIG` | `rclone` | R2 object backup | Defaults to `/etc/munich-weekly/rclone.conf`. |
+| `RCLONE_R2_SOURCE` | `ops/scripts/backup-production.sh` | R2 object backup | Source remote/path for production upload objects, for example an rclone remote pointing to the production R2 bucket prefix. |
+| `RCLONE_R2_BACKUP` | `ops/scripts/backup-production.sh` | R2 object backup | Destination remote/path for independent private object backups. Use a separate private backup bucket, preferably via `rclone crypt` or an equivalent encrypted private destination. |
+| `RESTORE_PARENT_DIR` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `/var/tmp`. The script creates a private temporary drill directory under this path and removes it on exit. |
+| `CONTAINER_NAME` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `mw-restore-drill-postgres` as the container name prefix. The script appends a unique run suffix and labels the container before cleanup. |
+| `RESTORE_RUN_ID` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a UTC timestamp plus process ID. Used in the temporary Docker container name and cleanup label. |
+| `DB_NAME` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `munich_weekly_restore_drill` for the isolated restore database. |
+| `DB_USER` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to `restore_drill` for the isolated restore database user. |
+| `DB_PASSWORD` | `ops/scripts/restore-backup-drill.sh` | Optional restore drill override | Defaults to a local restore-drill password. It is only passed to the isolated Docker container. |
+| `ALLOW_EMPTY_R2_RESTORE` | `ops/scripts/restore-backup-drill.sh` | Explicit empty-object restore exception | Defaults to `false`. Set to `true` only when production is intentionally expected to have no uploaded R2 objects. |
+| `OPS_ALERT_WEBHOOK_URL` | `ops/scripts/notify-ops.sh` | Optional failure alerting | Webhook endpoint for systemd `OnFailure` alerts. Store in `/etc/munich-weekly/alerts.env`, not in Git. |
+| `OPS_ALERT_CONNECT_TIMEOUT` | `ops/scripts/notify-ops.sh` | Optional alert delivery override | Defaults to `10` seconds for webhook connection setup. |
+| `OPS_ALERT_MAX_TIME` | `ops/scripts/notify-ops.sh` | Optional alert delivery override | Defaults to `20` seconds for total webhook delivery time. |
+| `ALERT_ENV` | `ops/scripts/notify-ops.sh` | Optional alert env override | Defaults to `/etc/munich-weekly/alerts.env`. Use only for local validation or if production alert config intentionally moves. |
+| `BACKUP_UNIT` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.service` for recent backup journal output. |
+| `BACKUP_TIMER` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `munich-weekly-backup.timer` for timer status output. |
+| `BACKEND_HEALTH_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:8080/api/layout/health`. |
+| `LOCAL_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `http://127.0.0.1:3000/`. |
+| `PUBLIC_FRONTEND_URL` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `https://munichweekly.art`. |
+| `STATUS_PROBE_TIMEOUT` | `ops/scripts/production-status.sh` | Optional status check override | Defaults to `20s` for each non-HTTP probe. Increase only for one-off diagnostics on a slow host. |
+
 ## Backend
 
 The backend reads defaults from `backend/src/main/resources/application.properties`.

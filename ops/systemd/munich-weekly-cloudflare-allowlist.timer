@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Munich Weekly Cloudflare origin allowlist update weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 04:15:00
+Persistent=true
+RandomizedDelaySec=20m
+
+[Install]
+WantedBy=timers.target

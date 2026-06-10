@@ -221,7 +221,8 @@ This approach ensures that:
 
 ### Worker Deployment
 
-The Image Worker is deployed using Wrangler, Cloudflare's command-line tool:
+The Image Worker requires Node.js 22 or newer and is deployed using Wrangler,
+Cloudflare's command-line tool:
 
 ```bash
 # Install Wrangler

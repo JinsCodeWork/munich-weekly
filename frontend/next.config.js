@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   experimental: {
     // Allow proxied multipart uploads (> default 10MB) to reach backend
     proxyClientMaxBodySize: '30mb'
