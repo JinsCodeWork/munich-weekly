@@ -30,13 +30,14 @@ tokens, backup credentials, or private keys.
 3. Record current time and production state from outside the production server:
 
 ```bash
-date -u
-ssh munichweekly 'date -u'
-ssh munichweekly 'cd /home/deploy/munich-weekly && git rev-parse HEAD'
+date -Is
+ssh munichweekly 'date -Is'
+ssh munichweekly 'git -C /home/deploy/munich-weekly rev-parse HEAD'
 ssh munichweekly 'docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"'
 ssh munichweekly 'sudo -n -u deploy env HOME=/home/deploy PM2_HOME=/home/deploy/.pm2 pm2 status --no-color'
 ssh munichweekly 'sudo journalctl -u nginx -n 200 --no-pager'
-ssh munichweekly 'sudo -n -u deploy env HOME=/home/deploy PM2_HOME=/home/deploy/.pm2 pm2 logs --lines 200 --nostream --raw'
+ssh munichweekly 'docker logs --timestamps --tail 200 mw-backend'
+ssh munichweekly 'sudo -n -u deploy env HOME=/home/deploy PM2_HOME=/home/deploy/.pm2 pm2 logs munich-frontend --lines 200 --nostream --raw'
 ```
 
 4. If any secret is known or likely exposed, rotate that secret before broad
@@ -59,11 +60,12 @@ directory. Do not copy secret env files or private keys.
 
 ```bash
 mkdir -p incident-evidence/YYYY-MM-DD-incident
-ssh munichweekly 'date -u' > incident-evidence/YYYY-MM-DD-incident/server-date.txt
-ssh munichweekly 'cd /home/deploy/munich-weekly && git rev-parse HEAD && git status --short' > incident-evidence/YYYY-MM-DD-incident/git-state.txt
+ssh munichweekly 'date -Is' > incident-evidence/YYYY-MM-DD-incident/server-date.txt
+ssh munichweekly 'git -C /home/deploy/munich-weekly rev-parse HEAD && git -C /home/deploy/munich-weekly status --short' > incident-evidence/YYYY-MM-DD-incident/git-state.txt
 ssh munichweekly 'docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"' > incident-evidence/YYYY-MM-DD-incident/docker-ps.txt
 ssh munichweekly 'sudo journalctl -u nginx --since "2 hours ago" --no-pager' > incident-evidence/YYYY-MM-DD-incident/nginx-journal.txt
-ssh munichweekly 'sudo -n -u deploy env HOME=/home/deploy PM2_HOME=/home/deploy/.pm2 pm2 logs --lines 1000 --nostream --raw' > incident-evidence/YYYY-MM-DD-incident/backend-logs.txt
+ssh munichweekly 'docker logs --timestamps --since 2h mw-backend' > incident-evidence/YYYY-MM-DD-incident/backend-container.log
+ssh munichweekly 'sudo -n -u deploy env HOME=/home/deploy PM2_HOME=/home/deploy/.pm2 pm2 logs munich-frontend --lines 1000 --nostream --raw' > incident-evidence/YYYY-MM-DD-incident/frontend-pm2.log
 ```
 
 Keep evidence files private. Redact personal data before sharing outside the
@@ -82,6 +84,8 @@ validated afterward.
 - Cloudflare R2 access keys.
 - Turnstile site secret.
 - Image worker secrets and Worker bindings.
+- Image worker `DEBUG_AUTH_SECRET`.
+- Alert webhook `OPS_ALERT_WEBHOOK_URL`.
 - `JWT_SECRET`.
 - `ANONYMOUS_VOTE_SECRET`.
 - PostgreSQL application and administrative passwords.
