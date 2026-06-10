@@ -133,9 +133,10 @@ jobs:
         run: docker build -t munich-weekly-backend:ci .
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: munich-weekly-backend:ci
+          version: v0.71.0
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
