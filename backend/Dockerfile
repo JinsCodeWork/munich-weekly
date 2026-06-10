@@ -1,5 +1,5 @@
 # Use a minimal JDK runtime image
-FROM eclipse-temurin:21-jdk as builder
+FROM eclipse-temurin:25-jdk as builder
 
 # Set work directory inside container
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY src src
 RUN ./gradlew clean build -x test --no-daemon
 
 # Use a smaller runtime image and upgrade the vulnerable OpenSSL packages.
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 WORKDIR /app
 
