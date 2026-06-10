@@ -12,10 +12,14 @@ COPY src src
 # Pre-build dependencies to cache layers (optional optimization)
 RUN ./gradlew clean build -x test --no-daemon
 
-# Use a smaller base image for final runtime
-FROM eclipse-temurin:21-jdk-jammy
+# Use a smaller runtime image and upgrade the vulnerable OpenSSL packages.
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --only-upgrade libssl3 openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 # SECURITY FIX 2025-12-16: Create non-root user to run the application
 RUN groupadd --system --gid 1001 appgroup && \

@@ -201,6 +201,31 @@ ssh munichweekly 'cd /home/deploy/munich-weekly/frontend && npm ls PACKAGE_NAME'
 6. Close the Dependabot alert only after production is confirmed on the fixed
    version or the alert is proven not applicable.
 
+## Container Vulnerability Response
+
+Treat a failing container image scan as a release blocker until the finding is
+fixed, documented as not exploitable, or explicitly risk-accepted by the
+platform owner.
+
+1. Confirm whether the failure is scanner setup, OS packages, application
+   dependencies inside `app.jar`, or embedded secrets.
+2. For OS package findings, prefer updating the base image or applying a
+   targeted package upgrade for the affected packages. Avoid broad production
+   host changes when only the image layer is affected.
+3. For Java findings, update the Spring Boot BOM or the affected dependency to
+   the fixed version. Use explicit Gradle overrides only when the BOM still
+   resolves a vulnerable version.
+4. Rebuild and rescan the image before deployment:
+
+```bash
+cd backend
+docker build --no-cache -t munich-weekly-backend:ci .
+trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 munich-weekly-backend:ci
+```
+
+5. After deployment, record the production git SHA, image identity, and backend
+   health check result in the incident timeline.
+
 ## Backup Failure Response
 
 Treat every failed production backup as P1 until a later backup succeeds and a
