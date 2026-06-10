@@ -5,4 +5,5 @@ Description=Send Munich Weekly operations alert for %i
 Type=oneshot
 User=root
 Group=root
+PassEnvironment=ALERT_ENV
 ExecStart=/usr/local/sbin/munich-weekly-notify-ops.sh %i
