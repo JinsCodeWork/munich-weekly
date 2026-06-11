@@ -68,6 +68,7 @@ curl http://localhost:8080/api/layout/health
 ### 3. Run the Frontend
 
 The frontend rewrite configuration defaults API calls to `http://localhost:8080/api`.
+Use Node.js 20 or newer; `frontend/package.json` declares this runtime floor.
 
 ```bash
 cd frontend
@@ -116,6 +117,7 @@ Frontend:
 ```bash
 cd frontend
 npx tsc --noEmit
+npm run test:routes
 npm run build
 npm run lint
 ```
