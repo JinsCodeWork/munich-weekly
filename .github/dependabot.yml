@@ -4,101 +4,182 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "daily"
+      interval: "monthly"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "frontend"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
+      frontend-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       nextjs-runtime:
+        applies-to: version-updates
         patterns:
           - "next"
           - "eslint-config-next"
       react-runtime:
+        applies-to: version-updates
         patterns:
           - "react"
           - "react-dom"
-      frontend-minor-patch:
+      frontend-major:
+        applies-to: version-updates
         update-types:
-          - "minor"
-          - "patch"
+          - "major"
         patterns:
           - "*"
 
   - package-ecosystem: "npm"
     directory: "/image-worker"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "06:20"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "image-worker"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
+      image-worker-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       cloudflare-worker-tooling:
+        applies-to: version-updates
         patterns:
           - "wrangler"
           - "@cloudflare/*"
           - "vitest"
+      image-worker-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
 
   - package-ecosystem: "gradle"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "06:40"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "backend"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
+      backend-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       spring-boot-stack:
+        applies-to: version-updates
         patterns:
           - "org.springframework.boot"
           - "io.spring.dependency-management"
           - "org.springdoc:*"
       aws-sdk:
+        applies-to: version-updates
         patterns:
           - "software.amazon.awssdk:*"
+      backend-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "07:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "docker"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      backend-docker-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      backend-docker-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker-compose"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "07:10"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "docker"
       - "backend"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      backend-compose-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      backend-compose-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "07:20"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "github-actions"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      github-actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      github-actions-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
