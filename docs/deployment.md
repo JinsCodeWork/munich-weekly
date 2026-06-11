@@ -29,7 +29,7 @@ This guide explains how to deploy the **Munich Weekly** photography platform to 
 * Nginx installed and running
 * Docker + Docker Compose installed (v28.0.4 and v2.34.0 confirmed)
 * Git installed
-* Node.js, npm, PM2, curl, flock, sudo, and systemd available for production deploys
+* Node.js 20 or newer, npm, PM2, curl, flock, sudo, and systemd available for production deploys
 
 ---
 
