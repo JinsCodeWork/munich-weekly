@@ -1,9 +1,8 @@
 /* Import Poppins font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.cjs";
 
 /* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
@@ -140,15 +139,15 @@
   }
 
   .btn-primary {
-    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+    @apply rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
   }
 
   .btn-secondary {
-    @apply btn bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400;
+    @apply rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-300;
+    @apply rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-300;
   }
 
   /* Card variants */
@@ -157,11 +156,11 @@
   }
 
   .card-default {
-    @apply card shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow;
   }
 
   .card-elevated {
-    @apply card shadow-md;
+    @apply bg-white border border-gray-200 rounded-lg overflow-hidden shadow-md;
   }
 
   /* Status badges */
@@ -170,27 +169,27 @@
   }
 
   .badge-success {
-    @apply badge bg-green-100 text-green-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800;
   }
 
   .badge-error {
-    @apply badge bg-red-100 text-red-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
   }
 
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800;
   }
 
   .badge-info {
-    @apply badge bg-blue-100 text-blue-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800;
   }
 
   .badge-default {
-    @apply badge bg-gray-100 text-gray-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800;
   }
 
   .badge-special {
-    @apply badge bg-purple-100 text-purple-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800;
   }
 
   /* Table styling */
