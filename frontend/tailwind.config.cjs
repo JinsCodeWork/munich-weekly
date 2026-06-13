@@ -1,8 +1,8 @@
-// tailwind.config.ts
-import type { Config } from 'tailwindcss'
-import tailwindcssAnimate from 'tailwindcss-animate'
+// tailwind.config.cjs
+const tailwindcssAnimate = require('tailwindcss-animate')
 
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+const config = {
   content: [
     './src/app/**/*.{ts,tsx}',
     './src/components/**/*.{ts,tsx}',
@@ -34,4 +34,4 @@ const config: Config = {
   ],
 }
 
-export default config
+module.exports = config
