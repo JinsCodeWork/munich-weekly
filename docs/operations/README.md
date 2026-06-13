@@ -30,6 +30,7 @@ gh pr checks <pr-number>
 | --- | --- |
 | Normal production checks | [Operations Runbook](./runbook.md) |
 | Deploying | [Deployment Guide](../deployment.md) |
+| Current deployment readiness | [Deployment Readiness Plan](./deployment-readiness-plan.md) |
 | Backup or restore | [Backup and Restore](./backup-restore.md) |
 | Security incident or outage | [Incident Response](./incident-response.md) |
 | Dependabot emails or PRs | [Dependency Maintenance](./dependency-maintenance.md) |

@@ -173,8 +173,11 @@ The script:
 * Runs bounded retry smoke checks against the local backend health endpoint,
   local frontend, and public site.
 * Fails if the public site exposes an `X-Powered-By` response header.
-* Attempts a best-effort rollback to the previous commit if any post-checkout
-  deploy step fails. The original deployment failure still exits nonzero.
+* Attempts a best-effort code rollback to the previous commit if any
+  post-checkout deploy step fails. The original deployment failure still exits
+  nonzero. This rollback does not restore PostgreSQL, R2 objects, or local
+  uploads; use the backup/restore runbook when a failed release may have changed
+  schema or data.
 
 ### Install or Update the Deploy Command
 
