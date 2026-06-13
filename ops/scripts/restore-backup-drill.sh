@@ -34,6 +34,35 @@ require_bool() {
   esac
 }
 
+stat_owner_mode() {
+  local file_path="$1"
+  if stat -c '%U %a' "$file_path" 2>/dev/null; then
+    return 0
+  fi
+  stat -f '%Su %Lp' "$file_path" 2>/dev/null
+}
+
+require_root_only_file_permissions() {
+  local file_path="$1"
+  local label="$2"
+  require_cmd stat
+  local owner mode owner_perms group_perms other_perms
+  read -r owner mode < <(stat_owner_mode "$file_path") || die "Could not stat $label: $file_path"
+
+  if [ "$owner" != "root" ]; then
+    die "$label must be owned by root: $file_path"
+  fi
+
+  mode=$((10#$mode))
+  owner_perms=$((mode / 100 % 10))
+  group_perms=$((mode / 10 % 10))
+  other_perms=$((mode % 10))
+
+  if [ $((owner_perms & 4)) -eq 0 ] || [ "$group_perms" -ne 0 ] || [ "$other_perms" -ne 0 ]; then
+    die "$label must be readable only by root: $file_path"
+  fi
+}
+
 cleanup() {
   if command -v docker >/dev/null 2>&1 && [ -n "${DRILL_CONTAINER_NAME:-}" ]; then
     local container_id
@@ -296,10 +325,13 @@ main() {
   require_bool ALLOW_EMPTY_R2_RESTORE "$ALLOW_EMPTY_R2_RESTORE"
 
   [ -r "$BACKUP_ENV" ] || die "Backup env file is missing or unreadable: $BACKUP_ENV"
+  require_root_only_file_permissions "$BACKUP_ENV" "Backup env file"
 
   set -a
   . "$BACKUP_ENV"
   set +a
+  export RCLONE_CONFIG="${RCLONE_CONFIG:-/etc/munich-weekly/rclone.conf}"
+  require_root_only_file_permissions "$RCLONE_CONFIG" "Rclone config file"
 
   mkdir -p "$RESTORE_PARENT_DIR"
   RESTORE_WORK_DIR="$(mktemp -d "$RESTORE_PARENT_DIR/mw-restore-drill.XXXXXXXX")"

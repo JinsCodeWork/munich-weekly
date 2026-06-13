@@ -25,19 +25,22 @@ require_cmd() {
 }
 
 stat_owner_mode() {
-  if stat -c '%U %a' "$BACKUP_ENV" 2>/dev/null; then
+  local file_path="$1"
+  if stat -c '%U %a' "$file_path" 2>/dev/null; then
     return 0
   fi
-  stat -f '%Su %Lp' "$BACKUP_ENV" 2>/dev/null
+  stat -f '%Su %Lp' "$file_path" 2>/dev/null
 }
 
-require_backup_env_permissions() {
+require_root_only_file_permissions() {
+  local file_path="$1"
+  local label="$2"
   require_cmd stat
   local owner mode owner_perms group_perms other_perms
-  read -r owner mode < <(stat_owner_mode) || die "Could not stat backup env file: $BACKUP_ENV"
+  read -r owner mode < <(stat_owner_mode "$file_path") || die "Could not stat $label: $file_path"
 
   if [ "$owner" != "root" ]; then
-    die "Backup env file must be owned by root: $BACKUP_ENV"
+    die "$label must be owned by root: $file_path"
   fi
 
   mode=$((10#$mode))
@@ -46,12 +49,27 @@ require_backup_env_permissions() {
   other_perms=$((mode % 10))
 
   if [ $((owner_perms & 4)) -eq 0 ] || [ "$group_perms" -ne 0 ] || [ "$other_perms" -ne 0 ]; then
-    die "Backup env file must be readable only by root: $BACKUP_ENV"
+    die "$label must be readable only by root: $file_path"
   fi
+}
+
+require_backup_env_permissions() {
+  require_root_only_file_permissions "$BACKUP_ENV" "Backup env file"
 }
 
 write_sha256sums() {
   "${SHA256_CMD[@]}" "$RUN_DIR/postgres.dump" "$RUN_DIR/uploads.tar.gz" > "$RUN_DIR/SHA256SUMS"
+}
+
+cleanup_staging() {
+  if [ "${KEEP_BACKUP_STAGING:-false}" = "true" ]; then
+    return
+  fi
+  if [ -n "${RUN_DIR:-}" ] && [ -d "$RUN_DIR" ] && [ "$RUN_DIR" != "/" ]; then
+    case "$RUN_DIR" in
+      "$BACKUP_WORK_DIR"/*) rm -rf "$RUN_DIR" ;;
+    esac
+  fi
 }
 
 require_bool ENFORCE_BACKUP_ENV_PERMISSIONS "$ENFORCE_BACKUP_ENV_PERMISSIONS"
@@ -79,14 +97,19 @@ REQUIRE_R2_BACKUP="${REQUIRE_R2_BACKUP:-true}"
 BACKUP_DRY_RUN="${BACKUP_DRY_RUN:-false}"
 ALLOW_BACKUP_DRY_RUN="${ALLOW_BACKUP_DRY_RUN:-false}"
 ALLOW_INCOMPLETE_R2_BACKUP="${ALLOW_INCOMPLETE_R2_BACKUP:-false}"
+KEEP_BACKUP_STAGING="${KEEP_BACKUP_STAGING:-false}"
 
 require_bool REQUIRE_R2_BACKUP "$REQUIRE_R2_BACKUP"
 require_bool BACKUP_DRY_RUN "$BACKUP_DRY_RUN"
 require_bool ALLOW_BACKUP_DRY_RUN "$ALLOW_BACKUP_DRY_RUN"
 require_bool ALLOW_INCOMPLETE_R2_BACKUP "$ALLOW_INCOMPLETE_R2_BACKUP"
+require_bool KEEP_BACKUP_STAGING "$KEEP_BACKUP_STAGING"
 
 if [ "$BACKUP_ENV" = "$PRODUCTION_BACKUP_ENV" ] && [ "$BACKUP_DRY_RUN" = "true" ]; then
   die "BACKUP_DRY_RUN cannot be true when BACKUP_ENV=$PRODUCTION_BACKUP_ENV"
+fi
+if [ "$BACKUP_ENV" = "$PRODUCTION_BACKUP_ENV" ] && [ "$KEEP_BACKUP_STAGING" = "true" ]; then
+  die "KEEP_BACKUP_STAGING cannot be true when BACKUP_ENV=$PRODUCTION_BACKUP_ENV"
 fi
 if [ "$BACKUP_DRY_RUN" = "true" ] && [ "$ALLOW_BACKUP_DRY_RUN" != "true" ]; then
   die "BACKUP_DRY_RUN=true requires ALLOW_BACKUP_DRY_RUN=true"
@@ -117,6 +140,9 @@ if [ "$REQUIRE_R2_BACKUP" = "true" ]; then
   : "${RCLONE_R2_SOURCE:?RCLONE_R2_SOURCE is required when REQUIRE_R2_BACKUP=true}"
   : "${RCLONE_R2_BACKUP:?RCLONE_R2_BACKUP is required when REQUIRE_R2_BACKUP=true}"
   export RCLONE_CONFIG="${RCLONE_CONFIG:-/etc/munich-weekly/rclone.conf}"
+  if [ "$BACKUP_ENV" = "$PRODUCTION_BACKUP_ENV" ] || [ "$ENFORCE_BACKUP_ENV_PERMISSIONS" = "true" ]; then
+    require_root_only_file_permissions "$RCLONE_CONFIG" "Rclone config file"
+  fi
   R2_BACKUP_PATH="${RCLONE_R2_BACKUP}/snapshots/${DATE_UTC}"
   if [ "$BACKUP_DRY_RUN" != "true" ]; then
     require_cmd rclone
@@ -125,6 +151,7 @@ fi
 
 mkdir -p "$BACKUP_WORK_DIR" "$RUN_DIR"
 chmod 0700 "$BACKUP_WORK_DIR" "$RUN_DIR"
+trap cleanup_staging EXIT
 
 if [ "$REQUIRE_R2_BACKUP" != "true" ]; then
   printf '%s\n' \

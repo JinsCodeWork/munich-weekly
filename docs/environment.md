@@ -40,6 +40,7 @@ application runtime variables and must not be committed.
 | `ALLOW_BACKUP_DRY_RUN` | `ops/scripts/backup-production.sh` | Local validation only | Defaults to `false`. Must be set to `true` with a non-production `BACKUP_ENV` before `BACKUP_DRY_RUN=true` is accepted. Never set this in `/etc/munich-weekly/backup.env`. |
 | `ALLOW_INCOMPLETE_R2_BACKUP` | `ops/scripts/backup-production.sh` | Local validation or exceptional maintenance only | Defaults to `false`. Required before `REQUIRE_R2_BACKUP=false` is accepted outside production; production backups reject `REQUIRE_R2_BACKUP=false`. |
 | `ENFORCE_BACKUP_ENV_PERMISSIONS` | `ops/scripts/backup-production.sh` | Optional local permission check | Defaults to `false`. Production `/etc/munich-weekly/backup.env` is always checked for root ownership and no group/other permissions. |
+| `KEEP_BACKUP_STAGING` | `ops/scripts/backup-production.sh` | Local debugging only | Defaults to `false`. Production rejects `true`; plaintext backup staging data is removed after each run. |
 | `RETENTION_DAILY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `14`. |
 | `RETENTION_WEEKLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `8`. |
 | `RETENTION_MONTHLY` | `ops/scripts/backup-production.sh` | Optional retention | Defaults to `12`. |
