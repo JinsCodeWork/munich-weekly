@@ -9,17 +9,19 @@ before relying on it.
 
 ## Current Handoff
 
-Last updated: 2026-06-11.
+Last updated: 2026-06-13.
 
 | Area | State | Next action |
 | --- | --- | --- |
-| Ops hardening PR | PR #3 is ready for review, CI green, not merged. | Review and merge when approved. |
-| Production deploy | Not performed for PR #3. | Schedule maintenance window before deploying. |
-| Backup timer | Scripts and units exist in repo; server installation not confirmed here. | Verify after merge on production. |
-| Restore drill | Script exists in repo; latest successful drill not recorded here. | Run after backup setup is confirmed. |
-| Status timer and alerts | Scripts and units exist in repo; server installation not confirmed here. | Install or verify on production. |
+| Ops hardening PR | PR #3 merged on 2026-06-10. | Deploy merged operations code after readiness gates pass. |
+| Production deploy | Not performed for current `main`. Production is still at `bb05283`; GitHub `main` is `57ecc37`. | Blocked on Cloudflare public smoke check; follow [Deployment Readiness Plan](./deployment-readiness-plan.md). |
+| Backup timer | `restic`, `rclone`, patched scripts, systemd units, root-only `backup.env`, root-only `rclone.conf`, and narrow deploy sudoers are installed. Backup timer is enabled. First successful snapshot: `89759db3` on 2026-06-13. | Monitor next scheduled backup on 2026-06-14 and keep restic password available from local `.env.local`. |
+| Restore drill | Restore drill succeeded from snapshot `89759db3` on 2026-06-13. | Run monthly and after backup script changes. |
+| Status timer and alerts | Scripts and units are installed, but status timer is not enabled because public Cloudflare smoke currently returns `403`. | Enable after the public health URL returns `200`. |
 | Cloudflare origin protection | Repo contains Nginx snippets and allowlist automation; production state not confirmed here. | Verify carefully before Nginx reload. |
-| Dependabot PRs | Several were opened from old `main`; PR #3 updates/removes many affected manifests. | Merge PR #3 first, then close or rebase stale Dependabot PRs. |
+| Public smoke check | Server-side `curl` to `/` and `/api/layout/health` receives Cloudflare `403` challenge even with a browser User-Agent; `/favicon.ico` returns `200` but is not an acceptable deploy smoke URL. Current Cloudflare connector can manage R2 but is unauthorized for zone/ruleset changes. | Add a Cloudflare rule so `/api/layout/health` returns `200` uncached, or re-authorize the connector with zone/ruleset permissions. |
+| R2 backup bucket | `munichweekly-ops-backups` was created on 2026-06-13 in R2 location `WEUR`. | Use only for encrypted restic data and copied object backups. |
+| Dependabot PRs | Open dependency PRs are not part of the deployment target. #37 is a green frontend security PR; #13 and #31 are major upgrades; #36, #29, #21, #16, and #14 are failing, draft, or blocked. | Deploy current stable `main` first, then triage #37 promptly through the dependency maintenance runbook. |
 
 ## Required Deployment Record
 
