@@ -22,6 +22,7 @@ Document classes, ownership, and historical document policy are defined in
 | --- | --- | --- | --- |
 | [Deployment Guide](./deployment.md) | Operational guide | Backend/platform maintainer | Production ports, Nginx, PM2, Docker, profiles, or SSL flow changes. |
 | [Operations Quickstart](./operations/README.md) | Operational guide | Platform maintainer | Production workflow, deployment gates, alerting, or handoff state changes. |
+| [Deployment Readiness Plan](./operations/deployment-readiness-plan.md) | Implementation plan | Platform maintainer | Production script installation, backup readiness, smoke checks, or first one-command deployment status changes. |
 | [Production State](./operations/production-state.md) | Operational handoff | Platform maintainer | PRs are merged, production is deployed, timers are installed, secrets rotate, or Cloudflare settings change. |
 | [Operations Runbook](./operations/runbook.md) | Operational runbook | Platform maintainer | Daily checks, alerting, maintenance cadence, or production service operations change. |
 | [Dependency Maintenance](./operations/dependency-maintenance.md) | Operational runbook | Platform maintainer | Dependabot grouping, CI gates, package managers, or security policy changes. |
