@@ -32,12 +32,16 @@ export const PromotionConfigForm: React.FC<PromotionConfigFormProps> = ({
   // Update form data when config changes
   useEffect(() => {
     if (config) {
-      setFormData({
-        isEnabled: config.isEnabled,
-        navTitle: config.navTitle,
-        pageUrl: config.pageUrl,
-        description: config.description || '',
-      });
+      const timer = window.setTimeout(() => {
+        setFormData({
+          isEnabled: config.isEnabled,
+          navTitle: config.navTitle,
+          pageUrl: config.pageUrl,
+          description: config.description || '',
+        });
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [config]);
 
@@ -259,7 +263,7 @@ export const PromotionConfigForm: React.FC<PromotionConfigFormProps> = ({
             {config.isEnabled && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Live URL:</span>
-                <a 
+                <a
                   href={`/${config.pageUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -274,4 +278,4 @@ export const PromotionConfigForm: React.FC<PromotionConfigFormProps> = ({
       )}
     </div>
   );
-}; 
+};

@@ -36,7 +36,7 @@ const isTokenExpired = (token: string): boolean => {
   try {
     const base64Url = token.split('.')[1]
     if (!base64Url) return true
-    
+
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
@@ -44,7 +44,7 @@ const isTokenExpired = (token: string): boolean => {
 
     const { exp } = JSON.parse(jsonPayload)
     if (!exp) return true
-    
+
     // Check if expired (consider as expired 30 seconds before actual expiry to avoid edge cases)
     return Date.now() >= (exp * 1000 - 30000)
   } catch {
@@ -60,17 +60,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
   const router = useRouter()
 
+  // Clear all authentication storage
+  const clearAuthStorage = useCallback(() => {
+    try {
+      localStorage.removeItem("jwt")
+      localStorage.removeItem("user_data")
+      sessionStorage.removeItem("jwt")
+      sessionStorage.removeItem("user_data")
+    } catch {
+      // Failed to clear auth storage
+    }
+
+    setToken(null)
+    setUser(null)
+  }, [])
+
   // Try to recover token and user data from both localStorage and sessionStorage
   useEffect(() => {
     const initAuth = async () => {
       let storedToken = null
       let storedUser = null
-      
+
       try {
         // First try to get long-term token from localStorage
         storedToken = localStorage.getItem("jwt")
         storedUser = localStorage.getItem("user_data")
-        
+
         // If not in localStorage, try sessionStorage as backup
         if (!storedToken) {
           storedToken = sessionStorage.getItem("jwt")
@@ -79,9 +94,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch {
         // Storage access error (possible private browsing mode)
       }
-      
+
       const preserveAuth = sessionStorage.getItem("preserve_auth")
-    
+
       if (storedToken) {
         // Check if token is expired
         if (isTokenExpired(storedToken)) {
@@ -89,9 +104,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false)
           return
         }
-        
+
         setToken(storedToken)
-        
+
         // If we have cached user data, use it first to improve perceived performance
         if (storedUser) {
           try {
@@ -101,12 +116,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // User data parsing failed
           }
         }
-        
+
         // Always fetch the latest user data regardless
         try {
           const userData = await usersApi.getCurrentUser()
           setUser(userData)
-          
+
           // Update cached user data
           try {
             localStorage.setItem("user_data", JSON.stringify(userData))
@@ -117,39 +132,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch {
           clearAuthStorage()
         }
-        
+
         // If we have preserve_auth flag, clear it
         if (preserveAuth === "true") {
           sessionStorage.removeItem("preserve_auth")
         }
       }
-      
+
       setLoading(false)
     }
-    
-    initAuth()
-  }, [])
 
-  // Clear all authentication storage
-  const clearAuthStorage = () => {
-    try {
-      localStorage.removeItem("jwt")
-      localStorage.removeItem("user_data")
-      sessionStorage.removeItem("jwt")
-      sessionStorage.removeItem("user_data")
-    } catch {
-      // Failed to clear auth storage
-    }
-    
-    setToken(null)
-    setUser(null)
-  }
+    initAuth()
+  }, [clearAuthStorage])
 
   const fetchUserData = async (): Promise<User | null> => {
     try {
       const userData = await usersApi.getCurrentUser()
       setUser(userData)
-      
+
       // Update cached user data
       try {
         localStorage.setItem("user_data", JSON.stringify(userData))
@@ -172,14 +172,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Store token in both localStorage and sessionStorage for reliability
       localStorage.setItem("jwt", newToken)
       sessionStorage.setItem("jwt", newToken)
-      
+
       setToken(newToken)
-      
+
       if (userData) {
         // If user data is provided, set and cache it directly
         setUser(userData)
         setLoading(false)
-        
+
         try {
           localStorage.setItem("user_data", JSON.stringify(userData))
           sessionStorage.setItem("user_data", JSON.stringify(userData))
@@ -203,7 +203,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     clearAuthStorage()
-    
+
     // Redirect to homepage
     router.push("/")
   }
@@ -242,9 +242,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Close modals when user successfully logs in
   useEffect(() => {
-    if (user) {
+    if (!user) return
+
+    const timeoutId = window.setTimeout(() => {
       closeAuthModals()
-    }
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [user, closeAuthModals])
 
   const value = {

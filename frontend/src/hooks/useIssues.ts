@@ -19,12 +19,12 @@ export function useIssues() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const fetchedIssues = await getAllIssues();
       // Sort issues by ID in descending order (newest first)
       const sortedIssues = (fetchedIssues || []).sort((a, b) => b.id - a.id);
       setIssues(sortedIssues);
-      
+
       // Filter for active issues (within submission period)
       const now = new Date();
       const active = sortedIssues.filter(issue => {
@@ -32,7 +32,7 @@ export function useIssues() {
         const submissionEnd = new Date(issue.submissionEnd);
         return submissionStart <= now && now <= submissionEnd;
       });
-      
+
       setActiveIssues(active);
     } catch (err) {
       console.error('Failed to fetch issues:', err);
@@ -44,7 +44,11 @@ export function useIssues() {
 
   // Load issues on component mount
   useEffect(() => {
-    fetchIssues();
+    const timer = window.setTimeout(() => {
+      void fetchIssues();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   return {
@@ -56,4 +60,4 @@ export function useIssues() {
     setIssues,
     setActiveIssues
   };
-} 
+}

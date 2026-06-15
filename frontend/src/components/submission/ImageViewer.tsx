@@ -31,18 +31,18 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
 
   // Check if imageUrl is valid
   const hasValidImage = imageUrl && imageUrl.trim() !== '' && !imageUrl.includes('undefined');
-  
+
   // Prevent background scrolling effect - optimized for mobile compatibility
   useEffect(() => {
     if (isOpen && hasValidImage) {
       // Record current scroll position
       const scrollY = window.scrollY;
-      
+
       // Gentle way to prevent scrolling, reducing impact on mobile rendering
       document.body.style.overflow = 'hidden';
       // Remove position fixed setting to avoid mobile rendering issues
       document.body.style.touchAction = 'none'; // Prevent mobile touch scrolling
-      
+
       return () => {
         // Restore body styles
         document.body.style.overflow = '';
@@ -54,11 +54,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       };
     }
   }, [isOpen, hasValidImage]);
-  
+
   // Create high quality image URL (without specifying width/height, letting the Worker adapt based on the original image and screen)
   const highQualityUrl = useMemo(() => {
     if (!hasValidImage) return '';
-    
+
     // For uploaded images, add high quality parameters without limiting dimensions
     if (imageUrl.startsWith('/uploads/') || imageUrl.includes('.r2.dev/')) {
       return createImageUrl(imageUrl, {
@@ -67,11 +67,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         fit: 'contain' // Force use of contain to ensure complete image display
       });
     }
-    
+
     // For external images, use the original URL
     return imageUrl;
   }, [imageUrl, hasValidImage]);
-  
+
   // Preload image to get dimension information
   useEffect(() => {
     if (isOpen && highQualityUrl) {
@@ -86,21 +86,25 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       };
       img.src = highQualityUrl;
     }
-    
+
     // Reset zoom and position when opening
     if (isOpen) {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-      setIsTransitioning(false);
+      const timer = window.setTimeout(() => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+        setIsTransitioning(false);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen, highQualityUrl]);
-  
+
   // Determine caption style based on description length
   const captionStyle = useMemo(() => {
     if (!description) return null;
-    
+
     const length = description.trim().length;
-    
+
     if (length < 60) {
       return { variant: 'default' as const, maxWidth: 'max-w-[90%]', textAlign: 'center' as const };
     } else if (length < 120) {
@@ -109,12 +113,12 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       return { variant: 'card' as const, maxWidth: 'max-w-[90%]', textAlign: 'left' as const };
     }
   }, [description]);
-  
+
   // Handle image load completion
   const handleImageLoad = () => {
     setImgLoaded(true);
   };
-  
+
   // Handle Escape key to close
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -122,16 +126,16 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
         onClose();
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener('keydown', handleEsc);
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
     };
   }, [isOpen, onClose]);
-  
+
   // Handle backdrop click to close
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -143,19 +147,19 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const handleDoubleTap = () => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300; // ms
-    
+
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       // Double tap detected - enable transition for smooth animation
       setIsTransitioning(true);
       setScale(scale === 1 ? 2.5 : 1);
       setPosition({ x: 0, y: 0 });
-      
+
       // Remove transition after animation completes
       setTimeout(() => {
         setIsTransitioning(false);
       }, 300);
     }
-    
+
     lastTapRef.current = now;
   };
 
@@ -169,11 +173,11 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
             // Store initial position on drag start
             initialPosRef.current = { ...position };
           }
-          
+
           // Calculate bounds for dragging
           const maxX = (bounds.width * scale - bounds.width) / 2;
           const maxY = (bounds.height * scale - bounds.height) / 2;
-          
+
           // Update position with boundaries
           setPosition({
             x: Math.max(-maxX, Math.min(maxX, initialPosRef.current.x + mx / scale)),
@@ -186,10 +190,10 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
           // Reset position when starting a new pinch gesture
           initialScaleRef.current = scale;
         }
-        
+
         const newScale = Math.max(1, Math.min(4, initialScaleRef.current * s));
         setScale(newScale);
-        
+
         // If zooming out to scale 1, reset position
         if (newScale === 1) {
           setPosition({ x: 0, y: 0 });
@@ -204,7 +208,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       eventOptions: { passive: false }
     }
   );
-  
+
   if (!isOpen || (!hasValidImage && isOpen)) {
     // If no valid image, close viewer directly
     if (!hasValidImage && isOpen) {
@@ -217,13 +221,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const calculateImageDimensions = () => {
     const maxHeight = Math.min(window.innerHeight * 0.7, 800);
     const maxWidth = Math.min(window.innerWidth * 0.9, 1200);
-    
+
     if (!imgDimensions.width || !imgDimensions.height) {
       return { width: maxWidth, height: maxHeight };
     }
-    
+
     const aspectRatio = imgDimensions.width / imgDimensions.height;
-    
+
     if (imgDimensions.isPortrait) {
       // Portrait image, prioritize height
       const height = maxHeight;
@@ -240,13 +244,13 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
   const { width, height } = calculateImageDimensions();
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div className="relative max-w-5xl w-full h-full flex flex-col items-center justify-center bg-transparent rounded-lg overflow-hidden">
         {/* Close button */}
-        <button 
+        <button
           className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-80 z-10 transition-all"
           onClick={onClose}
         >
@@ -254,17 +258,17 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        
+
         {/* Image help text for mobile devices */}
         <div className="absolute top-4 left-4 right-16 flex justify-center z-10 md:hidden">
           <div className="px-3 py-1 bg-black bg-opacity-60 text-white text-xs rounded-full">
             Double-tap to zoom, drag to pan
           </div>
         </div>
-        
+
         {/* Image Container with gesture support */}
-        <div 
-          className="flex justify-center items-center flex-grow w-full overflow-hidden" 
+        <div
+          className="flex justify-center items-center flex-grow w-full overflow-hidden"
           ref={containerRef}
           onClick={handleBackdropClick}
         >
@@ -278,10 +282,10 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
             }}
           >
             {/* Use Next.js optimized Image component */}
-            <div 
+            <div
               className="relative"
-              style={{ 
-                width, 
+              style={{
+                width,
                 height,
                 transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
                 transformOrigin: 'center center',
@@ -303,7 +307,7 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
                 unoptimized={false} // Let Next.js optimize the image
               />
             </div>
-            
+
             {/* Loading indicator */}
             {!imgLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -312,24 +316,24 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
             )}
           </div>
         </div>
-        
+
         {/* Description - fixed at the bottom, separate from the image */}
         {description && captionStyle && (
           <div className="w-full mt-4 flex justify-center flex-shrink-0" onClick={handleBackdropClick}>
-            <div 
+            <div
               className={getImageCaptionStyles({
                 variant: captionStyle.variant,
                 maxWidth: captionStyle.maxWidth
               })}
               onClick={(e) => e.stopPropagation()} // 防止点击文本区域时触发背景点击事件
             >
-              <div 
-                className={`text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden w-full px-1 custom-scrollbar ${captionStyle.textAlign === 'center' ? 'text-center' : 'text-left'}`} 
+              <div
+                className={`text-white text-lg font-light leading-relaxed italic max-h-[25vh] overflow-y-auto overflow-x-hidden w-full px-1 custom-scrollbar ${captionStyle.textAlign === 'center' ? 'text-center' : 'text-left'}`}
                 onClick={(e) => e.stopPropagation()}
-                style={{ 
+                style={{
                   textAlign: captionStyle.textAlign,
-                  wordWrap: 'break-word', 
-                  textOverflow: 'clip' 
+                  wordWrap: 'break-word',
+                  textOverflow: 'clip'
                 }}
               >
                 &ldquo;{description.trim()}&rdquo;
@@ -340,4 +344,4 @@ export function ImageViewer({ imageUrl, description, isOpen, onClose }: ImageVie
       </div>
     </div>
   );
-} 
+}
