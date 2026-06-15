@@ -64,7 +64,7 @@ export default function DataMigrationPage() {
   const [batchSize, setBatchSize] = useState(5);
   const [delayMs, setDelayMs] = useState(2000);
   const [error, setError] = useState<string | null>(null);
-  
+
             // 🔧 Added: Remigration related states
   const [remigrationStatus, setRemigrationStatus] = useState<RemigrationStatus | null>(null);
   const [remigrationBatchSize, setRemigrationBatchSize] = useState(3);
@@ -81,7 +81,7 @@ export default function DataMigrationPage() {
   // 🔧 新增：获取期刊列表
   const fetchIssues = useCallback(async () => {
     if (!token) return;
-    
+
     setIsLoadingIssues(true);
     try {
       const response = await fetch('/api/issues', {
@@ -89,7 +89,7 @@ export default function DataMigrationPage() {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const issuesData = await response.json();
         // 按ID降序排序（最新的在前）
@@ -105,14 +105,14 @@ export default function DataMigrationPage() {
 
   const fetchMigrationStatus = useCallback(async () => {
     if (!token) return;
-    
+
     try {
       const response = await fetch('/api/admin/migration/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const status = await response.json();
         setMigrationStatus(status);
@@ -125,14 +125,14 @@ export default function DataMigrationPage() {
   // 🔧 Added: Get remigration status
   const fetchRemigrationStatus = useCallback(async () => {
     if (!token) return;
-    
+
     try {
       const response = await fetch('/api/admin/migration/remigration/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const status = await response.json();
         setRemigrationStatus(status);
@@ -145,14 +145,14 @@ export default function DataMigrationPage() {
   // Auto-refresh status during migration
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    
+
     if (migrationStatus?.inProgress || remigrationStatus?.inProgress) {
       intervalId = setInterval(() => {
         fetchMigrationStatus();
         fetchRemigrationStatus();
       }, 2000); // Refresh every 2 seconds during migration
     }
-    
+
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
@@ -162,21 +162,21 @@ export default function DataMigrationPage() {
 
   const analyzeSubmissions = useCallback(async () => {
     if (!token) return;
-    
+
     setIsAnalyzing(true);
     setError(null);
-    
+
     try {
-      const url = selectedIssue 
+      const url = selectedIssue
         ? `/api/admin/migration/analyze?issueId=${selectedIssue}`
         : '/api/admin/migration/analyze';
-        
+
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const analysis = await response.json();
         setAnalysisResult(analysis);
@@ -194,9 +194,9 @@ export default function DataMigrationPage() {
 
   const startMigration = useCallback(async () => {
     if (!token) return;
-    
+
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
       params.append('batchSize', batchSize.toString());
@@ -204,7 +204,7 @@ export default function DataMigrationPage() {
       if (selectedIssue) {
         params.append('issueId', selectedIssue.toString());
       }
-      
+
       const response = await fetch('/api/admin/migration/start', {
         method: 'POST',
         headers: {
@@ -213,7 +213,7 @@ export default function DataMigrationPage() {
         },
         body: params.toString(),
       });
-      
+
       if (response.ok) {
         fetchMigrationStatus();
       } else {
@@ -228,9 +228,9 @@ export default function DataMigrationPage() {
 
   const stopMigration = useCallback(async () => {
     if (!token) return;
-    
+
     setError(null);
-    
+
     try {
       const response = await fetch('/api/admin/migration/stop', {
         method: 'POST',
@@ -238,7 +238,7 @@ export default function DataMigrationPage() {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         fetchMigrationStatus();
       } else {
@@ -254,9 +254,9 @@ export default function DataMigrationPage() {
   // 🔧 新增：启动重新迁移
   const startRemigration = useCallback(async () => {
     if (!token) return;
-    
+
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
       params.append('batchSize', remigrationBatchSize.toString());
@@ -264,7 +264,7 @@ export default function DataMigrationPage() {
       if (selectedIssue) {
         params.append('issueId', selectedIssue.toString());
       }
-      
+
       const response = await fetch('/api/admin/migration/remigration/start', {
         method: 'POST',
         headers: {
@@ -273,7 +273,7 @@ export default function DataMigrationPage() {
         },
         body: params.toString(),
       });
-      
+
       if (response.ok) {
         fetchRemigrationStatus();
       } else {
@@ -289,9 +289,9 @@ export default function DataMigrationPage() {
   // 🔧 新增：停止重新迁移
   const stopRemigration = useCallback(async () => {
     if (!token) return;
-    
+
     setError(null);
-    
+
     try {
       const response = await fetch('/api/admin/migration/remigration/stop', {
         method: 'POST',
@@ -299,7 +299,7 @@ export default function DataMigrationPage() {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         fetchRemigrationStatus();
       } else {
@@ -315,10 +315,14 @@ export default function DataMigrationPage() {
   // Initialize data on component mount
   useEffect(() => {
     if (isAdmin) {
-      fetchMigrationStatus();
-      fetchRemigrationStatus();
-      analyzeSubmissions();
-      fetchIssues();
+      const timer = window.setTimeout(() => {
+        void fetchMigrationStatus();
+        void fetchRemigrationStatus();
+        void analyzeSubmissions();
+        void fetchIssues();
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
@@ -326,7 +330,11 @@ export default function DataMigrationPage() {
   // 🔧 新增：当选择的期刊变化时重新分析
   useEffect(() => {
     if (isAdmin && issues.length > 0) {
-      analyzeSubmissions();
+      const timer = window.setTimeout(() => {
+        void analyzeSubmissions();
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIssue]);
@@ -439,7 +447,7 @@ export default function DataMigrationPage() {
                   </p>
                 </div>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-blue-50 rounded-lg p-4">
                   <p className="text-sm font-medium text-blue-600">总投稿数</p>
@@ -504,7 +512,7 @@ export default function DataMigrationPage() {
                 重新迁移使用较小批次以确保稳定性
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 批次间隔 (2000-30000ms)
@@ -529,7 +537,7 @@ export default function DataMigrationPage() {
           {remigrationStatus && (
             <div className="bg-white rounded-lg border border-orange-200 p-4 mb-4">
               <h3 className="text-lg font-medium text-gray-900 mb-3">重新迁移状态</h3>
-              
+
               {/* 筛选信息 */}
               {remigrationStatus.filteredByIssue && (
                 <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
@@ -538,7 +546,7 @@ export default function DataMigrationPage() {
                   </p>
                 </div>
               )}
-              
+
               {/* Status Badge */}
               <div className="flex items-center space-x-3 mb-4">
                 <span className="text-sm font-medium text-gray-700">状态:</span>
@@ -566,7 +574,7 @@ export default function DataMigrationPage() {
                     <span>{remigrationStatus.progressPercentage.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
+                    <div
                       className="bg-orange-600 h-3 rounded-full transition-all duration-300"
                       style={{ width: `${remigrationStatus.progressPercentage}%` }}
                     ></div>
@@ -639,7 +647,7 @@ export default function DataMigrationPage() {
         {analysisResult && analysisResult.migrationRequired && (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">首次迁移配置</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -658,7 +666,7 @@ export default function DataMigrationPage() {
                   每批处理的投稿数量，较小的值更安全
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   批次间隔 (1000-30000ms)
@@ -685,7 +693,7 @@ export default function DataMigrationPage() {
         {migrationStatus && (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">首次迁移状态</h2>
-            
+
             <div className="space-y-4">
               {/* 筛选信息 */}
               {migrationStatus.filteredByIssue && (
@@ -695,7 +703,7 @@ export default function DataMigrationPage() {
                   </p>
                 </div>
               )}
-              
+
               {/* Status Badge */}
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-700">状态:</span>
@@ -723,7 +731,7 @@ export default function DataMigrationPage() {
                     <span>{migrationStatus.progressPercentage.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
+                    <div
                       className="bg-blue-600 h-3 rounded-full transition-all duration-300"
                       style={{ width: `${migrationStatus.progressPercentage}%` }}
                     ></div>
@@ -779,7 +787,7 @@ export default function DataMigrationPage() {
                 所有投稿都已优化，无需迁移
               </div>
             )}
-            
+
             <Button
               onClick={analyzeSubmissions}
               variant="secondary"
@@ -810,4 +818,4 @@ export default function DataMigrationPage() {
       </div>
     </Container>
   );
-} 
+}

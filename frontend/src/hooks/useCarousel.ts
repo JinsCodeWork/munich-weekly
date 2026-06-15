@@ -18,6 +18,11 @@ interface UseCarouselReturn extends CarouselState {
   resetError: () => void;
 }
 
+const clampSlide = (slide: number, itemCount: number) => {
+  if (itemCount <= 0) return 0;
+  return Math.min(Math.max(slide, 0), itemCount - 1);
+};
+
 /**
  * Custom hook for carousel state management and navigation
  */
@@ -26,7 +31,7 @@ export function useCarousel({
   autoplayInterval = 5000,
   enabled = true,
 }: UseCarouselProps): UseCarouselReturn {
-  
+
   const [state, setState] = useState<CarouselState>({
     currentSlide: 0,
     isPlaying: enabled,
@@ -36,7 +41,11 @@ export function useCarousel({
   });
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastInteractionRef = useRef<number>(Date.now());
+  const lastInteractionRef = useRef<number>(0);
+
+  useEffect(() => {
+    lastInteractionRef.current = Date.now();
+  }, []);
 
   // Clear interval helper
   const clearAutoplay = useCallback(() => {
@@ -56,28 +65,44 @@ export function useCarousel({
       const timeSinceInteraction = Date.now() - lastInteractionRef.current;
       if (timeSinceInteraction < 10000) return;
 
-      setState(prev => ({
-        ...prev,
-        currentSlide: (prev.currentSlide + 1) % itemCount,
-      }));
+      setState(prev => {
+        const currentSlide = clampSlide(prev.currentSlide, itemCount);
+
+        return {
+          ...prev,
+          currentSlide: (currentSlide + 1) % itemCount,
+        };
+      });
     }, autoplayInterval);
   }, [enabled, itemCount, autoplayInterval, state.isHovered, clearAutoplay]);
 
   // Navigation functions
   const nextSlide = useCallback(() => {
+    if (itemCount <= 0) return;
+
     lastInteractionRef.current = Date.now();
-    setState(prev => ({
-      ...prev,
-      currentSlide: (prev.currentSlide + 1) % itemCount,
-    }));
+    setState(prev => {
+      const currentSlide = clampSlide(prev.currentSlide, itemCount);
+
+      return {
+        ...prev,
+        currentSlide: (currentSlide + 1) % itemCount,
+      };
+    });
   }, [itemCount]);
 
   const previousSlide = useCallback(() => {
+    if (itemCount <= 0) return;
+
     lastInteractionRef.current = Date.now();
-    setState(prev => ({
-      ...prev,
-      currentSlide: prev.currentSlide === 0 ? itemCount - 1 : prev.currentSlide - 1,
-    }));
+    setState(prev => {
+      const currentSlide = clampSlide(prev.currentSlide, itemCount);
+
+      return {
+        ...prev,
+        currentSlide: currentSlide === 0 ? itemCount - 1 : currentSlide - 1,
+      };
+    });
   }, [itemCount]);
 
   const goToSlide = useCallback((index: number) => {
@@ -125,13 +150,6 @@ export function useCarousel({
     return clearAutoplay;
   }, [state.isPlaying, state.isHovered, itemCount, startAutoplay, clearAutoplay]);
 
-  // Reset slide index if itemCount changes
-  useEffect(() => {
-    if (state.currentSlide >= itemCount && itemCount > 0) {
-      setState(prev => ({ ...prev, currentSlide: 0 }));
-    }
-  }, [itemCount, state.currentSlide]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -139,8 +157,11 @@ export function useCarousel({
     };
   }, [clearAutoplay]);
 
+  const currentSlide = clampSlide(state.currentSlide, itemCount);
+
   return {
     ...state,
+    currentSlide,
     nextSlide,
     previousSlide,
     goToSlide,
@@ -152,4 +173,4 @@ export function useCarousel({
   };
 }
 
-export default useCarousel; 
+export default useCarousel;

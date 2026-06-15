@@ -44,7 +44,7 @@ export default function FeaturedCarousel({
   const [progressWidth, setProgressWidth] = useState(0);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<FeaturedSubmission | null>(null);
-  
+
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isDesktop = !isMobile;
 
@@ -171,10 +171,11 @@ export default function FeaturedCarousel({
   // Autoplay progress bar effect
   useEffect(() => {
     if (!isPlaying || isHovered || validSubmissions.length <= 1) {
-      setProgressWidth(0);
-      return;
+      const timer = window.setTimeout(() => setProgressWidth(0), 0);
+      return () => window.clearTimeout(timer);
     }
 
+    const resetTimer = window.setTimeout(() => setProgressWidth(0), 0);
     const interval = setInterval(() => {
       setProgressWidth(prev => {
         const increment = 100 / (autoplayInterval / 100);
@@ -182,13 +183,11 @@ export default function FeaturedCarousel({
       });
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(resetTimer);
+      clearInterval(interval);
+    };
   }, [isPlaying, isHovered, autoplayInterval, validSubmissions.length, currentSlide]);
-
-  // Reset progress on slide change
-  useEffect(() => {
-    setProgressWidth(0);
-  }, [currentSlide]);
 
   // Loading state
   if (validSubmissions.length === 0) {
@@ -206,8 +205,8 @@ export default function FeaturedCarousel({
 
   return (
     <div
-      className={`${getCarouselStyles({ 
-        size: isMobile ? 'mobile' : 'desktop' 
+      className={`${getCarouselStyles({
+        size: isMobile ? 'mobile' : 'desktop'
       })} ${className}`}
       onMouseEnter={() => {
         if (isDesktop) {
@@ -227,7 +226,7 @@ export default function FeaturedCarousel({
       {validSubmissions.map((submission, index) => {
         const isActive = index === currentSlide;
         const isLoaded = imageLoadStates[submission.id] === true;
-        
+
         return (
           <div
             key={submission.id}
@@ -239,7 +238,7 @@ export default function FeaturedCarousel({
             }}
           >
             {/* Main image */}
-            <div 
+            <div
               className="relative w-full h-full cursor-pointer"
               onClick={() => handleImageClick(submission)}
             >
@@ -247,7 +246,7 @@ export default function FeaturedCarousel({
                 src={submission.imageUrl}
                 alt={submission.description || `Photo by ${submission.authorName}`}
                 fill
-                className={getCarouselImageStyles({ 
+                className={getCarouselImageStyles({
                   hover: isDesktop && isHovered,
                   loading: !isLoaded
                 })}
@@ -255,8 +254,8 @@ export default function FeaturedCarousel({
                 onLoad={() => handleImageLoad(submission.id)}
                 onError={() => handleImageError(submission.id)}
                 priority={index === 0}
-                sizes={isMobile 
-                  ? "(max-width: 768px) 800px" 
+                sizes={isMobile
+                  ? "(max-width: 768px) 800px"
                   : "(min-width: 769px) 1200px"
                 }
               />
@@ -354,7 +353,7 @@ export default function FeaturedCarousel({
       {/* Autoplay progress bar */}
       {isPlaying && !isHovered && validSubmissions.length > 1 && (
         <div className={getAutoplayProgressStyles({ playing: true })}>
-          <div 
+          <div
             className="h-full bg-white transition-all duration-100 ease-linear"
             style={{ width: `${progressWidth}%` }}
           />
@@ -369,4 +368,4 @@ export default function FeaturedCarousel({
       />
     </div>
   );
-} 
+}

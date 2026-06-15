@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, Suspense } from "react"
+import React, { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -8,41 +8,38 @@ import { cn } from "@/lib/utils"
 function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [token, setToken] = useState("")
+  const token = searchParams?.get("token") ?? ""
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
-  
-  // Get token from URL
-  useEffect(() => {
-    const urlToken = searchParams?.get("token")
-    if (urlToken) {
-      setToken(urlToken)
-    } else {
-      setError("Invalid reset link. Please request a new password reset.")
-    }
-  }, [searchParams])
-  
+  const resetLinkError = token ? "" : "Invalid reset link. Please request a new password reset."
+  const displayError = error || resetLinkError
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    
+
+    if (!token) {
+      setError(resetLinkError)
+      return
+    }
+
     // Validate password match
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
-    
+
     // Validate password length
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters long")
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     try {
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
@@ -51,14 +48,14 @@ function ResetPasswordForm() {
         },
         body: JSON.stringify({ token, newPassword }),
       })
-      
+
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data?.error || "Password reset failed. The link may have expired.")
       }
-      
+
       setSuccess(true)
-      
+
       // Redirect to login page after 3 seconds
       setTimeout(() => {
         router.push("/")
@@ -69,15 +66,7 @@ function ResetPasswordForm() {
       setIsSubmitting(false)
     }
   }
-  
-  if (!token && !error) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-400"></div>
-      </div>
-    )
-  }
-  
+
   return (
     <main className="relative min-h-screen w-full flex justify-center items-center py-12 px-4 bg-white">
       <div className="w-full max-w-md">
@@ -91,23 +80,23 @@ function ResetPasswordForm() {
             <p className="text-black mb-6">
               Your password has been successfully reset. You will be automatically redirected to the login page.
             </p>
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="inline-block bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
             >
               Login Now
             </Link>
           </div>
         ) : (
-          <form 
-            onSubmit={handleSubmit} 
+          <form
+            onSubmit={handleSubmit}
             className="bg-white p-8 rounded-xl border border-gray-200 shadow-md animate-fadeIn"
           >
             <h1 className="text-black text-3xl font-bold mb-8 text-center">Reset Password</h1>
-            
-            {error ? (
+
+            {displayError ? (
               <div className="bg-red-50 text-red-700 px-4 py-3 rounded-md mb-6 border border-red-200">
-                {error}
+                {displayError}
                 {!token && (
                   <div className="mt-4">
                     <Link href="/forgot-password" className="text-black underline">
@@ -135,7 +124,7 @@ function ResetPasswordForm() {
                     minLength={6}
                   />
                 </div>
-                
+
                 <div className="mb-8">
                   <label htmlFor="confirmPassword" className="block text-black mb-2">Confirm Password</label>
                   <input
@@ -152,7 +141,7 @@ function ResetPasswordForm() {
                     disabled={isSubmitting}
                   />
                 </div>
-                
+
                 <button
                   type="submit"
                   className={cn(
@@ -167,8 +156,8 @@ function ResetPasswordForm() {
                 </button>
               </>
             )}
-            
-            {!error && (
+
+            {!displayError && (
               <div className="mt-6 text-center">
                 <Link href="/" className="text-black hover:underline">
                   Return to Login
