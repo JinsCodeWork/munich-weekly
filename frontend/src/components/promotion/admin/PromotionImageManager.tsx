@@ -10,11 +10,11 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 import { PromotionImage } from '@/types/promotion';
-import { 
-  getPromotionImages, 
-  addPromotionImage, 
-  uploadPromotionImageFile, 
-  deletePromotionImage 
+import {
+  getPromotionImages,
+  addPromotionImage,
+  uploadPromotionImageFile,
+  deletePromotionImage
 } from '@/api/promotion';
 
 interface PromotionImageManagerProps {
@@ -33,7 +33,7 @@ export const PromotionImageManager: React.FC<PromotionImageManagerProps> = ({ co
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [uploading, setUploading] = useState<number | null>(null);
-  
+
   // Form state for adding new image
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<ImageFormData>({
@@ -48,7 +48,7 @@ export const PromotionImageManager: React.FC<PromotionImageManagerProps> = ({ co
       setError(null);
       const imageList = await getPromotionImages(configId);
       setImages(imageList);
-      
+
       // After loading images, update the default displayOrder for new images
       const maxOrder = imageList.length > 0 ? Math.max(...imageList.map(img => img.displayOrder)) : 0;
       setFormData(prev => ({
@@ -64,7 +64,11 @@ export const PromotionImageManager: React.FC<PromotionImageManagerProps> = ({ co
 
   // Load images
   useEffect(() => {
-    loadImages();
+    const timer = window.setTimeout(() => {
+      void loadImages();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [configId, loadImages]);
 
   const handleAddImage = async () => {
@@ -391,4 +395,4 @@ export const PromotionImageManager: React.FC<PromotionImageManagerProps> = ({ co
       </div>
     </div>
   );
-}; 
+};

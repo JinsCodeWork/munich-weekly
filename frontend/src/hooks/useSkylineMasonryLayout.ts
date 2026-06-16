@@ -9,7 +9,7 @@ export interface SkylineLayoutItem<T = unknown> {
   id: string | number;
   data: T;
   x: number;      // Absolute left position
-  y: number;      // Absolute top position  
+  y: number;      // Absolute top position
   width: number;  // Calculated render width
   height: number; // Calculated render height
   span: number;   // Number of columns to span
@@ -78,13 +78,13 @@ const DEFAULT_CONFIG: Required<SkylineMasonryConfig> = {
 
 /**
  * Custom hook for Skyline masonry layout using backend pre-ordering
- * 
+ *
  * Benefits:
- * - Backend provides optimal ordering (quality guarantee)  
+ * - Backend provides optimal ordering (quality guarantee)
  * - Frontend handles responsive positioning (performance guarantee)
  * - Simplified API with automatic column detection
  * - O(N·C) Skyline algorithm for efficient positioning
- * 
+ *
  * @param items - Array of items to be laid out
  * @param issueId - Issue ID for backend ordering API
  * @param config - Configuration object for layout parameters
@@ -97,14 +97,14 @@ export function useSkylineMasonryLayout<T = unknown>(
   config: Partial<SkylineMasonryConfig> = {},
   getDimensions: (item: T) => { width: number; height: number; aspectRatio?: number; isLoaded: boolean } | null
 ): SkylineMasonryLayoutResult<T> {
-  
+
   const mergedConfig = useMemo(() => {
     return { ...DEFAULT_CONFIG, ...config };
   }, [config]);
-  
+
   const [screenWidth, setScreenWidth] = useState<number>(0);
   const [containerWidth, setContainerWidth] = useState<number>(0);
-  
+
   // Ordering API state
   const [orderingState, setOrderingState] = useState<OrderingState>({
     data: null,
@@ -121,15 +121,15 @@ export function useSkylineMasonryLayout<T = unknown>(
     const updateDimensions = () => {
       const newScreenWidth = window.innerWidth;
       setScreenWidth(newScreenWidth);
-      
+
       // Calculate effective container width based on vote container settings
       // vote container: max-w-[1600px] with px-2 md:px-4 lg:px-6 padding
       const maxWidth = Math.min(1600, newScreenWidth);
       let padding = 0;
       if (newScreenWidth >= 1024) padding = 24; // lg:px-6
-      else if (newScreenWidth >= 768) padding = 16; // md:px-4  
+      else if (newScreenWidth >= 768) padding = 16; // md:px-4
       else padding = 8; // px-2
-      
+
       const effectiveWidth = maxWidth - (padding * 2);
       setContainerWidth(effectiveWidth);
     };
@@ -168,7 +168,7 @@ export function useSkylineMasonryLayout<T = unknown>(
     try {
       const requestPromise = layoutApi.getMasonryOrdering(issueId);
       setActiveRequest(requestPromise);
-      
+
       const response = await requestPromise;
       setOrderingState({
         data: response,
@@ -189,9 +189,13 @@ export function useSkylineMasonryLayout<T = unknown>(
 
   // Effect to fetch ordering when issueId changes
   useEffect(() => {
-    if (issueId) {
-      fetchOrdering();
-    }
+    if (!issueId) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void fetchOrdering();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issueId]); // Intentionally exclude fetchOrdering to prevent infinite loop
 
@@ -249,7 +253,7 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     const orderResult = orderingState.data.order;
     const targetOrdering = columnCount <= 2 ? orderResult.orderedIds2col : orderResult.orderedIds4col;
-    
+
     if (!targetOrdering.length) {
       return items; // Fallback if no ordering available
     }
@@ -295,18 +299,18 @@ export function useSkylineMasonryLayout<T = unknown>(
   const layoutResult = useMemo(() => {
     const heights: number[] = Array(columnCount).fill(0);
     const layoutItems: SkylineLayoutItem<T>[] = [];
-    
+
     let loadedCount = 0;
     let progressiveReadyCount = 0;
     const totalCount = orderedItems.length;
 
     // **SKYLINE ALGORITHM** - O(N·C) one-pass positioning with progressive support
-    orderedItems.forEach((item) => {
+    orderedItems.forEach((item, index) => {
       const dimensions = getDimensions(item);
-      
+
       // **CORE: Use stored aspect ratio directly - no calculation needed**
       let imgWidth: number, imgHeight: number, isLoaded: boolean, aspectRatio: number;
-      
+
       if (!dimensions) {
         // This should not happen for submissions with stored dimensions
         imgWidth = 400;
@@ -340,20 +344,20 @@ export function useSkylineMasonryLayout<T = unknown>(
 
       // Calculate actual render dimensions
       const realWidth = span * currentColumnWidth + (span - 1) * currentGap;
-      
+
       // **SYNC WITH BACKEND**: Dynamic content height calculation matching backend algorithm
       const submission = item as { description?: string } & Record<string, unknown>;
       const titleText = submission?.description?.split('\n')[0] || '';
       const titleLength = titleText.length;
-      
+
       // Base content height components (matching backend calculation)
       const isTabletOrLarger = screenWidth >= mergedConfig.tabletBreakpoint;
       const basePadding = isTabletOrLarger ? 32 : 24; // p-3 sm:p-4
       const metadataHeight = 24;
-      
+
       // Dynamic title height calculation based on text length and card width
       let titleHeight: number;
-      
+
       if (isWide) {
         // Wide images: larger font, more space, can show up to 3 lines
         const fontSizeBase = isTabletOrLarger ? 20 : 16; // text-base/lg
@@ -369,7 +373,7 @@ export function useSkylineMasonryLayout<T = unknown>(
         const estimatedLines = Math.min(maxLines, Math.ceil(titleLength / charsPerLine));
         titleHeight = estimatedLines * (fontSizeBase + 4) + 8;
       }
-      
+
       // Total content height with safety margin to prevent overlaps (matching backend)
       const safetyMargin = 12; // Extra padding to ensure no overlaps
       const contentHeight = basePadding + titleHeight + metadataHeight + safetyMargin;
@@ -407,7 +411,7 @@ export function useSkylineMasonryLayout<T = unknown>(
 
       // Add positioned item
       layoutItems.push({
-        id: (item as { id?: string | number }).id || Math.random(), // Fallback ID
+        id: (item as { id?: string | number }).id ?? `fallback-${index}`,
         data: item,
         x,
         y,
@@ -422,12 +426,12 @@ export function useSkylineMasonryLayout<T = unknown>(
 
     // **FIX: Ensure container height is always a valid number**
     const containerHeight = heights.length > 0 ? Math.max(...heights, 0) : 0;
-    
+
     // **FIX: Validate container height before returning**
     const validContainerHeight = (containerHeight && isFinite(containerHeight)) ? containerHeight : 0;
-    
+
     const loadingProgress = totalCount > 0 ? (loadedCount / totalCount) * 100 : 100;
-    
+
     // Progressive layout readiness calculation
     const progressiveThreshold = Math.min(6, Math.ceil(totalCount * 0.4)); // 40% or 6 items, whichever is smaller
     const isProgressiveLayoutReady = progressiveReadyCount >= progressiveThreshold && progressiveReadyCount > 0;
@@ -452,11 +456,11 @@ export function useSkylineMasonryLayout<T = unknown>(
       setActiveRequest(null);
       requestIdRef.current = null;
       setOrderingState(prev => ({ ...prev, isLoading: true, error: null }));
-      
+
       const requestPromise = layoutApi.getMasonryOrdering(issueId);
       setActiveRequest(requestPromise);
       requestIdRef.current = issueId;
-      
+
       requestPromise.then(response => {
         setOrderingState({
           data: response,
@@ -484,4 +488,4 @@ export function useSkylineMasonryLayout<T = unknown>(
     wideImageCount: orderingState.data?.order.wideImageCount || 0,
     orderingSource,
   };
-} 
+}

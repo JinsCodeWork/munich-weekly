@@ -10,6 +10,17 @@ interface LinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
   external?: boolean;
 }
 
+function ExternalLink({
+  children,
+  ...props
+}: React.AnchorHTMLAttributes<HTMLAnchorElement> & { children: React.ReactNode }) {
+  return (
+    <a target="_blank" rel="noopener noreferrer" {...props}>
+      {children}
+    </a>
+  );
+}
+
 /**
  * Standard link component that integrates Next.js Link component with consistent styling
  */
@@ -27,20 +38,23 @@ export function Link({
     button: 'inline-block px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 no-underline'
   };
 
-  const LinkComponent = external ? 
-    ({ children, ...props }: React.HTMLAttributes<HTMLAnchorElement> & { children: React.ReactNode }) => (
-      <a target="_blank" rel="noopener noreferrer" {...props}>
+  const classes = cn(variantClasses[variant], className);
+
+  if (external) {
+    return (
+      <ExternalLink href={href} className={classes} {...props}>
         {children}
-      </a>
-    ) : NextLink;
+      </ExternalLink>
+    );
+  }
 
   return (
-    <LinkComponent
+    <NextLink
       href={href}
-      className={cn(variantClasses[variant], className)}
+      className={classes}
       {...props}
     >
       {children}
-    </LinkComponent>
+    </NextLink>
   );
-} 
+}

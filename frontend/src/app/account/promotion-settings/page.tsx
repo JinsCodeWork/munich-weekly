@@ -9,10 +9,10 @@ import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  PromotionConfigForm, 
-  PromotionImageManager, 
-  PromotionConfigSelector 
+import {
+  PromotionConfigForm,
+  PromotionImageManager,
+  PromotionConfigSelector
 } from '@/components/promotion/admin';
 import { PromotionConfig } from '@/types/promotion';
 import { getPromotionConfigForAdmin } from '@/api/promotion';
@@ -51,10 +51,18 @@ export default function PromotionSettingsPage() {
 
     // Only load if user is authenticated and admin
     if (user && user.role === 'admin') {
-      loadConfig();
+      const timer = window.setTimeout(() => {
+        void loadConfig();
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     } else if (user && user.role !== 'admin') {
-      setError('Access denied: Admin privileges required');
-      setLoading(false);
+      const timer = window.setTimeout(() => {
+        setError('Access denied: Admin privileges required');
+        setLoading(false);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [user]);
 
@@ -118,9 +126,9 @@ export default function PromotionSettingsPage() {
               <p className="text-red-700">{error}</p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="mt-4"
             onClick={() => window.location.reload()}
           >
@@ -197,10 +205,10 @@ export default function PromotionSettingsPage() {
               onConfigDeleted={handleConfigDeleted}
             />
           </div>
-          
+
           {/* Configuration Form */}
-          <PromotionConfigForm 
-            config={config} 
+          <PromotionConfigForm
+            config={config}
             onConfigUpdate={handleConfigUpdate}
           />
         </div>
@@ -227,9 +235,9 @@ export default function PromotionSettingsPage() {
                 Please go to the &quot;Configuration&quot; tab, fill in the promotion details, and click &quot;Save Configuration&quot; first.
               </p>
             </div>
-            <Button 
-              variant="primary" 
-              size="sm" 
+            <Button
+              variant="primary"
+              size="sm"
               className="mt-4"
               onClick={() => setActiveTab('config')}
             >
@@ -240,4 +248,4 @@ export default function PromotionSettingsPage() {
       )}
     </Container>
   );
-} 
+}

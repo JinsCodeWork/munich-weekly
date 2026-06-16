@@ -45,7 +45,7 @@ export function useConfigAdmin() {
       const token = localStorage.getItem('jwt');
       // Ensure cookie can be accessed on both client and server side, preventing security restrictions
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-      
+
       const response = await fetch('/frontend-api/admin/config', {
         method: 'GET',
         headers: {
@@ -54,13 +54,13 @@ export function useConfigAdmin() {
         },
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Admin config API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.config) {
         setConfig(data.config);
       } else {
@@ -73,13 +73,13 @@ export function useConfigAdmin() {
       try {
         // Public API does not require authentication headers
         const publicResponse = await fetch('/frontend-api/config');
-        
+
         if (!publicResponse.ok) {
           throw new Error(`Public API error: ${publicResponse.status}`);
         }
-        
+
         const publicData = await publicResponse.json();
-        
+
         if (publicData.success && publicData.config) {
           setConfig(publicData.config);
         } else {
@@ -87,7 +87,7 @@ export function useConfigAdmin() {
         }
       } catch {
         setError('Failed to load configuration, using default settings');
-        
+
         // Use default config when error occurs
         setConfig({
           heroImage: homePageConfig.heroImage
@@ -102,7 +102,7 @@ export function useConfigAdmin() {
   const uploadImage = async (file: File): Promise<string> => {
     setIsUploading(true);
     setError(null);
-    
+
     try {
       // Create FormData
       const formData = new FormData();
@@ -112,7 +112,7 @@ export function useConfigAdmin() {
       const token = localStorage.getItem('jwt');
       // Ensure cookie can be accessed on both client and server side, preventing security restrictions
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-      
+
       // Use new dedicated hero image upload endpoint
       const response = await fetch('/api/submissions/admin/upload-hero', {
         method: 'POST',
@@ -122,13 +122,13 @@ export function useConfigAdmin() {
         },
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json() as UploadResponse;
-      
+
       if (!data.success || !data.url) {
         throw new Error(data.error || 'Upload returned invalid data');
       }
@@ -146,17 +146,17 @@ export function useConfigAdmin() {
           }),
           credentials: 'include'
         });
-        
+
         if (syncResponse.ok) {
           await syncResponse.json();
         }
       } catch {
         // Don't throw error since backend upload was successful
       }
-      
+
       // Return frontend local path
       return '/images/home/hero.jpg';
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown upload error';
       setError(`Image upload failed: ${errorMessage}`);
@@ -176,7 +176,7 @@ export function useConfigAdmin() {
       // Ensure token is also in cookie
       const token = localStorage.getItem('jwt');
       document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-      
+
       const response = await fetch('/frontend-api/admin/config', {
         method: 'POST',
         headers: {
@@ -186,13 +186,13 @@ export function useConfigAdmin() {
         body: JSON.stringify(configData),
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Save configuration failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setConfig(configData);
         setSuccess(data.message || 'Settings updated successfully');
@@ -233,7 +233,11 @@ export function useConfigAdmin() {
 
   // Initial configuration loading
   useEffect(() => {
-    loadConfig();
+    const timer = window.setTimeout(() => {
+      void loadConfig();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadConfig]);
 
   // Listen for config update events to auto-refresh when config is updated elsewhere
@@ -288,4 +292,4 @@ export function useConfigAdmin() {
     uploadImage,
     saveConfig
   };
-} 
+}
