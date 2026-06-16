@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -47,7 +47,7 @@ export default function SubmitPage() {
   const { user, loading, openLogin } = useAuth();
   const { activeIssues, isLoading, error: issuesError, fetchIssues } = useIssues();
   const { file, handleFileSelect, error: fileError, uploadFileWithFetch } = useFileUpload();
-  
+
   // State for workflow steps
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -60,7 +60,7 @@ export default function SubmitPage() {
   const [isLoginFlow, setIsLoginFlow] = useState(false);
   const [anonymousContactEmail, setAnonymousContactEmail] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
-  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
 
@@ -69,10 +69,14 @@ export default function SubmitPage() {
   // Initial auth check and modal setup
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        setShowInfoModal(true);
-      }
-      setInitialAuthCheckDone(true);
+      const timer = window.setTimeout(() => {
+        if (!user) {
+          setShowInfoModal(true);
+        }
+        setInitialAuthCheckDone(true);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [user, loading]);
 
@@ -99,7 +103,7 @@ export default function SubmitPage() {
       'expired-callback': () => setCaptchaToken(''),
       'error-callback': () => setCaptchaToken('')
     });
-    setTurnstileWidgetId(widgetId);
+    turnstileWidgetIdRef.current = widgetId;
   }, [isAnonymousMode, turnstileReady, turnstileSiteKey, file]);
 
   // Handle login button click - show login modal and hide info modal
@@ -108,7 +112,7 @@ export default function SubmitPage() {
     setShowInfoModal(false); // Hide the info modal first
     openLogin(); // Use global login modal
   };
-  
+
   // Handle close info modal
   const handleCloseInfoModal = () => {
     setShowInfoModal(false);
@@ -122,8 +126,8 @@ export default function SubmitPage() {
 
   const resetAnonymousCaptcha = () => {
     setCaptchaToken('');
-    if (turnstileWidgetId && window.turnstile) {
-      window.turnstile.reset(turnstileWidgetId);
+    if (turnstileWidgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetIdRef.current);
     }
   };
 
@@ -133,7 +137,7 @@ export default function SubmitPage() {
       setSubmitError("Please select an issue, upload a photo and add a description");
       return;
     }
-    
+
     // 验证描述长度
     if (description.trim().length > MAX_PHOTO_DESCRIPTION_LENGTH) {
       setSubmitError(`Description must be ${MAX_PHOTO_DESCRIPTION_LENGTH} characters or less`);
@@ -144,10 +148,10 @@ export default function SubmitPage() {
       setSubmitError("Please confirm that you agree to the Privacy Policy before submitting");
       return;
     }
-    
+
     setIsSubmitting(true);
     setSubmitError(null);
-    
+
     try {
       if (isAnonymousMode && !user) {
         if (!captchaToken) {
@@ -175,7 +179,7 @@ export default function SubmitPage() {
           throw new Error('Upload did not complete successfully');
         }
       }
-      
+
       // 3. Set success state
       setSubmissionSuccess(true);
 
@@ -239,8 +243,8 @@ export default function SubmitPage() {
     return (
       <>
         {/* Info modal with glassmorphism effect */}
-        <Modal 
-          isOpen={showInfoModal} 
+        <Modal
+          isOpen={showInfoModal}
           onClose={handleCloseInfoModal}
           overlayVariant="default"
           contentVariant="dark-glass"
@@ -253,11 +257,11 @@ export default function SubmitPage() {
             <h3 className="font-heading text-3xl font-bold text-white mb-8 tracking-wider animate-fadeIn opacity-0" style={{ animationDelay: "0.1s" }}>
               Share Your Perspective
             </h3>
-            
+
             <p className="font-sans text-white text-center mb-8 animate-fadeIn opacity-0" style={{ animationDelay: "0.2s" }}>
               Ready to share your unique view of the world? Log in to manage your submissions, or continue anonymously.
             </p>
-            
+
             <button
               onClick={handleLoginClick}
               className={cn(
@@ -283,7 +287,7 @@ export default function SubmitPage() {
             </button>
           </div>
         </Modal>
-        
+
         {/* Invisible wrapper to keep modals mounted */}
         <div className="fixed inset-0 pointer-events-none" aria-hidden="true"></div>
       </>
@@ -309,7 +313,7 @@ export default function SubmitPage() {
             </p>
           </div>
         )}
-        
+
         {/* Success message */}
         {submissionSuccess && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
@@ -335,9 +339,9 @@ export default function SubmitPage() {
             </div>
           </div>
         )}
-        
+
         {/* Loading/Error/Empty states */}
-        <LoadingErrorStates 
+        <LoadingErrorStates
           isLoading={isLoading}
           loadingMessage="Loading available issues..."
           error={issuesError}
@@ -346,20 +350,20 @@ export default function SubmitPage() {
           emptyStateMessage="There are no active issues accepting submissions at this time. Please check back later."
           hideEmptyStateIcon={true}
         />
-        
+
         {/* Main submission flow */}
         {!isLoading && !issuesError && activeIssues.length > 0 && !submissionSuccess && (
           <div className="space-y-8">
             {/* Step 1: Select an issue */}
             <div className={getFormContainerStyles()}>
               <h2 className="font-heading text-lg font-medium mb-4">Step 1: Select an Issue</h2>
-              <IssueSelector 
-                issues={activeIssues} 
+              <IssueSelector
+                issues={activeIssues}
                 selectedIssue={selectedIssue}
                 onSelectIssue={setSelectedIssue}
               />
             </div>
-            
+
             {/* Step 2: Upload Photo - Always display, regardless of whether image has been uploaded */}
             {selectedIssue && (
               <div className={getFormContainerStyles()}>
@@ -368,7 +372,7 @@ export default function SubmitPage() {
                   onFileSelected={handleFileSelect}
                   file={file}
                 />
-                
+
                 {/* Display error message */}
                 {getDisplayError() && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
@@ -379,7 +383,7 @@ export default function SubmitPage() {
                 )}
               </div>
             )}
-            
+
             {/* Step 3: Add description */}
             {file && (
               <div className="mt-6">
@@ -456,7 +460,7 @@ export default function SubmitPage() {
                     , including Munich Weekly&apos;s non-commercial publication and social media display terms.
                   </span>
                 </label>
-                
+
                 <Button
                   onClick={handleSubmit}
                   disabled={
@@ -475,4 +479,4 @@ export default function SubmitPage() {
       </div>
     </Container>
   );
-} 
+}

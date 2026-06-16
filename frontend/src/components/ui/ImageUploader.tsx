@@ -16,7 +16,7 @@ interface ImageUploaderProps {
  * Handles image selection, preview, validation, and upload
  * Uses useFileUpload hook for file handling logic
  */
-export function ImageUploader({ 
+export function ImageUploader({
   onFileSelected,
   file,
   className,
@@ -35,7 +35,8 @@ export function ImageUploader({
       reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
     } else {
-      setPreview(null);
+      const timer = window.setTimeout(() => setPreview(null), 0);
+      return () => window.clearTimeout(timer);
     }
   }, [file]);
 
@@ -56,7 +57,7 @@ export function ImageUploader({
       onFileSelected(null);
       return;
     }
-    
+
     setError(null);
     onFileSelected(selectedFile);
   }, [validateFile, onFileSelected]);
@@ -81,7 +82,7 @@ export function ImageUploader({
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Only set to false when leaving the entire drop zone
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
@@ -120,10 +121,10 @@ export function ImageUploader({
   return (
     <div className={`space-y-4 ${className || ''}`}>
       {/* File selection area */}
-      <div 
+      <div
         className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200
-          ${preview ? 'border-gray-300 bg-gray-50' : 
-            isDragging ? 'border-blue-500 bg-blue-50 border-solid' : 
+          ${preview ? 'border-gray-300 bg-gray-50' :
+            isDragging ? 'border-blue-500 bg-blue-50 border-solid' :
             'border-gray-300 hover:border-gray-500 hover:bg-gray-50'}`}
         onClick={preview ? undefined : triggerFileInput}
         onDragEnter={handleDragEnter}
@@ -135,15 +136,15 @@ export function ImageUploader({
           // Image preview
           <div className="relative w-full">
             <div className="relative max-h-64 overflow-hidden rounded">
-              <Image 
-                src={preview} 
-                alt="Preview" 
+              <Image
+                src={preview}
+                alt="Preview"
                 width={400}
                 height={300}
                 className="mx-auto object-contain"
               />
             </div>
-            
+
             {/* File info */}
             <div className="mt-2 text-sm text-gray-500">
               {file && (
@@ -152,10 +153,10 @@ export function ImageUploader({
                 </p>
               )}
             </div>
-            
+
             {/* Actions */}
             <div className="mt-3 flex justify-end space-x-2">
-              <Button 
+              <Button
                 onClick={handleClear}
                 variant="secondary"
                 size="sm"
@@ -185,7 +186,7 @@ export function ImageUploader({
             </div>
           </div>
         )}
-        
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -195,12 +196,12 @@ export function ImageUploader({
           className="hidden"
         />
       </div>
-      
+
       {/* Multi-submission guidance */}
       <p className="text-xs text-gray-500 italic mt-1 text-center">
         {maxImagesMessage}
       </p>
-      
+
       {/* Error message */}
       {error && (
         <div className="text-red-500 text-sm mt-2">
@@ -209,4 +210,4 @@ export function ImageUploader({
       )}
     </div>
   );
-} 
+}

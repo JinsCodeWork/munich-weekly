@@ -31,16 +31,16 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
 
   // Check if submission has valid image
   const hasValidImage = submission?.imageUrl && submission.imageUrl.trim() !== '';
-  
+
   // Prevent background scrolling
   useEffect(() => {
     if (isOpen) {
       const scrollY = window.scrollY;
-      
+
       document.body.style.overflow = 'hidden';
       document.body.style.height = '100vh';
       document.body.style.touchAction = 'none';
-      
+
       return () => {
         document.body.style.overflow = '';
         document.body.style.height = '';
@@ -49,7 +49,7 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
       };
     }
   }, [isOpen]);
-  
+
   // Close viewer if no valid image
   useEffect(() => {
     if (isOpen && !hasValidImage) {
@@ -61,9 +61,9 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
   // Create high quality image URL
   const highQualityUrl = useMemo(() => {
     if (!hasValidImage || !submission) return '';
-    
+
     const imageUrl = submission.imageUrl;
-    
+
     if (imageUrl.startsWith('/uploads/') || imageUrl.includes('.r2.dev/')) {
       return createImageUrl(imageUrl, {
         quality: 95,
@@ -71,10 +71,10 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
         fit: 'contain'
       });
     }
-    
+
     return imageUrl;
   }, [submission, hasValidImage]);
-  
+
   // Preload image to get dimensions
   useEffect(() => {
     if (isOpen && highQualityUrl) {
@@ -89,20 +89,24 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
       };
       img.src = highQualityUrl;
     }
-    
+
     // Reset zoom and position when opening
     if (isOpen) {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-      setIsTransitioning(false);
+      const timer = window.setTimeout(() => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+        setIsTransitioning(false);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen, highQualityUrl]);
-  
+
   // Handle image load completion
   const handleImageLoad = () => {
     setImgLoaded(true);
   };
-  
+
   // Handle Escape key to close
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -110,16 +114,16 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
         onClose();
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener('keydown', handleEsc);
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
     };
   }, [isOpen, onClose]);
-  
+
   // Handle backdrop click to close
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -131,17 +135,17 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
   const handleDoubleTap = () => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
-    
+
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       setIsTransitioning(true);
       setScale(scale === 1 ? 2.5 : 1);
       setPosition({ x: 0, y: 0 });
-      
+
       setTimeout(() => {
         setIsTransitioning(false);
       }, 300);
     }
-    
+
     lastTapRef.current = now;
   };
 
@@ -153,10 +157,10 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
           if (first) {
             initialPosRef.current = { ...position };
           }
-          
+
           const maxX = (bounds.width * scale - bounds.width) / 2;
           const maxY = (bounds.height * scale - bounds.height) / 2;
-          
+
           setPosition({
             x: Math.max(-maxX, Math.min(maxX, initialPosRef.current.x + mx / scale)),
             y: Math.max(-maxY, Math.min(maxY, initialPosRef.current.y + my / scale))
@@ -167,10 +171,10 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
         if (first) {
           initialScaleRef.current = scale;
         }
-        
+
         const newScale = Math.max(1, Math.min(4, initialScaleRef.current * s));
         setScale(newScale);
-        
+
         if (newScale === 1) {
           setPosition({ x: 0, y: 0 });
         }
@@ -184,20 +188,20 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
       eventOptions: { passive: false }
     }
   );
-  
+
   if (!isOpen || !submission) return null;
 
   // Calculate image dimensions
   const calculateImageDimensions = () => {
     const maxHeight = Math.min(window.innerHeight * 0.65, 800);
     const maxWidth = Math.min(window.innerWidth * 0.9, 1200);
-    
+
     if (!imgDimensions.width || !imgDimensions.height) {
       return { width: maxWidth, height: maxHeight };
     }
-    
+
     const aspectRatio = imgDimensions.width / imgDimensions.height;
-    
+
     if (imgDimensions.isPortrait) {
       const height = maxHeight;
       const width = height * aspectRatio;
@@ -212,13 +216,13 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
   const { width, height } = calculateImageDimensions();
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div className="relative max-w-5xl w-full h-full flex flex-col items-center justify-center bg-transparent rounded-lg overflow-hidden">
         {/* Close button */}
-        <button 
+        <button
           className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-80 z-10 transition-all"
           onClick={onClose}
         >
@@ -226,17 +230,17 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        
+
         {/* Mobile help text */}
         <div className="absolute top-4 left-4 right-16 flex justify-center z-10 md:hidden">
           <div className="px-3 py-1 bg-black bg-opacity-60 text-white text-xs rounded-full">
             Double-tap to zoom, drag to pan
           </div>
         </div>
-        
+
         {/* Image Container */}
-        <div 
-          className="flex justify-center items-center flex-grow w-full overflow-hidden" 
+        <div
+          className="flex justify-center items-center flex-grow w-full overflow-hidden"
           ref={containerRef}
           onClick={handleBackdropClick}
         >
@@ -249,10 +253,10 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
               touchAction: scale > 1 ? 'none' : 'auto',
             }}
           >
-            <div 
+            <div
               className="relative"
-              style={{ 
-                width, 
+              style={{
+                width,
                 height,
                 transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
                 transformOrigin: 'center center',
@@ -273,7 +277,7 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
                 unoptimized={false}
               />
             </div>
-            
+
             {/* Loading indicator */}
             {!imgLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -282,10 +286,10 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
             )}
           </div>
         </div>
-        
+
                  {/* Gallery submission details - simplified */}
          <div className="w-full mt-4 flex justify-center flex-shrink-0 max-h-[30vh] overflow-y-auto" onClick={handleBackdropClick}>
-           <div 
+           <div
              className="max-w-4xl w-full bg-black bg-opacity-60 backdrop-blur-sm rounded-lg p-6 text-white"
              onClick={(e) => e.stopPropagation()}
            >
@@ -298,7 +302,7 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
                  {submission.issueTitle}
                </p>
              </div>
- 
+
              {/* Description */}
              {submission.description && (
                <div className="border-t border-white/20 pt-4 text-center">
@@ -312,4 +316,4 @@ export function GalleryImageViewer({ submission, isOpen, onClose }: GalleryImage
       </div>
     </div>
   );
-} 
+}

@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
+
+const getServerSnapshot = () => false;
 
 /**
  * Custom hook for responsive design using CSS media queries
@@ -6,34 +8,24 @@ import { useState, useEffect } from 'react';
  * @returns boolean indicating if the media query matches
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    // Check if we're in a browser environment
+  const subscribe = useCallback((onStoreChange: () => void) => {
     if (typeof window === 'undefined') {
-      return;
+      return () => {};
     }
 
     const mediaQuery = window.matchMedia(query);
-    
-    // Set initial value
-    setMatches(mediaQuery.matches);
+    mediaQuery.addEventListener('change', onStoreChange);
 
-    // Create event listener
-    const handler = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
-    };
-
-    // Add event listener
-    mediaQuery.addEventListener('change', handler);
-
-    // Cleanup
     return () => {
-      mediaQuery.removeEventListener('change', handler);
+      mediaQuery.removeEventListener('change', onStoreChange);
     };
   }, [query]);
 
-  return matches;
+  const getSnapshot = useCallback(() => {
+    return typeof window !== 'undefined' && window.matchMedia(query).matches;
+  }, [query]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-export default useMediaQuery; 
+export default useMediaQuery;
