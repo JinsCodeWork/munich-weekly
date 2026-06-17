@@ -9,6 +9,8 @@ import { POST } from '../src/app/frontend-api/admin/sync-hero/route';
 
 const BACKEND_URL = 'http://backend.test';
 const HERO_URL = 'https://img.munichweekly.art/uploads/hero.jpg';
+const HERO_URL_WITH_FRAGMENT = 'https://img.munichweekly.art/uploads/hero.jpg?variant=admin#browser-only';
+const HERO_CANONICAL_URL = 'https://img.munichweekly.art/uploads/hero.jpg?variant=admin';
 const PRIVATE_URL = 'http://169.254.169.254/latest/meta-data';
 const PRIVATE_IPV6_URL = 'https://[::1]/hero.jpg';
 const PRIVATE_MAPPED_IPV6_URL = 'https://[::ffff:127.0.0.1]/hero.jpg';
@@ -87,7 +89,7 @@ function installFetchStub(calls: FetchCall[]) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    if (url === HERO_URL) {
+    if (url === HERO_URL || url === HERO_CANONICAL_URL) {
       return new Response(JPEG_BYTES, {
         status: 200,
         headers: {
@@ -164,6 +166,17 @@ function makeRequest(token: string | null, imageUrl?: string) {
   });
 }
 
+function makeCookieOnlyRequest(token: string, imageUrl?: string) {
+  return new NextRequest('http://localhost/frontend-api/admin/sync-hero', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      cookie: `jwt=${token}`,
+    },
+    body: JSON.stringify(imageUrl ? { imageUrl } : {}),
+  });
+}
+
 function frontendHeroPath(workspaceRoot: string) {
   return path.join(workspaceRoot, 'frontend', 'public', 'images', 'home', 'hero.jpg');
 }
@@ -178,6 +191,21 @@ async function rejectsMissingTokenBeforeBackendOrImageFetch() {
     installFetchStub(calls);
 
     const response = await POST(makeRequest(null, HERO_URL));
+    const body = await responseJson(response);
+
+    assert.equal(response.status, 401);
+    assert.match(body.error ?? '', /login/i);
+    assert.equal(existsSync(frontendHeroPath(workspaceRoot)), false);
+    assert.deepEqual(calls, []);
+  });
+}
+
+async function rejectsCookieOnlyTokenBeforeBackendOrImageFetch() {
+  await withRouteWorkspace(async (workspaceRoot) => {
+    const calls: FetchCall[] = [];
+    installFetchStub(calls);
+
+    const response = await POST(makeCookieOnlyRequest('admin-token', HERO_URL));
     const body = await responseJson(response);
 
     assert.equal(response.status, 401);
@@ -326,6 +354,25 @@ async function allowsAdminToSyncTrustedRemoteHero() {
   });
 }
 
+async function allowsAdminToSyncCanonicalTrustedRemoteHero() {
+  await withRouteWorkspace(async (workspaceRoot) => {
+    const calls: FetchCall[] = [];
+    installFetchStub(calls);
+
+    const response = await POST(makeRequest('admin-token', HERO_URL_WITH_FRAGMENT));
+    const body = await responseJson(response);
+    const saved = await readFile(frontendHeroPath(workspaceRoot));
+
+    assert.equal(response.status, 200);
+    assert.equal(body.success, true);
+    assert.equal(body.sourceType, 'remote');
+    assert.deepEqual(saved, JPEG_BYTES);
+    assert.deepEqual(calls.map((call) => call.url), [`${BACKEND_URL}/api/users/me`, HERO_CANONICAL_URL]);
+    assert.equal(calls[1].redirect, 'error');
+    assert.equal(calls[1].cache, 'no-store');
+  });
+}
+
 async function allowsAdminToSyncLocalUploadedHeroByExtension() {
   await withRouteWorkspace(async (workspaceRoot) => {
     const calls: FetchCall[] = [];
@@ -368,6 +415,7 @@ async function main() {
 
   try {
     await rejectsMissingTokenBeforeBackendOrImageFetch();
+    await rejectsCookieOnlyTokenBeforeBackendOrImageFetch();
     await rejectsArbitraryBearerBeforeMutatingHero();
     await rejectsNonAdminUserBeforeFetchingImage();
     await rejectsPrivateRemoteUrlBeforeFetchingIt();
@@ -377,6 +425,7 @@ async function main() {
     await rejectsRemoteNonImageContentType();
     await rejectsOversizedRemoteContentLength();
     await allowsAdminToSyncTrustedRemoteHero();
+    await allowsAdminToSyncCanonicalTrustedRemoteHero();
     await allowsAdminToSyncLocalUploadedHeroByExtension();
     await allowsAdminToSyncDefaultLocalHeroWhenBodyHasNoImageUrl();
   } finally {

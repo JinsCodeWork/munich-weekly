@@ -41,18 +41,13 @@ export function useConfigAdmin() {
     setError(null);
 
     try {
-      // Add additional verification measures - explicitly send token as cookie
-      const token = localStorage.getItem('jwt');
-      // Ensure cookie can be accessed on both client and server side, preventing security restrictions
-      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-
       const response = await fetch('/frontend-api/admin/config', {
         method: 'GET',
+        credentials: 'omit',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeader()
-        },
-        credentials: 'include'
+        }
       });
 
       if (!response.ok) {
@@ -108,11 +103,6 @@ export function useConfigAdmin() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Add additional verification measures - ensure token is also in cookie
-      const token = localStorage.getItem('jwt');
-      // Ensure cookie can be accessed on both client and server side, preventing security restrictions
-      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-
       // Use new dedicated hero image upload endpoint
       const response = await fetch('/api/submissions/admin/upload-hero', {
         method: 'POST',
@@ -137,14 +127,14 @@ export function useConfigAdmin() {
       try {
         const syncResponse = await fetch('/frontend-api/admin/sync-hero', {
           method: 'POST',
+          credentials: 'omit',
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeader()
           },
           body: JSON.stringify({
             imageUrl: data.url
-          }),
-          credentials: 'include'
+          })
         });
 
         if (syncResponse.ok) {
@@ -173,18 +163,14 @@ export function useConfigAdmin() {
     setSuccess(null);
 
     try {
-      // Ensure token is also in cookie
-      const token = localStorage.getItem('jwt');
-      document.cookie = `jwt=${token || ''}; path=/; max-age=3600; SameSite=None; Secure=false`;
-
       const response = await fetch('/frontend-api/admin/config', {
         method: 'POST',
+        credentials: 'omit',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeader()
         },
-        body: JSON.stringify(configData),
-        credentials: 'include'
+        body: JSON.stringify(configData)
       });
 
       if (!response.ok) {

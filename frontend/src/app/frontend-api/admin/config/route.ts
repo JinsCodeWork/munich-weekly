@@ -4,13 +4,9 @@ import path from 'path';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// Get JWT token from request
+// Get JWT token from the Authorization header. Admin frontend APIs do not accept
+// JWT cookies so browsers cannot trigger them with ambient credentials.
 function getAuthToken(request: NextRequest): string | null {
-  const authCookie = request.cookies.get('jwt')?.value;
-  if (authCookie) {
-    return authCookie;
-  }
-
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
@@ -68,7 +64,7 @@ export async function GET(request: NextRequest) {
       success: true,
       config
     });
-    
+
   } catch (error) {
     return NextResponse.json(
       { error: `Failed to retrieve configuration: ${error instanceof Error ? error.message : 'Unknown error'}` },
@@ -140,4 +136,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

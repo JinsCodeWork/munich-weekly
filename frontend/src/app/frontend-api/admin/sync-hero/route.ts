@@ -34,11 +34,6 @@ function getApiBaseUrl(): string {
 }
 
 function getAuthToken(request: NextRequest): string | null {
-  const authCookie = request.cookies.get('jwt')?.value;
-  if (authCookie) {
-    return authCookie;
-  }
-
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
@@ -120,11 +115,28 @@ function resolveHeroSource(imageUrl: unknown): HeroSource {
     throw new HeroSyncError('Remote hero image URL points to a private or local host', 400);
   }
 
-  if (!getAllowedRemoteOrigins().has(parsedUrl.origin)) {
+  const allowedOrigin = findAllowedRemoteOrigin(parsedUrl.origin);
+  if (!allowedOrigin) {
     throw new HeroSyncError('Remote hero image origin is not allowed', 400);
   }
 
-  return { type: 'remote', url: parsedUrl };
+  return { type: 'remote', url: canonicalizeRemoteHeroUrl(parsedUrl, allowedOrigin) };
+}
+
+function findAllowedRemoteOrigin(candidateOrigin: string): string | null {
+  for (const allowedOrigin of getAllowedRemoteOrigins()) {
+    if (candidateOrigin === allowedOrigin) {
+      return allowedOrigin;
+    }
+  }
+  return null;
+}
+
+function canonicalizeRemoteHeroUrl(parsedUrl: URL, allowedOrigin: string): URL {
+  const canonicalUrl = new URL(allowedOrigin);
+  canonicalUrl.pathname = parsedUrl.pathname;
+  canonicalUrl.search = parsedUrl.search;
+  return canonicalUrl;
 }
 
 function isPrivateOrLocalHostname(hostname: string): boolean {
