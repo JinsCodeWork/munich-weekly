@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { isStorageAvailable } from '@/api'
@@ -19,13 +19,14 @@ export const ProtectedRoute = ({
   const { loading, isAuthenticated, hasRole } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const authenticated = isAuthenticated()
+  const hasRequiredRole = !requiredRole || hasRole(requiredRole)
 
   useEffect(() => {
     // Wait for authentication state to complete loading
     if (!loading) {
       // If user is not logged in, redirect to login page
-      if (!isAuthenticated()) {
+      if (!authenticated) {
         // Save current URL in session to return after login
         try {
           sessionStorage.setItem('auth_redirect', pathname)
@@ -34,29 +35,27 @@ export const ProtectedRoute = ({
         } catch (error) {
           console.error('Unable to save redirect URL:', error)
         }
-        
+
         // Redirect to login page
         router.push(`${fallbackPath}?redirect=${encodeURIComponent(pathname)}`)
-      } 
+      }
       // If a specific role is required and user doesn't have it
-      else if (requiredRole && !hasRole(requiredRole)) {
+      else if (!hasRequiredRole) {
         // Redirect to forbidden page
         router.push('/403')
       }
-      
-      setIsCheckingAuth(false)
     }
-  }, [loading, isAuthenticated, hasRole, requiredRole, router, pathname, fallbackPath])
+  }, [loading, authenticated, hasRequiredRole, router, pathname, fallbackPath])
 
   // Storage availability warning
   useEffect(() => {
-    if (!loading && isAuthenticated() && !isStorageAvailable('localStorage')) {
+    if (!loading && authenticated && !isStorageAvailable('localStorage')) {
       console.warn('LocalStorage is not available! Authentication state may be lost after page refresh.')
     }
-  }, [loading, isAuthenticated])
+  }, [loading, authenticated])
 
   // When authentication check is in progress or user doesn't meet criteria, don't render content
-  if (loading || isCheckingAuth) {
+  if (loading || !authenticated || !hasRequiredRole) {
     // Display loading state
     return <div className="flex justify-center items-center min-h-[50vh]">
       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -65,4 +64,4 @@ export const ProtectedRoute = ({
 
   // If authentication check passes, render children
   return <>{children}</>
-} 
+}

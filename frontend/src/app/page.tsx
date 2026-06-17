@@ -14,16 +14,17 @@ export default function Home() {
   const [config, setConfig] = useState(homePageConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastConfigUpdateRef = useRef<string | null>(null);
+  const [lastConfigUpdate, setLastConfigUpdate] = useState<string | null>(null);
 
   // Create reusable configuration loading function
   const loadConfig = useCallback(async (forceRefresh = false) => {
     try {
               // Add timestamp parameter when force refreshing to bypass cache
       const timestamp = Date.now();
-      const url = forceRefresh 
+      const url = forceRefresh
         ? `/frontend-api/config?_t=${timestamp}&_force=1`
         : `/frontend-api/config?_t=${timestamp}`;
-      
+
       const response = await fetch(url, {
         // Disable cache when force refreshing
         cache: forceRefresh ? 'no-store' : 'default',
@@ -32,11 +33,13 @@ export default function Home() {
           'Pragma': 'no-cache'
         } : {}
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.success && data.config?.heroImage) {
+          let nextLastConfigUpdate = lastConfigUpdateRef.current;
+
           // 使用函数式更新避免依赖当前state
           setConfig(prevConfig => {
             const newConfig = {
@@ -46,19 +49,24 @@ export default function Home() {
                 ...data.config.heroImage
               }
             };
-            
+
             // 检查配置是否真正发生了变化
-            const hasConfigChanged = 
+            const hasConfigChanged =
               data.config.lastUpdated !== lastConfigUpdateRef.current ||
               JSON.stringify(newConfig.heroImage) !== JSON.stringify(prevConfig.heroImage);
-              
+
             if (hasConfigChanged) {
-              lastConfigUpdateRef.current = data.config.lastUpdated || new Date().toISOString();
+              nextLastConfigUpdate = data.config.lastUpdated || new Date().toISOString();
               return newConfig;
             } else {
               return prevConfig;
             }
           });
+
+          if (nextLastConfigUpdate !== lastConfigUpdateRef.current) {
+            lastConfigUpdateRef.current = nextLastConfigUpdate;
+            setLastConfigUpdate(nextLastConfigUpdate);
+          }
         }
       }
     } catch {
@@ -114,14 +122,14 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50">
       {!isLoading && (
         <>
-          <HeroImage 
-            imageUrl={heroImage.imageUrl} 
-            description={heroImage.description} 
+          <HeroImage
+            imageUrl={heroImage.imageUrl}
+            description={heroImage.description}
             imageCaption={heroImage.imageCaption}
             // Pass configuration update time for forced image cache refresh
-            lastUpdated={lastConfigUpdateRef.current}
+            lastUpdated={lastConfigUpdate}
           />
-          
+
           <Container className="py-16" spacing="standard">
             <div className="text-center">
               <h2 className="font-heading text-3xl font-semibold tracking-tight text-gray-900 mb-4">
@@ -130,11 +138,11 @@ export default function Home() {
               <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto mb-8">
                 {introText.description}
               </p>
-              
+
               {/* Vote button */}
               <Link href="/vote">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="lg"
                   className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all duration-200"
                 >

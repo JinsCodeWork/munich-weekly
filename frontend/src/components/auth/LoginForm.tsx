@@ -33,7 +33,7 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
       const timer = setTimeout(() => {
         onClose()
       }, 1500)
-      
+
       return () => clearTimeout(timer)
     }
   }, [user, success, onClose])
@@ -41,11 +41,15 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
   // Reset state each time modal is opened
   useEffect(() => {
     if (isOpen) {
-      setEmail("")
-      setPassword("")
-      setError("")
-      setSuccess(false)
-      setIsSubmitting(false)
+      const timer = window.setTimeout(() => {
+        setEmail("")
+        setPassword("")
+        setError("")
+        setSuccess(false)
+        setIsSubmitting(false)
+      }, 0)
+
+      return () => window.clearTimeout(timer)
     }
   }, [isOpen])
 
@@ -168,10 +172,10 @@ export function LoginForm({ isOpen, onClose, onRegisterClick }: LoginFormProps) 
           className={cn(
             "font-sans w-full py-4 rounded-full text-lg font-semibold tracking-wide mb-6 transition-colors",
             "animate-fadeIn opacity-0",
-            success 
-              ? "bg-green-500 text-white cursor-not-allowed" 
-              : isSubmitting 
-                ? "bg-white/70 text-gray-700 cursor-not-allowed" 
+            success
+              ? "bg-green-500 text-white cursor-not-allowed"
+              : isSubmitting
+                ? "bg-white/70 text-gray-700 cursor-not-allowed"
                 : "bg-white text-gray-900 hover:bg-gray-200"
           )}
           style={{ animationDelay: "0.5s" }}

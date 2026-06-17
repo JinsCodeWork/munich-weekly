@@ -12,7 +12,7 @@ import { VoteStatusProvider, useVoteStatus } from '@/context/VoteStatusContext';
 
 /**
  * Inner Vote Page Component
- * 
+ *
  * Separated to use VoteStatusContext hooks inside the provider.
  * Implements batch vote status checking for optimal performance.
  */
@@ -20,28 +20,28 @@ function VotePageContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(true);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  
+
   const { issues, isLoading: issueLoading, error: issueError } = useIssues();
   const { batchCheckVoteStatus, isInitialLoading: isLoadingVoteStatus } = useVoteStatus();
-  
+
   // Use ref to track current issue ID to prevent unnecessary re-renders
   const currentIssueIdRef = useRef<number | null>(null);
-  
+
   // Get current issue - only issues within voting period should be shown
   const currentIssue = useMemo(() => {
     const now = new Date();
-    
+
     // Filter issues that are currently in voting period
     const votingIssues = issues.filter(issue => {
       const votingStart = new Date(issue.votingStart);
       const votingEnd = new Date(issue.votingEnd);
       return votingStart <= now && now <= votingEnd;
     });
-    
+
     if (votingIssues.length > 0) {
       return votingIssues[0]; // Return first issue in voting period
     }
-    
+
     return null; // No issues are currently in voting period
   }, [issues]);
 
@@ -52,22 +52,22 @@ function VotePageContent() {
       console.log(`⚠️ VotePage: Skipping duplicate load for issue ${issueId}`);
       return;
     }
-    
+
     currentIssueIdRef.current = issueId;
     setIsLoadingSubmissions(true);
     setSubmissionError(null);
-    
+
     try {
       console.log(`📥 VotePage: Loading submissions for issue ${issueId}`);
       const fetchedSubmissions = await getSubmissionsByIssue(issueId);
       setSubmissions(fetchedSubmissions);
-      
+
       // **MOBILE OPTIMIZATION**: Start vote status check immediately but don't block rendering
       // This allows progressive image loading to work independently
       if (fetchedSubmissions.length > 0) {
         const submissionIds = fetchedSubmissions.map(sub => sub.id);
         console.log(`🔍 VotePage: Starting non-blocking batch vote status check for ${submissionIds.length} submissions`);
-        
+
         // Use setTimeout to ensure submissions render first, then check vote status
         setTimeout(() => {
           batchCheckVoteStatus(submissionIds).catch(error => {
@@ -88,19 +88,27 @@ function VotePageContent() {
   // Load submissions when current issue is available - simplified dependencies
   useEffect(() => {
     if (currentIssue?.id && currentIssue.id !== currentIssueIdRef.current) {
-      loadSubmissionsForIssue(currentIssue.id);
+      const timer = window.setTimeout(() => {
+        void loadSubmissionsForIssue(currentIssue.id);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     } else if (!issueLoading && !currentIssue) {
       // No current issue and not loading
       currentIssueIdRef.current = null;
-      setIsLoadingSubmissions(false);
+      const timer = window.setTimeout(() => {
+        setIsLoadingSubmissions(false);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIssue?.id, issueLoading]); // Intentionally exclude currentIssue and loadSubmissionsForIssue to prevent infinite loops
 
   // Stable callback functions with useCallback
   const handleVoteSuccess = useCallback((submissionId: number, newVoteCount?: number) => {
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === submissionId 
+    setSubmissions(prev => prev.map(sub =>
+      sub.id === submissionId
         ? { ...sub, voteCount: newVoteCount !== undefined ? newVoteCount : sub.voteCount }
         : sub
     ));
@@ -108,12 +116,12 @@ function VotePageContent() {
 
   const handleVoteCancelled = useCallback((submissionId: number, newVoteCount?: number) => {
     setSubmissions(prev => {
-      const updated = prev.map(sub => 
-        sub.id === submissionId 
+      const updated = prev.map(sub =>
+        sub.id === submissionId
           ? { ...sub, voteCount: newVoteCount !== undefined ? newVoteCount : sub.voteCount }
           : sub
       );
-      
+
       return updated;
     });
   }, []);
@@ -142,7 +150,7 @@ function VotePageContent() {
 
   // Determine overall loading state - prevent flickering by being more specific
   const isOverallLoading = issueLoading || (isLoadingSubmissions && submissions.length === 0);
-  
+
   // **MOBILE OPTIMIZATION**: Only show vote status loader if images are already loaded
   // This prevents vote status loading from blocking progressive image display
   const shouldShowVoteStatusLoader = isLoadingVoteStatus && submissions.length > 0 && !isOverallLoading;
@@ -215,7 +223,7 @@ function VotePageContent() {
           <div className="text-sm text-gray-500">
             <p>Voting Period: {new Date(currentIssue.votingStart).toLocaleDateString()} - {new Date(currentIssue.votingEnd).toLocaleDateString()} (CET)</p>
           </div>
-          
+
           {/* Show subtle vote status loading indicator */}
           {shouldShowVoteStatusLoader && (
             <div className="mt-2 text-sm text-gray-500 flex items-center justify-center">
@@ -265,9 +273,9 @@ function VotePageContent() {
 
 /**
  * Main Vote Page Component
- * 
+ *
  * Wrapped with VoteStatusProvider for optimized vote status management.
- * 
+ *
  * Key performance improvements:
  * - Eliminates N individual vote status API calls
  * - Uses batch checking for all submissions at once
@@ -280,4 +288,4 @@ export default function VotePage() {
       <VotePageContent />
     </VoteStatusProvider>
   );
-} 
+}

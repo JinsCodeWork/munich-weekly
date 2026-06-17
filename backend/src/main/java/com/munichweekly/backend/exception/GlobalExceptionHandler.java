@@ -73,10 +73,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
+        response.put("status", HttpStatus.CONTENT_TOO_LARGE.value());
         response.put("error", "File size exceeds the limit");
         response.put("message", "Maximum allowed file size is 20MB");
         
-        return new ResponseEntity<>(response, HttpStatus.PAYLOAD_TOO_LARGE);
+        return new ResponseEntity<>(response, HttpStatus.CONTENT_TOO_LARGE);
     }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { issuesApi, submissionsApi } from "@/api"
 import { Issue, MySubmissionResponse, SubmissionStatus } from "@/types/submission"
@@ -15,13 +15,11 @@ import { Container } from '@/components/ui/Container'
 export default function SubmissionsPage() {
   const { user } = useAuth()
   const [allSubmissions, setAllSubmissions] = useState<MySubmissionResponse[]>([])
-  const [displayedSubmissions, setDisplayedSubmissions] = useState<MySubmissionResponse[]>([])
   const [issues, setIssues] = useState<Issue[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedIssue, setSelectedIssue] = useState<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const pageSize = 8
   const [isManageMode, setIsManageMode] = useState(false)
   const [submissionToDelete, setSubmissionToDelete] = useState<number | null>(null)
@@ -30,37 +28,32 @@ export default function SubmissionsPage() {
   const [showSelectedDeleteDialog, setShowSelectedDeleteDialog] = useState(false)
   const [isFilterChanging, setIsFilterChanging] = useState(false)
 
-  const updateDisplayedSubmissions = useCallback((submissions: MySubmissionResponse[], page: number) => {
-    const startIndex = (page - 1) * pageSize
+  const displayedSubmissions = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
     const endIndex = startIndex + pageSize
-    const paginatedItems = submissions.slice(startIndex, endIndex)
-    const calculatedTotalPages = Math.ceil(submissions.length / pageSize)
-    
-    setDisplayedSubmissions(paginatedItems)
-    setTotalPages(calculatedTotalPages)
-  }, [pageSize])
+    return allSubmissions.slice(startIndex, endIndex)
+  }, [allSubmissions, currentPage, pageSize])
+
+  const totalPages = Math.max(1, Math.ceil(allSubmissions.length / pageSize))
 
   const loadSubmissions = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       setIsFilterChanging(true)
-      
-      // Clear displayed submissions immediately to prevent stale content
-      setDisplayedSubmissions([])
-      
+
       // Get first page to determine total count
       const firstPageResponse = await submissionsApi.getUserSubmissions(selectedIssue, 0, pageSize)
-      
+
       let allSubmissions: MySubmissionResponse[] = []
-      
+
       if (Array.isArray(firstPageResponse)) {
         // If backend returns complete array, use it directly
         allSubmissions = firstPageResponse
       } else {
         // If backend supports pagination, get all pages
         allSubmissions = [...firstPageResponse.content]
-        
+
         // If there are multiple pages, get remaining pages
         if (firstPageResponse.totalPages > 1) {
           for (let page = 1; page < firstPageResponse.totalPages; page++) {
@@ -71,18 +64,16 @@ export default function SubmissionsPage() {
           }
         }
       }
-      
+
       // Sort by submission time (newest first)
       allSubmissions.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
-      
+
       setAllSubmissions(allSubmissions)
       // Don't update displayed submissions here - let the useEffect handle it
     } catch (err) {
       console.error("Failed to load submissions:", err)
       setError("Failed to load submissions, please try again later")
       setAllSubmissions([])
-      setDisplayedSubmissions([])
-      setTotalPages(1)
     } finally {
       setLoading(false)
       setIsFilterChanging(false)
@@ -101,24 +92,24 @@ export default function SubmissionsPage() {
     }
   }
 
-  // Update displayed submissions when pagination state changes
-  useEffect(() => {
-    if (allSubmissions.length > 0) {
-      updateDisplayedSubmissions(allSubmissions, currentPage)
-    }
-  }, [currentPage, allSubmissions, updateDisplayedSubmissions])
-
   // Load submissions when selectedIssue changes
   useEffect(() => {
     if (user) {
-      setCurrentPage(1)
-      loadSubmissions()
+      const timer = window.setTimeout(() => {
+        void loadSubmissions()
+      }, 0)
+
+      return () => window.clearTimeout(timer)
     }
   }, [selectedIssue, user, loadSubmissions])
 
   // Load issues on mount
   useEffect(() => {
-    loadIssues()
+    const timer = window.setTimeout(() => {
+      void loadIssues()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [])
 
   const handlePageChange = (page: number) => {
@@ -139,7 +130,7 @@ export default function SubmissionsPage() {
   const handleDeleteClick = useCallback((submissionId: number) => {
     // Find the submission to check its status
     const submission = allSubmissions.find(s => s.id === submissionId);
-    
+
     if (submission && submission.status === 'selected') {
       // For selected submissions, show special dialog requiring email contact
       setSubmissionToDelete(submissionId);
@@ -153,14 +144,14 @@ export default function SubmissionsPage() {
 
   const handleConfirmDelete = async () => {
     if (submissionToDelete === null) return;
-    
+
     try {
       setIsDeleting(true);
       await submissionsApi.deleteSubmission(submissionToDelete);
-      
+
       const updatedSubmissions = allSubmissions.filter(submission => submission.id !== submissionToDelete)
       setAllSubmissions(updatedSubmissions);
-      
+
       setShowDeleteDialog(false);
       setSubmissionToDelete(null);
     } catch (error) {
@@ -188,10 +179,10 @@ export default function SubmissionsPage() {
       const emailBody = encodeURIComponent(
         `Dear Munich Weekly Team,\n\nI would like to request the deletion of my photo that has been selected for publication.\n\nSubmission ID: ${submission.id}\nPhoto Description: ${submission.description || "No description provided"}\nSubmitted Date: ${new Date(submission.submittedAt).toLocaleDateString()}\n\nReason for deletion request:\n[Please explain your reason here, especially if it involves privacy concerns or personal information]\n\nI understand that this photo has been selected for public exhibition and that deletion may affect publication integrity. I request this deletion in accordance with GDPR Article 17 (Right to Erasure).\n\nThank you for your consideration.\n\nBest regards,\n[Your name]`
       );
-      
+
       window.open(`mailto:contact@munichweekly.art?subject=${emailSubject}&body=${emailBody}`, '_blank');
     }
-    
+
     // Close the dialog
     setShowSelectedDeleteDialog(false);
     setSubmissionToDelete(null);
@@ -199,9 +190,9 @@ export default function SubmissionsPage() {
 
   const convertToSubmissions = useCallback((mySubmissions: MySubmissionResponse[]) => {
     return mySubmissions.map(submission => {
-      const issue = issues.find(issue => 
+      const issue = issues.find(issue =>
         submission.imageUrl && (
-          submission.imageUrl.includes(`issues/${issue.id}/`) || 
+          submission.imageUrl.includes(`issues/${issue.id}/`) ||
           submission.imageUrl.includes(`issue${issue.id}`)
         )
       ) || (issues.length > 0 ? issues[0] : {
@@ -244,17 +235,17 @@ export default function SubmissionsPage() {
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 mb-2 font-heading">My Submissions</h1>
             <p className="text-gray-600">
-              {allSubmissions.length > 0 
+              {allSubmissions.length > 0
                 ? `You have ${allSubmissions.length} submission${allSubmissions.length > 1 ? 's' : ''}`
                 : "You haven't submitted any photos yet"
               }
-              {totalPages > 1 
+              {totalPages > 1
                 ? ` (page ${currentPage} of ${totalPages}, showing ${displayedSubmissions.length} per page)`
                 : ` (showing ${displayedSubmissions.length} submission${displayedSubmissions.length > 1 ? 's' : ''})`
               }
             </p>
           </div>
-          
+
           <div className="flex items-center self-start md:self-auto">
             <label htmlFor="issue-filter" className="mr-2 text-sm text-gray-500">
               Filter by Issue:
@@ -278,11 +269,11 @@ export default function SubmissionsPage() {
 
       {allSubmissions && allSubmissions.length > 0 && !loading && (
         <div className="mb-6 flex flex-wrap gap-3">
-          <Button 
+          <Button
             variant={isManageMode ? "danger" : "outline"}
             onClick={toggleManageMode}
             className={cn(
-              "border border-red-500 hover:bg-red-50 whitespace-nowrap px-4 min-w-[210px] flex items-center", 
+              "border border-red-500 hover:bg-red-50 whitespace-nowrap px-4 min-w-[210px] flex items-center",
               isManageMode && "bg-red-500 text-white hover:bg-red-600"
             )}
           >
@@ -299,7 +290,7 @@ export default function SubmissionsPage() {
             )}
             <span className="inline-block">{isManageMode ? 'Exit Management' : 'Manage My Submissions'}</span>
           </Button>
-          
+
         </div>
       )}
 
@@ -361,7 +352,7 @@ export default function SubmissionsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {displayedSubmissions.map((submission) => {
               const convertedSubmission = convertToSubmissions([submission])[0];
-              
+
               return (
                 <div key={submission.id} className="relative group">
                   <SubmissionCard
@@ -370,7 +361,7 @@ export default function SubmissionsPage() {
                     layoutMode="grid"
                     className="h-full"
                   />
-                  
+
                   {isManageMode && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg">
                       <button
@@ -394,7 +385,7 @@ export default function SubmissionsPage() {
               );
             })}
           </div>
-          
+
           {totalPages > 1 && (
             <div className="mt-8">
               <Pagination
@@ -410,7 +401,7 @@ export default function SubmissionsPage() {
           )}
         </>
       )}
-      
+
       {/* Normal Delete Dialog */}
       <Modal
         isOpen={showDeleteDialog}
@@ -504,4 +495,4 @@ export default function SubmissionsPage() {
       </Modal>
     </Container>
   )
-} 
+}

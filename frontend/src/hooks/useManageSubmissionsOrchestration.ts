@@ -46,7 +46,11 @@ export function useManageSubmissionsOrchestration({
   } = useDebugTools(token, selectedIssue);
 
   useEffect(() => {
-    setUseMockData(debugMockData);
+    const timeoutId = window.setTimeout(() => {
+      setUseMockData(debugMockData);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [debugMockData]);
 
   const [showImageViewer, setShowImageViewer] = useState(false);
