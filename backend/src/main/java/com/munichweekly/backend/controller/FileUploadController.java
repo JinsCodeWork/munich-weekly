@@ -499,8 +499,7 @@ public class FileUploadController {
             
             // If using LocalStorageService, we need to manually save to a specific location
             if (storageService instanceof LocalStorageService) {
-                // Use special path to save hero image
-                String heroFileUrl = saveHeroImageLocally(file, localStorageService);
+                String heroFileUrl = localStorageService.storeHeroImage(file);
                 
                 if (heroFileUrl != null) {
                     response.put("success", true);
@@ -526,55 +525,18 @@ public class FileUploadController {
         } catch (IllegalArgumentException e) {
             logger.warn("Invalid hero image upload: " + e.getMessage());
             response.put("success", false);
-            response.put("error", e.getMessage());
+            response.put("error", "Hero image upload request is invalid");
             return ResponseEntity.badRequest().body(response);
         } catch (IOException e) {
             logger.error("Hero image upload error: " + e.getMessage(), e);
             response.put("success", false);
-            response.put("error", "Failed to store hero image: " + e.getMessage());
+            response.put("error", "Failed to store hero image");
             return ResponseEntity.internalServerError().body(response);
         } catch (Exception e) {
             logger.error("Unexpected error during hero image upload", e);
             response.put("success", false);
-            response.put("error", "An unexpected error occurred: " + e.getMessage());
+            response.put("error", "Internal server error");
             return ResponseEntity.internalServerError().body(response);
-        }
-    }
-    
-    /**
-     * Save hero image to specific location in local storage
-     */
-    private String saveHeroImageLocally(MultipartFile file, LocalStorageService localService) throws IOException {
-        // Get the root path of uploads directory
-        try {
-            java.lang.reflect.Field rootLocationField = LocalStorageService.class.getDeclaredField("rootLocation");
-            rootLocationField.setAccessible(true);
-            java.nio.file.Path rootLocation = (java.nio.file.Path) rootLocationField.get(localService);
-            
-            // Determine file extension
-            String originalFilename = file.getOriginalFilename();
-            String extension = "jpg"; // Default
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-            }
-            
-            // Save as fixed hero.jpg
-            java.nio.file.Path heroImagePath = rootLocation.resolve("hero." + extension);
-            
-            logger.info("Saving hero image to: " + heroImagePath);
-            
-            // Save file, replace existing file
-            java.nio.file.Files.copy(file.getInputStream(), heroImagePath, 
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            
-            logger.info("Hero image saved successfully: " + heroImagePath);
-            
-            // Return accessible URL path
-            return "/uploads/hero." + extension;
-            
-        } catch (Exception e) {
-            logger.error("Failed to save hero image locally: " + e.getMessage(), e);
-            throw new IOException("Failed to save hero image: " + e.getMessage(), e);
         }
     }
 }

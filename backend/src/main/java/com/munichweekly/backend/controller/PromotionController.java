@@ -2,9 +2,13 @@ package com.munichweekly.backend.controller;
 
 import com.munichweekly.backend.dto.*;
 import com.munichweekly.backend.service.PromotionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -186,32 +190,50 @@ public class PromotionController {
      * 
      * POST /api/promotion/admin/images/{imageId}/upload
      */
-    @PostMapping("/admin/images/{imageId}/upload")
+    @PostMapping(value = "/admin/images/{imageId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('admin')")
-    public ResponseEntity<String> uploadPromotionImageFile(
+    @Operation(summary = "Upload a promotion image file")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Promotion image uploaded")
+    @ApiResponse(responseCode = "400", description = "Upload request is invalid")
+    @ApiResponse(responseCode = "500", description = "Upload failed")
+    public ResponseEntity<FileUploadResponseDTO> uploadPromotionImageFile(
             @PathVariable Long imageId,
             @RequestParam("file") MultipartFile file) {
         try {
             // Validate file type
             if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File cannot be empty");
+                return ResponseEntity.badRequest()
+                        .body(new FileUploadResponseDTO(false, "File cannot be empty"));
             }
 
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.startsWith("image/"))) {
-                return ResponseEntity.badRequest().body("File must be image format");
+                return ResponseEntity.badRequest()
+                        .body(new FileUploadResponseDTO(false, "File must be image format"));
             }
 
             // Call service to upload file
             String imageUrl = promotionService.uploadPromotionImageFile(imageId, file);
-            return ResponseEntity.ok(imageUrl);
+            if (imageUrl == null || imageUrl.isBlank()) {
+                logger.error("Promotion image upload returned empty URL for imageId={}", imageId);
+                return ResponseEntity.internalServerError()
+                        .body(new FileUploadResponseDTO(false, "File upload failed"));
+            }
+            return ResponseEntity.ok(new FileUploadResponseDTO(imageUrl));
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            logger.warn("Invalid promotion image upload for imageId={}: {}", imageId, e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new FileUploadResponseDTO(false, "Promotion image upload request is invalid"));
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("File upload failed");
+            logger.error("Promotion image upload I/O failure for imageId={}", imageId, e);
+            return ResponseEntity.internalServerError()
+                    .body(new FileUploadResponseDTO(false, "File upload failed"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Internal server error");
+            logger.error("Unexpected promotion image upload failure for imageId={}", imageId, e);
+            return ResponseEntity.internalServerError()
+                    .body(new FileUploadResponseDTO(false, "Internal server error"));
         }
     }
 
@@ -254,4 +276,4 @@ public class PromotionController {
             return ResponseEntity.internalServerError().build();
         }
     }
-} 
+}

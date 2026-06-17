@@ -2719,7 +2719,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "properties": {
                   "file": {
@@ -2740,13 +2740,39 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/FileUploadResponseDTO"
                 }
               }
             },
-            "description": "OK"
+            "description": "Promotion image uploaded"
+          },
+          "400": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDTO"
+                }
+              }
+            },
+            "description": "Upload request is invalid"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDTO"
+                }
+              }
+            },
+            "description": "Upload failed"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Upload a promotion image file",
         "tags": [
           "promotion-controller"
         ]

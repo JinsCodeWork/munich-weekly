@@ -222,6 +222,49 @@ class FileUploadControllerAnonymousTest {
         verify(storageService, never()).storeFileWithDimensions(any(), any(), any(), any());
     }
 
+    @Test
+    void localHeroUploadDelegatesToLocalStorageService() throws Exception {
+        LocalStorageService localService = mock(LocalStorageService.class);
+        when(localService.storeHeroImage(any())).thenReturn("/uploads/hero.png");
+        FileUploadController localController = new FileUploadController(
+                localService,
+                new SubmissionUploadService(submissionRepository),
+                r2StorageService,
+                localService,
+                anonymousUploadTokenService
+        );
+
+        ResponseEntity<Map<String, Object>> response = localController.uploadHeroImage(
+                new MockMultipartFile("file", "hero.jpg/../../evil.png", "image/png", "image".getBytes())
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("url", "/uploads/hero.png");
+        verify(localService).storeHeroImage(any());
+    }
+
+    @Test
+    void localHeroUploadDoesNotExposeStorageExceptionText() throws Exception {
+        LocalStorageService localService = mock(LocalStorageService.class);
+        when(localService.storeHeroImage(any()))
+                .thenThrow(new IllegalArgumentException("<script>alert(1)</script>"));
+        FileUploadController localController = new FileUploadController(
+                localService,
+                new SubmissionUploadService(submissionRepository),
+                r2StorageService,
+                localService,
+                anonymousUploadTokenService
+        );
+
+        ResponseEntity<Map<String, Object>> response = localController.uploadHeroImage(
+                new MockMultipartFile("file", "hero.jpg/../../evil.png", "image/png", "image".getBytes())
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("error", "Hero image upload request is invalid");
+        assertThat(response.getBody().toString()).doesNotContain("<script>");
+    }
+
     private Submission anonymousSubmission() {
         Issue issue = new Issue(
                 "Street Corners",

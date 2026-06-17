@@ -14,13 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Service
 public class AnonymousSubmissionService {
 
     private static final int MAX_DESCRIPTION_LENGTH = 2000;
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final int MAX_EMAIL_LENGTH = 254;
+    private static final int MAX_EMAIL_LOCAL_PART_LENGTH = 64;
 
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
@@ -86,9 +86,39 @@ public class AnonymousSubmissionService {
         }
 
         String contactEmail = normalizeOptionalEmail(request.getContactEmail());
-        if (contactEmail != null && !EMAIL_PATTERN.matcher(contactEmail).matches()) {
+        if (contactEmail != null && !isValidContactEmail(contactEmail)) {
             throw new IllegalArgumentException("Contact email must be a valid email address");
         }
+    }
+
+    private boolean isValidContactEmail(String email) {
+        if (email.length() > MAX_EMAIL_LENGTH) {
+            return false;
+        }
+
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 0 || atIndex != email.lastIndexOf('@') || atIndex > MAX_EMAIL_LOCAL_PART_LENGTH) {
+            return false;
+        }
+
+        String localPart = email.substring(0, atIndex);
+        String domain = email.substring(atIndex + 1);
+        int lastDotIndex = domain.lastIndexOf('.');
+        if (localPart.isEmpty() || domain.isEmpty() || lastDotIndex <= 0 || lastDotIndex == domain.length() - 1) {
+            return false;
+        }
+
+        return !containsWhitespaceOrControl(email);
+    }
+
+    private boolean containsWhitespaceOrControl(String value) {
+        for (int index = 0; index < value.length(); index++) {
+            char current = value.charAt(index);
+            if (Character.isWhitespace(current) || Character.isISOControl(current)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateSubmissionWindow(Issue issue) {

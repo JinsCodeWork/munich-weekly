@@ -6,6 +6,12 @@
 import { fetchAPI } from '../http';
 import { PromotionConfig, PromotionImage } from '@/types/promotion';
 
+type PromotionUploadResponse = {
+  success?: boolean;
+  imageUrl?: string;
+  error?: string;
+};
+
 /**
  * Get all promotion configurations for admin
  * Admin endpoint - requires admin authentication
@@ -92,12 +98,20 @@ export const uploadPromotionImageFile = async (imageId: number, file: File): Pro
     body: formData,
   });
 
+  const contentType = response.headers.get('content-type') ?? '';
+  const payload: PromotionUploadResponse = contentType.includes('application/json')
+    ? await response.json()
+    : { imageUrl: await response.text() };
+
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `Upload failed: ${response.status}`);
+    throw new Error(payload.error || `Upload failed: ${response.status}`);
   }
 
-  return await response.text();
+  if (!payload.imageUrl) {
+    throw new Error('Upload response did not include an image URL');
+  }
+
+  return payload.imageUrl;
 };
 
 /**
@@ -119,4 +133,4 @@ export const deletePromotionConfig = async (configId: number): Promise<void> => 
   return await fetchAPI<void>(`/api/promotion/admin/config/${configId}`, {
     method: 'DELETE',
   });
-}; 
+};
