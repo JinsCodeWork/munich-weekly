@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,9 +46,9 @@ public class LocalStorageService implements StorageService {
     @PostConstruct
     public void init() {
         try {
-            rootLocation = Paths.get(uploadsDirectory);
+            rootLocation = Paths.get(uploadsDirectory).toAbsolutePath().normalize();
             Files.createDirectories(rootLocation);
-            logger.info("Local storage initialized at: " + rootLocation.toAbsolutePath());
+            logger.info("Local storage initialized at: " + rootLocation);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not initialize local storage", e);
             throw new RuntimeException("Could not initialize storage", e);
@@ -78,9 +79,11 @@ public class LocalStorageService implements StorageService {
         }
         
         validateFile(file);
+        String safeIssueId = requireSafePathSegment(issueId, "Issue ID");
+        String safeSubmissionId = requireSafePathSegment(submissionId, "Submission ID");
         
         // Create directory structure: uploads/issues/{issueId}/submissions/
-        Path issueDir = rootLocation.resolve("issues").resolve(issueId).resolve("submissions");
+        Path issueDir = resolveUnderRoot("issues", safeIssueId, "submissions");
         Files.createDirectories(issueDir);
         
         // Get file extension
@@ -88,8 +91,8 @@ public class LocalStorageService implements StorageService {
         String extension = getFileExtension(originalFilename);
         
         // Create filename: {submissionId}.{extension}
-        String filename = submissionId + "." + extension;
-        Path destinationFile = issueDir.resolve(filename);
+        String filename = safeSubmissionId + "." + extension;
+        Path destinationFile = resolveUnderRoot("issues", safeIssueId, "submissions", filename);
         
         // **OPTIMIZATION: Extract dimensions from stream before storing**
         ImageDimensions dimensions = null;
@@ -117,8 +120,23 @@ public class LocalStorageService implements StorageService {
         }
         
         // Return relative URL for frontend access
-        String relativePath = "/uploads/issues/" + issueId + "/submissions/" + filename;
+        String relativePath = "/uploads/issues/" + safeIssueId + "/submissions/" + filename;
         return new StorageResult(relativePath, dimensions);
+    }
+
+    public String storeHeroImage(MultipartFile file) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
+
+        validateFile(file);
+        String filename = heroFilenameForContentType(file.getContentType());
+        Path heroImagePath = resolveUnderRoot(filename);
+
+        Files.copy(file.getInputStream(), heroImagePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        logger.info("Hero image saved successfully: " + heroImagePath);
+
+        return "/uploads/" + filename;
     }
     
     /**
@@ -209,7 +227,7 @@ public class LocalStorageService implements StorageService {
             throw new IllegalArgumentException("File must have a valid extension");
         }
         
-        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
     }
     
     /**
@@ -221,21 +239,18 @@ public class LocalStorageService implements StorageService {
     @Override
     public boolean deleteFile(String fileUrl) {
         try {
-            // Extract file name from URL
-            String fileName = fileUrl;
-            if (fileUrl.startsWith("/uploads/")) {
-                fileName = fileUrl.substring("/uploads/".length());
-            }
-            
-            Path filePath = rootLocation.resolve(fileName);
+            Path filePath = resolveUploadUrl(fileUrl);
             logger.info("Attempting to delete file: " + filePath);
             
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
-                logger.info("Deleted file: " + fileName);
+                logger.info("Deleted file: " + filePath);
                 return true;
             }
             logger.warning("File not found for deletion: " + filePath);
+            return false;
+        } catch (IllegalArgumentException e) {
+            logger.warning("Rejected unsafe file deletion path: " + e.getMessage());
             return false;
         } catch (IOException e) {
             logger.log(Level.WARNING, "Failed to delete file: " + fileUrl + " - " + e.getMessage(), e);
@@ -251,15 +266,87 @@ public class LocalStorageService implements StorageService {
      */
     @Override
     public boolean fileExists(String fileUrl) {
-        // Extract file name from URL
-        String fileName = fileUrl;
-        if (fileUrl.startsWith("/uploads/")) {
-            fileName = fileUrl.substring("/uploads/".length());
+        Path filePath;
+        try {
+            filePath = resolveUploadUrl(fileUrl);
+        } catch (IllegalArgumentException e) {
+            logger.warning("Rejected unsafe file lookup path: " + e.getMessage());
+            return false;
         }
-        
-        Path filePath = rootLocation.resolve(fileName);
+
         boolean exists = Files.exists(filePath);
         logger.info("Checking if file exists: " + filePath + " - " + exists);
         return exists;
     }
-} 
+
+    private String heroFilenameForContentType(String contentType) {
+        if ("image/png".equals(contentType)) {
+            return "hero.png";
+        }
+        if ("image/jpeg".equals(contentType)) {
+            return "hero.jpg";
+        }
+        throw new IllegalArgumentException("File type not allowed. Only JPEG and PNG images are supported.");
+    }
+
+    private String requireSafePathSegment(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(label + " cannot be empty");
+        }
+
+        String trimmed = value.trim();
+        if (".".equals(trimmed) || "..".equals(trimmed) || trimmed.length() > 120) {
+            throw new IllegalArgumentException(label + " is invalid");
+        }
+
+        for (int index = 0; index < trimmed.length(); index++) {
+            char current = trimmed.charAt(index);
+            boolean safe = Character.isLetterOrDigit(current)
+                    || current == '-'
+                    || current == '_'
+                    || current == '.';
+            if (!safe) {
+                throw new IllegalArgumentException(label + " contains invalid characters");
+            }
+        }
+
+        return trimmed;
+    }
+
+    private Path resolveUploadUrl(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new IllegalArgumentException("File URL cannot be empty");
+        }
+
+        String relativePath = fileUrl.trim();
+        if (relativePath.startsWith("/uploads/")) {
+            relativePath = relativePath.substring("/uploads/".length());
+        } else if (relativePath.startsWith("uploads/")) {
+            relativePath = relativePath.substring("uploads/".length());
+        }
+
+        if (relativePath.contains("\\") || relativePath.contains("\0") || relativePath.contains("://")) {
+            throw new IllegalArgumentException("File URL is invalid");
+        }
+
+        String[] segments = relativePath.split("/");
+        for (String segment : segments) {
+            requireSafePathSegment(segment, "File URL path segment");
+        }
+
+        return resolveUnderRoot(segments);
+    }
+
+    private Path resolveUnderRoot(String... segments) {
+        Path resolved = rootLocation;
+        for (String segment : segments) {
+            resolved = resolved.resolve(segment);
+        }
+
+        Path normalized = resolved.normalize();
+        if (!normalized.startsWith(rootLocation)) {
+            throw new IllegalArgumentException("File path is outside uploads directory");
+        }
+        return normalized;
+    }
+}

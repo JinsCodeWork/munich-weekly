@@ -137,6 +137,23 @@ class AnonymousSubmissionServiceTest {
         verify(submissionRepository, never()).save(any());
     }
 
+    @Test
+    void rejectsPathologicalContactEmailBeforeCaptchaOrDatabaseAccess() {
+        AnonymousSubmissionRequestDTO request = new AnonymousSubmissionRequestDTO();
+        request.setIssueId(7L);
+        request.setDescription("A quiet street after rain");
+        request.setContactEmail("!@!." + "!.".repeat(5000));
+        request.setCaptchaToken("captcha-token");
+
+        assertThatThrownBy(() -> service.createAnonymousSubmission(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Contact email must be a valid email address");
+
+        verify(captchaVerificationService, never()).verify(any());
+        verify(userRepository, never()).save(any());
+        verify(submissionRepository, never()).save(any());
+    }
+
     private Issue activeIssue() {
         LocalDateTime now = LocalDateTime.now();
         return new Issue(
