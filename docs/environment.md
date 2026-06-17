@@ -129,7 +129,7 @@ identity.
 | `NEXT_PUBLIC_API_URL` | `frontend/next.config.js`, frontend API routes | Optional | Defaults to `http://localhost:8080/api` for rewrites. `sync-hero` normalizes a trailing `/api` before appending `/api/users/me`; check each frontend API route before changing this value globally. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `src/app/submit/page.tsx` | Anonymous submission CAPTCHA | Public site key for the Turnstile widget. |
 | `DEBUG_CONFIG_API` | `src/app/frontend-api/config/route.ts` | Optional debugging | Set to `1` for config API debug logging. |
-| `HERO_IMAGE_ALLOWED_ORIGINS` | `src/app/frontend-api/admin/sync-hero/route.ts` | Optional remote homepage hero sync origins | Comma-separated exact HTTPS origins allowed for admin hero image sync, in addition to the current built-in image CDN origins. Do not include path segments, credentials, or wildcards. |
+| `HERO_IMAGE_ALLOWED_ORIGINS` | `src/app/frontend-api/admin/sync-hero/route.ts` | Optional remote homepage hero sync origins | Comma-separated exact HTTPS origins allowed for admin hero image sync, in addition to the current built-in image CDN origins. Do not include path segments, credentials, or wildcards. The route compares the parsed URL origin exactly, rejects private/local hosts, and rebuilds remote downloads from the allowlisted origin plus the submitted path and query string. |
 | `NODE_ENV` | Next.js and image utilities | Managed by Next.js | `development` changes image optimization and upload rewrite behavior. |
 
 ## Image Worker

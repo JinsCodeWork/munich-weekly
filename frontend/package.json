@@ -14,7 +14,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:routes": "tsx test/sync-hero-route.test.ts && tsx test/csp-report-route.test.ts",
+    "test:routes": "tsx test/sync-hero-route.test.ts && tsx test/admin-config-route.test.ts && tsx test/csp-report-route.test.ts",
     "lint": "eslint src"
   },
   "dependencies": {
