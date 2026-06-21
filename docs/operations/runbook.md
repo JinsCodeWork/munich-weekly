@@ -118,6 +118,24 @@ To test the live alert destination, start the template without the temporary
 sudo systemctl start 'munich-weekly-alert@manual-test.service'
 ```
 
+## Repository Security Scanning
+
+CodeQL code scanning is managed by the explicit GitHub Actions workflow at
+`.github/workflows/codeql.yml`. It scans the same language categories GitHub
+default setup previously reported for this repository: Actions, Java/Kotlin,
+JavaScript/TypeScript, and Python.
+
+The CodeQL action uses the `v4` major-version tag instead of a pinned commit SHA
+so advanced setup continues to receive GitHub's CodeQL action, CLI, and query
+updates within that supported major line. Other CI actions can remain pinned by
+commit SHA.
+
+Keep GitHub CodeQL default setup disabled after the explicit workflow is active.
+Running both default setup and an advanced workflow can suppress the workflow
+uploads or leave pull requests with neutral "configurations not found" code
+scanning checks. If that happens, check the repository's Code Security settings
+and confirm that CodeQL is using the workflow file rather than default setup.
+
 ## Weekly Maintenance Review
 
 Once per week:
