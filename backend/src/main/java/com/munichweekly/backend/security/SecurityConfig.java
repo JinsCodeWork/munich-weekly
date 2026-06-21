@@ -1,15 +1,19 @@
 package com.munichweekly.backend.security;
 
 import com.munichweekly.backend.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 
@@ -20,6 +24,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final String VOTES_PATH = "/api/votes";
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
@@ -43,7 +49,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for API use
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(new CookieCsrfTokenRepository())
+                        .requireCsrfProtectionMatcher(SecurityConfig::requiresCsrfProtection)
+                )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
@@ -54,6 +63,9 @@ public class SecurityConfig {
 
                         // Generated API documentation
                         .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+
+                        // Browser CSRF token helper
+                        .requestMatchers(HttpMethod.GET, "/api/csrf").permitAll()
                         
                         // Authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()  // Login etc. allowed
@@ -128,10 +140,41 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtUtil, userRepository),
-                        UsernamePasswordAuthenticationFilter.class
+                        CsrfFilter.class
                 );
 
         return http.build();
+    }
+
+    static boolean requiresCsrfProtection(HttpServletRequest request) {
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (!contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        path = removePathParameters(path);
+        return VOTES_PATH.equals(path)
+                && (HttpMethod.POST.name().equals(method) || HttpMethod.DELETE.name().equals(method))
+                && !hasAuthenticatedUser();
+    }
+
+    private static String removePathParameters(String path) {
+        String[] segments = path.split("/", -1);
+        for (int i = 0; i < segments.length; i++) {
+            int pathParameterStart = segments[i].indexOf(';');
+            if (pathParameterStart >= 0) {
+                segments[i] = segments[i].substring(0, pathParameterStart);
+            }
+        }
+        return String.join("/", segments);
+    }
+
+    private static boolean hasAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
     @Bean

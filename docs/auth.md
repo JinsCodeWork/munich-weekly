@@ -131,6 +131,13 @@ Voting requests include cookies, and the backend either verifies the signed
 cookie, migrates an existing legacy `visitorId` once, or issues a new random
 anonymous subject.
 
+Browser vote mutations are CSRF-protected because `mw_vote_anon` is an ambient
+cookie. The frontend obtains a token from `GET /api/csrf` and sends the returned
+header on `POST /api/votes` and `DELETE /api/votes`. The accompanying
+`XSRF-TOKEN` cookie is managed by Spring Security and is not a frontend API;
+clients should use the response body token from `/api/csrf` rather than reading
+the cookie directly.
+
 Legacy compatibility is intentionally narrow: if a valid `mw_vote_anon` cookie
 exists, the backend ignores any changed `visitorId` cookie. If `mw_vote_anon` is
 missing and a legacy `visitorId` exists, the backend signs that value into
@@ -173,6 +180,10 @@ and method-level `@PreAuthorize` annotations. Do not maintain public/protected
 endpoint inventories by hand in Markdown; use [API Reference](./api.md), the
 generated [api.json](./api.json), and the backend security config as the current
 facts.
+
+Spring CSRF protection is enabled for cookie-backed vote mutations. JWT-protected
+API calls continue to use explicit `Authorization: Bearer ...` headers rather
+than browser-ambient authentication cookies.
 
 ### 5.2. Error Handling
 

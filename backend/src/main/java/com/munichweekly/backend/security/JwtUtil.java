@@ -53,7 +53,7 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException e) {
-            throw new RuntimeException("Invalid JWT token");
+            throw new JwtException("Invalid JWT token", e);
         }
     }
 
@@ -61,7 +61,11 @@ public class JwtUtil {
      * Extract user ID from token.
      */
     public Long extractUserId(String token) {
-        return Long.parseLong(parseToken(token).getSubject());
+        try {
+            return Long.parseLong(parseToken(token).getSubject());
+        } catch (NumberFormatException e) {
+            throw new JwtException("Invalid JWT subject", e);
+        }
     }
 
     @PostConstruct

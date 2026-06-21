@@ -2,7 +2,7 @@
  * Voting-related API module
  * Provides voting functionality and vote status checking
  */
-import { fetchAPI } from "../http";
+import { fetchAPI, getCsrfHeader } from "../http";
 
 interface VoteResponse {
   vote: { id: number; submissionId: number };
@@ -28,10 +28,12 @@ interface BatchVoteStatusResponse {
 export const submitVote = async (submissionId: number): Promise<VoteResponse> => {
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
+  const csrfHeader = await getCsrfHeader();
   
   return fetchAPI<VoteResponse>(url.toString(), {
     method: "POST",
     credentials: "include",
+    headers: csrfHeader,
   });
 };
 
@@ -84,9 +86,11 @@ export const checkBatchVoteStatus = async (submissionIds: number[]): Promise<Bat
 export const cancelVote = async (submissionId: number): Promise<CancelVoteResponse> => {
   const url = new URL("/api/votes", window.location.origin);
   url.searchParams.append("submissionId", submissionId.toString());
+  const csrfHeader = await getCsrfHeader();
   
   return fetchAPI<CancelVoteResponse>(url.toString(), {
     method: "DELETE",
     credentials: "include",
+    headers: csrfHeader,
   });
 };
