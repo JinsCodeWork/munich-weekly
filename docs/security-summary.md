@@ -30,6 +30,7 @@ Use [Authentication & Security](./auth.md) for implementation details,
 - **Purpose**: Enable anonymous voting without user registration
 - **Privacy**: No personal data collection for anonymous users
 - **Constraint**: One vote per signed anonymous subject per submission, with broad IP-based throttles for excessive token issuance or repeated anonymous vote attempts
+- **CSRF**: Browser vote and cancel-vote mutations require the response body token from `GET /api/csrf`
 
 ### User Roles & Permissions
 - **User Role**: Basic functionality (vote, submit, manage own content)
@@ -51,6 +52,7 @@ Use [Authentication & Security](./auth.md) for implementation details,
 ✅ **Privacy-Compliant Anonymous Voting**
 - GDPR-compliant visitor tracking
 - Backend-signed HttpOnly anonymous vote identity
+- CSRF token required for cookie-backed vote mutations
 - Transparent data handling policies
 
 ✅ **Comprehensive Role-Based Access Control**

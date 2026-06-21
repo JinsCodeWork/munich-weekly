@@ -9,6 +9,8 @@ import com.munichweekly.backend.security.CurrentUserUtil;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +34,9 @@ import java.util.Arrays;
 @Tag(name = "Votes", description = "Vote submission and vote status endpoints")
 public class VoteController {
     private static final Logger logger = LoggerFactory.getLogger(VoteController.class);
+    private static final String CSRF_HEADER_DESCRIPTION =
+            "Required for browser clients using cookie-backed anonymous voting. "
+                    + "Bearer-authenticated API clients are exempt.";
 
     private final VoteService voteService;
     private final AnonymousVoteIdentityService anonymousVoteIdentityService;
@@ -54,6 +59,23 @@ public class VoteController {
      * Returns the vote object and current vote count.
      */
     @Description("Submit a vote for a submission. Uses userId for authenticated users and a signed anonymous vote cookie for anonymous users.")
+    @Operation(
+            summary = "Submit a vote",
+            description = "Creates a vote for the current authenticated user or anonymous visitor.",
+            parameters = {
+                    @Parameter(
+                            name = "X-XSRF-TOKEN",
+                            in = ParameterIn.HEADER,
+                            required = false,
+                            schema = @Schema(type = "string"),
+                            description = CSRF_HEADER_DESCRIPTION
+                    )
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Vote created"),
+            @ApiResponse(responseCode = "403", description = "Missing or invalid CSRF token for cookie-backed vote mutation")
+    })
     @PostMapping
     public ResponseEntity<?> vote(
             @RequestParam Long submissionId,
@@ -275,6 +297,31 @@ public class VoteController {
      * Returns success status and updated vote count.
      */
     @Description("Cancel a vote for a submission. Uses userId for authenticated users and a signed anonymous vote cookie for anonymous users.")
+    @Operation(
+            summary = "Cancel a vote",
+            description = "Cancels a vote for the current authenticated user or anonymous visitor.",
+            parameters = {
+                    @Parameter(
+                            name = "X-XSRF-TOKEN",
+                            in = ParameterIn.HEADER,
+                            required = false,
+                            schema = @Schema(type = "string"),
+                            description = CSRF_HEADER_DESCRIPTION
+                    )
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Vote cancellation processed"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Vote cannot be cancelled",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Missing or invalid CSRF token for cookie-backed vote mutation")
+    })
     @DeleteMapping
     public ResponseEntity<?> cancelVote(
             @RequestParam Long submissionId,

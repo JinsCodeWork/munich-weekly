@@ -37,6 +37,12 @@ export type FetchAPIOptions = RequestInit & {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
+type CsrfTokenResponse = {
+  headerName: string;
+  parameterName: string;
+  token: string;
+};
+
 const fetchWithTimeout = async (
   url: string,
   options: RequestInit = {},
@@ -73,6 +79,51 @@ function flattenHeaders(init?: HeadersInit): Record<string, string> {
     Object.assign(out, init);
   }
   return out;
+}
+
+function isCsrfTokenResponse(value: unknown): value is CsrfTokenResponse {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.headerName === "string" &&
+    candidate.headerName.length > 0 &&
+    typeof candidate.parameterName === "string" &&
+    candidate.parameterName.length > 0 &&
+    typeof candidate.token === "string" &&
+    candidate.token.length > 0
+  );
+}
+
+export async function getCsrfHeader(): Promise<Record<string, string>> {
+  const response = await fetchWithTimeout(
+    "/api/csrf",
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(parseApiErrorMessage(responseText, response));
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(responseText) as unknown;
+  } catch {
+    throw new Error("CSRF token response was not valid JSON");
+  }
+
+  if (!isCsrfTokenResponse(parsed)) {
+    throw new Error("CSRF token response was missing required fields");
+  }
+
+  return { [parsed.headerName]: parsed.token };
 }
 
 /**

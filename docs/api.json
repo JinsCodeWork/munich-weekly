@@ -115,6 +115,20 @@
         ],
         "type": "object"
       },
+      "CsrfTokenResponseDTO": {
+        "properties": {
+          "headerName": {
+            "type": "string"
+          },
+          "parameterName": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "EmailLoginRequestDTO": {
         "properties": {
           "email": {
@@ -1497,6 +1511,28 @@
         "summary": "Reset password",
         "tags": [
           "Authentication"
+        ]
+      }
+    },
+    "/api/csrf": {
+      "get": {
+        "description": "Issues a CSRF token for browser clients that call cookie-backed mutation endpoints.",
+        "operationId": "getCsrfToken",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfTokenResponseDTO"
+                }
+              }
+            },
+            "description": "CSRF token issued"
+          }
+        },
+        "summary": "Get CSRF token",
+        "tags": [
+          "Security"
         ]
       }
     },
@@ -3592,8 +3628,17 @@
     },
     "/api/votes": {
       "delete": {
+        "description": "Cancels a vote for the current authenticated user or anonymous visitor.",
         "operationId": "cancelVote",
         "parameters": [
+          {
+            "description": "Required for browser clients using cookie-backed anonymous voting. Bearer-authenticated API clients are exempt.",
+            "in": "header",
+            "name": "X-XSRF-TOKEN",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "query",
             "name": "submissionId",
@@ -3629,16 +3674,46 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Vote cancellation processed"
+          },
+          "400": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Vote cannot be cancelled"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Missing or invalid CSRF token for cookie-backed vote mutation"
           }
         },
+        "summary": "Cancel a vote",
         "tags": [
           "Votes"
         ]
       },
       "post": {
+        "description": "Creates a vote for the current authenticated user or anonymous visitor.",
         "operationId": "vote",
         "parameters": [
+          {
+            "description": "Required for browser clients using cookie-backed anonymous voting. Bearer-authenticated API clients are exempt.",
+            "in": "header",
+            "name": "X-XSRF-TOKEN",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "query",
             "name": "submissionId",
@@ -3674,9 +3749,20 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Vote created"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Missing or invalid CSRF token for cookie-backed vote mutation"
           }
         },
+        "summary": "Submit a vote",
         "tags": [
           "Votes"
         ]
@@ -3826,6 +3912,10 @@
     {
       "description": "Login, registration, and password reset",
       "name": "Authentication"
+    },
+    {
+      "description": "Browser security token helpers",
+      "name": "Security"
     },
     {
       "description": "Vote submission and vote status endpoints",
