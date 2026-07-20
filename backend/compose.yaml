@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:18
     container_name: mw-postgres
     restart: unless-stopped
     environment:
