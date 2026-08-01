@@ -1,5 +1,5 @@
 # Use a minimal JDK runtime image
-FROM eclipse-temurin:21-jdk AS builder
+FROM eclipse-temurin:25-jdk AS builder
 
 # Set work directory inside container
 WORKDIR /app
