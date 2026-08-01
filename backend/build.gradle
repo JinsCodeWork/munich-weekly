@@ -48,7 +48,7 @@ dependencies {
     
     // Mailjet API
     implementation 'com.mailjet:mailjet-client:6.0.1'
-    implementation 'org.json:json:20260522'
+    implementation 'org.json:json:20260719'
     
     // 🔧 新增：EXIF 元数据读取库
     implementation 'com.drewnoakes:metadata-extractor:2.19.0'
